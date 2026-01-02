@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { 
   CheckSquare, 
   BookOpen, 
@@ -81,7 +82,13 @@ const Landing = () => {
   ];
 
   return (
-    <main className="relative min-h-screen w-full overflow-x-hidden bg-chronyx-landing">
+    <motion.main 
+      className="relative min-h-screen w-full overflow-x-hidden bg-chronyx-landing"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+    >
       {/* Paper-like texture overlay */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.015]" 
         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }} 
@@ -452,23 +459,26 @@ const Landing = () => {
               playsInline
             >
               <source 
-                src="https://ewevnteuyfpinnlhvoty.supabase.co/storage/v1/object/public/vyom/VYOM__A_Quiet_Space.mp4" 
+                src="https://ewevnteuyfpinnlhvoty.supabase.co/storage/v1/object/public/chronyx/CHRONYX__A_Quiet_Space.mp4" 
                 type="video/mp4" 
               />
               Your browser does not support the video tag.
             </video>
             
             {/* Brand Overlay - covers NotebookLM branding in top-left corner */}
-            <div className="absolute top-0 left-0 bg-gradient-to-br from-background via-background/95 to-transparent px-4 py-3 rounded-br-xl pointer-events-none">
-              <div className="flex items-center gap-2">
-                <ChronxyxLogo className="w-5 h-5" />
-                <span className="text-sm font-light tracking-wider text-foreground">CHRONYX</span>
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-background via-background/80 to-transparent px-4 py-3 pointer-events-none">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ChronxyxLogo className="w-6 h-6" />
+                  <span className="text-base font-light tracking-[0.15em] text-foreground">CHRONYX</span>
+                </div>
+                <span className="text-xs font-light tracking-wide text-muted-foreground mr-10">by CROPXON</span>
               </div>
             </div>
             
-            {/* Additional overlay for bottom-left if needed */}
-            <div className="absolute bottom-12 left-0 bg-gradient-to-tr from-background via-background/90 to-transparent px-4 py-2 rounded-tr-xl pointer-events-none">
-              <span className="text-xs font-light tracking-wide text-muted-foreground">by CROPXON</span>
+            {/* Bottom overlay to hide any watermarks */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/80 to-transparent h-16 pointer-events-none flex items-end justify-center pb-2">
+              <span className="text-xs font-light tracking-widest text-muted-foreground/60">A QUIET SPACE FOR YOUR LIFE</span>
             </div>
             
             {/* Close button */}
@@ -481,7 +491,7 @@ const Landing = () => {
           </div>
         </div>
       )}
-    </main>
+    </motion.main>
   );
 };
 
