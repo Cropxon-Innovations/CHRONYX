@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SidebarQuickAdd } from "./SidebarQuickAdd";
 import {
   LayoutDashboard,
   CheckSquare,
@@ -320,6 +321,14 @@ const AppSidebar = () => {
               </TooltipContent>
             </Tooltip>
           )}
+        </div>
+
+        {/* Quick Add */}
+        <div className={cn(
+          "border-b border-sidebar-border",
+          collapsed ? "p-2" : "px-4 py-2"
+        )}>
+          <SidebarQuickAdd collapsed={collapsed} onClose={closeMobile} />
         </div>
 
         {/* Navigation */}

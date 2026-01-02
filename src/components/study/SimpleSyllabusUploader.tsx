@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,7 +44,8 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
-  Minimize2
+  Minimize2,
+  GripVertical
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,7 @@ interface SyllabusDocument {
   file_size: number;
   progress_percentage: number;
   notes: string | null;
+  sort_order: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -94,6 +96,10 @@ export const SimpleSyllabusUploader = () => {
   // Delete state
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  // Drag and drop state
+  const [draggedDocId, setDraggedDocId] = useState<string | null>(null);
+  const [dragOverDocId, setDragOverDocId] = useState<string | null>(null);
+
   // Fetch syllabus documents
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ["syllabus-documents", user?.id],
@@ -101,12 +107,78 @@ export const SimpleSyllabusUploader = () => {
       const { data, error } = await supabase
         .from("syllabus_documents")
         .select("*")
+        .order("sort_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as SyllabusDocument[];
     },
     enabled: !!user,
   });
+
+  // Reorder mutation
+  const reorderMutation = useMutation({
+    mutationFn: async (reorderedDocs: SyllabusDocument[]) => {
+      const updates = reorderedDocs.map((doc, index) => ({
+        id: doc.id,
+        sort_order: index,
+      }));
+      
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("syllabus_documents")
+          .update({ sort_order: update.sort_order })
+          .eq("id", update.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["syllabus-documents"] });
+    },
+  });
+
+  // Drag handlers
+  const handleDragStart = useCallback((e: React.DragEvent, docId: string) => {
+    setDraggedDocId(docId);
+    e.dataTransfer.effectAllowed = "move";
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, docId: string) => {
+    e.preventDefault();
+    if (draggedDocId && draggedDocId !== docId) {
+      setDragOverDocId(docId);
+    }
+  }, [draggedDocId]);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverDocId(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetDocId: string) => {
+    e.preventDefault();
+    if (!draggedDocId || draggedDocId === targetDocId) {
+      setDraggedDocId(null);
+      setDragOverDocId(null);
+      return;
+    }
+
+    const draggedIndex = documents.findIndex(d => d.id === draggedDocId);
+    const targetIndex = documents.findIndex(d => d.id === targetDocId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    const newDocs = [...documents];
+    const [removed] = newDocs.splice(draggedIndex, 1);
+    newDocs.splice(targetIndex, 0, removed);
+
+    reorderMutation.mutate(newDocs);
+    setDraggedDocId(null);
+    setDragOverDocId(null);
+  }, [draggedDocId, documents, reorderMutation]);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedDocId(null);
+    setDragOverDocId(null);
+  }, []);
 
   // Upload mutation
   const uploadMutation = useMutation({
@@ -429,13 +501,29 @@ export const SimpleSyllabusUploader = () => {
       ) : (
         <div className="space-y-3">
           {documents.map((doc) => (
-            <Card key={doc.id} className="group hover:shadow-md transition-shadow">
+            <Card 
+              key={doc.id} 
+              className={cn(
+                "group hover:shadow-md transition-all cursor-move",
+                draggedDocId === doc.id && "opacity-50",
+                dragOverDocId === doc.id && "ring-2 ring-primary ring-offset-2"
+              )}
+              draggable
+              onDragStart={(e) => handleDragStart(e, doc.id)}
+              onDragOver={(e) => handleDragOver(e, doc.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, doc.id)}
+              onDragEnd={handleDragEnd}
+            >
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  {/* Icon and Info */}
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-5 h-5 text-muted-foreground" />
+                  {/* Drag Handle and Icon */}
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <GripVertical className="w-4 h-4 text-muted-foreground/50 cursor-grab active:cursor-grabbing" />
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-muted-foreground" />
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
