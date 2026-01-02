@@ -1,139 +1,357 @@
-import TrendChart from "@/components/dashboard/TrendChart";
-import { Wallet } from "lucide-react";
-
-interface Loan {
-  id: string;
-  name: string;
-  totalAmount: number;
-  remainingAmount: number;
-  monthlyEmi: number;
-  interestRate: number;
-  nextDueDate: string;
-}
-
-const loans: Loan[] = [
-  {
-    id: "1",
-    name: "Home Loan",
-    totalAmount: 5000000,
-    remainingAmount: 3200000,
-    monthlyEmi: 42000,
-    interestRate: 8.5,
-    nextDueDate: "2025-01-05",
-  },
-  {
-    id: "2",
-    name: "Car Loan",
-    totalAmount: 800000,
-    remainingAmount: 320000,
-    monthlyEmi: 18500,
-    interestRate: 9.2,
-    nextDueDate: "2025-01-10",
-  },
-];
-
-const principalTrend = [
-  { name: "Jul", value: 3800000 },
-  { name: "Aug", value: 3700000 },
-  { name: "Sep", value: 3600000 },
-  { name: "Oct", value: 3500000 },
-  { name: "Nov", value: 3400000 },
-  { name: "Dec", value: 3200000 },
-];
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
+import { useState, useMemo } from "react";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { LoanSummaryCards, formatCurrency } from "@/components/loans/LoanSummaryCards";
+import { LoanCard } from "@/components/loans/LoanCard";
+import { AddLoanForm, LoanFormData } from "@/components/loans/AddLoanForm";
+import { EmiScheduleTable } from "@/components/loans/EmiScheduleTable";
+import { LoanActions } from "@/components/loans/LoanActions";
+import { getBankColor, getBankInitials } from "@/components/loans/BankLogos";
 
 const Loans = () => {
-  const totalRemaining = loans.reduce((acc, loan) => acc + loan.remainingAmount, 0);
-  const totalEmi = loans.reduce((acc, loan) => acc + loan.monthlyEmi, 0);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showAddLoan, setShowAddLoan] = useState(false);
+  const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
+
+  // Fetch loans
+  const { data: loans = [], isLoading: loansLoading } = useQuery({
+    queryKey: ["loans", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("loans")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch all EMI schedules
+  const { data: allEmis = [] } = useQuery({
+    queryKey: ["all-emis", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("emi_schedule")
+        .select("*")
+        .order("emi_date", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // Calculate summary metrics
+  const summary = useMemo(() => {
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+
+    const activeLoans = loans.filter(l => l.status === "active");
+    
+    let totalOutstanding = 0;
+    let emiDueThisMonth = 0;
+    let totalEmiThisMonth = 0;
+
+    activeLoans.forEach(loan => {
+      const loanEmis = allEmis.filter(e => e.loan_id === loan.id);
+      const pendingEmis = loanEmis.filter(e => e.payment_status === "Pending");
+      
+      if (pendingEmis.length > 0) {
+        totalOutstanding += Number(pendingEmis[0].remaining_principal) + Number(pendingEmis[0].principal_component);
+      }
+
+      // EMIs due this month
+      const thisMonthEmis = pendingEmis.filter(e => {
+        const emiDate = parseISO(e.emi_date);
+        return isWithinInterval(emiDate, { start: monthStart, end: monthEnd });
+      });
+
+      emiDueThisMonth += thisMonthEmis.length;
+      totalEmiThisMonth += thisMonthEmis.reduce((sum, e) => sum + Number(e.emi_amount), 0);
+    });
+
+    return {
+      totalOutstanding,
+      activeLoansCount: activeLoans.length,
+      emiDueThisMonth,
+      totalEmiThisMonth,
+    };
+  }, [loans, allEmis]);
+
+  // Get loan details for cards
+  const getLoanDetails = (loanId: string) => {
+    const loanEmis = allEmis.filter(e => e.loan_id === loanId);
+    const paidEmis = loanEmis.filter(e => e.payment_status === "Paid");
+    const pendingEmis = loanEmis.filter(e => e.payment_status === "Pending");
+    
+    const remainingPrincipal = pendingEmis.length > 0
+      ? Number(pendingEmis[0].remaining_principal) + Number(pendingEmis[0].principal_component)
+      : 0;
+
+    const nextEmi = pendingEmis[0];
+
+    return {
+      remainingPrincipal,
+      paidCount: paidEmis.length,
+      pendingCount: pendingEmis.length,
+      nextEmiDate: nextEmi ? format(parseISO(nextEmi.emi_date), "MMM dd") : undefined,
+      schedule: loanEmis,
+    };
+  };
+
+  // Add loan mutation
+  const addLoanMutation = useMutation({
+    mutationFn: async (data: LoanFormData) => {
+      const { data: loan, error } = await supabase
+        .from("loans")
+        .insert({ ...data, user_id: user!.id })
+        .select()
+        .single();
+      if (error) throw error;
+
+      // Generate EMI schedule via edge function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-emi-schedule`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            loan_id: loan.id,
+            principal: data.principal_amount,
+            annual_interest_rate: data.interest_rate,
+            tenure_months: data.tenure_months,
+            emi_start_date: data.start_date,
+            emi_amount_override: data.emi_amount,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to generate EMI schedule");
+      return loan;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["loans"] });
+      queryClient.invalidateQueries({ queryKey: ["all-emis"] });
+      toast({ title: "Loan added successfully" });
+      setShowAddLoan(false);
+    },
+    onError: () => {
+      toast({ title: "Failed to add loan", variant: "destructive" });
+    },
+  });
+
+  // Mark EMI paid mutation
+  const markPaidMutation = useMutation({
+    mutationFn: async ({ emiId, paidDate, paymentMethod }: { emiId: string; paidDate: string; paymentMethod: string }) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mark-emi-paid`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ emi_id: emiId, paid_date: paidDate, payment_method: paymentMethod }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to mark EMI as paid");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-emis"] });
+      toast({ title: "EMI marked as paid" });
+    },
+  });
+
+  // Part payment mutation
+  const partPaymentMutation = useMutation({
+    mutationFn: async ({ loanId, amount, date, reductionType, method }: any) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/apply-part-payment`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            loan_id: loanId,
+            amount,
+            payment_date: date,
+            reduction_type: reductionType,
+            payment_method: method,
+          }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to apply part-payment");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["all-emis"] });
+      queryClient.invalidateQueries({ queryKey: ["loans"] });
+      toast({ 
+        title: "Part-payment applied",
+        description: `Interest saved: ${formatCurrency(data.interest_saved, "INR")}`,
+      });
+    },
+  });
+
+  // Foreclosure mutation
+  const foreclosureMutation = useMutation({
+    mutationFn: async ({ loanId, date, method }: any) => {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/apply-foreclosure`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            loan_id: loanId,
+            foreclosure_date: date,
+            payment_method: method,
+          }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to foreclose loan");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["all-emis"] });
+      queryClient.invalidateQueries({ queryKey: ["loans"] });
+      toast({ 
+        title: "Loan foreclosed",
+        description: `Interest saved: ${formatCurrency(data.interest_saved, "INR")}`,
+      });
+      setSelectedLoanId(null);
+    },
+  });
+
+  const selectedLoan = loans.find(l => l.id === selectedLoanId);
+  const selectedLoanDetails = selectedLoanId ? getLoanDetails(selectedLoanId) : null;
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in max-w-5xl">
       {/* Header */}
-      <header>
-        <h1 className="text-2xl font-light text-foreground tracking-wide">Loans & EMI</h1>
-        <p className="text-sm text-muted-foreground mt-1">Track your debt and payments</p>
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-light text-foreground tracking-wide">Loans & EMI</h1>
+          <p className="text-sm text-muted-foreground mt-1">Personal liability ledger</p>
+        </div>
+        <Button onClick={() => setShowAddLoan(true)} className="bg-primary text-primary-foreground">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Loan
+        </Button>
       </header>
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-lg p-6">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Outstanding</p>
-          <p className="text-3xl font-semibold text-foreground mt-2">{formatCurrency(totalRemaining)}</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-6">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">Monthly EMI</p>
-          <p className="text-3xl font-semibold text-vyom-accent mt-2">{formatCurrency(totalEmi)}</p>
-        </div>
-      </div>
+      {/* Summary Cards */}
+      <LoanSummaryCards
+        totalOutstanding={summary.totalOutstanding}
+        activeLoansCount={summary.activeLoansCount}
+        emiDueThisMonth={summary.emiDueThisMonth}
+        totalEmiThisMonth={summary.totalEmiThisMonth}
+        currency="INR"
+      />
 
-      {/* Loan Cards */}
-      <section className="space-y-4">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Active Loans</h2>
-        {loans.map((loan) => {
-          const progress = ((loan.totalAmount - loan.remainingAmount) / loan.totalAmount) * 100;
-          return (
-            <div key={loan.id} className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-vyom-accent-soft flex items-center justify-center">
-                    <Wallet className="w-5 h-5 text-vyom-accent" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-medium text-foreground">{loan.name}</h3>
-                    <p className="text-xs text-muted-foreground">{loan.interestRate}% p.a.</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Next EMI</p>
-                  <p className="text-sm text-foreground">{loan.nextDueDate}</p>
-                </div>
-              </div>
+      {/* Main Content */}
+      {selectedLoan ? (
+        <div className="space-y-6">
+          {/* Back button and loan header */}
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => setSelectedLoanId(null)} className="text-muted-foreground">
+              ← Back to Loans
+            </Button>
+          </div>
 
-              {/* Progress Ring (simplified as bar) */}
-              <div className="mb-4">
-                <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                  <span>Paid: {formatCurrency(loan.totalAmount - loan.remainingAmount)}</span>
-                  <span>{progress.toFixed(1)}%</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-vyom-success rounded-full transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
-                <div>
-                  <p className="text-lg font-semibold text-foreground">{formatCurrency(loan.totalAmount)}</p>
-                  <p className="text-xs text-muted-foreground">Total</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-foreground">{formatCurrency(loan.remainingAmount)}</p>
-                  <p className="text-xs text-muted-foreground">Remaining</p>
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-foreground">{formatCurrency(loan.monthlyEmi)}</p>
-                  <p className="text-xs text-muted-foreground">Monthly EMI</p>
-                </div>
-              </div>
+          <div className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg">
+            <div 
+              className="w-12 h-12 rounded-lg flex items-center justify-center text-sm font-medium text-white"
+              style={{ backgroundColor: getBankColor(selectedLoan.bank_name) }}
+            >
+              {getBankInitials(selectedLoan.bank_name)}
             </div>
-          );
-        })}
-      </section>
+            <div>
+              <h2 className="text-lg font-medium">{selectedLoan.bank_name} - {selectedLoan.loan_type} Loan</h2>
+              <p className="text-sm text-muted-foreground">
+                A/C: {selectedLoan.loan_account_number} • {selectedLoan.interest_rate}% p.a.
+              </p>
+            </div>
+          </div>
 
-      {/* Principal Reduction Chart */}
-      <TrendChart 
-        title="Principal Reduction" 
-        data={principalTrend}
-        color="hsl(150, 30%, 45%)"
+          <Tabs defaultValue="schedule" className="space-y-6">
+            <TabsList className="bg-muted/50 border border-border">
+              <TabsTrigger value="schedule" className="data-[state=active]:bg-card">EMI Schedule</TabsTrigger>
+              <TabsTrigger value="actions" className="data-[state=active]:bg-card">Actions</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="schedule">
+              <EmiScheduleTable
+                schedule={selectedLoanDetails?.schedule || []}
+                currency={selectedLoan.country === "USA" ? "USD" : "INR"}
+                onMarkPaid={(emiId, paidDate, paymentMethod) => 
+                  markPaidMutation.mutate({ emiId, paidDate, paymentMethod })
+                }
+                isLoading={markPaidMutation.isPending}
+              />
+            </TabsContent>
+
+            <TabsContent value="actions">
+              <LoanActions
+                loanId={selectedLoan.id}
+                currency={selectedLoan.country === "USA" ? "USD" : "INR"}
+                outstandingPrincipal={selectedLoanDetails?.remainingPrincipal || 0}
+                onPartPayment={(amount, date, reductionType, method) =>
+                  partPaymentMutation.mutate({ loanId: selectedLoan.id, amount, date, reductionType, method })
+                }
+                onForeclosure={(date, method) =>
+                  foreclosureMutation.mutate({ loanId: selectedLoan.id, date, method })
+                }
+                isLoading={partPaymentMutation.isPending || foreclosureMutation.isPending}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+      ) : (
+        <section className="space-y-4">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Your Loans</h2>
+          {loansLoading ? (
+            <div className="p-12 text-center text-muted-foreground">Loading...</div>
+          ) : loans.length === 0 ? (
+            <div className="p-12 text-center bg-card border border-border rounded-lg">
+              <p className="text-muted-foreground mb-4">No loans added yet</p>
+              <Button onClick={() => setShowAddLoan(true)} variant="outline" className="border-border">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Your First Loan
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {loans.map((loan) => {
+                const details = getLoanDetails(loan.id);
+                return (
+                  <LoanCard
+                    key={loan.id}
+                    loan={loan}
+                    remainingPrincipal={details.remainingPrincipal}
+                    paidCount={details.paidCount}
+                    pendingCount={details.pendingCount}
+                    nextEmiDate={details.nextEmiDate}
+                    onClick={() => setSelectedLoanId(loan.id)}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Add Loan Dialog */}
+      <AddLoanForm
+        open={showAddLoan}
+        onOpenChange={setShowAddLoan}
+        onSubmit={(data) => addLoanMutation.mutate(data)}
+        isLoading={addLoanMutation.isPending}
       />
     </div>
   );

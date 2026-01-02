@@ -68,6 +68,236 @@ export type Database = {
         }
         Relationships: []
       }
+      emi_events: {
+        Row: {
+          amount: number
+          applied_to_emi_id: string | null
+          created_at: string | null
+          event_date: string
+          event_type: string
+          id: string
+          interest_saved: number | null
+          loan_id: string
+          mode: string | null
+          new_emi_amount: number | null
+          new_tenure_months: number | null
+          notes: string | null
+          reduction_type: string | null
+        }
+        Insert: {
+          amount: number
+          applied_to_emi_id?: string | null
+          created_at?: string | null
+          event_date: string
+          event_type: string
+          id?: string
+          interest_saved?: number | null
+          loan_id: string
+          mode?: string | null
+          new_emi_amount?: number | null
+          new_tenure_months?: number | null
+          notes?: string | null
+          reduction_type?: string | null
+        }
+        Update: {
+          amount?: number
+          applied_to_emi_id?: string | null
+          created_at?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          interest_saved?: number | null
+          loan_id?: string
+          mode?: string | null
+          new_emi_amount?: number | null
+          new_tenure_months?: number | null
+          notes?: string | null
+          reduction_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emi_events_applied_to_emi_id_fkey"
+            columns: ["applied_to_emi_id"]
+            isOneToOne: false
+            referencedRelation: "emi_schedule"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emi_events_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emi_schedule: {
+        Row: {
+          adjustment_event_id: string | null
+          created_at: string | null
+          emi_amount: number
+          emi_date: string
+          emi_month: number
+          id: string
+          interest_component: number
+          is_adjusted: boolean | null
+          loan_id: string
+          paid_date: string | null
+          payment_method: string | null
+          payment_status: string | null
+          principal_component: number
+          remaining_principal: number
+        }
+        Insert: {
+          adjustment_event_id?: string | null
+          created_at?: string | null
+          emi_amount: number
+          emi_date: string
+          emi_month: number
+          id?: string
+          interest_component: number
+          is_adjusted?: boolean | null
+          loan_id: string
+          paid_date?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          principal_component: number
+          remaining_principal: number
+        }
+        Update: {
+          adjustment_event_id?: string | null
+          created_at?: string | null
+          emi_amount?: number
+          emi_date?: string
+          emi_month?: number
+          id?: string
+          interest_component?: number
+          is_adjusted?: boolean | null
+          loan_id?: string
+          paid_date?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          principal_component?: number
+          remaining_principal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emi_schedule_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loan_documents: {
+        Row: {
+          document_type: string | null
+          emi_id: string | null
+          file_name: string
+          file_type: string
+          file_url: string
+          id: string
+          loan_id: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          document_type?: string | null
+          emi_id?: string | null
+          file_name: string
+          file_type: string
+          file_url: string
+          id?: string
+          loan_id: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          document_type?: string | null
+          emi_id?: string | null
+          file_name?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          loan_id?: string
+          uploaded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loan_documents_emi_id_fkey"
+            columns: ["emi_id"]
+            isOneToOne: false
+            referencedRelation: "emi_schedule"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_documents_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loans: {
+        Row: {
+          bank_logo_url: string | null
+          bank_name: string
+          country: string
+          created_at: string | null
+          emi_amount: number
+          id: string
+          interest_rate: number
+          loan_account_number: string
+          loan_type: string
+          notes: string | null
+          principal_amount: number
+          repayment_mode: string | null
+          start_date: string
+          status: string | null
+          tenure_months: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bank_logo_url?: string | null
+          bank_name: string
+          country?: string
+          created_at?: string | null
+          emi_amount: number
+          id?: string
+          interest_rate: number
+          loan_account_number: string
+          loan_type: string
+          notes?: string | null
+          principal_amount: number
+          repayment_mode?: string | null
+          start_date: string
+          status?: string | null
+          tenure_months: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bank_logo_url?: string | null
+          bank_name?: string
+          country?: string
+          created_at?: string | null
+          emi_amount?: number
+          id?: string
+          interest_rate?: number
+          loan_account_number?: string
+          loan_type?: string
+          notes?: string | null
+          principal_amount?: number
+          repayment_mode?: string | null
+          start_date?: string
+          status?: string | null
+          tenure_months?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           birth_date: string | null
@@ -142,6 +372,7 @@ export type Database = {
           focus_level: string | null
           id: string
           is_timer_session: boolean | null
+          linked_topic_id: string | null
           notes: string | null
           planned_duration: number | null
           subject: string
@@ -158,6 +389,7 @@ export type Database = {
           focus_level?: string | null
           id?: string
           is_timer_session?: boolean | null
+          linked_topic_id?: string | null
           notes?: string | null
           planned_duration?: number | null
           subject: string
@@ -174,6 +406,7 @@ export type Database = {
           focus_level?: string | null
           id?: string
           is_timer_session?: boolean | null
+          linked_topic_id?: string | null
           notes?: string | null
           planned_duration?: number | null
           subject?: string
@@ -183,7 +416,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "study_logs_linked_topic_id_fkey"
+            columns: ["linked_topic_id"]
+            isOneToOne: false
+            referencedRelation: "syllabus_topics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subject_colors: {
         Row: {
@@ -217,11 +458,15 @@ export type Database = {
           chapter_name: string
           completed_at: string | null
           created_at: string | null
+          ease_factor: number | null
           estimated_hours: number | null
           id: string
+          interval_days: number | null
           is_completed: boolean | null
+          next_review_date: string | null
           notes: string | null
           priority: number | null
+          review_count: number | null
           sort_order: number | null
           subject: string
           topic_name: string
@@ -232,11 +477,15 @@ export type Database = {
           chapter_name: string
           completed_at?: string | null
           created_at?: string | null
+          ease_factor?: number | null
           estimated_hours?: number | null
           id?: string
+          interval_days?: number | null
           is_completed?: boolean | null
+          next_review_date?: string | null
           notes?: string | null
           priority?: number | null
+          review_count?: number | null
           sort_order?: number | null
           subject: string
           topic_name: string
@@ -247,11 +496,15 @@ export type Database = {
           chapter_name?: string
           completed_at?: string | null
           created_at?: string | null
+          ease_factor?: number | null
           estimated_hours?: number | null
           id?: string
+          interval_days?: number | null
           is_completed?: boolean | null
+          next_review_date?: string | null
           notes?: string | null
           priority?: number | null
+          review_count?: number | null
           sort_order?: number | null
           subject?: string
           topic_name?: string

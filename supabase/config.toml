@@ -1,1 +1,16 @@
 project_id = "ewevnteuyfpinnlhvoty"
+
+[functions.generate-emi-schedule]
+verify_jwt = false
+
+[functions.mark-emi-paid]
+verify_jwt = false
+
+[functions.apply-part-payment]
+verify_jwt = false
+
+[functions.apply-foreclosure]
+verify_jwt = false
+
+[functions.recalc-loan-summary]
+verify_jwt = false
