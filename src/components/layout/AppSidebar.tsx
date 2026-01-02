@@ -68,6 +68,7 @@ const navItems = [
   { path: "/app/insurance", label: "Insurance", icon: Shield },
   { path: "/app/lifespan", label: "Lifespan", icon: Clock },
   { path: "/app/achievements", label: "Achievements", icon: Trophy },
+  { path: "/app/profile", label: "Profile & Plan", icon: User },
   { path: "/app/settings", label: "Settings", icon: Settings },
 ];
 

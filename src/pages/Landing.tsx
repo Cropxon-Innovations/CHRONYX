@@ -22,6 +22,12 @@ import {
 } from "lucide-react";
 import chronyxPhilosophy from "@/assets/chronyx-philosophy.png";
 import SketchBorderCard from "@/components/landing/SketchBorderCard";
+import { 
+  FloatingSketchElements, 
+  SketchUnderline, 
+  HeroSketchFrame,
+  SectionConnector 
+} from "@/components/landing/SketchAnimations";
 
 // CHRONYX Logo Component
 const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
@@ -183,35 +189,65 @@ const Landing = () => {
           </div>
         </header>
 
-        {/* Hero Section - Compact */}
-        <section className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 py-8">
-          {/* Logo animation */}
-          <div 
+        {/* Hero Section - Compact with Sketch Elements */}
+        <section className="relative flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 py-8">
+          {/* Floating sketch decorations */}
+          <FloatingSketchElements />
+          
+          {/* Hero frame corners */}
+          <HeroSketchFrame />
+
+          {/* Logo animation with sketch ring */}
+          <motion.div 
             className={`relative mb-5 transition-all duration-1000 ease-out ${
               mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
             }`}
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 300 }}
           >
+            {/* Sketch ring around logo */}
+            <motion.svg
+              className="absolute -inset-4 w-[calc(100%+2rem)] h-[calc(100%+2rem)]"
+              viewBox="0 0 100 100"
+              initial={{ opacity: 0, rotate: -180 }}
+              animate={{ opacity: 0.15, rotate: 0 }}
+              transition={{ delay: 0.3, duration: 1.5, ease: "easeOut" }}
+            >
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="0.5"
+                strokeDasharray="8,6"
+              />
+            </motion.svg>
             <ChronxyxLogo className="w-16 h-16 md:w-20 md:h-20" />
-          </div>
+          </motion.div>
 
-          {/* Primary Title */}
-          <h1 
-            className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight tracking-[0.12em] sm:tracking-[0.15em] text-chronyx-landing-title transition-all duration-[800ms] ease-out ${
+          {/* Primary Title with animated underline */}
+          <motion.h1 
+            className={`relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight tracking-[0.12em] sm:tracking-[0.15em] text-chronyx-landing-title transition-all duration-[800ms] ease-out ${
               mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
           >
             CHRONYX
-          </h1>
+            <SketchUnderline delay={0.8} />
+          </motion.h1>
 
-          {/* Tagline */}
-          <p 
-            className={`mt-3 text-base sm:text-lg md:text-xl font-light text-chronyx-landing-tagline transition-all duration-[600ms] ease-out ${
-              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-            style={{ transitionDelay: '200ms' }}
+          {/* Tagline with entrance animation */}
+          <motion.p 
+            className={`mt-4 text-base sm:text-lg md:text-xl font-light text-chronyx-landing-tagline`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
           >
             A quiet space for your life.
-          </p>
+          </motion.p>
 
           {/* Subdescription */}
           <p 
