@@ -45,7 +45,12 @@ import {
   ZoomOut,
   Maximize2,
   Minimize2,
-  GripVertical
+  GripVertical,
+  CheckSquare,
+  Square,
+  ArrowUp,
+  ArrowDown,
+  MoreVertical
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -99,6 +104,10 @@ export const SimpleSyllabusUploader = () => {
   // Drag and drop state
   const [draggedDocId, setDraggedDocId] = useState<string | null>(null);
   const [dragOverDocId, setDragOverDocId] = useState<string | null>(null);
+
+  // Bulk selection state
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set());
 
   // Fetch syllabus documents
   const { data: documents = [], isLoading } = useQuery({
@@ -179,6 +188,67 @@ export const SimpleSyllabusUploader = () => {
     setDraggedDocId(null);
     setDragOverDocId(null);
   }, []);
+
+  // Bulk selection handlers
+  const toggleDocSelection = useCallback((docId: string) => {
+    setSelectedDocs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(docId)) {
+        newSet.delete(docId);
+      } else {
+        newSet.add(docId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllDocs = useCallback(() => {
+    setSelectedDocs(new Set(documents.map(d => d.id)));
+  }, [documents]);
+
+  const deselectAllDocs = useCallback(() => {
+    setSelectedDocs(new Set());
+  }, []);
+
+  const exitBulkMode = useCallback(() => {
+    setBulkMode(false);
+    setSelectedDocs(new Set());
+  }, []);
+
+  const moveSelectedUp = useCallback(() => {
+    if (selectedDocs.size === 0) return;
+    
+    const selectedIndices = documents
+      .map((d, i) => selectedDocs.has(d.id) ? i : -1)
+      .filter(i => i !== -1);
+    
+    if (selectedIndices[0] === 0) return; // Already at top
+    
+    const newDocs = [...documents];
+    selectedIndices.forEach(idx => {
+      [newDocs[idx - 1], newDocs[idx]] = [newDocs[idx], newDocs[idx - 1]];
+    });
+    
+    reorderMutation.mutate(newDocs);
+  }, [selectedDocs, documents, reorderMutation]);
+
+  const moveSelectedDown = useCallback(() => {
+    if (selectedDocs.size === 0) return;
+    
+    const selectedIndices = documents
+      .map((d, i) => selectedDocs.has(d.id) ? i : -1)
+      .filter(i => i !== -1)
+      .reverse();
+    
+    if (selectedIndices[0] === documents.length - 1) return; // Already at bottom
+    
+    const newDocs = [...documents];
+    selectedIndices.forEach(idx => {
+      [newDocs[idx], newDocs[idx + 1]] = [newDocs[idx + 1], newDocs[idx]];
+    });
+    
+    reorderMutation.mutate(newDocs);
+  }, [selectedDocs, documents, reorderMutation]);
 
   // Upload mutation
   const uploadMutation = useMutation({
@@ -500,27 +570,109 @@ export const SimpleSyllabusUploader = () => {
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Bulk Mode Controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {bulkMode ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectedDocs.size === documents.length ? deselectAllDocs : selectAllDocs}
+                  >
+                    {selectedDocs.size === documents.length ? (
+                      <>
+                        <Square className="w-4 h-4 mr-2" />
+                        Deselect All
+                      </>
+                    ) : (
+                      <>
+                        <CheckSquare className="w-4 h-4 mr-2" />
+                        Select All
+                      </>
+                    )}
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {selectedDocs.size} selected
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm text-muted-foreground">
+                  {documents.length} document{documents.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {bulkMode && selectedDocs.size > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={moveSelectedUp}
+                    disabled={reorderMutation.isPending}
+                  >
+                    <ArrowUp className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={moveSelectedDown}
+                    disabled={reorderMutation.isPending}
+                  >
+                    <ArrowDown className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+              <Button
+                variant={bulkMode ? "default" : "outline"}
+                size="sm"
+                onClick={bulkMode ? exitBulkMode : () => setBulkMode(true)}
+              >
+                {bulkMode ? "Done" : "Bulk Reorder"}
+              </Button>
+            </div>
+          </div>
+
           {documents.map((doc) => (
             <Card 
               key={doc.id} 
               className={cn(
-                "group hover:shadow-md transition-all cursor-move",
+                "group hover:shadow-md transition-all",
+                !bulkMode && "cursor-move",
                 draggedDocId === doc.id && "opacity-50",
-                dragOverDocId === doc.id && "ring-2 ring-primary ring-offset-2"
+                dragOverDocId === doc.id && "ring-2 ring-primary ring-offset-2",
+                bulkMode && selectedDocs.has(doc.id) && "ring-2 ring-primary bg-primary/5"
               )}
-              draggable
-              onDragStart={(e) => handleDragStart(e, doc.id)}
-              onDragOver={(e) => handleDragOver(e, doc.id)}
+              draggable={!bulkMode}
+              onDragStart={(e) => !bulkMode && handleDragStart(e, doc.id)}
+              onDragOver={(e) => !bulkMode && handleDragOver(e, doc.id)}
               onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, doc.id)}
+              onDrop={(e) => !bulkMode && handleDrop(e, doc.id)}
               onDragEnd={handleDragEnd}
+              onClick={bulkMode ? () => toggleDocSelection(doc.id) : undefined}
             >
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  {/* Drag Handle and Icon */}
+                  {/* Checkbox / Drag Handle and Icon */}
                   <div className="flex items-start gap-2 flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <GripVertical className="w-4 h-4 text-muted-foreground/50 cursor-grab active:cursor-grabbing" />
+                      {bulkMode ? (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleDocSelection(doc.id);
+                          }}
+                          className="p-1"
+                        >
+                          {selectedDocs.has(doc.id) ? (
+                            <CheckSquare className="w-5 h-5 text-primary" />
+                          ) : (
+                            <Square className="w-5 h-5 text-muted-foreground" />
+                          )}
+                        </button>
+                      ) : (
+                        <GripVertical className="w-4 h-4 text-muted-foreground/50 cursor-grab active:cursor-grabbing" />
+                      )}
                       <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                         <FileText className="w-5 h-5 text-muted-foreground" />
                       </div>
@@ -552,56 +704,58 @@ export const SimpleSyllabusUploader = () => {
                   </div>
 
                   {/* Progress and Actions */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-24">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium">{doc.progress_percentage}%</span>
+                  {!bulkMode && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-24">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium">{doc.progress_percentage}%</span>
+                        </div>
+                        <Progress 
+                          value={doc.progress_percentage} 
+                          className="h-2"
+                        />
                       </div>
-                      <Progress 
-                        value={doc.progress_percentage} 
-                        className="h-2"
-                      />
+                      
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => openPreview(doc)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => openEdit(doc)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleDownload(doc)}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => setDeleteConfirmId(doc.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => openPreview(doc)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => openEdit(doc)}
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleDownload(doc)}
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeleteConfirmId(doc.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Notes preview */}
-                {doc.notes && (
+                {doc.notes && !bulkMode && (
                   <div className="mt-3 pt-3 border-t">
                     <p className="text-xs text-muted-foreground line-clamp-2">{doc.notes}</p>
                   </div>
@@ -678,16 +832,19 @@ export const SimpleSyllabusUploader = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Inline PDF Preview Dialog */}
+      {/* Inline PDF Preview Dialog - hideCloseButton to avoid duplicate X */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className={cn(
-          "transition-all duration-300",
-          previewFullscreen 
-            ? "max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none p-0" 
-            : "max-w-5xl w-[90vw] h-[85vh]"
-        )}>
+        <DialogContent 
+          className={cn(
+            "transition-all duration-300",
+            previewFullscreen 
+              ? "max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none p-0" 
+              : "max-w-5xl w-[90vw] h-[85vh]"
+          )}
+          hideCloseButton
+        >
           <DialogHeader className={cn(
-            "flex flex-row items-center justify-between",
+            "flex flex-row items-center justify-between pr-0",
             previewFullscreen && "absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur p-4"
           )}>
             <DialogTitle>Document Preview</DialogTitle>
