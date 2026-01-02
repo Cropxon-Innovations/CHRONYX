@@ -24,6 +24,8 @@ import Memory from "./pages/app/Memory";
 import MemoryTimeline from "./pages/app/MemoryTimeline";
 import Search from "./pages/app/Search";
 import Backup from "./pages/app/Backup";
+import Documents from "./pages/app/Documents";
+import Social from "./pages/app/Social";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +58,8 @@ const App = () => (
                 <Route path="memory/timeline" element={<MemoryTimeline />} />
                 <Route path="search" element={<Search />} />
                 <Route path="backup" element={<Backup />} />
+                <Route path="documents" element={<Documents />} />
+                <Route path="social" element={<Social />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
