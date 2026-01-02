@@ -1183,6 +1183,51 @@ export type Database = {
         }
         Relationships: []
       }
+      syllabus_documents: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          notes: string | null
+          progress_percentage: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_size?: number
+          file_type: string
+          file_url: string
+          id?: string
+          notes?: string | null
+          progress_percentage?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          notes?: string | null
+          progress_percentage?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       syllabus_modules: {
         Row: {
           created_at: string

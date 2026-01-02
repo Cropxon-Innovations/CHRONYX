@@ -43,7 +43,8 @@ import { SpacedRepetition } from "@/components/study/SpacedRepetition";
 import { StudyNotes } from "@/components/study/StudyNotes";
 import { StudyDataExport } from "@/components/study/StudyDataExport";
 import { WeeklySchedulePlanner } from "@/components/study/WeeklySchedulePlanner";
-import EnhancedSyllabusPlanner from "@/components/study/EnhancedSyllabusPlanner";
+import SimpleSyllabusUploader from "@/components/study/SimpleSyllabusUploader";
+import FloatingTimer from "@/components/study/FloatingTimer";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 const focusLevels = ["low", "medium", "high"] as const;
@@ -322,14 +323,14 @@ const Study = () => {
         </Button>
       </div>
 
-      {/* Timer */}
-      {showTimer && (
-        <StudyTimer 
-          onComplete={handleTimerComplete}
-          subjects={subjects}
-          defaultSubject={subject}
-        />
-      )}
+      {/* Floating Timer */}
+      <FloatingTimer 
+        onComplete={handleTimerComplete}
+        subjects={subjects}
+        defaultSubject={subject}
+        isOpen={showTimer}
+        onClose={() => setShowTimer(false)}
+      />
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -506,7 +507,7 @@ const Study = () => {
         </TabsContent>
 
         <TabsContent value="syllabus" className="space-y-6">
-          <EnhancedSyllabusPlanner />
+          <SimpleSyllabusUploader />
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-6">
