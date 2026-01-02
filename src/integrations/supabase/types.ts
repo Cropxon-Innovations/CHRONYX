@@ -68,6 +68,39 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_banks: {
+        Row: {
+          color: string
+          country: string
+          created_at: string
+          full_name: string
+          id: string
+          logo_url: string | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          country?: string
+          created_at?: string
+          full_name: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          country?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       emi_events: {
         Row: {
           amount: number
