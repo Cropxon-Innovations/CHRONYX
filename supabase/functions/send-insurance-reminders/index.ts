@@ -99,41 +99,47 @@ serve(async (req) => {
 
       try {
         const { error: emailError } = await resend.emails.send({
-          from: "Vyom <notifications@resend.dev>",
+          from: "CHRONYX <notifications@resend.dev>",
           to: [profile.email],
           subject: `Insurance Renewal: ${insurance.policy_name} due in ${daysUntilRenewal} day${daysUntilRenewal > 1 ? "s" : ""}`,
           html: `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2 style="color: #1a1a1a; margin-bottom: 20px;">Insurance Renewal Reminder</h2>
-              <p style="color: #666; font-size: 16px; line-height: 1.5;">
-                Your insurance policy is up for renewal in <strong>${daysUntilRenewal} day${daysUntilRenewal > 1 ? "s" : ""}</strong>.
-              </p>
-              <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                <table style="width: 100%; border-collapse: collapse;">
-                  <tr>
-                    <td style="padding: 8px 0; color: #666;">Policy Name</td>
-                    <td style="padding: 8px 0; font-weight: 600; text-align: right;">${insurance.policy_name}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; color: #666;">Provider</td>
-                    <td style="padding: 8px 0; font-weight: 600; text-align: right;">${insurance.provider}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; color: #666;">Renewal Date</td>
-                    <td style="padding: 8px 0; font-weight: 600; text-align: right;">${formattedDate}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; color: #666;">Premium Amount</td>
-                    <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #e11d48;">${formattedPremium}</td>
-                  </tr>
-                </table>
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #faf9f7;">
+              <div style="background: #1a1a1a; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="color: white; margin: 0; font-size: 20px; letter-spacing: 4px; font-weight: 300;">CHRONYX</h1>
+                <p style="color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 4px;">BY CROPXON</p>
               </div>
-              <p style="color: #666; font-size: 14px; margin-top: 20px;">
-                <strong>Important:</strong> Renew your policy before the due date to avoid coverage gaps.
-              </p>
-              <p style="color: #999; font-size: 14px; margin-top: 30px;">
-                This is an automated reminder from Vyom.
-              </p>
+              <div style="background: white; padding: 32px; border: 1px solid #e8e6e3; border-top: none; border-radius: 0 0 8px 8px;">
+                <h2 style="color: #1a1a1a; margin-bottom: 20px; font-weight: 500;">Insurance Renewal Reminder</h2>
+                <p style="color: #64748b; font-size: 16px; line-height: 1.5;">
+                  Your insurance policy is up for renewal in <strong>${daysUntilRenewal} day${daysUntilRenewal > 1 ? "s" : ""}</strong>.
+                </p>
+                <div style="background: #faf9f7; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e8e6e3;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td style="padding: 8px 0; color: #64748b;">Policy Name</td>
+                      <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${insurance.policy_name}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; color: #64748b;">Provider</td>
+                      <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${insurance.provider}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; color: #64748b;">Renewal Date</td>
+                      <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${formattedDate}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; color: #64748b;">Premium Amount</td>
+                      <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #dc2626;">${formattedPremium}</td>
+                    </tr>
+                  </table>
+                </div>
+                <p style="color: #64748b; font-size: 14px; margin-top: 20px;">
+                  <strong>Important:</strong> Renew your policy before the due date to avoid coverage gaps.
+                </p>
+                <p style="color: #94a3b8; font-size: 14px; margin-top: 30px;">
+                  This is an automated reminder from CHRONYX.
+                </p>
+              </div>
             </div>
           `,
         });

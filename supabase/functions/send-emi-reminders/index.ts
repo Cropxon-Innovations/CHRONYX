@@ -120,38 +120,44 @@ serve(async (req) => {
 
         try {
           const { error: emailError } = await resend.emails.send({
-            from: "Vyom <notifications@resend.dev>",
+            from: "CHRONYX <notifications@resend.dev>",
             to: [profile.email],
             subject: `EMI Reminder: ${loan.bank_name} payment due in ${days} day${days > 1 ? "s" : ""}`,
             html: `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #1a1a1a; margin-bottom: 20px;">EMI Payment Reminder</h2>
-                <p style="color: #666; font-size: 16px; line-height: 1.5;">
-                  Your EMI payment is due in <strong>${days} day${days > 1 ? "s" : ""}</strong>.
-                </p>
-                <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                  <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                      <td style="padding: 8px 0; color: #666;">Bank</td>
-                      <td style="padding: 8px 0; font-weight: 600; text-align: right;">${loan.bank_name}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 8px 0; color: #666;">Loan Type</td>
-                      <td style="padding: 8px 0; font-weight: 600; text-align: right;">${loan.loan_type}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 8px 0; color: #666;">Due Date</td>
-                      <td style="padding: 8px 0; font-weight: 600; text-align: right;">${formattedDate}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 8px 0; color: #666;">Amount</td>
-                      <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #e11d48;">${formattedAmount}</td>
-                    </tr>
-                  </table>
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #faf9f7;">
+                <div style="background: #1a1a1a; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
+                  <h1 style="color: white; margin: 0; font-size: 20px; letter-spacing: 4px; font-weight: 300;">CHRONYX</h1>
+                  <p style="color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 4px;">BY CROPXON</p>
                 </div>
-                <p style="color: #999; font-size: 14px; margin-top: 30px;">
-                  This is an automated reminder from Vyom. Please ensure sufficient balance in your account.
-                </p>
+                <div style="background: white; padding: 32px; border: 1px solid #e8e6e3; border-top: none; border-radius: 0 0 8px 8px;">
+                  <h2 style="color: #1a1a1a; margin-bottom: 20px; font-weight: 500;">EMI Payment Reminder</h2>
+                  <p style="color: #64748b; font-size: 16px; line-height: 1.5;">
+                    Your EMI payment is due in <strong>${days} day${days > 1 ? "s" : ""}</strong>.
+                  </p>
+                  <div style="background: #faf9f7; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e8e6e3;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b;">Bank</td>
+                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${loan.bank_name}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b;">Loan Type</td>
+                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${loan.loan_type}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b;">Due Date</td>
+                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${formattedDate}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 8px 0; color: #64748b;">Amount</td>
+                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #dc2626;">${formattedAmount}</td>
+                      </tr>
+                    </table>
+                  </div>
+                  <p style="color: #94a3b8; font-size: 14px; margin-top: 30px;">
+                    This is an automated reminder from CHRONYX. Please ensure sufficient balance in your account.
+                  </p>
+                </div>
               </div>
             `,
           });
