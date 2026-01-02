@@ -360,9 +360,14 @@ const AppSidebar = () => {
                 Sign Out
               </button>
               
-              {/* Branding */}
-              <div className="pt-2 text-[10px] text-sidebar-foreground/30 text-center">
-                Vyom By CropXon Innovations Pvt Ltd
+              {/* Branding and Version */}
+              <div className="pt-2 space-y-1 text-center">
+                <div className="text-[10px] text-sidebar-foreground/30">
+                  Vyom By CropXon Innovations Pvt Ltd
+                </div>
+                <div className="text-[10px] text-sidebar-foreground/20 font-mono">
+                  V1.0.0
+                </div>
               </div>
             </>
           )}

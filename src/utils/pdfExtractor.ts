@@ -215,17 +215,16 @@ export function detectSyllabusStructure(lines: string[]): SyllabusStructure {
 /**
  * Check if OCR is needed (text extraction insufficient)
  */
-export function needsOCR(pagesText: string[]): boolean {
-  const totalChars = pagesText.join("").length;
+export function needsOCR(fullText: string): boolean {
+  const totalChars = fullText.length;
   
   // If less than 200 chars total, probably needs OCR
   if (totalChars < 200) return true;
   
   // If no module/phase patterns detected, may need OCR
-  const combinedText = pagesText.join("\n");
   const hasStructure = 
-    /^(PHASE|PART|MODULE|CHAPTER|UNIT)\s+\d/im.test(combinedText) ||
-    /^\d+\.\s+/m.test(combinedText);
+    /^(PHASE|PART|MODULE|CHAPTER|UNIT)\s+\d/im.test(fullText) ||
+    /^\d+\.\s+/m.test(fullText);
   
   return !hasStructure && totalChars < 500;
 }
@@ -263,7 +262,7 @@ export async function parseSyllabusFile(file: File): Promise<{
       pagesText = await extractPdfText(file);
       
       // Check if OCR is needed
-      if (needsOCR(pagesText)) {
+      if (needsOCR(pagesText.join('\n'))) {
         return {
           status: 'needs_ocr',
           message: 'Document appears to be scanned. OCR extraction needed.'

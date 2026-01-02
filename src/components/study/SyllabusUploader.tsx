@@ -2,12 +2,12 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Upload, FileText, Check, X, Loader2, BookOpen, Clock, Eye, Save } from "lucide-react";
+import { Upload, Loader2, BookOpen, Save, FileText, AlertTriangle, Clock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -24,16 +24,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import { extractPdfText, detectSyllabusStructure, needsOCR, extractViaOCR, SyllabusStructure } from "@/utils/pdfExtractor";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 
@@ -58,10 +51,12 @@ const SyllabusUploader = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
+  const [isOCR, setIsOCR] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState("Programming");
   const [parsedSyllabus, setParsedSyllabus] = useState<ParsedSyllabus | null>(null);
   const [fileName, setFileName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [parseWarning, setParseWarning] = useState<string | null>(null);
 
   const parseTextContent = (text: string): ParsedModule[] => {
     const lines = text.split("\n").filter((line) => line.trim());
@@ -74,6 +69,8 @@ const SyllabusUploader = () => {
       // Detect chapter/module headers
       const isHeader =
         trimmed.startsWith("#") ||
+        trimmed.match(/^(PHASE|PART)\s+\d+/i) ||
+        trimmed.match(/^MODULE\s+\d+/i) ||
         trimmed.startsWith("Module") ||
         trimmed.startsWith("Chapter") ||
         trimmed.startsWith("Unit") ||
@@ -86,7 +83,7 @@ const SyllabusUploader = () => {
         }
         const chapterName = trimmed
           .replace(/^#+\s*/, "")
-          .replace(/^(Module|Chapter|Unit)\s*\d*[\.:]\s*/i, "")
+          .replace(/^(PHASE|PART|Module|Chapter|Unit)\s*\d*[\.:]\s*/i, "")
           .replace(/:$/, "")
           .trim();
         currentModule = { chapter: chapterName || "General", topics: [] };
@@ -126,6 +123,17 @@ const SyllabusUploader = () => {
     return modules;
   };
 
+  const convertStructureToModules = (structure: SyllabusStructure): ParsedModule[] => {
+    return structure.modules.map((m) => ({
+      chapter: m.name,
+      topics: m.topics.map((t) => ({
+        name: t.name,
+        hours: t.hours,
+        selected: t.selected,
+      })),
+    }));
+  };
+
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -133,6 +141,8 @@ const SyllabusUploader = () => {
     setFileName(file.name);
     setIsUploading(true);
     setUploadProgress(0);
+    setIsOCR(false);
+    setParseWarning(null);
 
     // Simulate upload progress
     const progressInterval = setInterval(() => {
@@ -147,18 +157,62 @@ const SyllabusUploader = () => {
 
     try {
       setIsParsing(true);
-      const text = await file.text();
+      let modules: ParsedModule[] = [];
+      let warningMsg: string | null = null;
+
+      const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith('.pdf');
+
+      if (isPDF) {
+        // Use PDF.js extraction
+        const pages = await extractPdfText(file);
+        const fullText = pages.join("\n");
+        
+        // Check if OCR is needed
+        if (needsOCR(fullText)) {
+          setIsOCR(true);
+          toast.info("Scanned document detected. Running OCR...");
+          
+          try {
+            const ocrLines = await extractViaOCR(file);
+            const ocrText = ocrLines.join("\n");
+            const structure = detectSyllabusStructure(ocrLines);
+            
+            if (structure.modules.length > 0) {
+              modules = convertStructureToModules(structure);
+            } else {
+              modules = parseTextContent(ocrText);
+            }
+          } catch (ocrError) {
+            console.error("OCR failed:", ocrError);
+            warningMsg = "OCR extraction failed. Please try a text-based document.";
+          }
+        } else {
+          // Parse extracted text
+          const structure = detectSyllabusStructure(pages);
+          
+          if (structure.modules.length > 0) {
+            modules = convertStructureToModules(structure);
+          } else {
+            modules = parseTextContent(fullText);
+            if (modules.length === 0) {
+              warningMsg = "No clear syllabus structure detected. The document may need manual organization.";
+            }
+          }
+        }
+      } else {
+        // For text files, use simple text parsing
+        const text = await file.text();
+        modules = parseTextContent(text);
+      }
       
       // Complete upload
       clearInterval(progressInterval);
       setUploadProgress(100);
-      
-      // Parse content
-      const modules = parseTextContent(text);
 
       if (modules.length === 0 || modules.every((m) => m.topics.length === 0)) {
         toast.error("Could not parse any topics from the file");
         setParsedSyllabus(null);
+        setParseWarning(warningMsg || "No topics found in the document.");
         return;
       }
 
@@ -174,12 +228,14 @@ const SyllabusUploader = () => {
         totalTopics,
         totalHours,
       });
+      setParseWarning(warningMsg);
     } catch (error) {
       console.error("Error parsing file:", error);
       toast.error("Failed to parse file");
     } finally {
       setIsUploading(false);
       setIsParsing(false);
+      setIsOCR(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
