@@ -22,6 +22,7 @@ import { Upload, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { LoanDocumentUpload } from "./LoanDocumentUpload";
 
 interface AddLoanFormProps {
   open: boolean;
@@ -196,6 +197,29 @@ export const AddLoanForm = ({
     });
   };
 
+  const handleDocumentDataExtracted = (data: Partial<LoanFormData>) => {
+    if (data.bank_name) {
+      const allBanks = [...INDIAN_BANKS, ...US_BANKS];
+      const isKnownBank = allBanks.some((b) => b.name === data.bank_name);
+      if (isKnownBank) {
+        setBankName(data.bank_name);
+        setCustomBank("");
+      } else {
+        setBankName("custom");
+        setCustomBank(data.bank_name);
+      }
+    }
+    if (data.loan_account_number) setLoanAccountNumber(data.loan_account_number);
+    if (data.principal_amount) setPrincipal(data.principal_amount.toString());
+    if (data.interest_rate) setInterestRate(data.interest_rate.toString());
+    if (data.tenure_months) setTenure(data.tenure_months.toString());
+    if (data.emi_amount) {
+      setEmiAmount(data.emi_amount.toString());
+      setEmiOverride(true);
+    }
+    if (data.start_date) setStartDate(data.start_date);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border sm:max-w-lg max-h-[90vh] overflow-y-auto">
@@ -204,9 +228,14 @@ export const AddLoanForm = ({
             {mode === "add" ? "Add New Loan" : "Edit Loan"}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Enter loan details exactly as per your bank statement
+            Enter loan details or upload a document to auto-extract
           </DialogDescription>
         </DialogHeader>
+
+        {/* Document Upload for OCR */}
+        {mode === "add" && (
+          <LoanDocumentUpload onDataExtracted={handleDocumentDataExtracted} />
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           {/* Country */}
