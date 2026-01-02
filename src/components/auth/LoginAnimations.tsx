@@ -1,5 +1,46 @@
 import { motion } from "framer-motion";
 
+// Floating particles animation
+export const FloatingParticles = () => {
+  const particles = Array.from({ length: 25 }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: 2 + Math.random() * 3,
+    duration: 15 + Math.random() * 20,
+    delay: Math.random() * 10,
+  }));
+
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+      {particles.map((particle) => (
+        <motion.div
+          key={particle.id}
+          className="absolute rounded-full bg-primary/20"
+          style={{
+            width: particle.size,
+            height: particle.size,
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+          }}
+          animate={{
+            y: [0, -30, 0, 20, 0],
+            x: [0, 15, -10, 5, 0],
+            opacity: [0.2, 0.5, 0.3, 0.4, 0.2],
+            scale: [1, 1.2, 0.9, 1.1, 1],
+          }}
+          transition={{
+            duration: particle.duration,
+            repeat: Infinity,
+            delay: particle.delay,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
 // Sketched time flow lines animation
 const TimeFlowLines = () => (
   <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none">
