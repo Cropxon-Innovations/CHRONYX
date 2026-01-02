@@ -26,6 +26,7 @@ import { useTheme } from "next-themes";
 
 const navItems = [
   { path: "/app", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/app/search", label: "Search", icon: Activity },
   { path: "/app/todos", label: "Todos", icon: CheckSquare },
   { path: "/app/study", label: "Study", icon: BookOpen },
   { path: "/app/memory", label: "Memory", icon: ImageIcon },

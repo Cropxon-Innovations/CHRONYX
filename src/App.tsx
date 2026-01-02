@@ -22,6 +22,8 @@ import Activity from "./pages/app/Activity";
 import Settings from "./pages/app/Settings";
 import Memory from "./pages/app/Memory";
 import MemoryTimeline from "./pages/app/MemoryTimeline";
+import Search from "./pages/app/Search";
+import Backup from "./pages/app/Backup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +54,8 @@ const App = () => (
                 <Route path="settings" element={<Settings />} />
                 <Route path="memory" element={<Memory />} />
                 <Route path="memory/timeline" element={<MemoryTimeline />} />
+                <Route path="search" element={<Search />} />
+                <Route path="backup" element={<Backup />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
