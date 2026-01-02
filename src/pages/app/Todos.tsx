@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLog } from "@/hooks/useActivityLog";
 
 type ViewMode = "day" | "month" | "year";
 type TodoStatus = "pending" | "done" | "skipped";
@@ -27,6 +28,7 @@ const Todos = () => {
   const [isAdding, setIsAdding] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { logActivity } = useActivityLog();
 
   useEffect(() => {
     if (user) {
@@ -74,10 +76,12 @@ const Todos = () => {
       setNewTodoText("");
       setIsAdding(false);
       toast({ title: "Task added" });
+      logActivity(`Added task: ${data.text.substring(0, 30)}${data.text.length > 30 ? '...' : ''}`, "Todos");
     }
   };
 
   const updateTodoStatus = async (id: string, status: TodoStatus) => {
+    const todo = todos.find(t => t.id === id);
     const { error } = await supabase
       .from("todos")
       .update({ status })
@@ -87,6 +91,10 @@ const Todos = () => {
       toast({ title: "Error", description: "Failed to update status", variant: "destructive" });
     } else {
       setTodos(todos.map(t => t.id === id ? { ...t, status } : t));
+      if (todo) {
+        const statusText = status === "done" ? "Completed" : status === "skipped" ? "Skipped" : "Marked pending";
+        logActivity(`${statusText} task: ${todo.text.substring(0, 30)}${todo.text.length > 30 ? '...' : ''}`, "Todos");
+      }
     }
   };
 
@@ -104,10 +112,12 @@ const Todos = () => {
       setTodos(todos.map(t => t.id === id ? { ...t, text: editText.trim() } : t));
       setEditingId(null);
       setEditText("");
+      logActivity(`Updated task: ${editText.trim().substring(0, 30)}${editText.trim().length > 30 ? '...' : ''}`, "Todos");
     }
   };
 
   const deleteTodo = async (id: string) => {
+    const todo = todos.find(t => t.id === id);
     const { error } = await supabase
       .from("todos")
       .delete()
@@ -118,6 +128,9 @@ const Todos = () => {
     } else {
       setTodos(todos.filter(t => t.id !== id));
       toast({ title: "Task deleted" });
+      if (todo) {
+        logActivity(`Deleted task: ${todo.text.substring(0, 30)}${todo.text.length > 30 ? '...' : ''}`, "Todos");
+      }
     }
   };
 

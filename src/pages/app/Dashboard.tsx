@@ -7,15 +7,19 @@ import ActivityItem from "@/components/dashboard/ActivityItem";
 import AchievementItem from "@/components/dashboard/AchievementItem";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { format, subDays, startOfWeek, addDays, parseISO, formatDistanceToNow } from "date-fns";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [todosStats, setTodosStats] = useState({ completed: 0, total: 0 });
   const [studyMinutes, setStudyMinutes] = useState(0);
-  const [daysUntilTarget, setDaysUntilTarget] = useState(8412);
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [targetAge, setTargetAge] = useState(60);
+  const [studyTrend, setStudyTrend] = useState<Array<{ name: string; value: number }>>([]);
+  const [heatmapData, setHeatmapData] = useState<number[]>([]);
+  const [recentActivity, setRecentActivity] = useState<Array<{ action: string; module: string; timestamp: string }>>([]);
+  const [recentAchievements, setRecentAchievements] = useState<Array<{ date: string; title: string; description: string; category: string }>>([]);
 
   useEffect(() => {
     if (user) {
@@ -62,6 +66,91 @@ const Dashboard = () => {
       setTargetAge(profile.target_age || 60);
     }
 
+    // Fetch study trend for this week
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    const weekDates = weekDays.map(d => format(d, "yyyy-MM-dd"));
+    
+    const { data: weeklyStudy } = await supabase
+      .from("study_logs")
+      .select("date, duration")
+      .gte("date", weekDates[0])
+      .lte("date", weekDates[6]);
+
+    const studyByDay: Record<string, number> = {};
+    weeklyStudy?.forEach(log => {
+      studyByDay[log.date] = (studyByDay[log.date] || 0) + log.duration;
+    });
+
+    const trendData = weekDays.map(day => ({
+      name: format(day, "EEE"),
+      value: studyByDay[format(day, "yyyy-MM-dd")] || 0,
+    }));
+    setStudyTrend(trendData);
+
+    // Fetch heatmap data (last 84 days of todos)
+    const heatmapStartDate = format(subDays(new Date(), 83), "yyyy-MM-dd");
+    const { data: heatmapTodos } = await supabase
+      .from("todos")
+      .select("date, status")
+      .gte("date", heatmapStartDate)
+      .order("date", { ascending: true });
+
+    const todosByDay: Record<string, { done: number; total: number }> = {};
+    heatmapTodos?.forEach(todo => {
+      if (!todosByDay[todo.date]) {
+        todosByDay[todo.date] = { done: 0, total: 0 };
+      }
+      todosByDay[todo.date].total++;
+      if (todo.status === "done") {
+        todosByDay[todo.date].done++;
+      }
+    });
+
+    const heatmap: number[] = [];
+    for (let i = 83; i >= 0; i--) {
+      const date = format(subDays(new Date(), i), "yyyy-MM-dd");
+      const dayData = todosByDay[date];
+      if (dayData && dayData.total > 0) {
+        const ratio = dayData.done / dayData.total;
+        heatmap.push(Math.round(ratio * 4));
+      } else {
+        heatmap.push(0);
+      }
+    }
+    setHeatmapData(heatmap);
+
+    // Fetch recent activity
+    const { data: activityLogs } = await supabase
+      .from("activity_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (activityLogs) {
+      setRecentActivity(activityLogs.map(log => ({
+        action: log.action,
+        module: log.module,
+        timestamp: formatDistanceToNow(new Date(log.created_at!), { addSuffix: true }),
+      })));
+    }
+
+    // Fetch recent achievements
+    const { data: achievements } = await supabase
+      .from("achievements")
+      .select("*")
+      .order("achieved_at", { ascending: false })
+      .limit(3);
+
+    if (achievements) {
+      setRecentAchievements(achievements.map(a => ({
+        date: format(parseISO(a.achieved_at), "MMM d, yyyy"),
+        title: a.title,
+        description: a.description || "",
+        category: a.category,
+      })));
+    }
+
     setLoading(false);
   };
 
@@ -72,33 +161,6 @@ const Dashboard = () => {
   const targetDate = new Date(effectiveBirthDate);
   targetDate.setFullYear(effectiveBirthDate.getFullYear() + targetAge);
   const daysRemaining = Math.max(0, Math.floor((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-
-  // Sample data for charts (will be replaced with real data)
-  const studyTrend = [
-    { name: "Mon", value: 45 },
-    { name: "Tue", value: 60 },
-    { name: "Wed", value: 35 },
-    { name: "Thu", value: 90 },
-    { name: "Fri", value: 75 },
-    { name: "Sat", value: 120 },
-    { name: "Sun", value: studyMinutes || 80 },
-  ];
-
-  const heatmapData = Array.from({ length: 84 }, () => Math.floor(Math.random() * 5));
-
-  const recentActivity = [
-    { action: "Completed 3 tasks", module: "Todos", timestamp: "2h ago" },
-    { action: "Logged study session", module: "Study", timestamp: "4h ago" },
-  ];
-
-  const recentAchievements = [
-    { 
-      date: "Dec 28, 2024", 
-      title: "First Week Complete", 
-      description: "Used VYOM for 7 consecutive days",
-      category: "Personal"
-    },
-  ];
 
   const completionRate = todosStats.total > 0 
     ? Math.round((todosStats.completed / todosStats.total) * 100) 
@@ -156,8 +218,8 @@ const Dashboard = () => {
       <section>
         <h2 className="text-lg font-light text-foreground mb-4">Trends</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Heatmap title="Productivity" data={heatmapData} />
-          <TrendChart title="Study This Week" data={studyTrend} />
+          <Heatmap title="Productivity" data={heatmapData.length > 0 ? heatmapData : Array(84).fill(0)} />
+          <TrendChart title="Study This Week" data={studyTrend.length > 0 ? studyTrend : []} />
         </div>
       </section>
 
@@ -175,9 +237,13 @@ const Dashboard = () => {
             Recent Achievements
           </h3>
           <div className="space-y-0">
-            {recentAchievements.map((achievement, i) => (
-              <AchievementItem key={i} {...achievement} />
-            ))}
+            {recentAchievements.length > 0 ? (
+              recentAchievements.map((achievement, i) => (
+                <AchievementItem key={i} {...achievement} />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No achievements yet</p>
+            )}
           </div>
         </div>
 
@@ -187,9 +253,13 @@ const Dashboard = () => {
             Recent Activity
           </h3>
           <div>
-            {recentActivity.map((activity, i) => (
-              <ActivityItem key={i} {...activity} />
-            ))}
+            {recentActivity.length > 0 ? (
+              recentActivity.map((activity, i) => (
+                <ActivityItem key={i} {...activity} />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No recent activity</p>
+            )}
           </div>
         </div>
       </section>

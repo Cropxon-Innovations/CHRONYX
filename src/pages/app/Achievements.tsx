@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
+import { useActivityLog } from "@/hooks/useActivityLog";
 import {
   Select,
   SelectContent,
@@ -30,6 +31,7 @@ const Achievements = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { logActivity } = useActivityLog();
   
   const [filter, setFilter] = useState("All");
   const [isAddingAchievement, setIsAddingAchievement] = useState(false);
@@ -71,6 +73,7 @@ const Achievements = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["achievements"] });
       toast({ title: "Achievement added" });
+      logActivity(`Added achievement: ${title}`, "Achievements");
       resetForm();
       setIsAddingAchievement(false);
     },
@@ -96,6 +99,7 @@ const Achievements = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["achievements"] });
       toast({ title: "Achievement updated" });
+      logActivity(`Updated achievement: ${title}`, "Achievements");
       resetForm();
       setEditingAchievement(null);
     },
@@ -107,12 +111,17 @@ const Achievements = () => {
   // Delete achievement mutation
   const deleteAchievementMutation = useMutation({
     mutationFn: async (id: string) => {
+      const achievement = achievements.find(a => a.id === id);
       const { error } = await supabase.from("achievements").delete().eq("id", id);
       if (error) throw error;
+      return achievement;
     },
-    onSuccess: () => {
+    onSuccess: (deletedAchievement) => {
       queryClient.invalidateQueries({ queryKey: ["achievements"] });
       toast({ title: "Achievement deleted" });
+      if (deletedAchievement) {
+        logActivity(`Deleted achievement: ${deletedAchievement.title}`, "Achievements");
+      }
     },
     onError: () => {
       toast({ title: "Failed to delete achievement", variant: "destructive" });

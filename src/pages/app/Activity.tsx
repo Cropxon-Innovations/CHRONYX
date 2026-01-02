@@ -1,30 +1,60 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import ActivityItem from "@/components/dashboard/ActivityItem";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { format, formatDistanceToNow, isToday, parseISO } from "date-fns";
 
-const modules = ["All", "Todos", "Study", "Loans", "Insurance", "Lifespan", "Achievements"];
-
-const activityLog = [
-  { action: "Completed task: Morning meditation", module: "Todos", timestamp: "Today, 8:30 AM" },
-  { action: "Logged 45 minutes study session", module: "Study", timestamp: "Today, 7:00 AM" },
-  { action: "Added reflection note", module: "Lifespan", timestamp: "Yesterday, 10:15 PM" },
-  { action: "Completed 3 daily tasks", module: "Todos", timestamp: "Yesterday, 6:00 PM" },
-  { action: "Updated insurance document", module: "Insurance", timestamp: "Yesterday, 3:30 PM" },
-  { action: "Recorded EMI payment", module: "Loans", timestamp: "Dec 28, 4:00 PM" },
-  { action: "Added achievement: 100 Day Streak", module: "Achievements", timestamp: "Dec 28, 9:00 AM" },
-  { action: "Completed book reading goal", module: "Study", timestamp: "Dec 27, 8:00 PM" },
-  { action: "Skipped task: Call parents", module: "Todos", timestamp: "Dec 27, 6:00 PM" },
-  { action: "Updated loan details", module: "Loans", timestamp: "Dec 26, 2:00 PM" },
-  { action: "Logged 90 minutes programming study", module: "Study", timestamp: "Dec 25, 10:00 AM" },
-  { action: "Added new policy document", module: "Insurance", timestamp: "Dec 24, 11:30 AM" },
-];
+const modules = ["All", "Todos", "Study", "Loans", "Insurance", "Lifespan", "Achievements", "Settings"];
 
 const Activity = () => {
+  const { user } = useAuth();
   const [filter, setFilter] = useState("All");
 
+  const { data: activityLogs = [], isLoading } = useQuery({
+    queryKey: ["activity-logs", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("activity_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const formattedLogs = activityLogs.map(log => {
+    const createdAt = parseISO(log.created_at!);
+    let timestamp: string;
+    
+    if (isToday(createdAt)) {
+      timestamp = `Today, ${format(createdAt, "h:mm a")}`;
+    } else {
+      timestamp = format(createdAt, "MMM d, h:mm a");
+    }
+    
+    return {
+      id: log.id,
+      action: log.action,
+      module: log.module,
+      timestamp,
+      created_at: log.created_at,
+    };
+  });
+
   const filteredActivity = filter === "All"
-    ? activityLog
-    : activityLog.filter(a => a.module === filter);
+    ? formattedLogs
+    : formattedLogs.filter(a => a.module === filter);
+
+  const todayCount = activityLogs.filter(a => 
+    a.created_at && isToday(parseISO(a.created_at))
+  ).length;
+
+  const activeModules = new Set(activityLogs.map(a => a.module)).size;
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -37,19 +67,15 @@ const Activity = () => {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-card border border-border rounded-lg p-5">
-          <p className="text-3xl font-semibold text-foreground">{activityLog.length}</p>
+          <p className="text-3xl font-semibold text-foreground">{activityLogs.length}</p>
           <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Total Actions</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-5">
-          <p className="text-3xl font-semibold text-foreground">
-            {activityLog.filter(a => a.timestamp.includes("Today")).length}
-          </p>
+          <p className="text-3xl font-semibold text-foreground">{todayCount}</p>
           <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Today</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-5">
-          <p className="text-3xl font-semibold text-vyom-accent">
-            {new Set(activityLog.map(a => a.module)).size}
-          </p>
+          <p className="text-3xl font-semibold text-vyom-accent">{activeModules}</p>
           <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Active Modules</p>
         </div>
       </div>
@@ -74,11 +100,19 @@ const Activity = () => {
 
       {/* Activity List */}
       <div className="bg-card border border-border rounded-lg p-6">
-        <div className="divide-y divide-border">
-          {filteredActivity.map((activity, i) => (
-            <ActivityItem key={i} {...activity} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="text-center text-muted-foreground py-8">Loading...</div>
+        ) : filteredActivity.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">
+            No activity recorded yet
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {filteredActivity.map((activity) => (
+              <ActivityItem key={activity.id} {...activity} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Note */}
