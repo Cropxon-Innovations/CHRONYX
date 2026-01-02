@@ -356,7 +356,7 @@ const Landing = () => {
         </footer>
       </div>
 
-      {/* Demo Video Modal - Ready for video content */}
+      {/* Demo Video Modal */}
       {showDemo && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-md p-4"
@@ -366,23 +366,36 @@ const Landing = () => {
             className="relative w-full max-w-4xl aspect-video bg-card rounded-xl border border-border overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/20">
-              <div className="text-center space-y-4">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                  <Play className="w-10 h-10 text-primary" />
-                </div>
-                <p className="text-lg font-light text-foreground">Experience VYOM</p>
-                <p className="text-sm text-muted-foreground">Your personal life dashboard awaits</p>
-                <button 
-                  className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-full text-sm hover:bg-primary/90 transition-colors"
-                  onClick={() => setShowDemo(false)}
-                >
-                  Get Started
-                </button>
+            {/* Video Player */}
+            <video
+              className="w-full h-full object-cover"
+              controls
+              autoPlay
+              playsInline
+            >
+              <source 
+                src="https://ewevnteuyfpinnlhvoty.supabase.co/storage/v1/object/public/vyom/VYOM__A_Quiet_Space.mp4" 
+                type="video/mp4" 
+              />
+              Your browser does not support the video tag.
+            </video>
+            
+            {/* Brand Overlay - covers NotebookLM branding in top-left corner */}
+            <div className="absolute top-0 left-0 bg-gradient-to-br from-background via-background/95 to-transparent px-4 py-3 rounded-br-xl pointer-events-none">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-sm font-light tracking-wider text-foreground">VYOM</span>
               </div>
             </div>
+            
+            {/* Additional overlay for bottom-left if needed */}
+            <div className="absolute bottom-12 left-0 bg-gradient-to-tr from-background via-background/90 to-transparent px-4 py-2 rounded-tr-xl pointer-events-none">
+              <span className="text-xs font-light tracking-wide text-muted-foreground">by CROPXON</span>
+            </div>
+            
+            {/* Close button */}
             <button 
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-background/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-background/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors z-10"
               onClick={() => setShowDemo(false)}
             >
               ×
