@@ -9,7 +9,7 @@ import { useActivityLog } from "@/hooks/useActivityLog";
 import { EnhancedCalendar } from "@/components/ui/date-picker-enhanced";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, differenceInYears, differenceInMonths, differenceInDays } from "date-fns";
-import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield } from "lucide-react";
+import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DataExport } from "@/components/export/DataExport";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -420,6 +420,23 @@ const Settings = () => {
           Download all your data including todos, study logs, achievements, and activity history.
         </p>
         <DataExport />
+      </section>
+
+      {/* Backup Section */}
+      <section className="bg-card border border-border rounded-lg p-6 space-y-4">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <Database className="w-4 h-4" />
+          Backup & Restore
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Create full backups of your VYOM data or restore from previous backups.
+        </p>
+        <Button variant="outline" asChild>
+          <a href="/app/backup">
+            <HardDrive className="w-4 h-4 mr-2" />
+            Open Backup Manager
+          </a>
+        </Button>
       </section>
 
       {/* Save Button */}

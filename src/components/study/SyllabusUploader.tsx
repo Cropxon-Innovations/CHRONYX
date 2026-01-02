@@ -57,6 +57,7 @@ const SyllabusUploader = () => {
   const [fileName, setFileName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [parseWarning, setParseWarning] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const parseTextContent = (text: string): ParsedModule[] => {
     const lines = text.split("\n").filter((line) => line.trim());
@@ -421,44 +422,91 @@ const SyllabusUploader = () => {
                   </pre>
                 </div>
 
-                {/* Upload Area */}
+                {/* Upload Area with Drag & Drop */}
                 <div
                   className={cn(
-                    "border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer",
-                    isUploading
+                    "border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer relative",
+                    isDragOver
+                      ? "border-primary bg-primary/10 scale-[1.02]"
+                      : isUploading
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50 hover:bg-accent/30"
                   )}
                   onClick={() => !isUploading && fileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDragOver(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDragOver(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDragOver(false);
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                      const file = files[0];
+                      if (file.type === "application/pdf" || file.name.endsWith('.pdf') || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+                        handleFileSelect({ target: { files: [file] } } as any);
+                      } else {
+                        toast.error("Please upload a PDF, TXT, or MD file");
+                      }
+                    }
+                  }}
                 >
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".txt,.md"
+                    accept=".txt,.md,.pdf"
                     onChange={handleFileSelect}
                     className="hidden"
                   />
                   
                   {isUploading ? (
                     <div className="space-y-4">
-                      <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
+                      <div className="relative">
+                        <Loader2 className="w-12 h-12 mx-auto text-primary animate-spin" />
+                        {isOCR && (
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center">
+                            <FileText className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </div>
                       <div className="space-y-2">
-                        <p className="text-sm text-foreground">{fileName}</p>
-                        <Progress value={uploadProgress} className="h-2 w-64 mx-auto" />
+                        <p className="text-sm font-medium text-foreground">{fileName}</p>
+                        <div className="relative">
+                          <Progress value={uploadProgress} className="h-3 w-64 mx-auto" />
+                          <div 
+                            className="absolute top-0 left-0 h-full bg-primary/30 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </div>
                         <p className="text-xs text-muted-foreground">
-                          {isParsing ? "Parsing content..." : `Uploading... ${uploadProgress}%`}
+                          {isOCR ? "Running OCR on scanned document..." : isParsing ? "Parsing content..." : `Uploading... ${uploadProgress}%`}
                         </p>
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <Upload className="w-10 h-10 mx-auto text-muted-foreground" />
+                      <div className={cn(
+                        "w-16 h-16 mx-auto rounded-full flex items-center justify-center transition-all",
+                        isDragOver ? "bg-primary/20 scale-110" : "bg-muted/50"
+                      )}>
+                        <Upload className={cn(
+                          "w-8 h-8 transition-colors",
+                          isDragOver ? "text-primary" : "text-muted-foreground"
+                        )} />
+                      </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">
-                          Click to upload or drag and drop
+                          {isDragOver ? "Drop your file here" : "Click to upload or drag and drop"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          TXT or MD files only
+                          PDF, TXT, or MD files supported
                         </p>
                       </div>
                     </div>

@@ -1,5 +1,8 @@
 project_id = "ewevnteuyfpinnlhvoty"
 
+[functions.send-email-otp]
+verify_jwt = false
+
 [functions.generate-emi-schedule]
 verify_jwt = false
 
