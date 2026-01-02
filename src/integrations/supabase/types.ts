@@ -128,6 +128,134 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          category: string
+          created_at: string
+          document_type: string
+          expiry_date: string | null
+          file_url: string
+          id: string
+          is_locked: boolean | null
+          issue_date: string | null
+          notes: string | null
+          sort_order: number | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          document_type: string
+          expiry_date?: string | null
+          file_url: string
+          id?: string
+          is_locked?: boolean | null
+          issue_date?: string | null
+          notes?: string | null
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          document_type?: string
+          expiry_date?: string | null
+          file_url?: string
+          id?: string
+          is_locked?: boolean | null
+          issue_date?: string | null
+          notes?: string | null
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      education_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          education_id: string
+          file_url: string
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          education_id: string
+          file_url: string
+          id?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          education_id?: string
+          file_url?: string
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "education_documents_education_id_fkey"
+            columns: ["education_id"]
+            isOneToOne: false
+            referencedRelation: "education_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      education_records: {
+        Row: {
+          course: string | null
+          created_at: string
+          degree: string
+          end_year: number | null
+          id: string
+          institution: string
+          notes: string | null
+          start_year: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          course?: string | null
+          created_at?: string
+          degree: string
+          end_year?: number | null
+          id?: string
+          institution: string
+          notes?: string | null
+          start_year?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          course?: string | null
+          created_at?: string
+          degree?: string
+          end_year?: number | null
+          id?: string
+          institution?: string
+          notes?: string | null
+          start_year?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       emi_events: {
         Row: {
           amount: number
@@ -934,6 +1062,7 @@ export type Database = {
           lock_hash: string | null
           name: string
           parent_folder_id: string | null
+          sort_order: number | null
           updated_at: string
           user_id: string
         }
@@ -946,6 +1075,7 @@ export type Database = {
           lock_hash?: string | null
           name: string
           parent_folder_id?: string | null
+          sort_order?: number | null
           updated_at?: string
           user_id: string
         }
@@ -958,6 +1088,7 @@ export type Database = {
           lock_hash?: string | null
           name?: string
           parent_folder_id?: string | null
+          sort_order?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -1019,6 +1150,59 @@ export type Database = {
         }
         Relationships: []
       }
+      salary_records: {
+        Row: {
+          annual_amount: number | null
+          bonus: number | null
+          created_at: string
+          effective_date: string | null
+          id: string
+          monthly_amount: number | null
+          notes: string | null
+          salary_type: string
+          updated_at: string
+          user_id: string
+          variable_pay: number | null
+          work_history_id: string
+        }
+        Insert: {
+          annual_amount?: number | null
+          bonus?: number | null
+          created_at?: string
+          effective_date?: string | null
+          id?: string
+          monthly_amount?: number | null
+          notes?: string | null
+          salary_type?: string
+          updated_at?: string
+          user_id: string
+          variable_pay?: number | null
+          work_history_id: string
+        }
+        Update: {
+          annual_amount?: number | null
+          bonus?: number | null
+          created_at?: string
+          effective_date?: string | null
+          id?: string
+          monthly_amount?: number | null
+          notes?: string | null
+          salary_type?: string
+          updated_at?: string
+          user_id?: string
+          variable_pay?: number | null
+          work_history_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salary_records_work_history_id_fkey"
+            columns: ["work_history_id"]
+            isOneToOne: false
+            referencedRelation: "work_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       savings_goals: {
         Row: {
           category: string
@@ -1055,6 +1239,60 @@ export type Database = {
           target_amount?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      social_profiles: {
+        Row: {
+          connection_type: string
+          created_at: string
+          custom_name: string | null
+          id: string
+          last_post_date: string | null
+          last_sync_at: string | null
+          logo_url: string | null
+          notes_encrypted: string | null
+          platform: string
+          profile_url: string | null
+          sort_order: number | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          connection_type?: string
+          created_at?: string
+          custom_name?: string | null
+          id?: string
+          last_post_date?: string | null
+          last_sync_at?: string | null
+          logo_url?: string | null
+          notes_encrypted?: string | null
+          platform: string
+          profile_url?: string | null
+          sort_order?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          connection_type?: string
+          created_at?: string
+          custom_name?: string | null
+          id?: string
+          last_post_date?: string | null
+          last_sync_at?: string | null
+          logo_url?: string | null
+          notes_encrypted?: string | null
+          platform?: string
+          profile_url?: string | null
+          sort_order?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -1194,6 +1432,7 @@ export type Database = {
           id: string
           notes: string | null
           progress_percentage: number
+          sort_order: number | null
           title: string
           updated_at: string
           user_id: string
@@ -1208,6 +1447,7 @@ export type Database = {
           id?: string
           notes?: string | null
           progress_percentage?: number
+          sort_order?: number | null
           title: string
           updated_at?: string
           user_id: string
@@ -1222,6 +1462,7 @@ export type Database = {
           id?: string
           notes?: string | null
           progress_percentage?: number
+          sort_order?: number | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -1538,6 +1779,86 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      work_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          file_url: string
+          id: string
+          title: string
+          user_id: string
+          work_history_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          file_url: string
+          id?: string
+          title: string
+          user_id: string
+          work_history_id: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          file_url?: string
+          id?: string
+          title?: string
+          user_id?: string
+          work_history_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_documents_work_history_id_fkey"
+            columns: ["work_history_id"]
+            isOneToOne: false
+            referencedRelation: "work_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_history: {
+        Row: {
+          company_name: string
+          created_at: string
+          employment_type: string
+          end_date: string | null
+          id: string
+          is_current: boolean | null
+          notes: string | null
+          role: string
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          employment_type?: string
+          end_date?: string | null
+          id?: string
+          is_current?: boolean | null
+          notes?: string | null
+          role: string
+          start_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          employment_type?: string
+          end_date?: string | null
+          id?: string
+          is_current?: boolean | null
+          notes?: string | null
+          role?: string
+          start_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
