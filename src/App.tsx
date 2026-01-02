@@ -8,6 +8,10 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AnimatePresence, motion } from "framer-motion";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Refund from "./pages/Refund";
+import Pricing from "./pages/Pricing";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/app/Dashboard";
 import Todos from "./pages/app/Todos";
@@ -57,6 +61,38 @@ const AnimatedRoutes = () => {
           element={
             <motion.div {...pageTransition}>
               <Login />
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/privacy" 
+          element={
+            <motion.div {...pageTransition}>
+              <Privacy />
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/terms" 
+          element={
+            <motion.div {...pageTransition}>
+              <Terms />
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/refund" 
+          element={
+            <motion.div {...pageTransition}>
+              <Refund />
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/pricing" 
+          element={
+            <motion.div {...pageTransition}>
+              <Pricing />
             </motion.div>
           } 
         />

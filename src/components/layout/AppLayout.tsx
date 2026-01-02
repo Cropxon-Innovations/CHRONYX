@@ -5,6 +5,7 @@ import CollapsibleNetWorth from "./CollapsibleNetWorth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Breadcrumbs from "./Breadcrumbs";
 import PageLoader from "./PageLoader";
+import FloatingQuickAction from "./FloatingQuickAction";
 
 const AppLayout = () => {
   const [isNetWorthCollapsed, setIsNetWorthCollapsed] = useState(false);
@@ -98,6 +99,9 @@ const AppLayout = () => {
             />
           </div>
         )}
+
+        {/* Floating Quick Action Button */}
+        <FloatingQuickAction />
       </div>
     </ProtectedRoute>
   );
