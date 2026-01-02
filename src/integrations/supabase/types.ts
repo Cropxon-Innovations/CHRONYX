@@ -164,6 +164,38 @@ export type Database = {
           },
         ]
       }
+      emi_reminders: {
+        Row: {
+          email_sent_to: string
+          emi_id: string
+          id: string
+          reminder_type: string
+          sent_at: string
+        }
+        Insert: {
+          email_sent_to: string
+          emi_id: string
+          id?: string
+          reminder_type: string
+          sent_at?: string
+        }
+        Update: {
+          email_sent_to?: string
+          emi_id?: string
+          id?: string
+          reminder_type?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emi_reminders_emi_id_fkey"
+            columns: ["emi_id"]
+            isOneToOne: false
+            referencedRelation: "emi_schedule"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emi_schedule: {
         Row: {
           adjustment_event_id: string | null
@@ -398,6 +430,38 @@ export type Database = {
           },
         ]
       }
+      insurance_reminders: {
+        Row: {
+          email_sent_to: string
+          id: string
+          insurance_id: string
+          reminder_days_before: number
+          sent_at: string
+        }
+        Insert: {
+          email_sent_to: string
+          id?: string
+          insurance_id: string
+          reminder_days_before: number
+          sent_at?: string
+        }
+        Update: {
+          email_sent_to?: string
+          id?: string
+          insurance_id?: string
+          reminder_days_before?: number
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_reminders_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "insurances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurances: {
         Row: {
           created_at: string
@@ -410,6 +474,7 @@ export type Database = {
           policy_type: string
           premium_amount: number
           provider: string
+          reminder_days: number[] | null
           renewal_date: string
           start_date: string
           status: string
@@ -429,6 +494,7 @@ export type Database = {
           policy_type: string
           premium_amount: number
           provider: string
+          reminder_days?: number[] | null
           renewal_date: string
           start_date: string
           status?: string
@@ -448,6 +514,7 @@ export type Database = {
           policy_type?: string
           premium_amount?: number
           provider?: string
+          reminder_days?: number[] | null
           renewal_date?: string
           start_date?: string
           status?: string

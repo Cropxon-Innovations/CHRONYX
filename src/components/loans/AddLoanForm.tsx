@@ -126,12 +126,17 @@ export const AddLoanForm = ({
     }
   }, [open, initialData]);
 
-  // Combine built-in banks with custom banks
+  // Combine built-in banks with custom banks (include logos)
   const builtInBanks = country === "India" ? INDIAN_BANKS : US_BANKS;
   const userCustomBanks = customBanks.filter(cb => cb.country === country || country === "Other");
   const banks = [
-    ...builtInBanks,
-    ...userCustomBanks.map(cb => ({ name: cb.name, fullName: cb.full_name, color: cb.color })),
+    ...builtInBanks.map(b => ({ ...b, logo_url: null as string | null })),
+    ...userCustomBanks.map(cb => ({ 
+      name: cb.name, 
+      fullName: cb.full_name, 
+      color: cb.color,
+      logo_url: cb.logo_url 
+    })),
   ];
 
   useEffect(() => {
@@ -288,17 +293,49 @@ export const AddLoanForm = ({
           {/* Bank Name */}
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground">Bank Name</Label>
-            <Select value={bankName} onValueChange={setBankName}>
+            <Select value={bankName} onValueChange={(val) => {
+              setBankName(val);
+              // Set logo if custom bank has one
+              const customBank = userCustomBanks.find(cb => cb.name === val);
+              if (customBank?.logo_url) {
+                setBankLogoUrl(customBank.logo_url);
+              } else if (val !== "custom") {
+                setBankLogoUrl("");
+              }
+            }}>
               <SelectTrigger className="bg-background border-border">
                 <SelectValue placeholder="Select bank" />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
                 {banks.map((bank) => (
                   <SelectItem key={bank.name} value={bank.name}>
-                    {bank.fullName}
+                    <div className="flex items-center gap-2">
+                      {bank.logo_url ? (
+                        <img 
+                          src={bank.logo_url} 
+                          alt={bank.name}
+                          className="w-5 h-5 rounded object-contain bg-white"
+                        />
+                      ) : (
+                        <div 
+                          className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-medium text-white"
+                          style={{ backgroundColor: bank.color }}
+                        >
+                          {bank.name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <span>{bank.fullName}</span>
+                    </div>
                   </SelectItem>
                 ))}
-                <SelectItem value="custom">Other (Custom)</SelectItem>
+                <SelectItem value="custom">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-medium bg-muted text-muted-foreground">
+                      +
+                    </div>
+                    <span>Other (Custom)</span>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
             {bankName === "custom" && (

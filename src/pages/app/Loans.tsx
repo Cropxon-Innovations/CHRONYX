@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, FileText, History, Calendar, Settings, Scale, CreditCard } from "lucide-react";
+import { Plus, FileText, History, Calendar, Settings, Scale, CreditCard, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +18,7 @@ import { LoanDocuments } from "@/components/loans/LoanDocuments";
 import { LoanHistory } from "@/components/loans/LoanHistory";
 import { BulkEmiPayment } from "@/components/loans/BulkEmiPayment";
 import { LoanComparison } from "@/components/loans/LoanComparison";
+import RefinanceCalculator from "@/components/loans/RefinanceCalculator";
 
 const Loans = () => {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ const Loans = () => {
   const [editingLoan, setEditingLoan] = useState<any | null>(null);
   const [showComparison, setShowComparison] = useState(false);
   const [showBulkPayment, setShowBulkPayment] = useState(false);
+  const [showRefinance, setShowRefinance] = useState(false);
 
   // Fetch loans
   const { data: loans = [], isLoading: loansLoading } = useQuery({
@@ -281,6 +283,16 @@ const Loans = () => {
           <p className="text-sm text-muted-foreground mt-1">Personal liability ledger</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {loans.length > 0 && (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowRefinance(!showRefinance)}
+              className="border-border"
+            >
+              <Calculator className="w-4 h-4 mr-2" />
+              Refinance
+            </Button>
+          )}
           {loans.length > 1 && (
             <Button 
               variant="outline" 
@@ -307,6 +319,13 @@ const Loans = () => {
           </Button>
         </div>
       </header>
+
+      {/* Refinance Calculator */}
+      {showRefinance && loans.length > 0 && (
+        <div className="mb-6">
+          <RefinanceCalculator loans={loans} />
+        </div>
+      )}
 
       {/* Comparison View */}
       {showComparison && (

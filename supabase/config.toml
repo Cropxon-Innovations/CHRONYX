@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.recalc-loan-summary]
 verify_jwt = false
+
+[functions.send-emi-reminders]
+verify_jwt = false
+
+[functions.send-insurance-reminders]
+verify_jwt = false
