@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { 
   FolderOpen, 
@@ -16,7 +17,6 @@ import {
   Star,
   Pencil,
   Check,
-  X,
   FolderClosed
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -75,10 +75,10 @@ export const AnimatedFolderCard = ({
   onClick,
 }: AnimatedFolderCardProps) => {
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(folder.color || FOLDER_COLORS[0].value);
   const [selectedIcon, setSelectedIcon] = useState(folder.icon || "Default");
   const [isDragOver, setIsDragOver] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
   const [newName, setNewName] = useState(folder.name);
   const [isLockAnimating, setIsLockAnimating] = useState(false);
   const [isUnlockAnimating, setIsUnlockAnimating] = useState(false);
@@ -93,27 +93,28 @@ export const AnimatedFolderCard = ({
     setNewName(folder.name);
   }, [folder.name]);
 
+  // Sync selected values when folder changes
   useEffect(() => {
-    if (isRenaming && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+    setSelectedColor(folder.color || FOLDER_COLORS[0].value);
+    setSelectedIcon(folder.icon || "Default");
+  }, [folder.color, folder.icon]);
+
+  useEffect(() => {
+    if (renameOpen && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 100);
     }
-  }, [isRenaming]);
+  }, [renameOpen]);
 
   const handleRename = () => {
     if (newName.trim() && newName !== folder.name) {
       onUpdate({ name: newName.trim() });
-    }
-    setIsRenaming(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleRename();
-    } else if (e.key === "Escape") {
+    } else {
       setNewName(folder.name);
-      setIsRenaming(false);
     }
+    setRenameOpen(false);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -224,57 +225,14 @@ export const AnimatedFolderCard = ({
               )}
             </div>
             
-            {/* Name and Controls */}
+            {/* Name */}
             <div className="flex-1 min-w-0">
-              {isRenaming ? (
-                <div className="flex items-center gap-1 w-full">
-                  <Input
-                    ref={inputRef}
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    onBlur={handleRename}
-                    onKeyDown={handleKeyDown}
-                    className="h-7 text-sm py-0 px-2 bg-background flex-1 min-w-0"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <div className="flex items-center gap-0.5 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRename();
-                      }}
-                    >
-                      <Check className="w-3 h-3 text-green-500" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setNewName(folder.name);
-                        setIsRenaming(false);
-                      }}
-                    >
-                      <X className="w-3 h-3 text-red-500" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <span 
-                  className="text-sm font-medium truncate block cursor-pointer"
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    setIsRenaming(true);
-                  }}
-                  title={folder.name}
-                >
-                  {folder.name}
-                </span>
-              )}
+              <span 
+                className="text-sm font-medium truncate block"
+                title={folder.name}
+              >
+                {folder.name}
+              </span>
             </div>
             
             {/* Actions */}
@@ -330,7 +288,8 @@ export const AnimatedFolderCard = ({
                 className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-all duration-200"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsRenaming(true);
+                  setNewName(folder.name);
+                  setRenameOpen(true);
                 }}
                 title="Rename folder"
               >
@@ -351,6 +310,46 @@ export const AnimatedFolderCard = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Rename Dialog (Popup) */}
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rename Folder</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Folder Name</Label>
+              <Input
+                ref={inputRef}
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Enter folder name"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleRename();
+                  } else if (e.key === "Escape") {
+                    setNewName(folder.name);
+                    setRenameOpen(false);
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => {
+              setNewName(folder.name);
+              setRenameOpen(false);
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleRename} disabled={!newName.trim()}>
+              <Check className="w-4 h-4 mr-2" />
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Customize Dialog */}
       <Dialog open={customizeOpen} onOpenChange={setCustomizeOpen}>
