@@ -4,38 +4,42 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+
+@import url("https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&display=swap");
+
 @layer base {
   :root {
     /* CHRONYX Design System - Light Mode */
-    --background: 40 20% 97%;
-    --foreground: 230 15% 12%;
+    --background: 209 40% 96%;
+    --foreground: 222 47% 11%;
 
-    --card: 40 15% 99%;
-    --card-foreground: 230 15% 12%;
+    --card: 210 40% 98%;
+    --card-foreground: 222 47% 11%;
 
-    --popover: 40 15% 99%;
-    --popover-foreground: 230 15% 12%;
+    --popover: 214 31% 91%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 230 25% 35%;
-    --primary-foreground: 40 20% 98%;
+    --primary: 216 19% 26%;
+    --primary-foreground: 210 19% 98%;
 
-    --secondary: 40 10% 94%;
-    --secondary-foreground: 230 15% 20%;
+    --secondary: 215 19% 34%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 40 10% 92%;
-    --muted-foreground: 230 10% 45%;
+    --muted: 215 20% 65%;
+    --muted-foreground: 222 47% 11%;
 
-    --accent: 230 20% 92%;
-    --accent-foreground: 230 25% 30%;
+    --accent: 210 40% 98%;
+    --accent-foreground: 215 16% 46%;
 
-    --destructive: 0 60% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 85% 97%;
 
-    --border: 230 10% 88%;
-    --input: 230 10% 88%;
-    --ring: 230 25% 35%;
+    --border: 212 26% 83%;
+    --input: 212 26% 83%;
+    --ring: 216 19% 26%;
 
-    --radius: 0.5rem;
+    --radius: 0rem;
 
     /* CHRONYX Custom Tokens */
     --chronyx-accent: 230 25% 45%;
@@ -89,43 +93,62 @@
 
     /* Sidebar */
     --sidebar-background: 40 15% 98%;
-    --sidebar-foreground: 230 15% 25%;
-    --sidebar-primary: 230 25% 35%;
-    --sidebar-primary-foreground: 40 20% 98%;
-    --sidebar-accent: 230 15% 94%;
-    --sidebar-accent-foreground: 230 25% 30%;
-    --sidebar-border: 230 10% 90%;
-    --sidebar-ring: 230 25% 35%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 216 19% 26%;
+    --sidebar-primary-foreground: 210 19% 98%;
+    --sidebar-accent: 215 19% 34%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 212 26% 83%;
+    --sidebar-ring: 216 19% 26%;
+    --chart-1: 217 10% 64%;
+    --chart-2: 215 20% 65%;
+    --chart-3: 215 16% 46%;
+    --chart-4: 219 8% 46%;
+    --chart-5: 215 19% 34%;
+    --sidebar: 210 40% 98%;
+    --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-serif: 'Crimson Pro', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 230 15% 8%;
-    --foreground: 40 10% 92%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
 
-    --card: 230 15% 10%;
-    --card-foreground: 40 10% 92%;
+    --card: 217 32% 17%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 230 15% 10%;
-    --popover-foreground: 40 10% 92%;
+    --popover: 215 24% 26%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 230 20% 70%;
-    --primary-foreground: 230 15% 8%;
+    --primary: 212 26% 83%;
+    --primary-foreground: 228 84% 4%;
 
-    --secondary: 230 12% 15%;
-    --secondary-foreground: 40 10% 85%;
+    --secondary: 215 19% 34%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 230 12% 18%;
-    --muted-foreground: 230 10% 55%;
+    --muted: 215 16% 46%;
+    --muted-foreground: 210 40% 98%;
 
-    --accent: 230 15% 18%;
-    --accent-foreground: 230 15% 80%;
+    --accent: 228 84% 4%;
+    --accent-foreground: 215 20% 65%;
 
-    --destructive: 0 55% 45%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 85% 97%;
 
-    --border: 230 12% 18%;
-    --input: 230 12% 18%;
-    --ring: 230 20% 60%;
+    --border: 215 19% 34%;
+    --input: 215 19% 34%;
+    --ring: 212 26% 83%;
 
     /* CHRONYX Custom Tokens - Dark */
     --chronyx-accent: 230 20% 65%;
@@ -179,13 +202,27 @@
 
     /* Sidebar - Dark */
     --sidebar-background: 230 15% 6%;
-    --sidebar-foreground: 40 10% 85%;
-    --sidebar-primary: 230 20% 65%;
-    --sidebar-primary-foreground: 230 15% 8%;
-    --sidebar-accent: 230 12% 15%;
-    --sidebar-accent-foreground: 40 10% 85%;
-    --sidebar-border: 230 12% 15%;
-    --sidebar-ring: 230 20% 60%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 212 26% 83%;
+    --sidebar-primary-foreground: 228 84% 4%;
+    --sidebar-accent: 215 20% 65%;
+    --sidebar-accent-foreground: 228 84% 4%;
+    --sidebar-border: 215 19% 34%;
+    --sidebar-ring: 212 26% 83%;
+    --chart-1: 215 12% 83%;
+    --chart-2: 212 26% 83%;
+    --chart-3: 215 20% 65%;
+    --chart-4: 217 10% 64%;
+    --chart-5: 215 16% 46%;
+    --sidebar: 217 32% 17%;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   }
 }
 
