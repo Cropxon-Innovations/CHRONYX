@@ -2,95 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* VYOM Design System - Light Mode */
+    --background: 40 20% 97%;
+    --foreground: 230 15% 12%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 40 15% 99%;
+    --card-foreground: 230 15% 12%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 40 15% 99%;
+    --popover-foreground: 230 15% 12%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 230 25% 35%;
+    --primary-foreground: 40 20% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 40 10% 94%;
+    --secondary-foreground: 230 15% 20%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 40 10% 92%;
+    --muted-foreground: 230 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 230 20% 92%;
+    --accent-foreground: 230 25% 30%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 230 10% 88%;
+    --input: 230 10% 88%;
+    --ring: 230 25% 35%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* VYOM Custom Tokens */
+    --vyom-accent: 230 25% 45%;
+    --vyom-accent-soft: 230 20% 92%;
+    --vyom-metric: 230 15% 15%;
+    --vyom-success: 150 30% 45%;
+    --vyom-warning: 35 70% 50%;
+    --vyom-neutral: 230 10% 60%;
+    --vyom-ring-track: 230 10% 90%;
+    --vyom-ring-fill: 230 25% 45%;
+    --vyom-gradient-start: 230 30% 96%;
+    --vyom-gradient-end: 40 20% 97%;
+    --vyom-flow-line: 230 15% 85%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar */
+    --sidebar-background: 40 15% 98%;
+    --sidebar-foreground: 230 15% 25%;
+    --sidebar-primary: 230 25% 35%;
+    --sidebar-primary-foreground: 40 20% 98%;
+    --sidebar-accent: 230 15% 94%;
+    --sidebar-accent-foreground: 230 25% 30%;
+    --sidebar-border: 230 10% 90%;
+    --sidebar-ring: 230 25% 35%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 230 15% 8%;
+    --foreground: 40 10% 92%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 230 15% 10%;
+    --card-foreground: 40 10% 92%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 230 15% 10%;
+    --popover-foreground: 40 10% 92%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 230 20% 70%;
+    --primary-foreground: 230 15% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 230 12% 15%;
+    --secondary-foreground: 40 10% 85%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 230 12% 18%;
+    --muted-foreground: 230 10% 55%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 230 15% 18%;
+    --accent-foreground: 230 15% 80%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 55% 45%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 230 12% 18%;
+    --input: 230 12% 18%;
+    --ring: 230 20% 60%;
+
+    /* VYOM Custom Tokens - Dark */
+    --vyom-accent: 230 20% 65%;
+    --vyom-accent-soft: 230 15% 18%;
+    --vyom-metric: 40 10% 95%;
+    --vyom-success: 150 25% 55%;
+    --vyom-warning: 35 60% 55%;
+    --vyom-neutral: 230 10% 50%;
+    --vyom-ring-track: 230 12% 20%;
+    --vyom-ring-fill: 230 20% 60%;
+    --vyom-gradient-start: 230 15% 8%;
+    --vyom-gradient-end: 235 15% 10%;
+    --vyom-flow-line: 230 12% 20%;
+
+    /* Sidebar - Dark */
+    --sidebar-background: 230 15% 6%;
+    --sidebar-foreground: 40 10% 85%;
+    --sidebar-primary: 230 20% 65%;
+    --sidebar-primary-foreground: 230 15% 8%;
+    --sidebar-accent: 230 12% 15%;
+    --sidebar-accent-foreground: 40 10% 85%;
+    --sidebar-border: 230 12% 15%;
+    --sidebar-ring: 230 20% 60%;
   }
 }
 
@@ -99,7 +120,141 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer components {
+  /* VYOM Animations */
+  .vyom-fade-in {
+    animation: vyomFadeIn 0.8s ease-out forwards;
+  }
+
+  .vyom-fade-in-delayed {
+    animation: vyomFadeIn 0.6s ease-out 0.3s forwards;
+    opacity: 0;
+  }
+
+  .vyom-fade-in-delayed-2 {
+    animation: vyomFadeIn 0.6s ease-out 0.6s forwards;
+    opacity: 0;
+  }
+
+  .vyom-ring-animate {
+    animation: vyomRingFill 3s ease-out forwards;
+  }
+
+  .vyom-flow-line {
+    animation: vyomFlowLine 20s linear infinite;
+  }
+
+  .vyom-flow-line-2 {
+    animation: vyomFlowLine 25s linear infinite 5s;
+  }
+
+  .vyom-flow-line-3 {
+    animation: vyomFlowLine 22s linear infinite 10s;
+  }
+
+  /* Metric Card Styling */
+  .vyom-metric-value {
+    @apply text-4xl font-semibold tracking-tight;
+    color: hsl(var(--vyom-metric));
+  }
+
+  .vyom-metric-label {
+    @apply text-sm font-medium tracking-wide uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Progress Ring */
+  .vyom-ring-track {
+    stroke: hsl(var(--vyom-ring-track));
+  }
+
+  .vyom-ring-fill {
+    stroke: hsl(var(--vyom-ring-fill));
+  }
+
+  /* Gradient Background */
+  .vyom-gradient-bg {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--vyom-gradient-start)) 0%,
+      hsl(var(--vyom-gradient-end)) 100%
+    );
+  }
+
+  /* Flow Lines */
+  .vyom-flow-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .vyom-flow {
+    position: absolute;
+    height: 1px;
+    width: 200px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--vyom-flow-line)) 50%,
+      transparent 100%
+    );
+    opacity: 0.4;
+  }
+}
+
+@layer utilities {
+  @keyframes vyomFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes vyomRingFill {
+    from {
+      stroke-dashoffset: 283;
+    }
+  }
+
+  @keyframes vyomFlowLine {
+    from {
+      transform: translateX(-200px);
+    }
+    to {
+      transform: translateX(calc(100vw + 200px));
+    }
+  }
+
+  /* Scrollbar Styling */
+  .vyom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .vyom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .vyom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+
+  .vyom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
   }
 }
