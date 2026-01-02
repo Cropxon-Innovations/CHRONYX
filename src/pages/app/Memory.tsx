@@ -230,9 +230,10 @@ const Memory = () => {
       const { data, error } = await supabase
         .from("memory_folders")
         .select("*")
+        .order("sort_order", { ascending: true })
         .order("name");
       if (error) throw error;
-      return data as Folder[];
+      return data as (Folder & { sort_order?: number })[];
     },
     enabled: !!user,
   });
@@ -482,6 +483,27 @@ const Memory = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["memory_folders"] });
       toast({ title: "Folder deleted" });
+    },
+  });
+
+  // Reorder folders mutation
+  const reorderFoldersMutation = useMutation({
+    mutationFn: async (reorderedFolders: (Folder & { sort_order?: number })[]) => {
+      const updates = reorderedFolders.map((folder, index) => ({
+        id: folder.id,
+        sort_order: index,
+      }));
+      
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("memory_folders")
+          .update({ sort_order: update.sort_order })
+          .eq("id", update.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memory_folders"] });
     },
   });
 
@@ -1035,13 +1057,41 @@ const Memory = () => {
             Folders {draggingMemoryId && <span className="text-primary">(Drop memory here)</span>}
           </h3>
           <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))]">
-            {folders.map((folder) => {
+            {folders.map((folder, index) => {
               const isUnlocked = unlockedFolders.has(folder.id);
               return (
                 <div
                   key={folder.id}
-                  onDrop={(e) => handleFolderDrop(folder.id, e)}
-                  onDragOver={(e) => e.preventDefault()}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("folder-id", folder.id);
+                    e.dataTransfer.setData("folder-index", String(index));
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const draggedFolderId = e.dataTransfer.getData("folder-id");
+                    const draggedIndex = parseInt(e.dataTransfer.getData("folder-index"));
+                    
+                    // If dropping a memory into folder
+                    if (draggingMemoryId) {
+                      handleFolderDrop(folder.id, e);
+                      return;
+                    }
+                    
+                    // If reordering folders
+                    if (draggedFolderId && draggedIndex !== index) {
+                      const newFolders = [...folders];
+                      const [removed] = newFolders.splice(draggedIndex, 1);
+                      newFolders.splice(index, 0, removed);
+                      reorderFoldersMutation.mutate(newFolders);
+                    }
+                  }}
+                  className="cursor-grab active:cursor-grabbing"
                 >
                   <AnimatedFolderCard
                     folder={folder}
