@@ -1,9 +1,30 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Check, Sparkles, Crown, Zap } from "lucide-react";
+import { ArrowLeft, Check, Sparkles, Crown, Zap, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useRazorpay } from "@/hooks/useRazorpay";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Pricing = () => {
+  const { initiatePayment, isLoading } = useRazorpay();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handlePlanSelect = async (planType: "free" | "pro" | "premium") => {
+    if (planType === "free") {
+      navigate("/login");
+      return;
+    }
+
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    await initiatePayment(planType);
+  };
+
   const plans = [
     {
       name: "Free",
@@ -12,6 +33,7 @@ const Pricing = () => {
       description: "Everything you need to get started",
       icon: Zap,
       highlight: false,
+      planType: "free" as const,
       features: [
         "Unlimited tasks & todos",
         "Study syllabus tracking",
@@ -24,16 +46,16 @@ const Pricing = () => {
         "Email support",
       ],
       cta: "Get Started Free",
-      ctaLink: "/login",
     },
     {
       name: "Pro",
-      price: "₹99",
+      price: "₹299",
       period: "/month",
       description: "Enhanced features for serious users",
       icon: Sparkles,
       highlight: true,
       popular: true,
+      planType: "pro" as const,
       features: [
         "Everything in Free, plus:",
         "10GB memory storage",
@@ -46,16 +68,16 @@ const Pricing = () => {
         "Early access to new features",
       ],
       cta: "Upgrade to Pro",
-      ctaLink: "/login",
     },
     {
       name: "Premium",
-      price: "₹2,999",
+      price: "₹1,999",
       period: "one-time",
       description: "Lifetime access with all features",
       icon: Crown,
       highlight: false,
       lifetime: true,
+      planType: "premium" as const,
       features: [
         "Everything in Pro, plus:",
         "Unlimited storage",
@@ -68,7 +90,6 @@ const Pricing = () => {
         "Direct founder support",
       ],
       cta: "Get Lifetime Access",
-      ctaLink: "/login",
     },
   ];
 
@@ -148,18 +169,25 @@ const Pricing = () => {
                   ))}
                 </ul>
 
-                <Link to={plan.ctaLink} className="block">
-                  <Button 
-                    className={`w-full ${
-                      plan.highlight 
-                        ? "" 
-                        : "bg-muted text-foreground hover:bg-muted/80"
-                    }`}
-                    variant={plan.highlight ? "default" : "secondary"}
-                  >
-                    {plan.cta}
-                  </Button>
-                </Link>
+                <Button 
+                  className={`w-full ${
+                    plan.highlight 
+                      ? "" 
+                      : "bg-muted text-foreground hover:bg-muted/80"
+                  }`}
+                  variant={plan.highlight ? "default" : "secondary"}
+                  onClick={() => handlePlanSelect(plan.planType)}
+                  disabled={isLoading && plan.planType !== "free"}
+                >
+                  {isLoading && plan.planType !== "free" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    plan.cta
+                  )}
+                </Button>
               </motion.div>
             );
           })}

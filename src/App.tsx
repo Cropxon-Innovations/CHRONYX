@@ -12,6 +12,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Refund from "./pages/Refund";
 import Pricing from "./pages/Pricing";
+import About from "./pages/About";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/app/Dashboard";
 import Todos from "./pages/app/Todos";
@@ -93,6 +94,14 @@ const AnimatedRoutes = () => {
           element={
             <motion.div {...pageTransition}>
               <Pricing />
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/about" 
+          element={
+            <motion.div {...pageTransition}>
+              <About />
             </motion.div>
           } 
         />
