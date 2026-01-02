@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,14 +17,18 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { INDIAN_BANKS, US_BANKS, LOAN_TYPES, REPAYMENT_MODES } from "./BankLogos";
+import { INDIAN_BANKS, US_BANKS, LOAN_TYPES, REPAYMENT_MODES, getBankColor } from "./BankLogos";
+import { Upload, X, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddLoanFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: LoanFormData) => void;
   isLoading?: boolean;
-  initialData?: Partial<LoanFormData>;
+  initialData?: Partial<LoanFormData> & { id?: string };
   mode?: "add" | "edit";
 }
 
@@ -43,7 +47,6 @@ export interface LoanFormData {
   notes?: string;
 }
 
-// Calculate EMI using standard formula
 function calculateEMI(principal: number, annualRate: number, tenureMonths: number): number {
   if (annualRate === 0) return principal / tenureMonths;
   const monthlyRate = annualRate / 12 / 100;
@@ -59,23 +62,69 @@ export const AddLoanForm = ({
   initialData,
   mode = "add",
 }: AddLoanFormProps) => {
-  const [country, setCountry] = useState(initialData?.country || "India");
-  const [bankName, setBankName] = useState(initialData?.bank_name || "");
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [country, setCountry] = useState("India");
+  const [bankName, setBankName] = useState("");
   const [customBank, setCustomBank] = useState("");
-  const [loanAccountNumber, setLoanAccountNumber] = useState(initialData?.loan_account_number || "");
-  const [loanType, setLoanType] = useState(initialData?.loan_type || "Home");
-  const [principal, setPrincipal] = useState(initialData?.principal_amount?.toString() || "");
-  const [interestRate, setInterestRate] = useState(initialData?.interest_rate?.toString() || "");
-  const [tenure, setTenure] = useState(initialData?.tenure_months?.toString() || "");
-  const [emiAmount, setEmiAmount] = useState(initialData?.emi_amount?.toString() || "");
+  const [bankLogoUrl, setBankLogoUrl] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [loanAccountNumber, setLoanAccountNumber] = useState("");
+  const [loanType, setLoanType] = useState("Home");
+  const [principal, setPrincipal] = useState("");
+  const [interestRate, setInterestRate] = useState("");
+  const [tenure, setTenure] = useState("");
+  const [emiAmount, setEmiAmount] = useState("");
   const [emiOverride, setEmiOverride] = useState(false);
-  const [startDate, setStartDate] = useState(initialData?.start_date || new Date().toISOString().split("T")[0]);
-  const [repaymentMode, setRepaymentMode] = useState(initialData?.repayment_mode || "Auto Debit");
-  const [notes, setNotes] = useState(initialData?.notes || "");
+  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [repaymentMode, setRepaymentMode] = useState("Auto Debit");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (open && initialData) {
+      setCountry(initialData.country || "India");
+      setBankLogoUrl(initialData.bank_logo_url || "");
+      setLoanAccountNumber(initialData.loan_account_number || "");
+      setLoanType(initialData.loan_type || "Home");
+      setPrincipal(initialData.principal_amount?.toString() || "");
+      setInterestRate(initialData.interest_rate?.toString() || "");
+      setTenure(initialData.tenure_months?.toString() || "");
+      setEmiAmount(initialData.emi_amount?.toString() || "");
+      setStartDate(initialData.start_date || new Date().toISOString().split("T")[0]);
+      setRepaymentMode(initialData.repayment_mode || "Auto Debit");
+      setNotes(initialData.notes || "");
+
+      const allBanks = [...INDIAN_BANKS, ...US_BANKS];
+      const isKnownBank = allBanks.some((b) => b.name === initialData.bank_name);
+      if (!isKnownBank && initialData.bank_name) {
+        setCustomBank(initialData.bank_name);
+        setBankName("custom");
+      } else {
+        setBankName(initialData.bank_name || "");
+        setCustomBank("");
+      }
+    } else if (open && !initialData) {
+      setCountry("India");
+      setBankName("");
+      setCustomBank("");
+      setBankLogoUrl("");
+      setLoanAccountNumber("");
+      setLoanType("Home");
+      setPrincipal("");
+      setInterestRate("");
+      setTenure("");
+      setEmiAmount("");
+      setEmiOverride(false);
+      setStartDate(new Date().toISOString().split("T")[0]);
+      setRepaymentMode("Auto Debit");
+      setNotes("");
+    }
+  }, [open, initialData]);
 
   const banks = country === "India" ? INDIAN_BANKS : US_BANKS;
 
-  // Auto-calculate EMI when inputs change
   useEffect(() => {
     if (!emiOverride && principal && interestRate && tenure) {
       const p = parseFloat(principal);
@@ -88,13 +137,53 @@ export const AddLoanForm = ({
     }
   }, [principal, interestRate, tenure, emiOverride]);
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Please upload an image file", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Image must be less than 2MB", variant: "destructive" });
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `logos/${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("loan-documents")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("loan-documents")
+        .getPublicUrl(filePath);
+
+      setBankLogoUrl(urlData.publicUrl);
+      toast({ title: "Logo uploaded" });
+    } catch (error) {
+      console.error("Logo upload error:", error);
+      toast({ title: "Upload failed", variant: "destructive" });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const finalBankName = bankName === "custom" ? customBank : bankName;
-    
+
     onSubmit({
       country,
       bank_name: finalBankName,
+      bank_logo_url: bankLogoUrl || undefined,
       loan_account_number: loanAccountNumber,
       loan_type: loanType,
       principal_amount: parseFloat(principal),
@@ -123,7 +212,13 @@ export const AddLoanForm = ({
           {/* Country */}
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground">Country</Label>
-            <Select value={country} onValueChange={(v) => { setCountry(v); setBankName(""); }}>
+            <Select
+              value={country}
+              onValueChange={(v) => {
+                setCountry(v);
+                setBankName("");
+              }}
+            >
               <SelectTrigger className="bg-background border-border">
                 <SelectValue />
               </SelectTrigger>
@@ -161,6 +256,60 @@ export const AddLoanForm = ({
             )}
           </div>
 
+          {/* Bank Logo Upload */}
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Bank Logo (Optional)</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="hidden"
+            />
+            <div className="flex items-center gap-3">
+              {bankLogoUrl ? (
+                <div className="relative">
+                  <img
+                    src={bankLogoUrl}
+                    alt="Bank logo"
+                    className="w-12 h-12 rounded-lg object-contain bg-white border border-border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setBankLogoUrl("")}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  className="w-12 h-12 rounded-lg flex items-center justify-center text-sm font-medium text-white"
+                  style={{
+                    backgroundColor: getBankColor(bankName === "custom" ? customBank : bankName),
+                  }}
+                >
+                  {(bankName === "custom" ? customBank : bankName).slice(0, 2).toUpperCase() || "?"}
+                </div>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingLogo}
+                className="border-border"
+              >
+                {uploadingLogo ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                Upload Logo
+              </Button>
+            </div>
+          </div>
+
           {/* Loan Account Number */}
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground">Loan Account Number</Label>
@@ -182,7 +331,9 @@ export const AddLoanForm = ({
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
                 {LOAN_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -287,7 +438,9 @@ export const AddLoanForm = ({
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
                 {REPAYMENT_MODES.map((mode) => (
-                  <SelectItem key={mode} value={mode}>{mode}</SelectItem>
+                  <SelectItem key={mode} value={mode}>
+                    {mode}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
