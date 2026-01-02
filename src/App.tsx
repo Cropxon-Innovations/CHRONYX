@@ -26,6 +26,7 @@ import Lifespan from "./pages/app/Lifespan";
 import Achievements from "./pages/app/Achievements";
 import Activity from "./pages/app/Activity";
 import Settings from "./pages/app/Settings";
+import Profile from "./pages/app/Profile";
 import Memory from "./pages/app/Memory";
 import MemoryTimeline from "./pages/app/MemoryTimeline";
 import Search from "./pages/app/Search";
@@ -118,6 +119,7 @@ const AnimatedRoutes = () => {
           <Route path="achievements" element={<Achievements />} />
           <Route path="activity" element={<Activity />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="profile" element={<Profile />} />
           <Route path="memory" element={<Memory />} />
           <Route path="memory/timeline" element={<MemoryTimeline />} />
           <Route path="search" element={<Search />} />
