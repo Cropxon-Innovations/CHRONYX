@@ -382,7 +382,7 @@ const Settings = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `vyom-data-export-${format(new Date(), "yyyy-MM-dd")}.json`;
+      a.download = `chronyx-data-export-${format(new Date(), "yyyy-MM-dd")}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

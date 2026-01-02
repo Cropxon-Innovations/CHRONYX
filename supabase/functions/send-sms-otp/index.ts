@@ -73,7 +73,7 @@ serve(async (req) => {
       body: new URLSearchParams({
         To: formattedPhone,
         From: twilioPhone,
-        Body: `Your VYOM verification code is: ${otp}. This code expires in 10 minutes. Do not share this code with anyone.`,
+        Body: `Your CHRONYX verification code is: ${otp}. This code expires in 10 minutes. Do not share this code with anyone.`,
       }),
     });
 

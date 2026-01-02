@@ -57,7 +57,7 @@ export const DataExport = () => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `vyom-export-${format(new Date(), "yyyy-MM-dd")}.json`;
+      link.download = `chronyx-export-${format(new Date(), "yyyy-MM-dd")}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -116,7 +116,7 @@ export const DataExport = () => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>VYOM Data Export</title>
+          <title>CHRONYX Data Export</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
@@ -173,7 +173,7 @@ export const DataExport = () => {
           </style>
         </head>
         <body>
-          <h1>VYOM</h1>
+          <h1>CHRONYX</h1>
           <p class="meta">Data Export • ${formatDate(data.exportedAt)}</p>
           
           ${data.profile ? `

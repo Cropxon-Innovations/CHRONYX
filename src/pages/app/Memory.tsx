@@ -34,7 +34,10 @@ import {
   FileArchive,
   Play,
   GripVertical,
-  MapPin
+  MapPin,
+  ChevronRight,
+  Home,
+  FolderPlus as FolderPlusIcon
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
@@ -197,6 +200,7 @@ const Memory = () => {
 
   // Nested folder navigation state
   const [currentParentFolderId, setCurrentParentFolderId] = useState<string | null>(null);
+  const [folderNavigationPath, setFolderNavigationPath] = useState<Folder[]>([]);
 
   // Fetch memories
   const { data: memories = [], isLoading: memoriesLoading } = useQuery({
@@ -240,6 +244,46 @@ const Memory = () => {
     },
     enabled: !!user,
   });
+
+  // Get current folder's subfolders
+  const currentFolders = useMemo(() => {
+    return folders.filter(f => f.parent_folder_id === currentParentFolderId);
+  }, [folders, currentParentFolderId]);
+
+  // Get breadcrumb path for current folder
+  const getBreadcrumbPath = useCallback((folderId: string | null): Folder[] => {
+    if (!folderId) return [];
+    const path: Folder[] = [];
+    let currentId: string | null = folderId;
+    while (currentId) {
+      const folder = folders.find(f => f.id === currentId);
+      if (folder) {
+        path.unshift(folder);
+        currentId = folder.parent_folder_id;
+      } else {
+        break;
+      }
+    }
+    return path;
+  }, [folders]);
+
+  // Navigate into a folder
+  const navigateToFolder = (folderId: string) => {
+    setCurrentParentFolderId(folderId);
+    setFolderNavigationPath(getBreadcrumbPath(folderId));
+  };
+
+  // Navigate to specific folder in breadcrumb
+  const navigateToBreadcrumb = (index: number) => {
+    if (index < 0) {
+      setCurrentParentFolderId(null);
+      setFolderNavigationPath([]);
+    } else {
+      const folder = folderNavigationPath[index];
+      setCurrentParentFolderId(folder.id);
+      setFolderNavigationPath(prev => prev.slice(0, index + 1));
+    }
+  };
 
   // Upload memory mutation with EXIF extraction and optional encryption
   const uploadMutation = useMutation({
@@ -1055,15 +1099,56 @@ const Memory = () => {
         </Card>
       </div>
 
+      {/* Breadcrumb Navigation */}
+      {currentParentFolderId && (
+        <div className="flex items-center gap-2 text-sm">
+          <button 
+            onClick={() => navigateToBreadcrumb(-1)}
+            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Home className="w-4 h-4" />
+            <span>Memory</span>
+          </button>
+          {folderNavigationPath.map((folder, index) => (
+            <div key={folder.id} className="flex items-center gap-2">
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              <button
+                onClick={() => navigateToBreadcrumb(index)}
+                className={`hover:text-foreground transition-colors ${
+                  index === folderNavigationPath.length - 1 ? 'text-foreground font-medium' : 'text-muted-foreground'
+                }`}
+              >
+                {folder.name}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Folders Section - Interactive with drag/drop */}
-      {folders.length > 0 && (
+      {(currentFolders.length > 0 || currentParentFolderId) && (
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            Folders {draggingMemoryId && <span className="text-primary">(Drop memory here)</span>}
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              {currentParentFolderId ? 'Subfolders' : 'Folders'} {draggingMemoryId && <span className="text-primary">(Drop memory here)</span>}
+            </h3>
+            {currentParentFolderId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setNewFolderDialogOpen(true);
+                }}
+              >
+                <FolderPlusIcon className="w-4 h-4 mr-2" />
+                Create Subfolder
+              </Button>
+            )}
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-            {folders.map((folder, index) => {
+            {currentFolders.map((folder, index) => {
               const isUnlocked = unlockedFolders.has(folder.id);
+              const hasSubfolders = folders.some(f => f.parent_folder_id === folder.id);
               return (
                 <div
                   key={folder.id}
@@ -1090,13 +1175,15 @@ const Memory = () => {
                     
                     // If reordering folders
                     if (draggedFolderId && draggedIndex !== index) {
-                      const newFolders = [...folders];
+                      const newFolders = [...currentFolders];
                       const [removed] = newFolders.splice(draggedIndex, 1);
                       newFolders.splice(index, 0, removed);
                       reorderFoldersMutation.mutate(newFolders);
                     }
                   }}
+                  onDoubleClick={() => navigateToFolder(folder.id)}
                   className="cursor-grab active:cursor-grabbing"
+                  title={hasSubfolders ? "Double-click to open" : undefined}
                 >
                   <AnimatedFolderCard
                     folder={folder}
@@ -1119,6 +1206,7 @@ const Memory = () => {
                     }}
                     onUpdate={(updates) => updateFolderMutation.mutate({ id: folder.id, ...updates })}
                     onDelete={() => deleteFolderMutation.mutate(folder.id)}
+                    onClick={() => navigateToFolder(folder.id)}
                   />
                 </div>
               );

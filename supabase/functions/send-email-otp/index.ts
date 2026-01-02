@@ -56,30 +56,32 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "VYOM <onboarding@resend.dev>",
+        from: "CHRONYX <onboarding@resend.dev>",
         to: [email],
-        subject: `Your VYOM Verification Code: ${otp}`,
+        subject: `Your CHRONYX Verification Code: ${otp}`,
         html: `
           <!DOCTYPE html>
           <html>
             <head>
               <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; margin: 0; padding: 40px 20px; }
-                .container { max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
-                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 32px; text-align: center; }
-                .header h1 { color: white; margin: 0; font-size: 28px; letter-spacing: 4px; font-weight: 300; }
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #faf9f7; margin: 0; padding: 40px 20px; }
+                .container { max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); overflow: hidden; border: 1px solid #e8e6e3; }
+                .header { background: #1a1a1a; padding: 32px; text-align: center; }
+                .header h1 { color: white; margin: 0; font-size: 24px; letter-spacing: 6px; font-weight: 300; }
+                .header p { color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 8px; }
                 .content { padding: 40px 32px; text-align: center; }
-                .otp-box { background: #f8f9fa; border: 2px dashed #e9ecef; border-radius: 8px; padding: 24px; margin: 24px 0; }
-                .otp-code { font-size: 36px; font-weight: 600; letter-spacing: 8px; color: #333; font-family: monospace; }
-                .message { color: #666; font-size: 14px; line-height: 1.6; }
-                .footer { background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef; }
-                .footer p { color: #999; font-size: 12px; margin: 0; }
+                .otp-box { background: #faf9f7; border: 1px solid #e8e6e3; border-radius: 8px; padding: 24px; margin: 24px 0; }
+                .otp-code { font-size: 36px; font-weight: 600; letter-spacing: 8px; color: #1a1a1a; font-family: monospace; }
+                .message { color: #64748b; font-size: 14px; line-height: 1.6; }
+                .footer { background: #faf9f7; padding: 20px; text-align: center; border-top: 1px solid #e8e6e3; }
+                .footer p { color: #94a3b8; font-size: 11px; margin: 0; }
               </style>
             </head>
             <body>
               <div class="container">
                 <div class="header">
-                  <h1>VYOM</h1>
+                  <h1>CHRONYX</h1>
+                  <p>BY CROPXON</p>
                 </div>
                 <div class="content">
                   <p class="message">Your verification code is:</p>
@@ -95,7 +97,7 @@ const handler = async (req: Request): Promise<Response> => {
                   </p>
                 </div>
                 <div class="footer">
-                  <p>VYOM by CropXon Innovations Pvt Ltd</p>
+                  <p>CHRONYX by CropXon Innovations Pvt Ltd</p>
                 </div>
               </div>
             </body>
