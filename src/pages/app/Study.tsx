@@ -42,6 +42,7 @@ import { SyllabusPlanner } from "@/components/study/SyllabusPlanner";
 import { SubjectColorPicker, useSubjectColors } from "@/components/study/SubjectColorPicker";
 import { SpacedRepetition } from "@/components/study/SpacedRepetition";
 import { StudyNotes } from "@/components/study/StudyNotes";
+import { StudyDataExport } from "@/components/study/StudyDataExport";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 const focusLevels = ["low", "medium", "high"] as const;
@@ -267,9 +268,12 @@ const Study = () => {
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl">
       {/* Header */}
-      <header>
-        <h1 className="text-2xl font-light text-foreground tracking-wide">Study</h1>
-        <p className="text-sm text-muted-foreground mt-1">A quiet record of time invested</p>
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-light text-foreground tracking-wide">Study</h1>
+          <p className="text-sm text-muted-foreground mt-1">A quiet record of time invested</p>
+        </div>
+        <StudyDataExport />
       </header>
 
       {/* Top Summary Strip */}

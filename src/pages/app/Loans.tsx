@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus } from "lucide-react";
+import { Plus, FileText, History, Calendar, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +14,8 @@ import { EmiScheduleTable } from "@/components/loans/EmiScheduleTable";
 import { LoanActions } from "@/components/loans/LoanActions";
 import { getBankColor, getBankInitials } from "@/components/loans/BankLogos";
 import { AmortizationPDF } from "@/components/loans/AmortizationPDF";
-
+import { LoanDocuments } from "@/components/loans/LoanDocuments";
+import { LoanHistory } from "@/components/loans/LoanHistory";
 const Loans = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -315,10 +316,24 @@ const Loans = () => {
           </div>
 
           <Tabs defaultValue="schedule" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <TabsList className="bg-muted/50 border border-border">
-                <TabsTrigger value="schedule" className="data-[state=active]:bg-card">EMI Schedule</TabsTrigger>
-                <TabsTrigger value="actions" className="data-[state=active]:bg-card">Actions</TabsTrigger>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <TabsList className="bg-muted/50 border border-border flex-wrap h-auto gap-1 p-1">
+                <TabsTrigger value="schedule" className="data-[state=active]:bg-card">
+                  <Calendar className="w-4 h-4 mr-1.5" />
+                  EMI Schedule
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="data-[state=active]:bg-card">
+                  <FileText className="w-4 h-4 mr-1.5" />
+                  Documents
+                </TabsTrigger>
+                <TabsTrigger value="history" className="data-[state=active]:bg-card">
+                  <History className="w-4 h-4 mr-1.5" />
+                  History
+                </TabsTrigger>
+                <TabsTrigger value="actions" className="data-[state=active]:bg-card">
+                  <Settings className="w-4 h-4 mr-1.5" />
+                  Actions
+                </TabsTrigger>
               </TabsList>
               <AmortizationPDF loan={selectedLoan} schedule={selectedLoanDetails?.schedule || []} />
             </div>
@@ -331,6 +346,17 @@ const Loans = () => {
                   markPaidMutation.mutate({ emiId, paidDate, paymentMethod })
                 }
                 isLoading={markPaidMutation.isPending}
+              />
+            </TabsContent>
+
+            <TabsContent value="documents">
+              <LoanDocuments loanId={selectedLoan.id} />
+            </TabsContent>
+
+            <TabsContent value="history">
+              <LoanHistory 
+                loanId={selectedLoan.id} 
+                currency={selectedLoan.country === "USA" ? "USD" : "INR"} 
               />
             </TabsContent>
 
