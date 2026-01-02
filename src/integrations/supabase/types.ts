@@ -98,6 +98,42 @@ export type Database = {
         }
         Relationships: []
       }
+      study_goals: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          start_date: string
+          subject: string
+          target_hours_weekly: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          start_date?: string
+          subject: string
+          target_hours_weekly?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          start_date?: string
+          subject?: string
+          target_hours_weekly?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       study_logs: {
         Row: {
           created_at: string | null
@@ -144,6 +180,81 @@ export type Database = {
           timer_ended_at?: string | null
           timer_started_at?: string | null
           topic?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subject_colors: {
+        Row: {
+          color: string
+          created_at: string | null
+          id: string
+          subject: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          subject: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          subject?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      syllabus_topics: {
+        Row: {
+          chapter_name: string
+          completed_at: string | null
+          created_at: string | null
+          estimated_hours: number | null
+          id: string
+          is_completed: boolean | null
+          notes: string | null
+          priority: number | null
+          sort_order: number | null
+          subject: string
+          topic_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chapter_name: string
+          completed_at?: string | null
+          created_at?: string | null
+          estimated_hours?: number | null
+          id?: string
+          is_completed?: boolean | null
+          notes?: string | null
+          priority?: number | null
+          sort_order?: number | null
+          subject: string
+          topic_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chapter_name?: string
+          completed_at?: string | null
+          created_at?: string | null
+          estimated_hours?: number | null
+          id?: string
+          is_completed?: boolean | null
+          notes?: string | null
+          priority?: number | null
+          sort_order?: number | null
+          subject?: string
+          topic_name?: string
           updated_at?: string | null
           user_id?: string
         }

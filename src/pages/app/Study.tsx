@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { Clock, ChevronDown, Plus, Trash2, Edit2, BarChart3, Timer } from "lucide-react";
+import { Clock, ChevronDown, Plus, Trash2, Edit2, BarChart3, Timer, Target, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +37,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudyInsights } from "@/components/study/StudyInsights";
 import { StudyTimer } from "@/components/study/StudyTimer";
+import { StudyGoals } from "@/components/study/StudyGoals";
+import { SyllabusPlanner } from "@/components/study/SyllabusPlanner";
+import { SubjectColorPicker, useSubjectColors } from "@/components/study/SubjectColorPicker";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 const focusLevels = ["low", "medium", "high"] as const;
@@ -327,6 +330,14 @@ const Study = () => {
           <TabsTrigger value="logs" className="data-[state=active]:bg-card">
             Sessions
           </TabsTrigger>
+          <TabsTrigger value="goals" className="data-[state=active]:bg-card">
+            <Target className="w-4 h-4 mr-1.5" />
+            Goals
+          </TabsTrigger>
+          <TabsTrigger value="syllabus" className="data-[state=active]:bg-card">
+            <BookOpen className="w-4 h-4 mr-1.5" />
+            Syllabus
+          </TabsTrigger>
           <TabsTrigger value="insights" className="data-[state=active]:bg-card">
             <BarChart3 className="w-4 h-4 mr-1.5" />
             Insights
@@ -465,6 +476,14 @@ const Study = () => {
               Add Study Entry
             </Button>
           )}
+        </TabsContent>
+
+        <TabsContent value="goals" className="space-y-6">
+          <StudyGoals studyLogs={studyLogs} />
+        </TabsContent>
+
+        <TabsContent value="syllabus" className="space-y-6">
+          <SyllabusPlanner />
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-6">
