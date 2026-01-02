@@ -1,15 +1,15 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Image, 
@@ -24,17 +24,24 @@ import {
   Trash2,
   Edit,
   Download,
-  Plus,
   Filter,
   SortAsc,
   FolderOpen,
   Layers,
-  X,
   Eye,
   EyeOff,
-  Key
+  Key,
+  Clock,
+  MapPin,
+  Camera,
+  FileArchive
 } from "lucide-react";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
+import { MemorySearch } from "@/components/memory/MemorySearch";
+import { BulkActions } from "@/components/memory/BulkActions";
+import { extractExifData, formatGpsCoords } from "@/components/memory/ExifExtractor";
+import { MemoryExport } from "@/components/memory/MemoryExport";
 
 type Memory = {
   id: string;
@@ -95,7 +102,7 @@ const generateVideoThumbnail = (file: File): Promise<Blob> => {
     const ctx = canvas.getContext('2d');
     
     video.onloadeddata = () => {
-      video.currentTime = 1; // Seek to 1 second
+      video.currentTime = 1;
     };
     
     video.onseeked = () => {
@@ -114,7 +121,7 @@ const generateVideoThumbnail = (file: File): Promise<Blob> => {
   });
 };
 
-// Simple hash function for password (client-side, for demo - use proper hashing in production)
+// Simple hash function for password
 const hashPassword = async (password: string): Promise<string> => {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
@@ -130,6 +137,7 @@ const Memory = () => {
   const [filterType, setFilterType] = useState<"all" | "photo" | "video">("all");
   const [filterCollection, setFilterCollection] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
+  const [searchQuery, setSearchQuery] = useState("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [newCollectionDialogOpen, setNewCollectionDialogOpen] = useState(false);
   const [newFolderDialogOpen, setNewFolderDialogOpen] = useState(false);
@@ -155,6 +163,15 @@ const Memory = () => {
   const [unlockingFolder, setUnlockingFolder] = useState<Folder | null>(null);
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockedFolders, setUnlockedFolders] = useState<Set<string>>(new Set());
+
+  // Bulk selection state
+  const [selectedMemories, setSelectedMemories] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  // Export state
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportType, setExportType] = useState<"single" | "collection" | "full">("full");
+  const [exportCollectionName, setExportCollectionName] = useState<string>("");
 
   // Fetch memories
   const { data: memories = [], isLoading: memoriesLoading } = useQuery({
@@ -198,7 +215,7 @@ const Memory = () => {
     enabled: !!user,
   });
 
-  // Upload memory mutation with thumbnail generation
+  // Upload memory mutation with EXIF extraction
   const uploadMutation = useMutation({
     mutationFn: async ({ files, title }: { files: File[]; title: string }) => {
       if (!user) throw new Error("Not authenticated");
@@ -209,17 +226,26 @@ const Memory = () => {
         const file = files[i];
         setUploadProgress(`Saving memory ${i + 1} of ${files.length}...`);
         
+        // Extract EXIF data for images
+        let exifData = { dateTaken: null as Date | null, latitude: null, longitude: null, make: null, model: null };
+        if (file.type.startsWith("image/")) {
+          setUploadProgress(`Extracting metadata ${i + 1} of ${files.length}...`);
+          exifData = await extractExifData(file);
+        }
+        
         const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const dateToUse = exifData.dateTaken || now;
+        const year = dateToUse.getFullYear();
+        const month = String(dateToUse.getMonth() + 1).padStart(2, "0");
         const memoryId = crypto.randomUUID();
         const ext = file.name.split(".").pop();
-        const datePart = format(now, "yyyy-MM-dd");
+        const datePart = format(dateToUse, "yyyy-MM-dd");
         const titlePart = title || "memory";
         const fileName = `${datePart}_${titlePart.replace(/\s+/g, "_")}_${memoryId.slice(0, 8)}.${ext}`;
         
         const storagePath = `${user.id}/${year}/${month}/${memoryId}/${fileName}`;
         
+        setUploadProgress(`Uploading ${i + 1} of ${files.length}...`);
         const { error: uploadError } = await supabase.storage
           .from("memories")
           .upload(storagePath, file);
@@ -256,9 +282,22 @@ const Memory = () => {
           console.log("Thumbnail generation failed, using original");
         }
         
+        // Build description with EXIF info
+        let description = "";
+        if (exifData.make && exifData.model) {
+          description += `📷 ${exifData.make} ${exifData.model}`;
+        }
+        if (exifData.latitude && exifData.longitude) {
+          const coords = formatGpsCoords(exifData.latitude, exifData.longitude);
+          if (coords) {
+            description += description ? ` • 📍 ${coords}` : `📍 ${coords}`;
+          }
+        }
+        
         const { error: dbError } = await supabase.from("memories").insert({
           user_id: user.id,
           title: title || null,
+          description: description || null,
           media_type: mediaType,
           file_url: urlData.publicUrl,
           thumbnail_url: thumbnailUrl,
@@ -345,6 +384,38 @@ const Memory = () => {
     },
   });
 
+  // Bulk update collection mutation
+  const bulkUpdateCollectionMutation = useMutation({
+    mutationFn: async ({ ids, collection_id }: { ids: string[]; collection_id: string | null }) => {
+      const { error } = await supabase.from("memories")
+        .update({ collection_id })
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memories"] });
+      setSelectedMemories(new Set());
+      setIsSelectionMode(false);
+      toast({ title: "Memories updated" });
+    },
+  });
+
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("memories")
+        .delete()
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memories"] });
+      setSelectedMemories(new Set());
+      setIsSelectionMode(false);
+      toast({ title: "Memories deleted" });
+    },
+  });
+
   // Lock folder mutation
   const lockFolderMutation = useMutation({
     mutationFn: async ({ folderId, password }: { folderId: string; password: string }) => {
@@ -388,20 +459,6 @@ const Memory = () => {
     },
   });
 
-  // Remove lock from folder
-  const removeFolderLockMutation = useMutation({
-    mutationFn: async (folderId: string) => {
-      const { error } = await supabase.from("memory_folders")
-        .update({ is_locked: false, lock_hash: null })
-        .eq("id", folderId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["memory_folders"] });
-      toast({ title: "Folder lock removed" });
-    },
-  });
-
   // Delete memory mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -439,19 +496,41 @@ const Memory = () => {
     setEditDialogOpen(true);
   };
 
-  // Filter and sort memories
-  const filteredMemories = memories
-    .filter((m) => {
-      if (filterType !== "all" && m.media_type !== filterType) return false;
-      if (filterCollection !== "all" && m.collection_id !== filterCollection) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === "date") {
-        return new Date(b.created_date).getTime() - new Date(a.created_date).getTime();
+  // Toggle memory selection
+  const toggleMemorySelection = (id: string) => {
+    setSelectedMemories((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
       }
-      return (a.title || a.file_name).localeCompare(b.title || b.file_name);
+      return next;
     });
+  };
+
+  // Filter and sort memories with search
+  const filteredMemories = useMemo(() => {
+    return memories
+      .filter((m) => {
+        if (filterType !== "all" && m.media_type !== filterType) return false;
+        if (filterCollection !== "all" && m.collection_id !== filterCollection) return false;
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          const titleMatch = m.title?.toLowerCase().includes(query);
+          const descMatch = m.description?.toLowerCase().includes(query);
+          const fileMatch = m.file_name.toLowerCase().includes(query);
+          if (!titleMatch && !descMatch && !fileMatch) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "date") {
+          return new Date(b.created_date).getTime() - new Date(a.created_date).getTime();
+        }
+        return (a.title || a.file_name).localeCompare(b.title || b.file_name);
+      });
+  }, [memories, filterType, filterCollection, sortBy, searchQuery]);
 
   const stats = {
     total: memories.length,
@@ -473,6 +552,23 @@ const Memory = () => {
           <p className="text-sm text-muted-foreground mt-1">Your private archive</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/app/memory/timeline">
+              <Clock className="w-4 h-4 mr-2" />
+              Timeline
+            </Link>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              setExportType("full");
+              setExportDialogOpen(true);
+            }}
+          >
+            <FileArchive className="w-4 h-4 mr-2" />
+            Backup
+          </Button>
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -510,6 +606,10 @@ const Memory = () => {
                   value={uploadTitle}
                   onChange={(e) => setUploadTitle(e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground flex items-center gap-2">
+                  <Camera className="w-3 h-3" />
+                  Dates and location will be extracted from photo metadata
+                </p>
                 {uploadProgress && (
                   <p className="text-sm text-muted-foreground text-center">{uploadProgress}</p>
                 )}
@@ -637,7 +737,7 @@ const Memory = () => {
               return (
                 <Card 
                   key={folder.id} 
-                  className="cursor-pointer hover:bg-accent/30 transition-colors"
+                  className="cursor-pointer hover:bg-accent/30 transition-colors group"
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -699,8 +799,9 @@ const Memory = () => {
         </div>
       )}
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <div className="flex flex-wrap items-center gap-3">
+        <MemorySearch value={searchQuery} onChange={setSearchQuery} />
         <Select value={filterType} onValueChange={(v: "all" | "photo" | "video") => setFilterType(v)}>
           <SelectTrigger className="w-32">
             <Filter className="w-4 h-4 mr-2" />
@@ -735,6 +836,16 @@ const Memory = () => {
           </SelectContent>
         </Select>
         <div className="flex-1" />
+        <Button
+          variant={isSelectionMode ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => {
+            setIsSelectionMode(!isSelectionMode);
+            if (isSelectionMode) setSelectedMemories(new Set());
+          }}
+        >
+          {isSelectionMode ? "Cancel Selection" : "Select"}
+        </Button>
         <div className="flex items-center gap-1 border border-border rounded-md p-1">
           <Button
             variant={viewMode === "grid" ? "secondary" : "ghost"}
@@ -762,92 +873,154 @@ const Memory = () => {
         <Card className="bg-card/30 border-dashed">
           <CardContent className="py-12 text-center">
             <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No memories yet</p>
+            <p className="text-muted-foreground">
+              {searchQuery ? "No memories match your search" : "No memories yet"}
+            </p>
             <p className="text-sm text-muted-foreground/70 mt-1">
-              Drag and drop photos or videos here
+              {searchQuery ? "Try a different search term" : "Drag and drop photos or videos here"}
             </p>
           </CardContent>
         </Card>
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {filteredMemories.map((memory) => (
-            <div
-              key={memory.id}
-              className="group relative aspect-square bg-accent/20 rounded-lg overflow-hidden cursor-pointer hover:ring-2 ring-primary/20 transition-all"
-              onClick={() => setSelectedMemory(memory)}
-            >
-              {memory.media_type === "photo" ? (
-                <img
-                  src={memory.thumbnail_url || memory.file_url}
-                  alt={memory.title || memory.file_name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                memory.thumbnail_url ? (
+          {filteredMemories.map((memory) => {
+            const isSelected = selectedMemories.has(memory.id);
+            return (
+              <div
+                key={memory.id}
+                className={`group relative aspect-square bg-accent/20 rounded-lg overflow-hidden cursor-pointer transition-all ${
+                  isSelected ? "ring-2 ring-primary" : "hover:ring-2 ring-primary/20"
+                }`}
+                onClick={() => {
+                  if (isSelectionMode) {
+                    toggleMemorySelection(memory.id);
+                  } else {
+                    setSelectedMemory(memory);
+                  }
+                }}
+              >
+                {isSelectionMode && (
+                  <div className="absolute top-2 left-2 z-10">
+                    <Checkbox
+                      checked={isSelected}
+                      className="bg-background/80"
+                      onClick={(e) => e.stopPropagation()}
+                      onCheckedChange={() => toggleMemorySelection(memory.id)}
+                    />
+                  </div>
+                )}
+                {memory.media_type === "photo" ? (
                   <img
-                    src={memory.thumbnail_url}
+                    src={memory.thumbnail_url || memory.file_url}
                     alt={memory.title || memory.file_name}
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-accent/40">
-                    <Video className="w-10 h-10 text-muted-foreground" />
+                  memory.thumbnail_url ? (
+                    <img
+                      src={memory.thumbnail_url}
+                      alt={memory.title || memory.file_name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-accent/40">
+                      <Video className="w-10 h-10 text-muted-foreground" />
+                    </div>
+                  )
+                )}
+                {memory.media_type === "video" && (
+                  <div className="absolute top-2 left-2">
+                    <Video className="w-4 h-4 text-white drop-shadow" />
                   </div>
-                )
-              )}
-              {memory.media_type === "video" && (
-                <div className="absolute top-2 left-2">
-                  <Video className="w-4 h-4 text-white drop-shadow" />
+                )}
+                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p className="text-xs text-white truncate">{memory.title || format(new Date(memory.created_date), "MMM d, yyyy")}</p>
                 </div>
-              )}
-              <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                <p className="text-xs text-white truncate">{memory.title || format(new Date(memory.created_date), "MMM d, yyyy")}</p>
+                {memory.is_locked && (
+                  <div className="absolute top-2 right-2">
+                    <Lock className="w-4 h-4 text-white drop-shadow" />
+                  </div>
+                )}
               </div>
-              {memory.is_locked && (
-                <div className="absolute top-2 right-2">
-                  <Lock className="w-4 h-4 text-white drop-shadow" />
-                </div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredMemories.map((memory) => (
-            <Card
-              key={memory.id}
-              className="cursor-pointer hover:bg-accent/30 transition-colors"
-              onClick={() => setSelectedMemory(memory)}
-            >
-              <CardContent className="p-3 flex items-center gap-4">
-                <div className="w-16 h-16 bg-accent/30 rounded-md overflow-hidden flex-shrink-0">
-                  {memory.thumbnail_url ? (
-                    <img src={memory.thumbnail_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  ) : memory.media_type === "photo" ? (
-                    <img src={memory.file_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Video className="w-6 h-6 text-muted-foreground" />
-                    </div>
+          {filteredMemories.map((memory) => {
+            const isSelected = selectedMemories.has(memory.id);
+            return (
+              <Card
+                key={memory.id}
+                className={`cursor-pointer transition-colors ${
+                  isSelected ? "ring-2 ring-primary" : "hover:bg-accent/30"
+                }`}
+                onClick={() => {
+                  if (isSelectionMode) {
+                    toggleMemorySelection(memory.id);
+                  } else {
+                    setSelectedMemory(memory);
+                  }
+                }}
+              >
+                <CardContent className="p-3 flex items-center gap-4">
+                  {isSelectionMode && (
+                    <Checkbox
+                      checked={isSelected}
+                      onClick={(e) => e.stopPropagation()}
+                      onCheckedChange={() => toggleMemorySelection(memory.id)}
+                    />
                   )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{memory.title || memory.file_name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {format(new Date(memory.created_date), "MMMM d, yyyy")}
-                  </p>
-                </div>
-                <Badge variant="secondary" className="capitalize">
-                  {memory.media_type}
-                </Badge>
-                {memory.is_locked && <Lock className="w-4 h-4 text-muted-foreground" />}
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="w-16 h-16 bg-accent/30 rounded-md overflow-hidden flex-shrink-0">
+                    {memory.thumbnail_url ? (
+                      <img src={memory.thumbnail_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    ) : memory.media_type === "photo" ? (
+                      <img src={memory.file_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Video className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{memory.title || memory.file_name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {format(new Date(memory.created_date), "MMMM d, yyyy")}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="capitalize">
+                    {memory.media_type}
+                  </Badge>
+                  {memory.is_locked && <Lock className="w-4 h-4 text-muted-foreground" />}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
+
+      {/* Bulk Actions */}
+      <BulkActions
+        selectedCount={selectedMemories.size}
+        collections={collections}
+        onMoveToCollection={(collectionId) => {
+          bulkUpdateCollectionMutation.mutate({
+            ids: Array.from(selectedMemories),
+            collection_id: collectionId === "none" ? null : collectionId,
+          });
+        }}
+        onDelete={() => {
+          bulkDeleteMutation.mutate(Array.from(selectedMemories));
+        }}
+        onClearSelection={() => {
+          setSelectedMemories(new Set());
+          setIsSelectionMode(false);
+        }}
+        isDeleting={bulkDeleteMutation.isPending}
+        isMoving={bulkUpdateCollectionMutation.isPending}
+      />
 
       {/* Memory Detail Dialog */}
       <Dialog open={!!selectedMemory && !editDialogOpen} onOpenChange={() => setSelectedMemory(null)}>
@@ -1005,6 +1178,9 @@ const Memory = () => {
               {showLockPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </Button>
           </div>
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            ⚠️ If you forget this password, the folder contents cannot be recovered.
+          </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setLockFolderDialogOpen(false)}>Cancel</Button>
             <Button
@@ -1058,6 +1234,17 @@ const Memory = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Export Dialog */}
+      <MemoryExport
+        open={exportDialogOpen}
+        onClose={() => setExportDialogOpen(false)}
+        memories={memories}
+        collections={collections}
+        exportType={exportType}
+        collectionName={exportCollectionName}
+        memory={selectedMemory || undefined}
+      />
     </div>
   );
 };

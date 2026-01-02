@@ -21,6 +21,7 @@ import Achievements from "./pages/app/Achievements";
 import Activity from "./pages/app/Activity";
 import Settings from "./pages/app/Settings";
 import Memory from "./pages/app/Memory";
+import MemoryTimeline from "./pages/app/MemoryTimeline";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
                 <Route path="activity" element={<Activity />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="memory" element={<Memory />} />
+                <Route path="memory/timeline" element={<MemoryTimeline />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
