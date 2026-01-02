@@ -233,69 +233,61 @@ const Lifespan = () => {
       {/* Main Visualization */}
       <LifespanBar daysLived={lifespan.daysLived} daysRemaining={lifespan.daysRemaining} />
 
-      {/* Live Ticker */}
+      {/* Live Counter - Matching Reference Design */}
       <div className="bg-card border border-border rounded-lg p-6">
         <div className="flex items-center gap-2 mb-6">
-          <Clock className="w-4 h-4 text-vyom-accent animate-pulse" />
+          <Clock className="w-4 h-4 text-muted-foreground" />
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
             Live Counter
           </h3>
         </div>
         
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-background border border-border rounded-lg p-4">
-            <div className="text-center">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-mono font-bold text-vyom-accent tabular-nums leading-tight">
-                {lifespan.secondsLived.toLocaleString()}
-              </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-2">Seconds Lived</p>
-            </div>
+          <div className="bg-muted/30 rounded-xl p-6 text-center">
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-light text-foreground tabular-nums tracking-tight">
+              {lifespan.secondsLived.toLocaleString()}
+            </p>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-3">Seconds Lived</p>
           </div>
-          <div className="bg-background border border-border rounded-lg p-4">
-            <div className="text-center">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-mono font-bold text-foreground tabular-nums leading-tight">
-                {lifespan.minutesLived.toLocaleString()}
-              </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-2">Minutes Lived</p>
-            </div>
+          <div className="bg-muted/30 rounded-xl p-6 text-center">
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-light text-foreground tabular-nums tracking-tight">
+              {lifespan.minutesLived.toLocaleString()}
+            </p>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-3">Minutes Lived</p>
           </div>
-          <div className="bg-background border border-border rounded-lg p-4">
-            <div className="text-center">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-mono font-bold text-foreground tabular-nums leading-tight">
-                {lifespan.hoursLived.toLocaleString()}
-              </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-2">Hours Lived</p>
-            </div>
+          <div className="bg-muted/30 rounded-xl p-6 text-center">
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-light text-foreground tabular-nums tracking-tight">
+              {lifespan.hoursLived.toLocaleString()}
+            </p>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-3">Hours Lived</p>
           </div>
-          <div className="bg-background border border-border rounded-lg p-4">
-            <div className="text-center">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-mono font-bold text-foreground tabular-nums leading-tight">
-                {lifespan.daysLived.toLocaleString()}
-              </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-2">Days Lived</p>
-            </div>
+          <div className="bg-muted/30 rounded-xl p-6 text-center">
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-light text-foreground tabular-nums tracking-tight">
+              {lifespan.daysLived.toLocaleString()}
+            </p>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-3">Days Lived</p>
           </div>
         </div>
 
         {/* Remaining Time */}
-        <div className="mt-6 pt-6 border-t border-border">
+        <div className="mt-8 pt-6 border-t border-border">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Time Remaining (Target: {targetAge} years)</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="text-center p-3 bg-background rounded-lg border border-border">
-              <p className="text-xl sm:text-2xl font-semibold text-foreground">{lifespan.yearsRemaining}</p>
-              <p className="text-xs text-muted-foreground mt-1">Years</p>
+            <div className="text-center p-4 bg-muted/20 rounded-xl">
+              <p className="text-2xl sm:text-3xl font-light text-foreground">{lifespan.yearsRemaining}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-2">Years</p>
             </div>
-            <div className="text-center p-3 bg-background rounded-lg border border-border">
-              <p className="text-xl sm:text-2xl font-semibold text-foreground">{lifespan.daysRemaining.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-1">Days</p>
+            <div className="text-center p-4 bg-muted/20 rounded-xl">
+              <p className="text-2xl sm:text-3xl font-light text-foreground">{lifespan.daysRemaining.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-2">Days</p>
             </div>
-            <div className="text-center p-3 bg-background rounded-lg border border-border">
-              <p className="text-xl sm:text-2xl font-semibold text-foreground">{lifespan.hoursRemaining.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-1">Hours</p>
+            <div className="text-center p-4 bg-muted/20 rounded-xl">
+              <p className="text-2xl sm:text-3xl font-light text-foreground">{lifespan.hoursRemaining.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-2">Hours</p>
             </div>
-            <div className="text-center p-3 bg-background rounded-lg border border-border">
-              <p className="text-xl sm:text-2xl font-semibold text-foreground">{lifespan.secondsRemaining.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-1">Seconds</p>
+            <div className="text-center p-4 bg-muted/20 rounded-xl">
+              <p className="text-2xl sm:text-3xl font-light text-foreground">{lifespan.secondsRemaining.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-2">Seconds</p>
             </div>
           </div>
         </div>
