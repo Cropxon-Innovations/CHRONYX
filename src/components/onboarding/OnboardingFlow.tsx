@@ -19,27 +19,27 @@ interface OnboardingFlowProps {
 const STEPS = [
   {
     id: 1,
-    title: "Welcome to VYOM",
+    title: "Welcome to CHRONYX",
     subtitle: "A quiet space for your life.",
-    description: "Your personal sanctuary for organizing everything that matters.",
+    description: "Your personal sanctuary for holding everything that matters — with continuity.",
     icon: Sparkles,
     sketch: "◎",
     color: "from-primary/20 to-transparent"
   },
   {
     id: 2,
-    title: "Track Your Tasks",
+    title: "Record Your Tasks",
     subtitle: "Simple daily planning",
-    description: "Organize todos by date, set priorities, and build productive routines.",
+    description: "Organize todos by date, set priorities, and build quiet routines.",
     icon: CheckSquare,
     sketch: "M",
     color: "from-emerald-500/20 to-transparent"
   },
   {
     id: 3,
-    title: "Master Your Studies",
+    title: "Hold Your Studies",
     subtitle: "Syllabus at a glance",
-    description: "Upload syllabi, track progress, and optimize your learning journey.",
+    description: "Upload syllabi, track progress, and hold your learning journey.",
     icon: BookOpen,
     sketch: "◇",
     color: "from-blue-500/20 to-transparent"
@@ -57,7 +57,7 @@ const STEPS = [
     id: 5,
     title: "Insurance Hub",
     subtitle: "Policies organized",
-    description: "Never miss a renewal. All your insurance in one secure place.",
+    description: "Never miss a renewal. All your insurance in one private place.",
     icon: Heart,
     sketch: "○",
     color: "from-rose-500/20 to-transparent"
@@ -73,8 +73,8 @@ const STEPS = [
   },
   {
     id: 7,
-    title: "Lifespan View",
-    subtitle: "Time perspective",
+    title: "Time Perspective",
+    subtitle: "Your lifespan view",
     description: "See your life in weeks. Make each one count.",
     icon: Clock,
     sketch: "◉",
@@ -280,7 +280,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
                 </>
               ) : (
                 <>
-                  Enter VYOM
+                  Enter CHRONYX
                   <Sparkles className="ml-2 h-4 w-4" />
                 </>
               )}

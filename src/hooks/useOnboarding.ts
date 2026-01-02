@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-const ONBOARDING_KEY = "vyom_onboarding_complete";
+const ONBOARDING_KEY = "chronyx_onboarding_complete";
 
 export const useOnboarding = () => {
   const { user } = useAuth();

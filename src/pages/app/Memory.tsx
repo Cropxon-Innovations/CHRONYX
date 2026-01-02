@@ -195,6 +195,9 @@ const Memory = () => {
   // Dragging memory state
   const [draggingMemoryId, setDraggingMemoryId] = useState<string | null>(null);
 
+  // Nested folder navigation state
+  const [currentParentFolderId, setCurrentParentFolderId] = useState<string | null>(null);
+
   // Fetch memories
   const { data: memories = [], isLoading: memoriesLoading } = useQuery({
     queryKey: ["memories", user?.id],
@@ -433,15 +436,16 @@ const Memory = () => {
     },
   });
 
-  // Create folder mutation
+  // Create folder mutation - supports nested subfolders
   const createFolderMutation = useMutation({
-    mutationFn: async ({ name, color, icon }: { name: string; color: string; icon: string }) => {
+    mutationFn: async ({ name, color, icon, parentFolderId }: { name: string; color: string; icon: string; parentFolderId?: string | null }) => {
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("memory_folders").insert({
         user_id: user.id,
         name,
         color,
         icon,
+        parent_folder_id: parentFolderId || null,
       });
       if (error) throw error;
     },
@@ -451,6 +455,7 @@ const Memory = () => {
       setNewFolderName("");
       setNewFolderColor("bg-accent/30");
       setNewFolderIcon("Default");
+      setCurrentParentFolderId(null);
       toast({ title: "Folder created" });
     },
   });

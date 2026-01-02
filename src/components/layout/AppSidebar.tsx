@@ -228,7 +228,7 @@ const AppSidebar = () => {
           <div className="flex items-center justify-between mb-3">
             {!collapsed && (
               <Link to="/app" className="text-xl font-light tracking-[0.25em] text-sidebar-foreground" onClick={closeMobile}>
-                VYOM
+                CHRONYX
               </Link>
             )}
             <div className="flex items-center gap-1">
@@ -471,7 +471,7 @@ const AppSidebar = () => {
               {/* Branding and Version */}
               <div className="pt-2 space-y-1 text-center">
                 <div className="text-[10px] text-sidebar-foreground/30">
-                  Vyom By CropXon Innovations Pvt Ltd
+                  CHRONYX by CROPXON
                 </div>
                 <div className="text-[10px] text-sidebar-foreground/20 font-mono">
                   V1.0.0
