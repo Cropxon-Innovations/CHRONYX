@@ -44,11 +44,11 @@ import { BulkActions } from "@/components/memory/BulkActions";
 import { extractExifData, formatGpsCoords } from "@/components/memory/ExifExtractor";
 import { MemoryExport } from "@/components/memory/MemoryExport";
 import { MemorySlideshow } from "@/components/memory/MemorySlideshow";
-import { FolderCard, FOLDER_COLORS, FOLDER_ICONS } from "@/components/memory/FolderCard";
+import { FolderCard as _FolderCard } from "@/components/memory/FolderCard";
+import { AnimatedFolderCard, FOLDER_COLORS, FOLDER_ICONS } from "@/components/memory/AnimatedFolderCard";
 import { CollectionCard } from "@/components/memory/CollectionCard";
 import { MemoryMap } from "@/components/memory/MemoryMap";
 import { GalleryView, GalleryViewMode } from "@/components/memory/GalleryView";
-import { encryptFile, deriveKey } from "@/utils/crypto";
 
 type Memory = {
   id: string;
@@ -455,9 +455,14 @@ const Memory = () => {
 
   // Update folder mutation
   const updateFolderMutation = useMutation({
-    mutationFn: async ({ id, color, icon }: { id: string; color?: string; icon?: string }) => {
+    mutationFn: async ({ id, color, icon, name }: { id: string; color?: string; icon?: string; name?: string }) => {
+      const updateData: Record<string, unknown> = {};
+      if (color !== undefined) updateData.color = color;
+      if (icon !== undefined) updateData.icon = icon;
+      if (name !== undefined) updateData.name = name;
+
       const { error } = await supabase.from("memory_folders")
-        .update({ color, icon })
+        .update(updateData)
         .eq("id", id);
       if (error) throw error;
     },
@@ -1028,18 +1033,19 @@ const Memory = () => {
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
             Folders {draggingMemoryId && <span className="text-primary">(Drop memory here)</span>}
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))]">
             {folders.map((folder) => {
               const isUnlocked = unlockedFolders.has(folder.id);
               return (
-                <div 
+                <div
                   key={folder.id}
                   onDrop={(e) => handleFolderDrop(folder.id, e)}
                   onDragOver={(e) => e.preventDefault()}
                 >
-                  <FolderCard
+                  <AnimatedFolderCard
                     folder={folder}
                     isUnlocked={isUnlocked}
+                    isOpen={isUnlocked}
                     onLock={() => {
                       setLockingFolder(folder);
                       setLockFolderDialogOpen(true);
@@ -1049,7 +1055,7 @@ const Memory = () => {
                       setUnlockDialogOpen(true);
                     }}
                     onRelock={() => {
-                      setUnlockedFolders(prev => {
+                      setUnlockedFolders((prev) => {
                         const next = new Set(prev);
                         next.delete(folder.id);
                         return next;
