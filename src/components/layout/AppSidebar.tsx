@@ -33,6 +33,8 @@ import {
   CheckCircle2,
   AlertCircle,
   User,
+  FileText,
+  Users,
 } from "lucide-react";
 import {
   Dialog,
@@ -55,6 +57,8 @@ const navItems = [
   { path: "/app/todos", label: "Todos", icon: CheckSquare },
   { path: "/app/study", label: "Study", icon: BookOpen },
   { path: "/app/memory", label: "Memory", icon: ImageIcon },
+  { path: "/app/documents", label: "Documents", icon: FileText },
+  { path: "/app/social", label: "Social", icon: Users },
   { path: "/app/expenses", label: "Expenses", icon: Receipt },
   { path: "/app/income", label: "Income", icon: TrendingUp },
   { path: "/app/reports", label: "Reports & Budget", icon: Activity },
