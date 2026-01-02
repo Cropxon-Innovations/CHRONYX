@@ -847,6 +847,45 @@ export type Database = {
         }
         Relationships: []
       }
+      savings_goals: {
+        Row: {
+          category: string
+          created_at: string
+          current_amount: number
+          deadline: string | null
+          goal_name: string
+          id: string
+          is_active: boolean
+          target_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          current_amount?: number
+          deadline?: string | null
+          goal_name: string
+          id?: string
+          is_active?: boolean
+          target_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current_amount?: number
+          deadline?: string | null
+          goal_name?: string
+          id?: string
+          is_active?: boolean
+          target_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       study_goals: {
         Row: {
           created_at: string | null
@@ -1061,6 +1100,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      weekly_study_schedule: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_active: boolean
+          start_time: string
+          subject: string
+          topic_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_active?: boolean
+          start_time: string
+          subject: string
+          topic_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          start_time?: string
+          subject?: string
+          topic_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_study_schedule_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "syllabus_topics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

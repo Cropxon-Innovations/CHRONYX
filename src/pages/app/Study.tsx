@@ -43,6 +43,7 @@ import { SubjectColorPicker, useSubjectColors } from "@/components/study/Subject
 import { SpacedRepetition } from "@/components/study/SpacedRepetition";
 import { StudyNotes } from "@/components/study/StudyNotes";
 import { StudyDataExport } from "@/components/study/StudyDataExport";
+import { WeeklySchedulePlanner } from "@/components/study/WeeklySchedulePlanner";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 const focusLevels = ["low", "medium", "high"] as const;
@@ -348,6 +349,10 @@ const Study = () => {
             <BookOpen className="w-4 h-4 mr-1.5" />
             Syllabus
           </TabsTrigger>
+          <TabsTrigger value="schedule" className="data-[state=active]:bg-card">
+            <Clock className="w-4 h-4 mr-1.5" />
+            Schedule
+          </TabsTrigger>
           <TabsTrigger value="review" className="data-[state=active]:bg-card">
             <Brain className="w-4 h-4 mr-1.5" />
             Review
@@ -502,6 +507,10 @@ const Study = () => {
 
         <TabsContent value="syllabus" className="space-y-6">
           <SyllabusPlanner />
+        </TabsContent>
+
+        <TabsContent value="schedule" className="space-y-6">
+          <WeeklySchedulePlanner />
         </TabsContent>
 
         <TabsContent value="review" className="space-y-6">

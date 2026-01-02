@@ -18,6 +18,7 @@ import IncomeSourcesList from "@/components/income/IncomeSourcesList";
 import IncomeEntriesList from "@/components/income/IncomeEntriesList";
 import AddIncomeSourceForm from "@/components/income/AddIncomeSourceForm";
 import AddIncomeEntryForm from "@/components/income/AddIncomeEntryForm";
+import { SavingsGoals } from "@/components/savings/SavingsGoals";
 
 interface IncomeStats {
   monthTotal: number;

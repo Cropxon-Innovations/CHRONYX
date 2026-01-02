@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,9 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useActivityLog } from "@/hooks/useActivityLog";
-import { Calendar } from "@/components/ui/calendar";
+import { EnhancedCalendar } from "@/components/ui/date-picker-enhanced";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, differenceInYears, differenceInMonths, differenceInDays } from "date-fns";
 import { CalendarIcon, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DataExport } from "@/components/export/DataExport";
@@ -160,16 +160,58 @@ const Settings = () => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
+                <EnhancedCalendar
                   mode="single"
                   selected={birthDate}
                   onSelect={setBirthDate}
                   disabled={(date) => date > new Date()}
-                  initialFocus
-                  className="pointer-events-auto"
+                  fromYear={1920}
+                  toYear={new Date().getFullYear()}
                 />
               </PopoverContent>
             </Popover>
+            
+            {/* Exact Age Display */}
+            {birthDate && (
+              <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-border">
+                <p className="text-xs text-muted-foreground mb-2">Your Exact Age</p>
+                <div className="flex items-center gap-4">
+                  {(() => {
+                    const now = new Date();
+                    const years = differenceInYears(now, birthDate);
+                    const monthsAfterYears = differenceInMonths(now, birthDate) % 12;
+                    const lastBirthday = new Date(
+                      now.getFullYear(),
+                      birthDate.getMonth(),
+                      birthDate.getDate()
+                    );
+                    if (lastBirthday > now) {
+                      lastBirthday.setFullYear(lastBirthday.getFullYear() - 1);
+                    }
+                    const nextMonthDate = new Date(lastBirthday);
+                    nextMonthDate.setMonth(lastBirthday.getMonth() + monthsAfterYears);
+                    const days = differenceInDays(now, nextMonthDate);
+                    
+                    return (
+                      <>
+                        <div className="text-center">
+                          <p className="text-2xl font-light text-foreground">{years}</p>
+                          <p className="text-xs text-muted-foreground">Years</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-light text-foreground">{monthsAfterYears}</p>
+                          <p className="text-xs text-muted-foreground">Months</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-light text-foreground">{Math.abs(days)}</p>
+                          <p className="text-xs text-muted-foreground">Days</p>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -187,19 +229,6 @@ const Settings = () => {
             />
           </div>
         </div>
-
-        {birthDate && (
-          <div className="bg-muted/50 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground">
-              Based on your birth date, you have lived approximately{" "}
-              <span className="font-semibold text-foreground">
-                {Math.floor((new Date().getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 365))}
-              </span>{" "}
-              years. Your lifespan visualizations will use{" "}
-              <span className="font-semibold text-foreground">{targetAge}</span> as the target age.
-            </p>
-          </div>
-        )}
       </section>
 
       {/* Data Export Section */}
