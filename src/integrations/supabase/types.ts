@@ -223,6 +223,249 @@ export type Database = {
           },
         ]
       }
+      family_members: {
+        Row: {
+          created_at: string
+          date_of_birth: string | null
+          full_name: string
+          id: string
+          notes: string | null
+          relation: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth?: string | null
+          full_name: string
+          id?: string
+          notes?: string | null
+          relation: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string | null
+          full_name?: string
+          id?: string
+          notes?: string | null
+          relation?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      insurance_claim_documents: {
+        Row: {
+          claim_id: string
+          document_type: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id: string
+          uploaded_at: string
+        }
+        Insert: {
+          claim_id: string
+          document_type?: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id?: string
+          uploaded_at?: string
+        }
+        Update: {
+          claim_id?: string
+          document_type?: string
+          file_name?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claim_documents_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_claims: {
+        Row: {
+          approved_amount: number | null
+          claim_date: string
+          claim_reference_no: string | null
+          claim_type: string
+          claimed_amount: number
+          created_at: string
+          id: string
+          insurance_id: string
+          insured_member_id: string | null
+          notes: string | null
+          settled_amount: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_amount?: number | null
+          claim_date: string
+          claim_reference_no?: string | null
+          claim_type: string
+          claimed_amount: number
+          created_at?: string
+          id?: string
+          insurance_id: string
+          insured_member_id?: string | null
+          notes?: string | null
+          settled_amount?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_amount?: number | null
+          claim_date?: string
+          claim_reference_no?: string | null
+          claim_type?: string
+          claimed_amount?: number
+          created_at?: string
+          id?: string
+          insurance_id?: string
+          insured_member_id?: string | null
+          notes?: string | null
+          settled_amount?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_claims_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "insurances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insurance_claims_insured_member_id_fkey"
+            columns: ["insured_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurance_documents: {
+        Row: {
+          document_type: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id: string
+          insurance_id: string
+          uploaded_at: string
+          year: number | null
+        }
+        Insert: {
+          document_type?: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id?: string
+          insurance_id: string
+          uploaded_at?: string
+          year?: number | null
+        }
+        Update: {
+          document_type?: string
+          file_name?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          insurance_id?: string
+          uploaded_at?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_documents_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "insurances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurances: {
+        Row: {
+          created_at: string
+          id: string
+          insured_member_id: string | null
+          insured_type: string
+          notes: string | null
+          policy_name: string
+          policy_number: string
+          policy_type: string
+          premium_amount: number
+          provider: string
+          renewal_date: string
+          start_date: string
+          status: string
+          sum_assured: number
+          updated_at: string
+          user_id: string
+          vehicle_registration: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          insured_member_id?: string | null
+          insured_type?: string
+          notes?: string | null
+          policy_name: string
+          policy_number: string
+          policy_type: string
+          premium_amount: number
+          provider: string
+          renewal_date: string
+          start_date: string
+          status?: string
+          sum_assured: number
+          updated_at?: string
+          user_id: string
+          vehicle_registration?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          insured_member_id?: string | null
+          insured_type?: string
+          notes?: string | null
+          policy_name?: string
+          policy_number?: string
+          policy_type?: string
+          premium_amount?: number
+          provider?: string
+          renewal_date?: string
+          start_date?: string
+          status?: string
+          sum_assured?: number
+          updated_at?: string
+          user_id?: string
+          vehicle_registration?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurances_insured_member_id_fkey"
+            columns: ["insured_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_documents: {
         Row: {
           document_type: string | null
