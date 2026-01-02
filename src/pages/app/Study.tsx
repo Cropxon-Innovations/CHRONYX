@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { BookOpen, Clock, ChevronDown, Plus, Trash2, Edit2 } from "lucide-react";
+import { Clock, ChevronDown, Plus, Trash2, Edit2, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from "date-fns";
+import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, differenceInDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import {
   Select,
@@ -23,8 +23,37 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
 
-const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "Other"];
+const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
+const focusLevels = ["low", "medium", "high"] as const;
+
+type FocusLevel = typeof focusLevels[number];
+
+// Focus level colors - muted and subtle
+const focusColors: Record<FocusLevel, string> = {
+  low: "bg-stone-300 dark:bg-stone-600",
+  medium: "bg-slate-400 dark:bg-slate-500",
+  high: "bg-emerald-300/70 dark:bg-emerald-700/50",
+};
+
+const focusLabels: Record<FocusLevel, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+};
 
 const Study = () => {
   const { user } = useAuth();
@@ -36,12 +65,16 @@ const Study = () => {
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
   const [isAddingLog, setIsAddingLog] = useState(false);
   const [editingLog, setEditingLog] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("logs");
   
   // Form state
-  const [subject, setSubject] = useState("Programming");
-  const [duration, setDuration] = useState("");
-  const [notes, setNotes] = useState("");
   const [logDate, setLogDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [subject, setSubject] = useState("Programming");
+  const [topic, setTopic] = useState("");
+  const [duration, setDuration] = useState("");
+  const [focusLevel, setFocusLevel] = useState<FocusLevel>("medium");
+  const [notes, setNotes] = useState("");
 
   // Fetch study logs
   const { data: studyLogs = [], isLoading } = useQuery({
@@ -58,14 +91,60 @@ const Study = () => {
     enabled: !!user,
   });
 
+  // Calculate metrics
+  const metrics = useMemo(() => {
+    const now = new Date();
+    const today = format(now, "yyyy-MM-dd");
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+    
+    const todayMinutes = studyLogs
+      .filter(log => log.date === today)
+      .reduce((acc, log) => acc + log.duration, 0);
+    
+    const weeklyLogs = studyLogs.filter(log => {
+      const logDate = parseISO(log.date);
+      return isWithinInterval(logDate, { start: weekStart, end: weekEnd });
+    });
+    
+    const weekMinutes = weeklyLogs.reduce((acc, log) => acc + log.duration, 0);
+    
+    // Calculate streak
+    let streak = 0;
+    let checkDate = now;
+    const logDates = new Set(studyLogs.map(log => log.date));
+    
+    while (logDates.has(format(checkDate, "yyyy-MM-dd"))) {
+      streak++;
+      checkDate = subDays(checkDate, 1);
+    }
+    
+    // Primary focus (most studied subject in last 7 days)
+    const last7Days = studyLogs.filter(log => {
+      const logDate = parseISO(log.date);
+      return differenceInDays(now, logDate) <= 7;
+    });
+    
+    const subjectTotals: Record<string, number> = {};
+    last7Days.forEach(log => {
+      subjectTotals[log.subject] = (subjectTotals[log.subject] || 0) + log.duration;
+    });
+    
+    const primaryFocus = Object.entries(subjectTotals).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+    
+    return { todayMinutes, weekMinutes, streak, primaryFocus };
+  }, [studyLogs]);
+
   // Add study log mutation
   const addLogMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("study_logs").insert({
         user_id: user!.id,
         subject,
+        topic: topic || null,
         duration: parseInt(duration),
         date: logDate,
+        focus_level: focusLevel,
         notes: notes || null,
       });
       if (error) throw error;
@@ -89,8 +168,10 @@ const Study = () => {
         .from("study_logs")
         .update({
           subject,
+          topic: topic || null,
           duration: parseInt(duration),
           date: logDate,
+          focus_level: focusLevel,
           notes: notes || null,
         })
         .eq("id", id);
@@ -122,6 +203,7 @@ const Study = () => {
       if (deletedLog) {
         logActivity(`Deleted study log: ${deletedLog.duration} minutes of ${deletedLog.subject}`, "Study");
       }
+      setDeleteConfirmId(null);
     },
     onError: () => {
       toast({ title: "Failed to delete log", variant: "destructive" });
@@ -129,17 +211,21 @@ const Study = () => {
   });
 
   const resetForm = () => {
-    setSubject("Programming");
-    setDuration("");
-    setNotes("");
     setLogDate(format(new Date(), "yyyy-MM-dd"));
+    setSubject("Programming");
+    setTopic("");
+    setDuration("");
+    setFocusLevel("medium");
+    setNotes("");
   };
 
   const openEditDialog = (log: typeof studyLogs[0]) => {
-    setSubject(log.subject);
-    setDuration(log.duration.toString());
-    setNotes(log.notes || "");
     setLogDate(log.date);
+    setSubject(log.subject);
+    setTopic(log.topic || "");
+    setDuration(log.duration.toString());
+    setFocusLevel((log.focus_level as FocusLevel) || "medium");
+    setNotes(log.notes || "");
     setEditingLog(log.id);
   };
 
@@ -147,156 +233,371 @@ const Study = () => {
     ? studyLogs.filter(log => log.subject === filter)
     : studyLogs;
 
-  // Calculate weekly summary
-  const now = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-  
-  const weeklyLogs = studyLogs.filter(log => {
-    const logDate = parseISO(log.date);
-    return isWithinInterval(logDate, { start: weekStart, end: weekEnd });
-  });
-  
-  const totalMinutes = weeklyLogs.reduce((acc, log) => acc + log.duration, 0);
-  const today = format(new Date(), "yyyy-MM-dd");
-  const todayMinutes = studyLogs
-    .filter(log => log.date === today)
-    .reduce((acc, log) => acc + log.duration, 0);
-
   // Get unique subjects from logs
   const uniqueSubjects = [...new Set(studyLogs.map(log => log.subject))];
-  const allSubjects = [...new Set([...subjects, ...uniqueSubjects])];
+
+  // Weekly chart data
+  const weeklyChartData = useMemo(() => {
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const days = eachDayOfInterval({ start: weekStart, end: now });
+    
+    return days.map(day => {
+      const dayStr = format(day, "yyyy-MM-dd");
+      const dayMinutes = studyLogs
+        .filter(log => log.date === dayStr)
+        .reduce((acc, log) => acc + log.duration, 0);
+      
+      return {
+        day: format(day, "EEE"),
+        minutes: dayMinutes,
+      };
+    });
+  }, [studyLogs]);
+
+  // Subject distribution data
+  const subjectDistribution = useMemo(() => {
+    const totals: Record<string, number> = {};
+    studyLogs.forEach(log => {
+      totals[log.subject] = (totals[log.subject] || 0) + log.duration;
+    });
+    
+    return Object.entries(totals)
+      .map(([subject, minutes]) => ({ subject, minutes }))
+      .sort((a, b) => b.minutes - a.minutes);
+  }, [studyLogs]);
+
+  // Monthly heatmap data
+  const monthlyHeatmap = useMemo(() => {
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    
+    return days.map(day => {
+      const dayStr = format(day, "yyyy-MM-dd");
+      const dayMinutes = studyLogs
+        .filter(log => log.date === dayStr)
+        .reduce((acc, log) => acc + log.duration, 0);
+      
+      return {
+        date: day,
+        minutes: dayMinutes,
+      };
+    });
+  }, [studyLogs]);
+
+  // Calculate longest streak ever
+  const longestStreak = useMemo(() => {
+    if (studyLogs.length === 0) return 0;
+    
+    const sortedDates = [...new Set(studyLogs.map(log => log.date))].sort();
+    let maxStreak = 1;
+    let currentStreak = 1;
+    
+    for (let i = 1; i < sortedDates.length; i++) {
+      const prevDate = parseISO(sortedDates[i - 1]);
+      const currDate = parseISO(sortedDates[i]);
+      const diff = differenceInDays(currDate, prevDate);
+      
+      if (diff === 1) {
+        currentStreak++;
+        maxStreak = Math.max(maxStreak, currentStreak);
+      } else {
+        currentStreak = 1;
+      }
+    }
+    
+    return maxStreak;
+  }, [studyLogs]);
+
+  const formatDuration = (minutes: number) => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in max-w-4xl">
       {/* Header */}
       <header>
         <h1 className="text-2xl font-light text-foreground tracking-wide">Study</h1>
-        <p className="text-sm text-muted-foreground mt-1">Track your learning journey</p>
+        <p className="text-sm text-muted-foreground mt-1">A quiet record of time invested</p>
       </header>
 
-      {/* Weekly Summary */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
-          This Week
-        </h3>
-        <div className="grid grid-cols-2 gap-8">
-          <div>
-            <p className="text-4xl font-semibold text-foreground">
-              {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m
-            </p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Total Time</p>
-          </div>
-          <div>
-            <p className="text-4xl font-semibold text-vyom-accent">{todayMinutes}m</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Today</p>
-          </div>
+      {/* Top Summary Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-card border border-border rounded-lg p-5">
+          <p className="text-3xl font-light text-foreground tracking-tight">
+            {metrics.todayMinutes > 0 ? formatDuration(metrics.todayMinutes) : "—"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1.5 tracking-wide">
+            {metrics.todayMinutes > 0 ? "Study Today" : "No study logged today"}
+          </p>
+        </div>
+        
+        <div className="bg-card border border-border rounded-lg p-5">
+          <p className="text-3xl font-light text-foreground tracking-tight">
+            {formatDuration(metrics.weekMinutes)}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1.5 tracking-wide">This Week</p>
+        </div>
+        
+        <div className="bg-card border border-border rounded-lg p-5">
+          <p className="text-3xl font-light text-foreground tracking-tight">
+            {metrics.streak > 0 ? `${metrics.streak}d` : "—"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1.5 tracking-wide">Current Streak</p>
+        </div>
+        
+        <div className="bg-card border border-border rounded-lg p-5">
+          <p className="text-3xl font-light text-foreground tracking-tight truncate">
+            {metrics.primaryFocus || "—"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1.5 tracking-wide">Primary Focus</p>
         </div>
       </div>
 
-      {/* Subject Filters */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setFilter(null)}
-          className={cn(
-            "px-3 py-1.5 text-sm rounded-md transition-colors",
-            filter === null
-              ? "bg-vyom-accent text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:text-foreground"
-          )}
-        >
-          All
-        </button>
-        {allSubjects.map((subj) => (
-          <button
-            key={subj}
-            onClick={() => setFilter(subj)}
-            className={cn(
-              "px-3 py-1.5 text-sm rounded-md transition-colors",
-              filter === subj
-                ? "bg-vyom-accent text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {subj}
-          </button>
-        ))}
-      </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="bg-muted/50 border border-border">
+          <TabsTrigger value="logs" className="data-[state=active]:bg-card">
+            Sessions
+          </TabsTrigger>
+          <TabsTrigger value="insights" className="data-[state=active]:bg-card">
+            <BarChart3 className="w-4 h-4 mr-1.5" />
+            Insights
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Study Logs */}
-      <div className="bg-card border border-border rounded-lg divide-y divide-border">
-        {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground">Loading...</div>
-        ) : filteredLogs.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            No study logs yet. Start logging your sessions!
-          </div>
-        ) : (
-          filteredLogs.map((log) => (
-            <div key={log.id} className="group">
-              <div 
-                className="flex items-center justify-between p-4 hover:bg-accent/30 transition-colors cursor-pointer"
-                onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
+        <TabsContent value="logs" className="space-y-6">
+          {/* Subject Filters */}
+          {uniqueSubjects.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFilter(null)}
+                className={cn(
+                  "px-3 py-1.5 text-sm rounded-md transition-colors border",
+                  filter === null
+                    ? "bg-card border-border text-foreground"
+                    : "bg-transparent border-transparent text-muted-foreground hover:text-foreground"
+                )}
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-vyom-accent-soft flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-vyom-accent" />
+                All
+              </button>
+              {uniqueSubjects.map((subj) => (
+                <button
+                  key={subj}
+                  onClick={() => setFilter(subj)}
+                  className={cn(
+                    "px-3 py-1.5 text-sm rounded-md transition-colors border",
+                    filter === subj
+                      ? "bg-card border-border text-foreground"
+                      : "bg-transparent border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {subj}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Study Logs */}
+          <div className="bg-card border border-border rounded-lg divide-y divide-border">
+            {isLoading ? (
+              <div className="p-12 text-center text-muted-foreground">Loading...</div>
+            ) : filteredLogs.length === 0 ? (
+              <div className="p-12 text-center">
+                <p className="text-muted-foreground mb-4">No study logged yet. Begin when you're ready.</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsAddingLog(true)}
+                  className="border-border"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add First Study Entry
+                </Button>
+              </div>
+            ) : (
+              filteredLogs.map((log) => (
+                <div key={log.id} className="group">
+                  <div 
+                    className="flex items-start justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
+                  >
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      {/* Focus level indicator */}
+                      <div className={cn(
+                        "w-1 h-12 rounded-full mt-0.5 flex-shrink-0",
+                        focusColors[(log.focus_level as FocusLevel) || "medium"]
+                      )} />
+                      
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xs text-muted-foreground">{format(parseISO(log.date), "MMM d")}</span>
+                        </div>
+                        <p className="text-sm font-medium text-foreground mt-0.5">{log.subject}</p>
+                        {log.topic && (
+                          <p className="text-sm text-muted-foreground truncate">{log.topic}</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span className="text-sm">{log.duration}m</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditDialog(log);
+                          }}
+                          className="p-1.5 hover:bg-muted rounded-md transition-colors"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirmId(log.id);
+                          }}
+                          className="p-1.5 hover:bg-muted rounded-md transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
+                      </div>
+                      
+                      {log.notes && (
+                        <ChevronDown className={cn(
+                          "w-4 h-4 text-muted-foreground transition-transform",
+                          expandedLog === log.id && "rotate-180"
+                        )} />
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{log.subject}</p>
-                    <p className="text-xs text-muted-foreground">{log.date}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">{log.duration}m</span>
-                  </div>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditDialog(log);
-                      }}
-                      className="p-1.5 hover:bg-muted rounded-md transition-colors"
-                    >
-                      <Edit2 className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteLogMutation.mutate(log.id);
-                      }}
-                      className="p-1.5 hover:bg-destructive/10 rounded-md transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </button>
-                  </div>
-                  {log.notes && (
-                    <ChevronDown className={cn(
-                      "w-4 h-4 text-muted-foreground transition-transform",
-                      expandedLog === log.id && "rotate-180"
-                    )} />
+                  
+                  {expandedLog === log.id && log.notes && (
+                    <div className="px-4 pb-4 pt-0 animate-fade-in">
+                      <p className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3 ml-4 border-l-2 border-border">
+                        {log.notes}
+                      </p>
+                    </div>
                   )}
                 </div>
-              </div>
-              {expandedLog === log.id && log.notes && (
-                <div className="px-4 pb-4 pt-0 animate-fade-in">
-                  <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 ml-14">
-                    {log.notes}
-                  </p>
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
+              ))
+            )}
+          </div>
 
-      {/* Add Log Button */}
-      <Button variant="vyom" className="w-full" onClick={() => setIsAddingLog(true)}>
-        <Plus className="w-4 h-4 mr-2" />
-        Log Study Session
-      </Button>
+          {/* Add Log Button */}
+          {filteredLogs.length > 0 && (
+            <Button 
+              variant="outline" 
+              className="w-full border-border text-muted-foreground hover:text-foreground" 
+              onClick={() => setIsAddingLog(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Study Entry
+            </Button>
+          )}
+        </TabsContent>
+
+        <TabsContent value="insights" className="space-y-8">
+          {studyLogs.length === 0 ? (
+            <div className="bg-card border border-border rounded-lg p-12 text-center">
+              <p className="text-muted-foreground">Log some study sessions to see insights.</p>
+            </div>
+          ) : (
+            <>
+              {/* Weekly Study Time */}
+              <div className="bg-card border border-border rounded-lg p-6">
+                <h3 className="text-sm text-muted-foreground mb-6">Weekly Study Time</h3>
+                <div className="h-48">
+                  <ChartContainer config={{ minutes: { label: "Minutes", color: "hsl(var(--primary))" } }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={weeklyChartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                        <XAxis 
+                          dataKey="day" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                        />
+                        <YAxis hide />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="minutes" radius={[4, 4, 0, 0]} fill="hsl(var(--primary) / 0.6)" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+              </div>
+
+              {/* Subject Distribution */}
+              <div className="bg-card border border-border rounded-lg p-6">
+                <h3 className="text-sm text-muted-foreground mb-4">Time by Subject</h3>
+                <div className="space-y-3">
+                  {subjectDistribution.slice(0, 6).map((item, index) => {
+                    const maxMinutes = subjectDistribution[0]?.minutes || 1;
+                    const percentage = (item.minutes / maxMinutes) * 100;
+                    
+                    return (
+                      <div key={item.subject} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-foreground">{item.subject}</span>
+                          <span className="text-muted-foreground">{formatDuration(item.minutes)}</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary/50 rounded-full transition-all"
+                            style={{ width: `${percentage}%`, opacity: 1 - (index * 0.1) }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Monthly Heatmap */}
+              <div className="bg-card border border-border rounded-lg p-6">
+                <h3 className="text-sm text-muted-foreground mb-4">Monthly Consistency</h3>
+                <div className="grid grid-cols-7 gap-1">
+                  {["M", "T", "W", "T", "F", "S", "S"].map((day, i) => (
+                    <div key={i} className="text-xs text-muted-foreground text-center py-1">{day}</div>
+                  ))}
+                  {monthlyHeatmap.map((day, i) => {
+                    const intensity = day.minutes === 0 ? 0 : Math.min(day.minutes / 120, 1);
+                    const isToday = isSameDay(day.date, new Date());
+                    
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          "aspect-square rounded-sm transition-colors",
+                          isToday && "ring-1 ring-primary/30",
+                          intensity === 0 ? "bg-muted/50" : ""
+                        )}
+                        style={intensity > 0 ? { 
+                          backgroundColor: `hsl(var(--primary) / ${0.2 + intensity * 0.5})` 
+                        } : undefined}
+                        title={`${format(day.date, "MMM d")}: ${day.minutes}m`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Longest Streak */}
+              <div className="bg-card border border-border rounded-lg p-6">
+                <h3 className="text-sm text-muted-foreground mb-2">Longest Streak</h3>
+                <p className="text-3xl font-light text-foreground">{longestStreak} days</p>
+              </div>
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Add/Edit Dialog */}
       <Dialog open={isAddingLog || !!editingLog} onOpenChange={(open) => {
@@ -306,13 +607,23 @@ const Study = () => {
           resetForm();
         }
       }}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-card border-border max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingLog ? "Edit Study Log" : "Log Study Session"}</DialogTitle>
+            <DialogTitle className="font-light">{editingLog ? "Edit Study Entry" : "Add Study Entry"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-2">
             <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Subject</label>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Date</label>
+              <Input
+                type="date"
+                value={logDate}
+                onChange={(e) => setLogDate(e.target.value)}
+                className="bg-background border-border"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Subject</label>
               <Select value={subject} onValueChange={setSubject}>
                 <SelectTrigger className="bg-background border-border">
                   <SelectValue />
@@ -324,8 +635,19 @@ const Study = () => {
                 </SelectContent>
               </Select>
             </div>
+            
             <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Duration (minutes)</label>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Topic</label>
+              <Input
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="What did you study?"
+                className="bg-background border-border"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Duration (minutes)</label>
               <Input
                 type="number"
                 value={duration}
@@ -334,29 +656,41 @@ const Study = () => {
                 className="bg-background border-border"
               />
             </div>
+            
             <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Date</label>
-              <Input
-                type="date"
-                value={logDate}
-                onChange={(e) => setLogDate(e.target.value)}
-                className="bg-background border-border"
-              />
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Focus Level</label>
+              <Select value={focusLevel} onValueChange={(v) => setFocusLevel(v as FocusLevel)}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {focusLevels.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      <div className="flex items-center gap-2">
+                        <div className={cn("w-2 h-2 rounded-full", focusColors[level])} />
+                        {focusLabels[level]}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+            
             <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Notes (optional)</label>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider">Notes (optional)</label>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="What did you learn?"
+                placeholder="Any reflections..."
                 className="bg-background border-border resize-none"
                 rows={3}
               />
             </div>
+            
             <div className="flex gap-2 pt-2">
               <Button
                 variant="outline"
-                className="flex-1"
+                className="flex-1 border-border"
                 onClick={() => {
                   setIsAddingLog(false);
                   setEditingLog(null);
@@ -366,7 +700,6 @@ const Study = () => {
                 Cancel
               </Button>
               <Button
-                variant="vyom"
                 className="flex-1"
                 disabled={!duration || parseInt(duration) <= 0}
                 onClick={() => {
@@ -383,6 +716,27 @@ const Study = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-light">Delete this entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteConfirmId && deleteLogMutation.mutate(deleteConfirmId)}
+              className="bg-muted text-foreground hover:bg-muted/80"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

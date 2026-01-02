@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarIcon, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DataExport } from "@/components/export/DataExport";
 
 interface Profile {
   id: string;
@@ -201,9 +202,19 @@ const Settings = () => {
         )}
       </section>
 
+      {/* Data Export Section */}
+      <section className="bg-card border border-border rounded-lg p-6 space-y-4">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+          Data Export
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Download all your data including todos, study logs, achievements, and activity history.
+        </p>
+        <DataExport />
+      </section>
+
       {/* Save Button */}
       <Button
-        variant="vyom-primary"
         onClick={saveSettings}
         disabled={saving}
         className="w-full sm:w-auto"
