@@ -373,6 +373,47 @@ export const SimpleSyllabusUploader = () => {
     },
   });
 
+  // Bulk delete mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const docsToDelete = documents.filter(d => ids.includes(d.id));
+      
+      // Delete files from storage
+      const paths = docsToDelete
+        .map(doc => doc.file_url.includes("/syllabus/") 
+          ? doc.file_url.split("/syllabus/")[1]
+          : doc.file_url)
+        .filter(Boolean);
+      
+      if (paths.length > 0) {
+        await supabase.storage.from("syllabus").remove(paths);
+      }
+      
+      // Delete from database
+      const { error } = await supabase
+        .from("syllabus_documents")
+        .delete()
+        .in("id", ids);
+      
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ["syllabus-documents"] });
+      toast({ title: `${count} document${count !== 1 ? 's' : ''} deleted` });
+      logActivity(`Bulk deleted ${count} syllabus documents`, "Study");
+      setSelectedDocs(new Set());
+      setBulkMode(false);
+      setBulkDeleteConfirmOpen(false);
+    },
+    onError: (error) => {
+      toast({ title: "Bulk delete failed", description: String(error), variant: "destructive" });
+    },
+  });
+
+  // Bulk delete confirmation state
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -620,6 +661,15 @@ export const SimpleSyllabusUploader = () => {
                     disabled={reorderMutation.isPending}
                   >
                     <ArrowDown className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setBulkDeleteConfirmOpen(true)}
+                    disabled={bulkDeleteMutation.isPending}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete ({selectedDocs.size})
                   </Button>
                 </>
               )}
@@ -943,6 +993,28 @@ export const SimpleSyllabusUploader = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={bulkDeleteConfirmOpen} onOpenChange={setBulkDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedDocs.size} document{selectedDocs.size !== 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the selected documents and their files. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(Array.from(selectedDocs))}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={bulkDeleteMutation.isPending}
+            >
+              {bulkDeleteMutation.isPending ? "Deleting..." : `Delete ${selectedDocs.size} Document${selectedDocs.size !== 1 ? 's' : ''}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

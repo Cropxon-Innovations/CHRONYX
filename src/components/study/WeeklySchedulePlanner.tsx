@@ -173,7 +173,7 @@ export const WeeklySchedulePlanner = () => {
         start_time: startTime,
         end_time: endTime,
         subject,
-        topic_id: topicId || null,
+        topic_id: topicId && topicId !== "none" ? topicId : null,
       });
       if (error) throw error;
     },
@@ -431,7 +431,7 @@ export const WeeklySchedulePlanner = () => {
                   <SelectValue placeholder="Select a topic..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  <SelectItem value="">No topic linked</SelectItem>
+                  <SelectItem value="none">No topic linked</SelectItem>
                   {syllabusTopics
                     .filter((t) => t.subject === subject)
                     .map((topic) => (

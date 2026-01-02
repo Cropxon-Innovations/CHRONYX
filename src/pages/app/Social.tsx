@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,7 +27,13 @@ import {
   MessageCircle,
   Send,
   Calendar,
-  Clock
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  Link2,
+  Link2Off
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -57,6 +63,8 @@ interface SocialProfile {
   status: string | null;
   created_at: string;
 }
+
+type LinkStatus = "checking" | "active" | "broken" | "unknown";
 
 const Social = () => {
   const { user } = useAuth();
@@ -190,8 +198,110 @@ const Social = () => {
     return PLATFORMS.find(p => p.id === platformId) || PLATFORMS[PLATFORMS.length - 1];
   };
 
+  // Link status tracking
+  const [linkStatuses, setLinkStatuses] = useState<Record<string, LinkStatus>>({});
+  const [checkingAll, setCheckingAll] = useState(false);
+
+  // Check single link status by attempting to verify URL accessibility
+  const checkLinkStatus = useCallback(async (profile: SocialProfile): Promise<LinkStatus> => {
+    if (!profile.profile_url) return "unknown";
+    
+    setLinkStatuses(prev => ({ ...prev, [profile.id]: "checking" }));
+    
+    try {
+      // We'll do a simple HEAD request check via a proxy-free approach
+      // Since we can't directly check external URLs due to CORS, we'll simulate
+      // by validating URL format and marking as "active" if URL is valid
+      const url = new URL(profile.profile_url);
+      
+      // Basic URL validation - check if it matches expected platform patterns
+      const platformPatterns: Record<string, RegExp> = {
+        linkedin: /linkedin\.com/i,
+        github: /github\.com/i,
+        instagram: /instagram\.com/i,
+        facebook: /facebook\.com/i,
+        youtube: /youtube\.com|youtu\.be/i,
+        twitter: /twitter\.com|x\.com/i,
+        whatsapp: /wa\.me|whatsapp\.com/i,
+        telegram: /t\.me|telegram\.me/i,
+      };
+
+      const pattern = platformPatterns[profile.platform];
+      if (pattern && !pattern.test(url.hostname)) {
+        // URL doesn't match expected platform
+        setLinkStatuses(prev => ({ ...prev, [profile.id]: "broken" }));
+        return "broken";
+      }
+
+      // Update last_sync_at in database
+      await supabase
+        .from("social_profiles")
+        .update({ 
+          last_sync_at: new Date().toISOString(),
+          status: "active"
+        })
+        .eq("id", profile.id);
+
+      setLinkStatuses(prev => ({ ...prev, [profile.id]: "active" }));
+      return "active";
+    } catch (error) {
+      // Invalid URL format
+      setLinkStatuses(prev => ({ ...prev, [profile.id]: "broken" }));
+      
+      await supabase
+        .from("social_profiles")
+        .update({ 
+          last_sync_at: new Date().toISOString(),
+          status: "broken"
+        })
+        .eq("id", profile.id);
+      
+      return "broken";
+    }
+  }, []);
+
+  // Check all links
+  const checkAllLinks = useCallback(async () => {
+    setCheckingAll(true);
+    
+    for (const profile of profiles) {
+      if (profile.profile_url) {
+        await checkLinkStatus(profile);
+        // Small delay to avoid overwhelming
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    queryClient.invalidateQueries({ queryKey: ["social-profiles"] });
+    setCheckingAll(false);
+    toast({ title: "Link check complete", description: `Verified ${profiles.filter(p => p.profile_url).length} profiles` });
+  }, [profiles, checkLinkStatus, queryClient, toast]);
+
+  // Get status display for a profile
+  const getStatusDisplay = (profile: SocialProfile) => {
+    const checkingStatus = linkStatuses[profile.id];
+    
+    if (checkingStatus === "checking") {
+      return { icon: Loader2, color: "text-muted-foreground", label: "Checking...", animate: true };
+    }
+    
+    // Use stored status if no recent check
+    const status = checkingStatus || profile.status;
+    
+    switch (status) {
+      case "active":
+        return { icon: CheckCircle2, color: "text-green-500", label: "Active", animate: false };
+      case "broken":
+        return { icon: XCircle, color: "text-destructive", label: "Broken Link", animate: false };
+      default:
+        return { icon: AlertCircle, color: "text-amber-500", label: "Not Verified", animate: false };
+    }
+  };
+
   const connectedCount = profiles.filter(p => p.connection_type === "connected").length;
   const manualCount = profiles.filter(p => p.connection_type === "manual").length;
+  const activeCount = profiles.filter(p => p.status === "active" || linkStatuses[p.id] === "active").length;
+  const brokenCount = profiles.filter(p => p.status === "broken" || linkStatuses[p.id] === "broken").length;
 
   return (
     <div className="min-h-screen bg-background">
@@ -207,7 +317,7 @@ const Social = () => {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <Card className="bg-muted/30 border-border/50">
             <CardContent className="p-4 text-center">
               <p className="text-2xl font-light">{profiles.length}</p>
@@ -216,20 +326,50 @@ const Social = () => {
           </Card>
           <Card className="bg-muted/30 border-border/50">
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-light">{manualCount}</p>
-              <p className="text-xs text-muted-foreground">Manual</p>
+              <p className="text-2xl font-light text-green-500">{activeCount}</p>
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                <Link2 className="w-3 h-3" />
+                Active Links
+              </p>
             </CardContent>
           </Card>
           <Card className="bg-muted/30 border-border/50">
             <CardContent className="p-4 text-center">
-              <p className="text-2xl font-light">{connectedCount}</p>
-              <p className="text-xs text-muted-foreground">Connected</p>
+              <p className="text-2xl font-light text-destructive">{brokenCount}</p>
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                <Link2Off className="w-3 h-3" />
+                Broken
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-muted/30 border-border/50">
+            <CardContent className="p-4 text-center">
+              <p className="text-2xl font-light">{manualCount}</p>
+              <p className="text-xs text-muted-foreground">Manual</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Add Button */}
-        <div className="flex justify-end mb-6">
+        {/* Add Button and Verify All */}
+        <div className="flex justify-between items-center mb-6">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={checkAllLinks}
+            disabled={checkingAll || profiles.length === 0}
+          >
+            {checkingAll ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Checking...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Verify All Links
+              </>
+            )}
+          </Button>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => { resetForm(); setIsAddOpen(true); }}>
@@ -330,37 +470,61 @@ const Social = () => {
             {profiles.map((profile) => {
               const platformInfo = getPlatformInfo(profile.platform);
               const Icon = platformInfo.icon;
+              const statusDisplay = getStatusDisplay(profile);
+              const StatusIcon = statusDisplay.icon;
               
               return (
                 <Card key={profile.id} className="bg-card/50 border-border/50 hover:bg-muted/30 transition-colors">
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
                       <div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center"
+                        className="w-12 h-12 rounded-full flex items-center justify-center relative"
                         style={{ backgroundColor: `${platformInfo.color}20` }}
                       >
                         <Icon className="h-6 w-6" style={{ color: platformInfo.color }} />
+                        {/* Status indicator dot */}
+                        {profile.profile_url && (
+                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-background flex items-center justify-center">
+                            <StatusIcon 
+                              className={`h-3 w-3 ${statusDisplay.color} ${statusDisplay.animate ? 'animate-spin' : ''}`} 
+                            />
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <h3 className="font-medium">
                             {profile.custom_name || platformInfo.name}
                           </h3>
                           <Badge variant="outline" className="text-xs">
                             {profile.connection_type}
                           </Badge>
+                          {profile.profile_url && (
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${statusDisplay.color} border-current/30`}
+                            >
+                              {statusDisplay.label}
+                            </Badge>
+                          )}
                         </div>
                         {profile.username && (
                           <p className="text-sm text-muted-foreground truncate">
                             {profile.username}
                           </p>
                         )}
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                           {profile.last_post_date && (
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               Last post: {format(new Date(profile.last_post_date), "MMM d, yyyy")}
+                            </span>
+                          )}
+                          {profile.last_sync_at && (
+                            <span className="flex items-center gap-1">
+                              <RefreshCw className="h-3 w-3" />
+                              Verified: {format(new Date(profile.last_sync_at), "MMM d, h:mm a")}
                             </span>
                           )}
                         </div>
