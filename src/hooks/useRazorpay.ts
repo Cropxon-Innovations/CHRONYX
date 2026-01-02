@@ -106,7 +106,7 @@ export const useRazorpay = () => {
         // Get current user
         const { data: { user } } = await supabase.auth.getUser();
 
-        return new Promise<{ success: boolean; paymentId?: string }>((resolve) => {
+        return new Promise<{ success: boolean; paymentId?: string; razorpay_order_id?: string; razorpay_payment_id?: string; razorpay_signature?: string }>((resolve) => {
           const options: RazorpayOptions = {
             key: keyId,
             amount: amount,
@@ -144,7 +144,13 @@ export const useRazorpay = () => {
                   title: "Payment Successful!",
                   description: `Welcome to CHRONYX ${plan === "pro" ? "Pro" : "Premium"}!`,
                 });
-                resolve({ success: true, paymentId: response.razorpay_payment_id });
+                resolve({ 
+                  success: true, 
+                  paymentId: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature
+                });
               } catch (error) {
                 console.error("Verification error:", error);
                 resolve({ success: false });

@@ -5,11 +5,16 @@ import { Button } from "@/components/ui/button";
 import { useRazorpay } from "@/hooks/useRazorpay";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useSubscription } from "@/hooks/useSubscription";
+import { toast } from "sonner";
 
 const Pricing = () => {
   const { initiatePayment, isLoading } = useRazorpay();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { createSubscription, getCurrentPlan, refetch } = useSubscription();
+
+  const currentPlan = getCurrentPlan();
 
   const handlePlanSelect = async (planType: "free" | "pro" | "premium") => {
     if (planType === "free") {
@@ -22,7 +27,33 @@ const Pricing = () => {
       return;
     }
 
-    await initiatePayment(planType);
+    // Check if already on this plan or higher
+    if (currentPlan === planType) {
+      toast.info(`You're already on the ${planType} plan`);
+      return;
+    }
+
+    if (currentPlan === 'premium') {
+      toast.info("You already have lifetime Premium access!");
+      return;
+    }
+
+    const result = await initiatePayment(planType);
+    
+    if (result?.success && result.razorpay_order_id && result.razorpay_payment_id && result.razorpay_signature) {
+      // Payment was successful, create subscription record
+      await createSubscription(
+        planType,
+        result.razorpay_order_id,
+        result.razorpay_payment_id,
+        result.razorpay_signature,
+        planType === 'pro' ? 29900 : 199900
+      );
+      
+      refetch();
+      toast.success(`Welcome to ${planType === 'pro' ? 'Pro' : 'Premium'}!`);
+      navigate('/app/profile');
+    }
   };
 
   const plans = [
