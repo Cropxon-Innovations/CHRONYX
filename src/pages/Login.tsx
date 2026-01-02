@@ -95,7 +95,13 @@ const Login = () => {
   }
 
   return (
-    <main className="min-h-screen vyom-gradient-bg flex items-center justify-center px-4 sm:px-6 relative overflow-hidden">
+    <motion.main 
+      className="min-h-screen vyom-gradient-bg flex items-center justify-center px-4 sm:px-6 relative overflow-hidden"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       {/* Floating Particles Background */}
       <FloatingParticles />
       
@@ -112,8 +118,22 @@ const Login = () => {
           ← Back
         </Link>
 
-        {/* Login Card */}
-        <div className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-sm relative">
+        {/* Login Card with Glow Effect */}
+        <motion.div 
+          className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-sm relative"
+          animate={{
+            boxShadow: [
+              "0 0 20px 0px hsl(var(--primary) / 0.05)",
+              "0 0 40px 5px hsl(var(--primary) / 0.1)",
+              "0 0 20px 0px hsl(var(--primary) / 0.05)",
+            ],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
             {/* Pulsing Logo */}
@@ -248,7 +268,7 @@ const Login = () => {
               {isSignUp ? "Already have an account? Sign in" : "New here? Create an account"}
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Google OAuth Setup Note */}
         <p className="mt-4 text-center text-xs text-muted-foreground">
@@ -259,7 +279,7 @@ const Login = () => {
         {/* Right Animation */}
         <RightSketchAnimation />
       </div>
-    </main>
+    </motion.main>
   );
 };
 
