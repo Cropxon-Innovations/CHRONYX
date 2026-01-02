@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     // Fetch EMI to validate
     const { data: emi, error: fetchError } = await supabase
       .from("emi_schedule")
-      .select("*, loans(user_id)")
+      .select("*, loans(user_id, bank_name, loan_type)")
       .eq("id", emi_id)
       .single();
 
@@ -56,12 +56,39 @@ Deno.serve(async (req) => {
       throw updateError;
     }
 
-    // Log activity
-    await supabase.from("activity_logs").insert({
-      user_id: emi.loans?.user_id,
-      module: "loans",
-      action: `EMI #${emi.emi_month} marked as paid. Amount: ₹${emi.emi_amount.toLocaleString()}, Method: ${payment_method}`,
-    });
+    // Auto-create expense entry for EMI payment
+    const userId = emi.loans?.user_id;
+    if (userId) {
+      const expenseNote = `EMI #${emi.emi_month} - ${emi.loans?.bank_name || "Loan"} (${emi.loans?.loan_type || "EMI"})`;
+      
+      const { error: expenseError } = await supabase
+        .from("expenses")
+        .insert({
+          user_id: userId,
+          expense_date: paid_date,
+          amount: emi.emi_amount,
+          category: "Loan EMI",
+          sub_category: emi.loans?.loan_type || "EMI",
+          payment_mode: payment_method || "Bank Transfer",
+          notes: expenseNote,
+          is_auto_generated: true,
+          source_type: "emi",
+          source_id: emi_id,
+        });
+
+      if (expenseError) {
+        console.error("Error creating expense entry:", expenseError);
+      } else {
+        console.log(`Auto-created expense entry for EMI ${emi_id}`);
+      }
+
+      // Log activity
+      await supabase.from("activity_logs").insert({
+        user_id: userId,
+        module: "loans",
+        action: `EMI #${emi.emi_month} marked as paid. Amount: ₹${emi.emi_amount.toLocaleString()}, Method: ${payment_method}`,
+      });
+    }
 
     console.log(`EMI ${emi_id} marked as paid successfully`);
 
@@ -70,6 +97,7 @@ Deno.serve(async (req) => {
         status: "paid",
         emi_month: emi.emi_month,
         amount: emi.emi_amount,
+        expense_created: true,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
