@@ -130,17 +130,25 @@ export const FolderCard = ({
   return (
     <>
       <Card 
-        className={`cursor-pointer transition-all duration-200 group ${colorClass.value} ${
+        className={`cursor-pointer transition-all duration-200 group border ${
           isDragOver ? 'ring-2 ring-primary scale-105' : 'hover:scale-[1.02]'
         }`}
+        style={{
+          backgroundColor: colorClass.value.includes('bg-') ? undefined : colorClass.value,
+        }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <IconComponent className={`w-5 h-5 flex-shrink-0 ${colorClass.textColor}`} />
+        <CardContent className={`p-3 ${colorClass.value}`}>
+          <div className="flex items-center gap-3">
+            {/* Icon */}
+            <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-background/50`}>
+              <IconComponent className={`w-4 h-4 ${colorClass.textColor}`} />
+            </div>
+            
+            {/* Name and Controls */}
+            <div className="flex-1 min-w-0 flex items-center gap-2">
               {isRenaming ? (
                 <div className="flex items-center gap-1 flex-1">
                   <Input
@@ -149,7 +157,7 @@ export const FolderCard = ({
                     onChange={(e) => setNewName(e.target.value)}
                     onBlur={handleRename}
                     onKeyDown={handleKeyDown}
-                    className="h-7 text-sm py-0 px-2"
+                    className="h-7 text-sm py-0 px-2 bg-background"
                     onClick={(e) => e.stopPropagation()}
                   />
                   <Button
@@ -178,79 +186,81 @@ export const FolderCard = ({
                 </div>
               ) : (
                 <span 
-                  className="text-sm font-medium truncate cursor-pointer hover:underline"
+                  className="text-sm font-medium truncate flex-1 cursor-pointer"
                   onDoubleClick={(e) => {
                     e.stopPropagation();
                     setIsRenaming(true);
                   }}
-                  title="Double-click to rename"
+                  title={folder.name}
                 >
                   {folder.name}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
+            
+            {/* Actions */}
+            <div className="flex items-center gap-0.5 flex-shrink-0">
               {folder.is_locked ? (
                 isUnlocked ? (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-6 w-6"
                     onClick={(e) => {
                       e.stopPropagation();
                       onRelock();
                     }}
                   >
-                    <Unlock className="w-4 h-4 text-green-500" />
+                    <Unlock className="w-3.5 h-3.5 text-green-500" />
                   </Button>
                 ) : (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-6 w-6"
                     onClick={(e) => {
                       e.stopPropagation();
                       onUnlock();
                     }}
                   >
-                    <Lock className="w-4 h-4 text-amber-500" />
+                    <Lock className="w-3.5 h-3.5 text-amber-500" />
                   </Button>
                 )
               ) : (
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
                     onLock();
                   }}
                 >
-                  <Key className="w-4 h-4 text-muted-foreground" />
+                  <Key className="w-3.5 h-3.5 text-muted-foreground" />
                 </Button>
               )}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsRenaming(true);
                 }}
                 title="Rename folder"
               >
-                <Pencil className="w-4 h-4 text-muted-foreground" />
+                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={(e) => {
                   e.stopPropagation();
                   setCustomizeOpen(true);
                 }}
               >
-                <Palette className="w-4 h-4 text-muted-foreground" />
+                <Palette className="w-3.5 h-3.5 text-muted-foreground" />
               </Button>
             </div>
           </div>
