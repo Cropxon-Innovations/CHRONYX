@@ -28,6 +28,7 @@ import {
   HeroSketchFrame,
   SectionConnector 
 } from "@/components/landing/SketchAnimations";
+import DashboardPreview from "@/components/landing/DashboardPreview";
 
 // CHRONYX Logo Component
 const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
@@ -189,131 +190,178 @@ const Landing = () => {
           </div>
         </header>
 
-        {/* Hero Section - Compact with Sketch Elements */}
-        <section className="relative flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 py-8">
+        {/* Hero Section - Two Column Layout */}
+        <section className="relative flex-1 flex items-center justify-center px-4 sm:px-6 py-8 lg:py-12">
           {/* Floating sketch decorations */}
           <FloatingSketchElements />
           
           {/* Hero frame corners */}
           <HeroSketchFrame />
 
-          {/* Logo animation with sketch ring */}
-          <motion.div 
-            className={`relative mb-5 transition-all duration-1000 ease-out ${
-              mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-            }`}
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            {/* Sketch ring around logo */}
-            <motion.svg
-              className="absolute -inset-4 w-[calc(100%+2rem)] h-[calc(100%+2rem)]"
-              viewBox="0 0 100 100"
-              initial={{ opacity: 0, rotate: -180 }}
-              animate={{ opacity: 0.15, rotate: 0 }}
-              transition={{ delay: 0.3, duration: 1.5, ease: "easeOut" }}
-            >
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="0.5"
-                strokeDasharray="8,6"
-              />
-            </motion.svg>
-            <ChronxyxLogo className="w-16 h-16 md:w-20 md:h-20" />
-          </motion.div>
-
-          {/* Primary Title with animated underline */}
-          <motion.h1 
-            className={`relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight tracking-[0.12em] sm:tracking-[0.15em] text-chronyx-landing-title transition-all duration-[800ms] ease-out ${
-              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-          >
-            CHRONYX
-            <SketchUnderline delay={0.8} />
-          </motion.h1>
-
-          {/* Tagline with entrance animation */}
-          <motion.p 
-            className={`mt-4 text-base sm:text-lg md:text-xl font-light text-chronyx-landing-tagline`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
-            A quiet space for your life.
-          </motion.p>
-
-          {/* Subdescription */}
-          <p 
-            className={`mt-2 text-xs sm:text-sm font-light text-muted-foreground/60 max-w-sm transition-all duration-[600ms] ease-out ${
-              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-            style={{ transitionDelay: '300ms' }}
-          >
-            A private system to hold your life with continuity.
-          </p>
-
-          {/* Feature pills - tighter */}
-          <div 
-            className={`mt-6 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 max-w-lg transition-all duration-[600ms] ease-out ${
-              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-            style={{ transitionDelay: '400ms' }}
-          >
-            {features.slice(0, 4).map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div 
-                  key={feature.label}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-border/30 bg-card/20 text-muted-foreground hover:border-primary/30 hover:text-foreground transition-all duration-300 group"
+          <div className="max-w-6xl mx-auto w-full">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              {/* Left side - Text content */}
+              <div className="text-center lg:text-left">
+                {/* Logo animation with sketch ring */}
+                <motion.div 
+                  className={`relative mb-5 inline-block transition-all duration-1000 ease-out ${
+                    mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Icon className="w-3 h-3 group-hover:text-primary transition-colors" />
-                  <span className="text-[10px] sm:text-xs font-light tracking-wide">{feature.label}</span>
+                  {/* Sketch ring around logo */}
+                  <motion.svg
+                    className="absolute -inset-4 w-[calc(100%+2rem)] h-[calc(100%+2rem)]"
+                    viewBox="0 0 100 100"
+                    initial={{ opacity: 0, rotate: -180 }}
+                    animate={{ opacity: 0.15, rotate: 0 }}
+                    transition={{ delay: 0.3, duration: 1.5, ease: "easeOut" }}
+                  >
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="45"
+                      fill="none"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="0.5"
+                      strokeDasharray="8,6"
+                    />
+                  </motion.svg>
+                  <ChronxyxLogo className="w-16 h-16 md:w-20 md:h-20" />
+                </motion.div>
+
+                {/* Primary Title with animated underline */}
+                <motion.h1 
+                  className={`relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight tracking-[0.12em] sm:tracking-[0.15em] text-chronyx-landing-title transition-all duration-[800ms] ease-out ${
+                    mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.8 }}
+                >
+                  CHRONYX
+                  <SketchUnderline delay={0.8} />
+                </motion.h1>
+
+                {/* Tagline with entrance animation */}
+                <motion.p 
+                  className={`mt-4 text-base sm:text-lg md:text-xl font-light text-chronyx-landing-tagline`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                >
+                  A quiet space for your life.
+                </motion.p>
+
+                {/* Subdescription */}
+                <p 
+                  className={`mt-2 text-xs sm:text-sm font-light text-muted-foreground/60 max-w-sm lg:max-w-none transition-all duration-[600ms] ease-out ${
+                    mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
+                  style={{ transitionDelay: '300ms' }}
+                >
+                  A private system to hold your life with continuity.
+                </p>
+
+                {/* Feature pills - tighter */}
+                <div 
+                  className={`mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-1.5 sm:gap-2 max-w-lg transition-all duration-[600ms] ease-out ${
+                    mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
+                  style={{ transitionDelay: '400ms' }}
+                >
+                  {features.slice(0, 4).map((feature, index) => {
+                    const Icon = feature.icon;
+                    return (
+                      <div 
+                        key={feature.label}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-full border border-border/30 bg-card/20 text-muted-foreground hover:border-primary/30 hover:text-foreground transition-all duration-300 group"
+                      >
+                        <Icon className="w-3 h-3 group-hover:text-primary transition-colors" />
+                        <span className="text-[10px] sm:text-xs font-light tracking-wide">{feature.label}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
 
-          {/* CTA Buttons - tighter */}
-          <div 
-            className={`mt-8 flex flex-col sm:flex-row items-center gap-3 transition-all duration-[600ms] ease-out ${
-              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-            style={{ transitionDelay: '500ms' }}
-          >
-            <Link to="/login">
-              <button className="group relative px-6 py-2.5 text-xs sm:text-sm tracking-wider font-light border border-primary/80 text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-all duration-300 ease-out overflow-hidden">
-                <span className="relative z-10 flex items-center gap-2">
-                  Enter CHRONYX
-                  <Shield className="w-3.5 h-3.5 opacity-70" />
-                </span>
-              </button>
-            </Link>
-            
-            <button 
-              onClick={() => setShowDemo(true)}
-              className="flex items-center gap-2 px-5 py-2.5 text-xs sm:text-sm tracking-wider font-light border border-border/40 text-muted-foreground bg-transparent rounded-md hover:border-primary/30 hover:text-foreground transition-all duration-300"
-            >
-              <Play className="w-3.5 h-3.5" />
-              Watch Demo
-            </button>
-          </div>
+                {/* CTA Buttons - tighter */}
+                <div 
+                  className={`mt-8 flex flex-col sm:flex-row items-center lg:items-start gap-3 transition-all duration-[600ms] ease-out ${
+                    mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
+                  style={{ transitionDelay: '500ms' }}
+                >
+                  <Link to="/login">
+                    <button className="group relative px-6 py-2.5 text-xs sm:text-sm tracking-wider font-light border border-primary/80 text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-all duration-300 ease-out overflow-hidden">
+                      <span className="relative z-10 flex items-center gap-2">
+                        Enter CHRONYX
+                        <Shield className="w-3.5 h-3.5 opacity-70" />
+                      </span>
+                    </button>
+                  </Link>
+                  
+                  <button 
+                    onClick={() => setShowDemo(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 text-xs sm:text-sm tracking-wider font-light border border-border/40 text-muted-foreground bg-transparent rounded-md hover:border-primary/30 hover:text-foreground transition-all duration-300"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    Watch Demo
+                  </button>
+                </div>
 
-          {/* Scroll indicator - smaller */}
-          <div 
-            className={`mt-10 flex flex-col items-center gap-1 text-muted-foreground/30 transition-all duration-[600ms] ease-out ${
-              mounted ? 'opacity-100' : 'opacity-0'
-            }`}
-            style={{ transitionDelay: '700ms' }}
-          >
-            <span className="text-[10px] tracking-widest uppercase">Explore</span>
-            <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+                {/* Scroll indicator - smaller, only on mobile */}
+                <div 
+                  className={`mt-10 flex lg:hidden flex-col items-center gap-1 text-muted-foreground/30 transition-all duration-[600ms] ease-out ${
+                    mounted ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  style={{ transitionDelay: '700ms' }}
+                >
+                  <span className="text-[10px] tracking-widest uppercase">Explore</span>
+                  <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+                </div>
+              </div>
+
+              {/* Right side - Dashboard Preview */}
+              <div className="hidden lg:flex items-center justify-center">
+                <div className="relative">
+                  {/* Background glow effect */}
+                  <motion.div
+                    className="absolute -inset-8 bg-gradient-to-br from-primary/5 via-transparent to-chronyx-success/5 rounded-3xl blur-2xl"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 1 }}
+                  />
+                  
+                  {/* Platform Overview Label */}
+                  <motion.div
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.2 }}
+                  >
+                    <div className="w-8 h-px bg-gradient-to-r from-transparent to-border/50" />
+                    <span className="text-[10px] tracking-widest text-muted-foreground/60 uppercase whitespace-nowrap">
+                      Platform Overview
+                    </span>
+                    <div className="w-8 h-px bg-gradient-to-l from-transparent to-border/50" />
+                  </motion.div>
+                  
+                  <DashboardPreview />
+                  
+                  {/* Scroll indicator - desktop only */}
+                  <motion.div 
+                    className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-muted-foreground/30"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 2 }}
+                  >
+                    <span className="text-[10px] tracking-widest uppercase">Explore</span>
+                    <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+                  </motion.div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
