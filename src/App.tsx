@@ -20,6 +20,7 @@ import Lifespan from "./pages/app/Lifespan";
 import Achievements from "./pages/app/Achievements";
 import Activity from "./pages/app/Activity";
 import Settings from "./pages/app/Settings";
+import Memory from "./pages/app/Memory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="achievements" element={<Achievements />} />
                 <Route path="activity" element={<Activity />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="memory" element={<Memory />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

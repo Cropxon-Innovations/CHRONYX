@@ -18,6 +18,7 @@ import {
   Sun,
   Receipt,
   TrendingUp,
+  ImageIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const navItems = [
   { path: "/app", label: "Dashboard", icon: LayoutDashboard },
   { path: "/app/todos", label: "Todos", icon: CheckSquare },
   { path: "/app/study", label: "Study", icon: BookOpen },
+  { path: "/app/memory", label: "Memory", icon: ImageIcon },
   { path: "/app/expenses", label: "Expenses", icon: Receipt },
   { path: "/app/income", label: "Income", icon: TrendingUp },
   { path: "/app/reports", label: "Reports & Budget", icon: Activity },

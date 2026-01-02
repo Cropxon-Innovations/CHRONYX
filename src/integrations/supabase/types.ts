@@ -817,6 +817,154 @@ export type Database = {
         }
         Relationships: []
       }
+      memories: {
+        Row: {
+          collection_id: string | null
+          created_at: string
+          created_date: string
+          description: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string
+          folder_id: string | null
+          id: string
+          is_locked: boolean | null
+          media_type: string
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          collection_id?: string | null
+          created_at?: string
+          created_date?: string
+          description?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          folder_id?: string | null
+          id?: string
+          is_locked?: boolean | null
+          media_type: string
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          collection_id?: string | null
+          created_at?: string
+          created_date?: string
+          description?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          folder_id?: string | null
+          id?: string
+          is_locked?: boolean | null
+          media_type?: string
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memories_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "memory_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memories_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "memory_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_collections: {
+        Row: {
+          created_at: string
+          folder_id: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          folder_id?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_collections_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "memory_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memory_folders: {
+        Row: {
+          created_at: string
+          id: string
+          is_locked: boolean | null
+          lock_hash: string | null
+          name: string
+          parent_folder_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_locked?: boolean | null
+          lock_hash?: string | null
+          name: string
+          parent_folder_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_locked?: boolean | null
+          lock_hash?: string | null
+          name?: string
+          parent_folder_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_folders_parent_folder_id_fkey"
+            columns: ["parent_folder_id"]
+            isOneToOne: false
+            referencedRelation: "memory_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           birth_date: string | null
@@ -1179,6 +1327,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      task_templates: {
+        Row: {
+          created_at: string
+          default_priority: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_recurring: boolean | null
+          name: string
+          recurrence_days: number[] | null
+          recurrence_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_priority?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          name: string
+          recurrence_days?: number[] | null
+          recurrence_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_priority?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          name?: string
+          recurrence_days?: number[] | null
+          recurrence_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       todos: {
         Row: {
