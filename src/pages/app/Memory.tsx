@@ -1056,7 +1056,7 @@ const Memory = () => {
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
             Folders {draggingMemoryId && <span className="text-primary">(Drop memory here)</span>}
           </h3>
-          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(160px,1fr))]">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {folders.map((folder, index) => {
               const isUnlocked = unlockedFolders.has(folder.id);
               return (
