@@ -38,12 +38,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudyInsights } from "@/components/study/StudyInsights";
 import { StudyTimer } from "@/components/study/StudyTimer";
 import { StudyGoals } from "@/components/study/StudyGoals";
-import { SyllabusPlanner } from "@/components/study/SyllabusPlanner";
 import { SubjectColorPicker, useSubjectColors } from "@/components/study/SubjectColorPicker";
 import { SpacedRepetition } from "@/components/study/SpacedRepetition";
 import { StudyNotes } from "@/components/study/StudyNotes";
 import { StudyDataExport } from "@/components/study/StudyDataExport";
 import { WeeklySchedulePlanner } from "@/components/study/WeeklySchedulePlanner";
+import EnhancedSyllabusPlanner from "@/components/study/EnhancedSyllabusPlanner";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 const focusLevels = ["low", "medium", "high"] as const;
@@ -506,7 +506,7 @@ const Study = () => {
         </TabsContent>
 
         <TabsContent value="syllabus" className="space-y-6">
-          <SyllabusPlanner />
+          <EnhancedSyllabusPlanner />
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-6">

@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import { format, addDays, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO } from "date-fns";
 import ProductivityAnalytics from "@/components/todos/ProductivityAnalytics";
+import TaskTemplates from "@/components/todos/TaskTemplates";
 
 type ViewMode = "day" | "week" | "month" | "analytics";
 type TodoStatus = "pending" | "done" | "skipped";
@@ -277,6 +278,76 @@ const Todos = () => {
     }
   };
 
+  const handleApplyTemplate = async (tasks: { text: string; priority: Priority; recurrence_type: "daily" | "weekly" | "monthly"; recurrence_days?: number[] }[]) => {
+    if (!user) return;
+
+    const today = new Date();
+    const tasksToCreate = [];
+
+    for (const task of tasks) {
+      if (task.recurrence_type === "daily") {
+        // Create for next 7 days
+        for (let i = 0; i < 7; i++) {
+          const taskDate = addDays(today, i);
+          tasksToCreate.push({
+            text: task.text,
+            user_id: user.id,
+            status: "pending",
+            date: format(taskDate, "yyyy-MM-dd"),
+            priority: task.priority,
+            is_recurring: true,
+            recurrence_type: "daily",
+            recurrence_days: null,
+          });
+        }
+      } else if (task.recurrence_type === "weekly" && task.recurrence_days) {
+        // Create for current week
+        for (const day of task.recurrence_days) {
+          const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+          const taskDate = addDays(weekStart, day);
+          if (taskDate >= today) {
+            tasksToCreate.push({
+              text: task.text,
+              user_id: user.id,
+              status: "pending",
+              date: format(taskDate, "yyyy-MM-dd"),
+              priority: task.priority,
+              is_recurring: true,
+              recurrence_type: "weekly",
+              recurrence_days: task.recurrence_days,
+            });
+          }
+        }
+      }
+    }
+
+    if (tasksToCreate.length === 0) {
+      toast({ title: "No tasks to create", description: "All tasks are scheduled for past dates" });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("todos")
+      .insert(tasksToCreate)
+      .select();
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to apply template", variant: "destructive" });
+    } else {
+      const newTodos = (data || []).map(t => ({
+        ...t,
+        status: t.status as TodoStatus,
+        priority: (t.priority || "medium") as Priority,
+        is_recurring: true,
+        recurrence_type: t.recurrence_type,
+        recurrence_days: t.recurrence_days,
+      }));
+      setAllTodos([...newTodos, ...allTodos]);
+      toast({ title: `${newTodos.length} tasks created from template` });
+      logActivity(`Applied task template: ${newTodos.length} tasks`, "Todos");
+    }
+  };
+
   const updateTodoStatus = async (id: string, status: TodoStatus) => {
     const todo = allTodos.find(t => t.id === id);
     const { error } = await supabase
@@ -470,6 +541,8 @@ const Todos = () => {
               <SelectItem value="status">By Status</SelectItem>
             </SelectContent>
           </Select>
+
+          <TaskTemplates onApplyTemplate={handleApplyTemplate} />
 
           <Dialog open={recurringDialogOpen} onOpenChange={setRecurringDialogOpen}>
             <DialogTrigger asChild>
