@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { BookOpen, Clock, ChevronDown, Plus, X, Trash2, Edit2 } from "lucide-react";
+import { BookOpen, Clock, ChevronDown, Plus, Trash2, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO } from "date-fns";
+import { useActivityLog } from "@/hooks/useActivityLog";
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ const Study = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { logActivity } = useActivityLog();
   
   const [filter, setFilter] = useState<string | null>(null);
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
@@ -71,6 +73,7 @@ const Study = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["study-logs"] });
       toast({ title: "Study session logged" });
+      logActivity(`Logged ${duration} minutes of ${subject} study`, "Study");
       resetForm();
       setIsAddingLog(false);
     },
@@ -96,6 +99,7 @@ const Study = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["study-logs"] });
       toast({ title: "Study log updated" });
+      logActivity(`Updated study log: ${duration} minutes of ${subject}`, "Study");
       resetForm();
       setEditingLog(null);
     },
@@ -107,12 +111,17 @@ const Study = () => {
   // Delete study log mutation
   const deleteLogMutation = useMutation({
     mutationFn: async (id: string) => {
+      const log = studyLogs.find(l => l.id === id);
       const { error } = await supabase.from("study_logs").delete().eq("id", id);
       if (error) throw error;
+      return log;
     },
-    onSuccess: () => {
+    onSuccess: (deletedLog) => {
       queryClient.invalidateQueries({ queryKey: ["study-logs"] });
       toast({ title: "Study log deleted" });
+      if (deletedLog) {
+        logActivity(`Deleted study log: ${deletedLog.duration} minutes of ${deletedLog.subject}`, "Study");
+      }
     },
     onError: () => {
       toast({ title: "Failed to delete log", variant: "destructive" });
