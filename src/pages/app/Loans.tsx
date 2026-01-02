@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, FileText, History, Calendar, Settings } from "lucide-react";
+import { Plus, FileText, History, Calendar, Settings, Scale, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,9 @@ import { getBankColor, getBankInitials } from "@/components/loans/BankLogos";
 import { AmortizationPDF } from "@/components/loans/AmortizationPDF";
 import { LoanDocuments } from "@/components/loans/LoanDocuments";
 import { LoanHistory } from "@/components/loans/LoanHistory";
+import { BulkEmiPayment } from "@/components/loans/BulkEmiPayment";
+import { LoanComparison } from "@/components/loans/LoanComparison";
+
 const Loans = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -23,6 +26,8 @@ const Loans = () => {
   const [showAddLoan, setShowAddLoan] = useState(false);
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
   const [editingLoan, setEditingLoan] = useState<any | null>(null);
+  const [showComparison, setShowComparison] = useState(false);
+  const [showBulkPayment, setShowBulkPayment] = useState(false);
 
   // Fetch loans
   const { data: loans = [], isLoading: loansLoading } = useQuery({
@@ -270,16 +275,63 @@ const Loans = () => {
   return (
     <div className="space-y-8 animate-fade-in max-w-5xl">
       {/* Header */}
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-light text-foreground tracking-wide">Loans & EMI</h1>
           <p className="text-sm text-muted-foreground mt-1">Personal liability ledger</p>
         </div>
-        <Button onClick={() => setShowAddLoan(true)} className="bg-primary text-primary-foreground">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Loan
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {loans.length > 1 && (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowComparison(!showComparison)}
+              className="border-border"
+            >
+              <Scale className="w-4 h-4 mr-2" />
+              Compare
+            </Button>
+          )}
+          {allEmis.filter(e => e.payment_status === "Pending").length > 1 && (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowBulkPayment(!showBulkPayment)}
+              className="border-border"
+            >
+              <CreditCard className="w-4 h-4 mr-2" />
+              Bulk Pay
+            </Button>
+          )}
+          <Button onClick={() => setShowAddLoan(true)} className="bg-primary text-primary-foreground">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Loan
+          </Button>
+        </div>
       </header>
+
+      {/* Comparison View */}
+      {showComparison && (
+        <LoanComparison 
+          loans={loans} 
+          allEmis={allEmis} 
+          onClose={() => setShowComparison(false)} 
+        />
+      )}
+
+      {/* Bulk Payment View */}
+      {showBulkPayment && (
+        <BulkEmiPayment
+          pendingEmis={allEmis.filter(e => e.payment_status === "Pending")}
+          loans={loans}
+          onMarkPaid={(emiIds, paidDate, paymentMethod) => {
+            // Mark each EMI as paid
+            emiIds.forEach(emiId => {
+              markPaidMutation.mutate({ emiId, paidDate, paymentMethod });
+            });
+          }}
+          isLoading={markPaidMutation.isPending}
+          onClose={() => setShowBulkPayment(false)}
+        />
+      )}
 
       {/* Summary Cards */}
       <LoanSummaryCards

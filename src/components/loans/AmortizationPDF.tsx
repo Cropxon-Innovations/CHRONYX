@@ -284,6 +284,23 @@ export const AmortizationPDF = ({ loan, schedule }: AmortizationPDFProps) => {
     toast({ title: "Opening WhatsApp..." });
   };
 
+  const handleEmailShare = async () => {
+    const subject = encodeURIComponent(`${loan.bank_name} Loan Amortization Schedule`);
+    const body = encodeURIComponent(
+      `Loan Amortization Schedule\n\n` +
+      `Bank: ${loan.bank_name}\n` +
+      `Loan Type: ${loan.loan_type}\n` +
+      `Account: ${loan.loan_account_number}\n` +
+      `Principal: ${formatCurrency(loan.principal_amount, currency)}\n` +
+      `EMI: ${formatCurrency(loan.emi_amount, currency)}\n` +
+      `Interest: ${loan.interest_rate}% p.a.\n` +
+      `Tenure: ${loan.tenure_months} months\n\n` +
+      `Please download the attached PDF for the full amortization schedule.`
+    );
+    window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+    toast({ title: "Opening email client..." });
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
