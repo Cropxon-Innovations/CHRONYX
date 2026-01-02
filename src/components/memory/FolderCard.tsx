@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,14 @@ import {
   Unlock, 
   Key, 
   Palette,
-  Settings,
   Trash2,
-  Folder,
   FolderHeart,
   FolderArchive,
   FolderCog,
-  Star
+  Star,
+  Pencil,
+  Check,
+  X
 } from "lucide-react";
 
 const FOLDER_COLORS = [
@@ -53,7 +54,7 @@ interface FolderCardProps {
   onLock: () => void;
   onUnlock: () => void;
   onRelock: () => void;
-  onUpdate: (updates: { color?: string; icon?: string }) => void;
+  onUpdate: (updates: { color?: string; icon?: string; name?: string }) => void;
   onDelete: () => void;
   onDrop?: (memoryId: string) => void;
 }
@@ -71,9 +72,36 @@ export const FolderCard = ({
   const [selectedColor, setSelectedColor] = useState(folder.color || FOLDER_COLORS[0].value);
   const [selectedIcon, setSelectedIcon] = useState(folder.icon || "Default");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newName, setNewName] = useState(folder.name);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const IconComponent = FOLDER_ICONS.find(i => i.name === selectedIcon)?.icon || FolderOpen;
   const colorClass = FOLDER_COLORS.find(c => c.value === selectedColor) || FOLDER_COLORS[0];
+
+  // Focus input when entering rename mode
+  useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isRenaming]);
+
+  const handleRename = () => {
+    if (newName.trim() && newName !== folder.name) {
+      onUpdate({ name: newName.trim() });
+    }
+    setIsRenaming(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleRename();
+    } else if (e.key === "Escape") {
+      setNewName(folder.name);
+      setIsRenaming(false);
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -111,11 +139,57 @@ export const FolderCard = ({
       >
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconComponent className={`w-5 h-5 ${colorClass.textColor}`} />
-              <span className="text-sm font-medium truncate">{folder.name}</span>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <IconComponent className={`w-5 h-5 flex-shrink-0 ${colorClass.textColor}`} />
+              {isRenaming ? (
+                <div className="flex items-center gap-1 flex-1">
+                  <Input
+                    ref={inputRef}
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onBlur={handleRename}
+                    onKeyDown={handleKeyDown}
+                    className="h-7 text-sm py-0 px-2"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRename();
+                    }}
+                  >
+                    <Check className="w-3 h-3 text-green-500" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setNewName(folder.name);
+                      setIsRenaming(false);
+                    }}
+                  >
+                    <X className="w-3 h-3 text-red-500" />
+                  </Button>
+                </div>
+              ) : (
+                <span 
+                  className="text-sm font-medium truncate cursor-pointer hover:underline"
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    setIsRenaming(true);
+                  }}
+                  title="Double-click to rename"
+                >
+                  {folder.name}
+                </span>
+              )}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-shrink-0">
               {folder.is_locked ? (
                 isUnlocked ? (
                   <Button
@@ -155,6 +229,18 @@ export const FolderCard = ({
                   <Key className="w-4 h-4 text-muted-foreground" />
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsRenaming(true);
+                }}
+                title="Rename folder"
+              >
+                <Pencil className="w-4 h-4 text-muted-foreground" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"

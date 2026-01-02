@@ -1,6 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   CheckSquare,
@@ -19,14 +24,35 @@ import {
   Receipt,
   TrendingUp,
   ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  HardDrive,
+  Mail,
+  Phone,
+  CheckCircle2,
+  AlertCircle,
+  User,
 } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useTheme } from "next-themes";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const navItems = [
   { path: "/app", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/app/search", label: "Search", icon: Activity },
+  { path: "/app/search", label: "Search", icon: Search },
   { path: "/app/todos", label: "Todos", icon: CheckSquare },
   { path: "/app/study", label: "Study", icon: BookOpen },
   { path: "/app/memory", label: "Memory", icon: ImageIcon },
@@ -37,14 +63,63 @@ const navItems = [
   { path: "/app/insurance", label: "Insurance", icon: Shield },
   { path: "/app/lifespan", label: "Lifespan", icon: Clock },
   { path: "/app/achievements", label: "Achievements", icon: Trophy },
+  { path: "/app/backup", label: "Backup", icon: HardDrive },
   { path: "/app/settings", label: "Settings", icon: Settings },
 ];
 
+interface UserProfile {
+  display_name: string | null;
+  phone_number: string | null;
+  email_verified: boolean;
+  phone_verified: boolean;
+  secondary_email: string | null;
+  secondary_phone: string | null;
+  primary_contact: string | null;
+}
+
 const AppSidebar = () => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [verifyDialog, setVerifyDialog] = useState<{
+    open: boolean;
+    type: "email" | "phone";
+    value: string;
+  }>({ open: false, type: "email", value: "" });
+  const [otp, setOtp] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  // Load collapsed state from localStorage
+  useEffect(() => {
+    const savedCollapsed = localStorage.getItem("sidebar-collapsed");
+    if (savedCollapsed) {
+      setIsCollapsed(savedCollapsed === "true");
+    }
+  }, []);
+
+  // Save collapsed state
+  useEffect(() => {
+    localStorage.setItem("sidebar-collapsed", String(isCollapsed));
+  }, [isCollapsed]);
+
+  // Fetch user profile
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, phone_number, email_verified, phone_verified, secondary_email, secondary_phone, primary_contact")
+        .eq("id", user.id)
+        .single();
+      if (data) {
+        setProfile(data);
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -56,63 +131,244 @@ const AppSidebar = () => {
 
   const closeMobile = () => setMobileOpen(false);
 
-  const SidebarContent = () => (
-    <>
-      {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
-        <Link to="/app" className="text-xl font-light tracking-[0.25em] text-sidebar-foreground" onClick={closeMobile}>
-          VYOM
-        </Link>
-        {/* Mobile close button */}
-        <button
-          onClick={() => setMobileOpen(false)}
-          className="lg:hidden p-2 -mr-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+  const handleVerifyOTP = async () => {
+    setIsVerifying(true);
+    // Simulate OTP verification (in production, integrate with SMS/email service)
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    if (otp === "123456") { // Demo OTP
+      const updateField = verifyDialog.type === "email" ? "email_verified" : "phone_verified";
+      const { error } = await supabase
+        .from("profiles")
+        .update({ [updateField]: true })
+        .eq("id", user?.id);
+      
+      if (!error) {
+        setProfile((prev) => prev ? { ...prev, [updateField]: true } : null);
+        toast.success(`${verifyDialog.type === "email" ? "Email" : "Phone"} verified successfully!`);
+        setVerifyDialog({ open: false, type: "email", value: "" });
+        setOtp("");
+      }
+    } else {
+      toast.error("Invalid OTP. Try 123456 for demo.");
+    }
+    setIsVerifying(false);
+  };
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 vyom-scrollbar overflow-y-auto">
-        {navItems.map(({ path, label, icon: Icon }) => {
-          const isActive = location.pathname === path;
-          return (
-            <Link
-              key={path}
-              to={path}
-              onClick={closeMobile}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+  const SidebarContent = ({ collapsed = false }: { collapsed?: boolean }) => (
+    <TooltipProvider delayDuration={0}>
+      <>
+        {/* Header with User Info */}
+        <div className={cn(
+          "border-b border-sidebar-border",
+          collapsed ? "p-2" : "p-4"
+        )}>
+          {/* Logo and collapse toggle */}
+          <div className="flex items-center justify-between mb-3">
+            {!collapsed && (
+              <Link to="/app" className="text-xl font-light tracking-[0.25em] text-sidebar-foreground" onClick={closeMobile}>
+                VYOM
+              </Link>
+            )}
+            <div className="flex items-center gap-1">
+              {/* Mobile close button */}
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="lg:hidden p-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              {/* Desktop collapse button */}
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="hidden lg:flex p-2 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 rounded-md transition-colors"
+              >
+                {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* User Info */}
+          {!collapsed && (
+            <div className="space-y-2">
+              {/* Name */}
+              {profile?.display_name && (
+                <div className="flex items-center gap-2 text-sm font-medium text-sidebar-foreground">
+                  <User className="w-4 h-4" />
+                  <span className="truncate">{profile.display_name}</span>
+                </div>
               )}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border space-y-1">
-        <button
-          onClick={toggleTheme}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
-        >
-          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          {theme === "dark" ? "Light Mode" : "Dark Mode"}
-        </button>
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign Out
-        </button>
-      </div>
-    </>
+              {/* Email with verification status */}
+              <div className="flex items-center gap-2 text-xs text-sidebar-foreground/70">
+                <Mail className="w-3.5 h-3.5" />
+                <span className="truncate flex-1">{user?.email}</span>
+                {profile?.email_verified ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                ) : (
+                  <button
+                    onClick={() => setVerifyDialog({ open: true, type: "email", value: user?.email || "" })}
+                    className="hover:text-amber-400"
+                  >
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                  </button>
+                )}
+              </div>
+
+              {/* Phone with verification status */}
+              {profile?.phone_number && (
+                <div className="flex items-center gap-2 text-xs text-sidebar-foreground/70">
+                  <Phone className="w-3.5 h-3.5" />
+                  <span className="truncate flex-1">{profile.phone_number}</span>
+                  {profile?.phone_verified ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                  ) : (
+                    <button
+                      onClick={() => setVerifyDialog({ open: true, type: "phone", value: profile.phone_number || "" })}
+                      className="hover:text-amber-400"
+                    >
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Collapsed user icon */}
+          {collapsed && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex justify-center">
+                  <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
+                    <User className="w-4 h-4 text-sidebar-foreground" />
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>{profile?.display_name || user?.email}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className={cn(
+          "flex-1 space-y-1 vyom-scrollbar overflow-y-auto",
+          collapsed ? "p-2" : "p-4"
+        )}>
+          {navItems.map(({ path, label, icon: Icon }) => {
+            const isActive = location.pathname === path;
+            
+            if (collapsed) {
+              return (
+                <Tooltip key={path}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to={path}
+                      onClick={closeMobile}
+                      className={cn(
+                        "flex items-center justify-center p-2.5 rounded-md transition-colors",
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{label}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            return (
+              <Link
+                key={path}
+                to={path}
+                onClick={closeMobile}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className={cn(
+          "border-t border-sidebar-border space-y-1",
+          collapsed ? "p-2" : "p-4"
+        )}>
+          {collapsed ? (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={toggleTheme}
+                    className="flex items-center justify-center p-2.5 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
+                  >
+                    {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>{theme === "dark" ? "Light Mode" : "Dark Mode"}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center justify-center p-2.5 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Sign Out</p>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {theme === "dark" ? "Light Mode" : "Dark Mode"}
+              </button>
+              
+              {/* Email above logout */}
+              <div className="px-3 py-1.5 text-xs text-sidebar-foreground/50 truncate">
+                {user?.email}
+              </div>
+              
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+              
+              {/* Branding */}
+              <div className="pt-2 text-[10px] text-sidebar-foreground/30 text-center">
+                Vyom By CropXon Innovations Pvt Ltd
+              </div>
+            </>
+          )}
+        </div>
+      </>
+    </TooltipProvider>
   );
 
   return (
@@ -147,13 +403,49 @@ const AppSidebar = () => {
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <SidebarContent />
+        <SidebarContent collapsed={false} />
       </aside>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex-col">
-        <SidebarContent />
+      <aside 
+        className={cn(
+          "hidden lg:flex fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border flex-col transition-all duration-300",
+          isCollapsed ? "w-14" : "w-64"
+        )}
+      >
+        <SidebarContent collapsed={isCollapsed} />
       </aside>
+
+      {/* OTP Verification Dialog */}
+      <Dialog open={verifyDialog.open} onOpenChange={(open) => setVerifyDialog((v) => ({ ...v, open }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Verify {verifyDialog.type === "email" ? "Email" : "Phone"}</DialogTitle>
+            <DialogDescription>
+              Enter the OTP sent to {verifyDialog.value}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              placeholder="Enter 6-digit OTP"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              maxLength={6}
+            />
+            <p className="text-xs text-muted-foreground">
+              Demo: Use OTP <code className="bg-muted px-1 rounded">123456</code>
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVerifyDialog({ open: false, type: "email", value: "" })}>
+              Cancel
+            </Button>
+            <Button onClick={handleVerifyOTP} disabled={otp.length !== 6 || isVerifying}>
+              {isVerifying ? "Verifying..." : "Verify"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
