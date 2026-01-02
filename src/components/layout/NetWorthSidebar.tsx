@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { TrendingUp, TrendingDown, Minus, Wallet, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Wallet, ArrowUpRight, ArrowDownRight, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface NetWorthData {
   netWorth: number;
@@ -20,14 +21,9 @@ const NetWorthSidebar = () => {
   const { user } = useAuth();
   const [data, setData] = useState<NetWorthData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      calculateNetWorth();
-    }
-  }, [user]);
-
-  const calculateNetWorth = async () => {
+  const calculateNetWorth = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -120,7 +116,58 @@ const NetWorthSidebar = () => {
       console.error("Error calculating net worth:", error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  }, [user]);
+
+  // Initial load
+  useEffect(() => {
+    if (user) {
+      calculateNetWorth();
+    }
+  }, [user, calculateNetWorth]);
+
+  // Set up real-time subscriptions for dynamic sync
+  useEffect(() => {
+    if (!user) return;
+
+    const incomeChannel = supabase
+      .channel('income-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'income_entries' }, calculateNetWorth)
+      .subscribe();
+
+    const expensesChannel = supabase
+      .channel('expenses-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, calculateNetWorth)
+      .subscribe();
+
+    const loansChannel = supabase
+      .channel('loans-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, calculateNetWorth)
+      .subscribe();
+
+    const emiChannel = supabase
+      .channel('emi-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'emi_schedule' }, calculateNetWorth)
+      .subscribe();
+
+    const insuranceChannel = supabase
+      .channel('insurance-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'insurances' }, calculateNetWorth)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(incomeChannel);
+      supabase.removeChannel(expensesChannel);
+      supabase.removeChannel(loansChannel);
+      supabase.removeChannel(emiChannel);
+      supabase.removeChannel(insuranceChannel);
+    };
+  }, [user, calculateNetWorth]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await calculateNetWorth();
   };
 
   const formatCurrency = (amount: number) => {
@@ -157,7 +204,18 @@ const NetWorthSidebar = () => {
           <Wallet className="w-4 h-4 text-vyom-accent" />
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Net Worth</span>
         </div>
-        <TrendIcon className={`w-4 h-4 ${trendColor}`} />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          <TrendIcon className={`w-4 h-4 ${trendColor}`} />
+        </div>
       </div>
 
       {/* Main Net Worth */}
