@@ -40,13 +40,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string) => {
     const redirectUrl = `${window.location.origin}/app`;
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
       },
     });
+    
+    // Send welcome email if signup was successful
+    if (!error && data?.user) {
+      try {
+        await supabase.functions.invoke('send-welcome-email', {
+          body: { email, name: email.split('@')[0] }
+        });
+      } catch (e) {
+        console.error('Failed to send welcome email:', e);
+      }
+    }
+    
     return { error };
   };
 
