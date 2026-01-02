@@ -10,7 +10,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { EnhancedCalendar } from "@/components/ui/date-picker-enhanced";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, differenceInYears, differenceInMonths, differenceInDays } from "date-fns";
-import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive, Camera, User, Upload, RotateCcw, Sparkles, Crop, Trash2, AlertTriangle } from "lucide-react";
+import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive, Camera, User, Upload, RotateCcw, Sparkles, Crop, Trash2, AlertTriangle, Download, ShieldCheck } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { DataExport } from "@/components/export/DataExport";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -111,6 +112,14 @@ const Settings = () => {
   const [deleteReason, setDeleteReason] = useState("");
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<"reason" | "verify" | "confirm">("reason");
+  const [deleteOtp, setDeleteOtp] = useState("");
+  const [deleteOtpHash, setDeleteOtpHash] = useState("");
+  const [deleteOtpSent, setDeleteOtpSent] = useState(false);
+  const [deleteOtpVerified, setDeleteOtpVerified] = useState(false);
+  const [sendingDeleteOtp, setSendingDeleteOtp] = useState(false);
+  const [verifyingDeleteOtp, setVerifyingDeleteOtp] = useState(false);
+  const [isDownloadingData, setIsDownloadingData] = useState(false);
 
   const DELETE_REASONS = [
     { value: "not_useful", label: "Not useful for my needs" },
@@ -315,8 +324,149 @@ const Settings = () => {
     logActivity("Reset onboarding flow", "Settings");
   };
 
+  const handleDownloadAllData = async () => {
+    if (!user) return;
+    setIsDownloadingData(true);
+    
+    try {
+      // Fetch all user data
+      const [
+        { data: achievements },
+        { data: expenses },
+        { data: incomeEntries },
+        { data: incomeSources },
+        { data: loans },
+        { data: insurances },
+        { data: studyLogs },
+        { data: studyGoals },
+        { data: savingsGoals },
+        { data: documents },
+        { data: educationRecords },
+        { data: memories },
+        { data: socialProfiles },
+      ] = await Promise.all([
+        supabase.from("achievements").select("*").eq("user_id", user.id),
+        supabase.from("expenses").select("*").eq("user_id", user.id),
+        supabase.from("income_entries").select("*").eq("user_id", user.id),
+        supabase.from("income_sources").select("*").eq("user_id", user.id),
+        supabase.from("loans").select("*").eq("user_id", user.id),
+        supabase.from("insurances").select("*").eq("user_id", user.id),
+        supabase.from("study_logs").select("*").eq("user_id", user.id),
+        supabase.from("study_goals").select("*").eq("user_id", user.id),
+        supabase.from("savings_goals").select("*").eq("user_id", user.id),
+        supabase.from("documents").select("*").eq("user_id", user.id),
+        supabase.from("education_records").select("*").eq("user_id", user.id),
+        supabase.from("memories").select("*").eq("user_id", user.id),
+        supabase.from("social_profiles").select("*").eq("user_id", user.id),
+      ]);
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        profile: profile,
+        achievements,
+        expenses,
+        incomeEntries,
+        incomeSources,
+        loans,
+        insurances,
+        studyLogs,
+        studyGoals,
+        savingsGoals,
+        documents,
+        educationRecords,
+        memories,
+        socialProfiles,
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `vyom-data-export-${format(new Date(), "yyyy-MM-dd")}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Data Exported",
+        description: "Your data has been downloaded successfully.",
+      });
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export your data. Please try again.",
+        variant: "destructive",
+      });
+    }
+    setIsDownloadingData(false);
+  };
+
+  const sendDeleteOtp = async () => {
+    if (!profile?.email && !user?.email) return;
+    setSendingDeleteOtp(true);
+    
+    try {
+      const email = profile?.email || user?.email;
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const hash = await hashOtp(code);
+      setDeleteOtpHash(hash);
+      
+      const { error } = await supabase.functions.invoke("send-email-otp", {
+        body: { email, otp: code, purpose: "account_deletion" },
+      });
+      
+      if (error) throw error;
+      
+      setDeleteOtpSent(true);
+      toast({
+        title: "Verification Code Sent",
+        description: `A 6-digit code has been sent to ${email}`,
+      });
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send verification code. Please try again.",
+        variant: "destructive",
+      });
+    }
+    setSendingDeleteOtp(false);
+  };
+
+  const verifyDeleteOtp = async () => {
+    if (!deleteOtp || deleteOtp.length !== 6) return;
+    setVerifyingDeleteOtp(true);
+    
+    try {
+      const hash = await hashOtp(deleteOtp);
+      if (hash === deleteOtpHash) {
+        setDeleteOtpVerified(true);
+        setDeleteStep("confirm");
+        toast({
+          title: "Verified",
+          description: "Email verification successful. You can now proceed with account deletion.",
+        });
+      } else {
+        toast({
+          title: "Invalid Code",
+          description: "The verification code is incorrect. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Verification failed. Please try again.",
+        variant: "destructive",
+      });
+    }
+    setVerifyingDeleteOtp(false);
+  };
+
   const handleDeleteAccount = async () => {
-    if (!user || !deleteReason || deleteConfirmText !== (profile?.email || user.email)) {
+    if (!user || !deleteReason || !deleteOtpVerified || deleteConfirmText !== (profile?.email || user.email)) {
       return;
     }
 
@@ -880,6 +1030,29 @@ const Settings = () => {
           Danger Zone
         </h2>
         <div className="space-y-3">
+          {/* Download Data Option */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-border rounded-lg bg-background">
+            <div className="space-y-1">
+              <p className="font-medium text-foreground flex items-center gap-2">
+                <Download className="w-4 h-4 text-muted-foreground" />
+                Download My Data
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Export all your data as a JSON file before deleting your account.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleDownloadAllData}
+              disabled={isDownloadingData}
+              className="w-full sm:w-auto"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isDownloadingData ? "Downloading..." : "Download Data"}
+            </Button>
+          </div>
+
+          {/* Delete Account Option */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-destructive/20 rounded-lg bg-background">
             <div className="space-y-1">
               <p className="font-medium text-foreground">Delete Account</p>
@@ -889,7 +1062,16 @@ const Settings = () => {
             </div>
             <Button
               variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
+              onClick={() => {
+                setShowDeleteDialog(true);
+                setDeleteStep("reason");
+                setDeleteOtp("");
+                setDeleteOtpHash("");
+                setDeleteOtpSent(false);
+                setDeleteOtpVerified(false);
+                setDeleteReason("");
+                setDeleteConfirmText("");
+              }}
               className="w-full sm:w-auto"
             >
               <Trash2 className="w-4 h-4 mr-2" />
@@ -1139,6 +1321,11 @@ const Settings = () => {
         if (!open) {
           setDeleteReason("");
           setDeleteConfirmText("");
+          setDeleteStep("reason");
+          setDeleteOtp("");
+          setDeleteOtpHash("");
+          setDeleteOtpSent(false);
+          setDeleteOtpVerified(false);
         }
       }}>
         <AlertDialogContent className="max-w-md">
@@ -1147,75 +1334,163 @@ const Settings = () => {
               <AlertTriangle className="w-5 h-5" />
               Delete Account
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-left space-y-4">
-              <p>
-                This action is <span className="font-semibold text-destructive">permanent and irreversible</span>. 
-                All your data including documents, memories, financial records, and settings will be permanently deleted.
-              </p>
+            <AlertDialogDescription className="text-left">
+              {deleteStep === "reason" && (
+                <p>
+                  This action is <span className="font-semibold text-destructive">permanent and irreversible</span>. 
+                  Please select a reason before proceeding.
+                </p>
+              )}
+              {deleteStep === "verify" && (
+                <p>
+                  For security, we need to verify your email address before deleting your account.
+                </p>
+              )}
+              {deleteStep === "confirm" && (
+                <p>
+                  Email verified. Type your email to confirm permanent deletion.
+                </p>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           
           <div className="space-y-4 py-2">
-            {/* Reason Selection */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Why are you deleting your account?
-              </Label>
-              <Select value={deleteReason} onValueChange={setDeleteReason}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a reason..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {DELETE_REASONS.map((reason) => (
-                    <SelectItem key={reason.value} value={reason.value}>
-                      {reason.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Step 1: Reason Selection */}
+            {deleteStep === "reason" && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Why are you deleting your account?
+                </Label>
+                <Select value={deleteReason} onValueChange={setDeleteReason}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a reason..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DELETE_REASONS.map((reason) => (
+                      <SelectItem key={reason.value} value={reason.value}>
+                        {reason.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-            {/* Account Confirmation */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Type <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-destructive">{profile?.email || user?.email}</span> to confirm
-              </Label>
-              <Input
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="Enter your email to confirm"
-                className="font-mono"
-              />
-            </div>
+            {/* Step 2: Email Verification */}
+            {deleteStep === "verify" && (
+              <div className="space-y-4">
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Verification code will be sent to:
+                  </p>
+                  <p className="font-medium">{profile?.email || user?.email}</p>
+                </div>
+                
+                {!deleteOtpSent ? (
+                  <Button 
+                    onClick={sendDeleteOtp} 
+                    disabled={sendingDeleteOtp}
+                    className="w-full"
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    {sendingDeleteOtp ? "Sending..." : "Send Verification Code"}
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <Input
+                      placeholder="Enter 6-digit code"
+                      value={deleteOtp}
+                      onChange={(e) => setDeleteOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      maxLength={6}
+                      className="text-center text-lg tracking-widest"
+                    />
+                    <Button 
+                      onClick={verifyDeleteOtp} 
+                      disabled={deleteOtp.length !== 6 || verifyingDeleteOtp}
+                      className="w-full"
+                    >
+                      <ShieldCheck className="w-4 h-4 mr-2" />
+                      {verifyingDeleteOtp ? "Verifying..." : "Verify Code"}
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Didn't receive it?{" "}
+                      <button 
+                        type="button"
+                        onClick={sendDeleteOtp} 
+                        disabled={sendingDeleteOtp}
+                        className="text-primary hover:underline"
+                      >
+                        Resend code
+                      </button>
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
-            {deleteConfirmText && deleteConfirmText !== (profile?.email || user?.email) && (
-              <p className="text-xs text-destructive flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
-                Email doesn't match
-              </p>
+            {/* Step 3: Final Confirmation */}
+            {deleteStep === "confirm" && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-green-600">Email verified successfully</span>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Type <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-destructive">{profile?.email || user?.email}</span> to confirm
+                  </Label>
+                  <Input
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="Enter your email to confirm"
+                    className="font-mono"
+                  />
+                </div>
+
+                {deleteConfirmText && deleteConfirmText !== (profile?.email || user?.email) && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Email doesn't match
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteAccount}
-              disabled={
-                isDeleting || 
-                !deleteReason || 
-                deleteConfirmText !== (profile?.email || user?.email)
-              }
-            >
-              {isDeleting ? (
-                <>Deleting...</>
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Forever
-                </>
-              )}
-            </Button>
+            
+            {deleteStep === "reason" && (
+              <Button
+                onClick={() => setDeleteStep("verify")}
+                disabled={!deleteReason}
+              >
+                Continue
+              </Button>
+            )}
+            
+            {deleteStep === "confirm" && (
+              <Button
+                variant="destructive"
+                onClick={handleDeleteAccount}
+                disabled={
+                  isDeleting || 
+                  !deleteReason || 
+                  !deleteOtpVerified ||
+                  deleteConfirmText !== (profile?.email || user?.email)
+                }
+              >
+                {isDeleting ? (
+                  <>Deleting...</>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Forever
+                  </>
+                )}
+              </Button>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
