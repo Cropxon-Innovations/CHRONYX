@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* VYOM Design System - Light Mode */
+    /* CHRONYX Design System - Light Mode */
     --background: 40 20% 97%;
     --foreground: 230 15% 12%;
 
@@ -37,30 +37,55 @@
 
     --radius: 0.5rem;
 
-    /* VYOM Custom Tokens */
-    --vyom-accent: 230 25% 45%;
-    --vyom-accent-soft: 230 20% 92%;
-    --vyom-metric: 230 15% 15%;
-    --vyom-success: 150 30% 45%;
-    --vyom-warning: 35 70% 50%;
-    --vyom-neutral: 230 10% 60%;
-    --vyom-ring-track: 230 10% 90%;
-    --vyom-ring-fill: 230 25% 45%;
-    --vyom-gradient-start: 230 30% 96%;
-    --vyom-gradient-end: 40 20% 97%;
-    --vyom-flow-line: 230 15% 85%;
+    /* CHRONYX Custom Tokens */
+    --chronyx-accent: 230 25% 45%;
+    --chronyx-accent-soft: 230 20% 92%;
+    --chronyx-metric: 230 15% 15%;
+    --chronyx-success: 150 30% 45%;
+    --chronyx-warning: 35 70% 50%;
+    --chronyx-neutral: 230 10% 60%;
+    --chronyx-ring-track: 230 10% 90%;
+    --chronyx-ring-fill: 230 25% 45%;
+    --chronyx-gradient-start: 230 30% 96%;
+    --chronyx-gradient-end: 40 20% 97%;
+    --chronyx-flow-line: 230 15% 85%;
+
+    /* Legacy aliases for compatibility */
+    --vyom-accent: var(--chronyx-accent);
+    --vyom-accent-soft: var(--chronyx-accent-soft);
+    --vyom-metric: var(--chronyx-metric);
+    --vyom-success: var(--chronyx-success);
+    --vyom-warning: var(--chronyx-warning);
+    --vyom-neutral: var(--chronyx-neutral);
+    --vyom-ring-track: var(--chronyx-ring-track);
+    --vyom-ring-fill: var(--chronyx-ring-fill);
+    --vyom-gradient-start: var(--chronyx-gradient-start);
+    --vyom-gradient-end: var(--chronyx-gradient-end);
+    --vyom-flow-line: var(--chronyx-flow-line);
 
     /* Landing Page Tokens - Light */
-    --vyom-landing: 40 15% 98%;
-    --vyom-landing-vignette: 230 10% 92% / 0.4;
-    --vyom-landing-title: 220 15% 20%;
-    --vyom-landing-tagline: 220 10% 45%;
-    --vyom-landing-subtext: 220 8% 55%;
-    --vyom-arc-stroke: 230 20% 40%;
-    --vyom-landing-button-border: 220 10% 70%;
-    --vyom-landing-button-text: 220 15% 25%;
-    --vyom-landing-button-hover: 220 8% 95%;
-    --vyom-landing-button-hover-border: 220 10% 60%;
+    --chronyx-landing: 40 15% 98%;
+    --chronyx-landing-vignette: 230 10% 92% / 0.4;
+    --chronyx-landing-title: 220 15% 20%;
+    --chronyx-landing-tagline: 220 10% 45%;
+    --chronyx-landing-subtext: 220 8% 55%;
+    --chronyx-arc-stroke: 230 20% 40%;
+    --chronyx-landing-button-border: 220 10% 70%;
+    --chronyx-landing-button-text: 220 15% 25%;
+    --chronyx-landing-button-hover: 220 8% 95%;
+    --chronyx-landing-button-hover-border: 220 10% 60%;
+
+    /* Legacy aliases */
+    --vyom-landing: var(--chronyx-landing);
+    --vyom-landing-vignette: var(--chronyx-landing-vignette);
+    --vyom-landing-title: var(--chronyx-landing-title);
+    --vyom-landing-tagline: var(--chronyx-landing-tagline);
+    --vyom-landing-subtext: var(--chronyx-landing-subtext);
+    --vyom-arc-stroke: var(--chronyx-arc-stroke);
+    --vyom-landing-button-border: var(--chronyx-landing-button-border);
+    --vyom-landing-button-text: var(--chronyx-landing-button-text);
+    --vyom-landing-button-hover: var(--chronyx-landing-button-hover);
+    --vyom-landing-button-hover-border: var(--chronyx-landing-button-hover-border);
 
     /* Sidebar */
     --sidebar-background: 40 15% 98%;
@@ -102,30 +127,55 @@
     --input: 230 12% 18%;
     --ring: 230 20% 60%;
 
-    /* VYOM Custom Tokens - Dark */
-    --vyom-accent: 230 20% 65%;
-    --vyom-accent-soft: 230 15% 18%;
-    --vyom-metric: 40 10% 95%;
-    --vyom-success: 150 25% 55%;
-    --vyom-warning: 35 60% 55%;
-    --vyom-neutral: 230 10% 50%;
-    --vyom-ring-track: 230 12% 20%;
-    --vyom-ring-fill: 230 20% 60%;
-    --vyom-gradient-start: 230 15% 8%;
-    --vyom-gradient-end: 235 15% 10%;
-    --vyom-flow-line: 230 12% 20%;
+    /* CHRONYX Custom Tokens - Dark */
+    --chronyx-accent: 230 20% 65%;
+    --chronyx-accent-soft: 230 15% 18%;
+    --chronyx-metric: 40 10% 95%;
+    --chronyx-success: 150 25% 55%;
+    --chronyx-warning: 35 60% 55%;
+    --chronyx-neutral: 230 10% 50%;
+    --chronyx-ring-track: 230 12% 20%;
+    --chronyx-ring-fill: 230 20% 60%;
+    --chronyx-gradient-start: 230 15% 8%;
+    --chronyx-gradient-end: 235 15% 10%;
+    --chronyx-flow-line: 230 12% 20%;
+
+    /* Legacy aliases for compatibility */
+    --vyom-accent: var(--chronyx-accent);
+    --vyom-accent-soft: var(--chronyx-accent-soft);
+    --vyom-metric: var(--chronyx-metric);
+    --vyom-success: var(--chronyx-success);
+    --vyom-warning: var(--chronyx-warning);
+    --vyom-neutral: var(--chronyx-neutral);
+    --vyom-ring-track: var(--chronyx-ring-track);
+    --vyom-ring-fill: var(--chronyx-ring-fill);
+    --vyom-gradient-start: var(--chronyx-gradient-start);
+    --vyom-gradient-end: var(--chronyx-gradient-end);
+    --vyom-flow-line: var(--chronyx-flow-line);
 
     /* Landing Page Tokens - Dark */
-    --vyom-landing: 230 15% 6%;
-    --vyom-landing-vignette: 230 15% 4% / 0.5;
-    --vyom-landing-title: 40 10% 88%;
-    --vyom-landing-tagline: 40 8% 60%;
-    --vyom-landing-subtext: 40 6% 50%;
-    --vyom-arc-stroke: 230 15% 60%;
-    --vyom-landing-button-border: 230 10% 40%;
-    --vyom-landing-button-text: 40 10% 85%;
-    --vyom-landing-button-hover: 230 12% 15%;
-    --vyom-landing-button-hover-border: 230 10% 50%;
+    --chronyx-landing: 230 15% 6%;
+    --chronyx-landing-vignette: 230 15% 4% / 0.5;
+    --chronyx-landing-title: 40 10% 88%;
+    --chronyx-landing-tagline: 40 8% 60%;
+    --chronyx-landing-subtext: 40 6% 50%;
+    --chronyx-arc-stroke: 230 15% 60%;
+    --chronyx-landing-button-border: 230 10% 40%;
+    --chronyx-landing-button-text: 40 10% 85%;
+    --chronyx-landing-button-hover: 230 12% 15%;
+    --chronyx-landing-button-hover-border: 230 10% 50%;
+
+    /* Legacy aliases */
+    --vyom-landing: var(--chronyx-landing);
+    --vyom-landing-vignette: var(--chronyx-landing-vignette);
+    --vyom-landing-title: var(--chronyx-landing-title);
+    --vyom-landing-tagline: var(--chronyx-landing-tagline);
+    --vyom-landing-subtext: var(--chronyx-landing-subtext);
+    --vyom-arc-stroke: var(--chronyx-arc-stroke);
+    --vyom-landing-button-border: var(--chronyx-landing-button-border);
+    --vyom-landing-button-text: var(--chronyx-landing-button-text);
+    --vyom-landing-button-hover: var(--chronyx-landing-button-hover);
+    --vyom-landing-button-hover-border: var(--chronyx-landing-button-hover-border);
 
     /* Sidebar - Dark */
     --sidebar-background: 230 15% 6%;
@@ -154,38 +204,65 @@
 }
 
 @layer components {
-  /* VYOM Landing Page Styles */
-  .bg-vyom-landing {
-    background-color: hsl(var(--vyom-landing));
+  /* CHRONYX Landing Page Styles */
+  .bg-chronyx-landing {
+    background-color: hsl(var(--chronyx-landing));
   }
 
-  .text-vyom-landing-title {
-    color: hsl(var(--vyom-landing-title));
+  .text-chronyx-landing-title {
+    color: hsl(var(--chronyx-landing-title));
   }
 
-  .text-vyom-landing-tagline {
-    color: hsl(var(--vyom-landing-tagline));
+  .text-chronyx-landing-tagline {
+    color: hsl(var(--chronyx-landing-tagline));
   }
 
-  .text-vyom-landing-subtext {
-    color: hsl(var(--vyom-landing-subtext));
+  .text-chronyx-landing-subtext {
+    color: hsl(var(--chronyx-landing-subtext));
     opacity: 0.6;
   }
 
-  .border-vyom-landing-button-border {
-    border-color: hsl(var(--vyom-landing-button-border));
+  .border-chronyx-landing-button-border {
+    border-color: hsl(var(--chronyx-landing-button-border));
   }
 
-  .text-vyom-landing-button-text {
-    color: hsl(var(--vyom-landing-button-text));
+  .text-chronyx-landing-button-text {
+    color: hsl(var(--chronyx-landing-button-text));
   }
 
-  .hover\:bg-vyom-landing-button-hover:hover {
-    background-color: hsl(var(--vyom-landing-button-hover));
+  .hover\:bg-chronyx-landing-button-hover:hover {
+    background-color: hsl(var(--chronyx-landing-button-hover));
   }
 
-  .hover\:border-vyom-landing-button-hover-border:hover {
-    border-color: hsl(var(--vyom-landing-button-hover-border));
+  .hover\:border-chronyx-landing-button-hover-border:hover {
+    border-color: hsl(var(--chronyx-landing-button-hover-border));
+  }
+
+  /* Legacy aliases for VYOM styles */
+  .bg-vyom-landing {
+    background-color: hsl(var(--chronyx-landing));
+  }
+
+  .text-vyom-landing-title {
+    color: hsl(var(--chronyx-landing-title));
+  }
+
+  .text-vyom-landing-tagline {
+    color: hsl(var(--chronyx-landing-tagline));
+  }
+
+  /* CHRONYX Ring Animation - 90 seconds for meditative rotation */
+  .chronyx-ring-rotate {
+    animation: chronyxRingRotate 90s linear infinite;
+  }
+
+  @keyframes chronyxRingRotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   /* Rotating Arc Animation - 75 seconds for one full rotation */

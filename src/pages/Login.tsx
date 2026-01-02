@@ -46,7 +46,7 @@ const Login = () => {
           }
         } else {
           toast({
-            title: "Welcome to VYOM",
+            title: "Welcome to CHRONYX",
             description: "Your account has been created.",
           });
           navigate("/app");
@@ -108,7 +108,7 @@ const Login = () => {
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
             <h1 className="text-xl sm:text-2xl font-light tracking-[0.2em] text-foreground mb-2 sm:mb-3">
-              VYOM
+              CHRONYX
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
               This space is private.

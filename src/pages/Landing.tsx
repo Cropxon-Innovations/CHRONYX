@@ -10,11 +10,57 @@ import {
   Image,
   Play,
   ChevronDown,
-  Sparkles,
   Lock,
-  BarChart3,
-  Calendar
+  Download,
+  Eye,
+  X
 } from "lucide-react";
+
+// CHRONYX Logo Component
+const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="hsl(var(--primary))" />
+        <stop offset="100%" stopColor="hsl(var(--primary) / 0.6)" />
+      </linearGradient>
+    </defs>
+    {/* Outer ring */}
+    <circle 
+      cx="50" cy="50" r="45" 
+      stroke="url(#logo-gradient)" 
+      strokeWidth="2" 
+      fill="none"
+      className="opacity-80"
+    />
+    {/* Inner dashed ring */}
+    <circle 
+      cx="50" cy="50" r="35" 
+      stroke="hsl(var(--primary))" 
+      strokeWidth="1" 
+      strokeDasharray="6 4"
+      fill="none"
+      className="opacity-40"
+    />
+    {/* Center dot */}
+    <circle 
+      cx="50" cy="50" r="5" 
+      fill="hsl(var(--primary))"
+      className="opacity-90"
+    />
+    {/* Time markers */}
+    {[0, 90, 180, 270].map((angle, i) => (
+      <circle 
+        key={i}
+        cx={50 + 40 * Math.cos((angle - 90) * Math.PI / 180)}
+        cy={50 + 40 * Math.sin((angle - 90) * Math.PI / 180)}
+        r="2"
+        fill="hsl(var(--primary))"
+        className="opacity-50"
+      />
+    ))}
+  </svg>
+);
 
 const Landing = () => {
   const [mounted, setMounted] = useState(false);
@@ -25,27 +71,32 @@ const Landing = () => {
   }, []);
 
   const features = [
-    { icon: CheckSquare, label: "Tasks", desc: "Track daily todos", sketch: "M" },
-    { icon: BookOpen, label: "Study", desc: "Master your syllabus", sketch: "◇" },
+    { icon: CheckSquare, label: "Tasks", desc: "Record daily todos", sketch: "M" },
+    { icon: BookOpen, label: "Study", desc: "Hold your syllabus", sketch: "◇" },
     { icon: Wallet, label: "Finance", desc: "Budget & loans", sketch: "△" },
-    { icon: Heart, label: "Insurance", desc: "Policy tracker", sketch: "○" },
-    { icon: Image, label: "Memory", desc: "Photo vault", sketch: "□" },
+    { icon: Heart, label: "Insurance", desc: "Policy records", sketch: "○" },
+    { icon: Image, label: "Memory", desc: "Private photo vault", sketch: "□" },
     { icon: Clock, label: "Time", desc: "Lifespan view", sketch: "◎" },
   ];
 
   return (
-    <main className="relative min-h-screen w-full overflow-x-hidden bg-vyom-landing">
+    <main className="relative min-h-screen w-full overflow-x-hidden bg-chronyx-landing">
+      {/* Paper-like texture overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.015]" 
+        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }} 
+      />
+
       {/* Handmade sketch grid background */}
       <div className="absolute inset-0 pointer-events-none">
-        <svg className="w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
+        <svg className="w-full h-full opacity-[0.02]" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <pattern id="sketch-grid" width="60" height="60" patternUnits="userSpaceOnUse">
+            <pattern id="sketch-grid" width="80" height="80" patternUnits="userSpaceOnUse">
               <path 
-                d="M 60 0 L 0 0 0 60" 
+                d="M 80 0 L 0 0 0 80" 
                 fill="none" 
                 stroke="currentColor" 
-                strokeWidth="0.5"
-                strokeDasharray="2,4"
+                strokeWidth="0.3"
+                strokeDasharray="3,6"
                 className="text-foreground"
               />
             </pattern>
@@ -54,147 +105,95 @@ const Landing = () => {
         </svg>
       </div>
 
-      {/* Decorative sketch elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Top left corner decoration */}
-        <svg className="absolute top-10 left-10 w-20 h-20 sketch-element opacity-[0.06]" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="8,12" className="text-primary" />
-          <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary opacity-50" />
-        </svg>
-        
-        {/* Bottom right corner decoration */}
-        <svg className="absolute bottom-20 right-20 w-32 h-32 sketch-element opacity-[0.05]" viewBox="0 0 100 100">
-          <rect x="20" y="20" width="60" height="60" fill="none" stroke="currentColor" strokeWidth="0.5" transform="rotate(12 50 50)" className="text-primary" />
-          <rect x="25" y="25" width="50" height="50" fill="none" stroke="currentColor" strokeWidth="0.5" transform="rotate(-8 50 50)" className="text-primary opacity-50" />
-        </svg>
-
-        {/* Floating dots pattern */}
-        {[...Array(12)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 rounded-full bg-primary/10 sketch-float"
-            style={{
-              left: `${10 + (i * 8) % 80}%`,
-              top: `${15 + (i * 13) % 70}%`,
-              animationDelay: `${i * 0.5}s`,
-            }}
-          />
-        ))}
-      </div>
-
       {/* Subtle vignette overlay */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--vyom-landing-vignette))_100%)]" />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--chronyx-landing-vignette))_100%)]" />
       
-      {/* Rotating Arc - Meditative motion */}
+      {/* Slow rotating concentric rings - meditative motion */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <svg
-          className="vyom-arc-rotate"
-          width="600"
-          height="600"
-          viewBox="0 0 600 600"
+          className="chronyx-ring-rotate"
+          width="700"
+          height="700"
+          viewBox="0 0 700 700"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <circle
-            cx="300"
-            cy="300"
+            cx="350"
+            cy="350"
+            r="320"
+            stroke="hsl(var(--chronyx-arc-stroke))"
+            strokeWidth="0.5"
+            strokeDasharray="502 1508"
+            strokeLinecap="round"
+            fill="none"
+            className="opacity-[0.03]"
+          />
+          <circle
+            cx="350"
+            cy="350"
             r="280"
-            stroke="hsl(var(--vyom-arc-stroke))"
-            strokeWidth="1"
-            strokeDasharray="440 1320"
+            stroke="hsl(var(--chronyx-arc-stroke))"
+            strokeWidth="0.5"
+            strokeDasharray="220 1540"
             strokeLinecap="round"
             fill="none"
             className="opacity-[0.04]"
           />
           <circle
-            cx="300"
-            cy="300"
-            r="260"
-            stroke="hsl(var(--vyom-arc-stroke))"
+            cx="350"
+            cy="350"
+            r="240"
+            stroke="hsl(var(--chronyx-arc-stroke))"
             strokeWidth="0.5"
-            strokeDasharray="220 1540"
-            strokeLinecap="round"
-            fill="none"
-            className="opacity-[0.03]"
-          />
-        </svg>
-      </div>
-
-      {/* Progress Ring - Subtle circular indicator */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <svg
-          className="vyom-ring-slow-rotate"
-          width="500"
-          height="500"
-          viewBox="0 0 500 500"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            cx="250"
-            cy="250"
-            r="220"
-            stroke="hsl(var(--vyom-arc-stroke))"
-            strokeWidth="1"
             fill="none"
             className="opacity-[0.02]"
-          />
-          <circle
-            cx="250"
-            cy="250"
-            r="220"
-            stroke="hsl(var(--vyom-arc-stroke))"
-            strokeWidth="1.5"
-            strokeDasharray="345 1036"
-            strokeDashoffset="0"
-            strokeLinecap="round"
-            fill="none"
-            className="opacity-[0.05] vyom-ring-fill-animate"
-            transform="rotate(-90 250 250)"
           />
         </svg>
       </div>
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
+        
+        {/* Header */}
+        <header className="w-full px-6 py-6">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <ChronxyxLogo className="w-8 h-8" />
+              <span className="text-lg font-light tracking-[0.2em] text-foreground/80">CHRONYX</span>
+            </div>
+            <Link to="/login">
+              <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Enter
+              </button>
+            </Link>
+          </div>
+        </header>
+
         {/* Hero Section */}
-        <section className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 pt-12 pb-8">
-          {/* Sketch-style logo accent */}
+        <section className="flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 pt-8 pb-16">
+          {/* Logo animation */}
           <div 
-            className={`relative mb-6 transition-all duration-1000 ease-out ${
+            className={`relative mb-10 transition-all duration-1000 ease-out ${
               mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
             }`}
           >
-            <div className="absolute -inset-4 border border-dashed border-primary/20 rounded-lg sketch-rotate" />
-            <div className="absolute -inset-6 border border-dotted border-primary/10 rounded-xl" />
-            <Sparkles className="w-8 h-8 text-primary/40" />
+            <ChronxyxLogo className="w-20 h-20 md:w-24 md:h-24" />
           </div>
 
-          {/* Primary Title with handwritten feel */}
+          {/* Primary Title */}
           <h1 
-            className={`text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extralight tracking-[0.25em] sm:tracking-[0.35em] text-vyom-landing-title transition-all duration-[800ms] ease-out relative ${
+            className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-chronyx-landing-title transition-all duration-[800ms] ease-out ${
               mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
             style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
           >
-            <span className="relative">
-              VYOM
-              {/* Underline sketch */}
-              <svg className="absolute -bottom-2 left-0 w-full h-3 overflow-visible" viewBox="0 0 100 10">
-                <path 
-                  d="M 0 5 Q 25 8 50 5 T 100 5" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="0.5"
-                  className="text-primary/30 sketch-draw"
-                />
-              </svg>
-            </span>
+            CHRONYX
           </h1>
 
           {/* Tagline */}
           <p 
-            className={`mt-8 text-lg sm:text-xl md:text-2xl font-light text-vyom-landing-tagline transition-all duration-[600ms] ease-out ${
+            className={`mt-6 text-lg sm:text-xl md:text-2xl font-light text-chronyx-landing-tagline transition-all duration-[600ms] ease-out ${
               mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
             style={{ 
@@ -205,9 +204,21 @@ const Landing = () => {
             A quiet space for your life.
           </p>
 
-          {/* Feature pills with icons */}
+          {/* Subdescription */}
+          <p 
+            className={`mt-4 text-sm sm:text-base font-light text-muted-foreground/70 max-w-md transition-all duration-[600ms] ease-out ${
+              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+            style={{ transitionDelay: '400ms' }}
+          >
+            A private system to hold your life with continuity.
+            <br className="hidden sm:block" />
+            No optimization. No pressure. Just time, recorded.
+          </p>
+
+          {/* Feature pills */}
           <div 
-            className={`mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-xl transition-all duration-[600ms] ease-out ${
+            className={`mt-10 flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-xl transition-all duration-[600ms] ease-out ${
               mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
             style={{ transitionDelay: '500ms' }}
@@ -217,7 +228,7 @@ const Landing = () => {
               return (
                 <div 
                   key={feature.label}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/50 bg-background/30 backdrop-blur-sm text-muted-foreground hover:border-primary/30 hover:text-foreground transition-all duration-300 group"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/40 bg-card/20 backdrop-blur-sm text-muted-foreground hover:border-primary/30 hover:text-foreground transition-all duration-300 group"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <Icon className="w-3.5 h-3.5 group-hover:text-primary transition-colors" />
@@ -237,10 +248,9 @@ const Landing = () => {
             <Link to="/login">
               <button className="group relative px-8 py-3 text-sm tracking-wider font-light border border-primary/80 text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-all duration-300 ease-out overflow-hidden">
                 <span className="relative z-10 flex items-center gap-2">
-                  Enter VYOM
+                  Enter CHRONYX
                   <Shield className="w-4 h-4 opacity-70" />
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             </Link>
             
@@ -255,7 +265,7 @@ const Landing = () => {
 
           {/* Scroll indicator */}
           <div 
-            className={`mt-16 flex flex-col items-center gap-2 text-muted-foreground/50 transition-all duration-[600ms] ease-out ${
+            className={`mt-20 flex flex-col items-center gap-2 text-muted-foreground/40 transition-all duration-[600ms] ease-out ${
               mounted ? 'opacity-100' : 'opacity-0'
             }`}
             style={{ transitionDelay: '1000ms' }}
@@ -265,23 +275,66 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* Features Grid Section */}
-        <section className="px-4 sm:px-6 py-16 sm:py-24">
-          <div className="max-w-6xl mx-auto">
+        {/* What is CHRONYX Section */}
+        <section className="px-4 sm:px-6 py-20 sm:py-28 border-t border-border/20">
+          <div className="max-w-3xl mx-auto text-center">
             <h2 
-              className={`text-center text-2xl sm:text-3xl font-light text-foreground mb-4 transition-all duration-500 ${
+              className={`text-2xl sm:text-3xl font-light text-foreground mb-6 transition-all duration-500 ${
                 mounted ? 'opacity-100' : 'opacity-0'
               }`}
-              style={{ transitionDelay: '800ms' }}
             >
+              What is CHRONYX?
+            </h2>
+            <p className="text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+              CHRONYX is a <strong className="text-foreground font-medium">personal system of record</strong> — 
+              a quiet place to hold the threads of your life. Tasks you complete, knowledge you acquire, 
+              money you manage, memories you preserve. All in one private, calm space.
+            </p>
+            <p className="text-muted-foreground/70 mt-4 text-sm">
+              Not a productivity tool. Not a second brain. Just a place for continuity.
+            </p>
+          </div>
+        </section>
+
+        {/* Why CHRONYX Section */}
+        <section className="px-4 sm:px-6 py-20 sm:py-28 bg-card/30">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl sm:text-3xl font-light text-foreground mb-6">
+              Why CHRONYX?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+              <div className="text-center">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-accent/50 flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <h3 className="text-sm font-medium text-foreground mb-2">No Gamification</h3>
+                <p className="text-sm text-muted-foreground">No streaks, no points, no pressure. Just quiet recording.</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-accent/50 flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <h3 className="text-sm font-medium text-foreground mb-2">Completely Private</h3>
+                <p className="text-sm text-muted-foreground">Your data belongs to you. No sharing, no selling, no tracking.</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-accent/50 flex items-center justify-center">
+                  <Download className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <h3 className="text-sm font-medium text-foreground mb-2">Full Control</h3>
+                <p className="text-sm text-muted-foreground">Export everything anytime. Your records, your ownership.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Grid Section */}
+        <section className="px-4 sm:px-6 py-20 sm:py-28">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-center text-2xl sm:text-3xl font-light text-foreground mb-4">
               Everything in one place
             </h2>
-            <p 
-              className={`text-center text-muted-foreground mb-12 max-w-md mx-auto transition-all duration-500 ${
-                mounted ? 'opacity-100' : 'opacity-0'
-              }`}
-              style={{ transitionDelay: '900ms' }}
-            >
+            <p className="text-center text-muted-foreground mb-12 max-w-md mx-auto">
               A personal dashboard for tasks, studies, finances, and memories
             </p>
             
@@ -291,13 +344,13 @@ const Landing = () => {
                 return (
                   <div
                     key={feature.label}
-                    className={`group relative p-6 sm:p-8 rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm hover:border-primary/30 hover:bg-card/50 transition-all duration-500 cursor-default ${
+                    className={`group relative p-6 sm:p-8 rounded-xl border border-border/40 bg-card/30 backdrop-blur-sm hover:border-primary/30 hover:bg-card/50 transition-all duration-500 cursor-default ${
                       mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                     }`}
                     style={{ transitionDelay: `${1000 + index * 100}ms` }}
                   >
                     {/* Sketch corner decoration */}
-                    <div className="absolute top-2 right-2 text-xs text-muted-foreground/30 font-mono">
+                    <div className="absolute top-2 right-2 text-xs text-muted-foreground/20 font-mono">
                       {feature.sketch}
                     </div>
                     
@@ -318,40 +371,40 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/30">
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-3 gap-8 text-center">
-              <div className={`transition-all duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDelay: '1200ms' }}>
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Lock className="w-4 h-4 text-primary/60" />
-                  <span className="text-2xl sm:text-3xl font-light text-foreground">100%</span>
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">Private</p>
-              </div>
-              <div className={`transition-all duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDelay: '1300ms' }}>
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <BarChart3 className="w-4 h-4 text-primary/60" />
-                  <span className="text-2xl sm:text-3xl font-light text-foreground">6+</span>
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">Modules</p>
-              </div>
-              <div className={`transition-all duration-500 ${mounted ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDelay: '1400ms' }}>
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Calendar className="w-4 h-4 text-primary/60" />
-                  <span className="text-2xl sm:text-3xl font-light text-foreground">∞</span>
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground">Timeline</p>
-              </div>
-            </div>
+        {/* Privacy Section */}
+        <section className="px-4 sm:px-6 py-20 sm:py-28 border-t border-border/20">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl sm:text-3xl font-light text-foreground mb-6">
+              Privacy, Ownership, Control
+            </h2>
+            <p className="text-muted-foreground leading-relaxed">
+              CHRONYX is designed for one person: you. Your data never leaves your account. 
+              Export everything as JSON or PDF anytime. Backup and restore at will. 
+              This is a system you can trust and live with for many years.
+            </p>
           </div>
+        </section>
+
+        {/* Quiet Closing Section */}
+        <section className="px-4 sm:px-6 py-24 sm:py-32 text-center">
+          <p className="text-xl sm:text-2xl font-light text-muted-foreground mb-8">
+            A system someone could trust<br />and live with for many years.
+          </p>
+          <Link to="/login">
+            <button className="px-8 py-3 text-sm tracking-wider font-light border border-primary/80 text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-all duration-300">
+              Enter CHRONYX
+            </button>
+          </Link>
         </section>
 
         {/* Footer */}
         <footer className="px-4 sm:px-6 py-8 border-t border-border/20">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground/60">
-            <p className="font-light tracking-wide">VYOM · Your life, organized</p>
-            <p className="text-xs">Private · Secure · Minimal</p>
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground/50">
+            <div className="flex items-center gap-3">
+              <ChronxyxLogo className="w-5 h-5 opacity-50" />
+              <span className="font-light tracking-wide">CHRONYX by CROPXON</span>
+            </div>
+            <p className="text-xs">Private · Quiet · Timeless</p>
           </div>
         </footer>
       </div>
@@ -383,8 +436,8 @@ const Landing = () => {
             {/* Brand Overlay - covers NotebookLM branding in top-left corner */}
             <div className="absolute top-0 left-0 bg-gradient-to-br from-background via-background/95 to-transparent px-4 py-3 rounded-br-xl pointer-events-none">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-sm font-light tracking-wider text-foreground">VYOM</span>
+                <ChronxyxLogo className="w-5 h-5" />
+                <span className="text-sm font-light tracking-wider text-foreground">CHRONYX</span>
               </div>
             </div>
             
@@ -398,7 +451,7 @@ const Landing = () => {
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-background/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors z-10"
               onClick={() => setShowDemo(false)}
             >
-              ×
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
