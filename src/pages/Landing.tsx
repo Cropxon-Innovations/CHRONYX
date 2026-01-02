@@ -15,6 +15,7 @@ import {
   Eye,
   X
 } from "lucide-react";
+import chronyxPhilosophy from "@/assets/chronyx-philosophy.png";
 
 // CHRONYX Logo Component
 const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
@@ -367,6 +368,30 @@ const Landing = () => {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </section>
+
+        {/* Philosophy Image Section */}
+        <section className="px-4 sm:px-6 py-20 sm:py-28 border-t border-border/20">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-center text-2xl sm:text-3xl font-light text-foreground mb-4">
+              The Philosophy of CHRONYX
+            </h2>
+            <p className="text-center text-muted-foreground mb-10 max-w-lg mx-auto">
+              An integrated view of your life — from finances to memories
+            </p>
+            {/* Image with bottom cropped to hide NotebookLM watermark */}
+            <div className="relative rounded-xl overflow-hidden border border-border/40 shadow-lg">
+              <div className="overflow-hidden" style={{ marginBottom: '-40px' }}>
+                <img 
+                  src={chronyxPhilosophy} 
+                  alt="CHRONYX Philosophy - A quiet space for your life" 
+                  className="w-full h-auto"
+                />
+              </div>
+              {/* Gradient overlay at bottom to smoothly hide watermark area */}
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background via-background/90 to-transparent" />
             </div>
           </div>
         </section>

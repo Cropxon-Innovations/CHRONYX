@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { LeftSketchAnimation, RightSketchAnimation } from "@/components/auth/LoginAnimations";
+import { LeftSketchAnimation, RightSketchAnimation, FloatingParticles } from "@/components/auth/LoginAnimations";
+import { motion } from "framer-motion";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -94,8 +95,11 @@ const Login = () => {
   }
 
   return (
-    <main className="min-h-screen vyom-gradient-bg flex items-center justify-center px-4 sm:px-6">
-      <div className="w-full max-w-5xl flex items-center justify-center gap-8">
+    <main className="min-h-screen vyom-gradient-bg flex items-center justify-center px-4 sm:px-6 relative overflow-hidden">
+      {/* Floating Particles Background */}
+      <FloatingParticles />
+      
+      <div className="w-full max-w-5xl flex items-center justify-center gap-8 relative z-10">
         {/* Left Animation */}
         <LeftSketchAnimation />
         
@@ -109,9 +113,44 @@ const Login = () => {
         </Link>
 
         {/* Login Card */}
-        <div className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-sm">
+        <div className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-sm relative">
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
+            {/* Pulsing Logo */}
+            <motion.div
+              className="mx-auto mb-3 w-10 h-10 sm:w-12 sm:h-12"
+              animate={{
+                scale: [1, 1.05, 1],
+                opacity: [0.8, 1, 0.8],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            >
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                <defs>
+                  <linearGradient id="login-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" />
+                    <stop offset="100%" stopColor="hsl(var(--primary) / 0.6)" />
+                  </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="45" stroke="url(#login-logo-gradient)" strokeWidth="2" fill="none" className="opacity-80" />
+                <circle cx="50" cy="50" r="35" stroke="hsl(var(--primary))" strokeWidth="1" strokeDasharray="6 4" fill="none" className="opacity-40" />
+                <circle cx="50" cy="50" r="5" fill="hsl(var(--primary))" className="opacity-90" />
+                {[0, 90, 180, 270].map((angle, i) => (
+                  <circle 
+                    key={i}
+                    cx={50 + 40 * Math.cos((angle - 90) * Math.PI / 180)}
+                    cy={50 + 40 * Math.sin((angle - 90) * Math.PI / 180)}
+                    r="2"
+                    fill="hsl(var(--primary))"
+                    className="opacity-50"
+                  />
+                ))}
+              </svg>
+            </motion.div>
             <h1 className="text-xl sm:text-2xl font-light tracking-[0.2em] text-foreground mb-2 sm:mb-3">
               CHRONYX
             </h1>
