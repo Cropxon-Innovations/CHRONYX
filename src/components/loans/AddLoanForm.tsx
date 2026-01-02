@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { LoanDocumentUpload } from "./LoanDocumentUpload";
+import { useCustomBanks } from "@/hooks/useCustomBanks";
 
 interface AddLoanFormProps {
   open: boolean;
@@ -65,6 +66,7 @@ export const AddLoanForm = ({
 }: AddLoanFormProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { customBanks, addCustomBank } = useCustomBanks();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [country, setCountry] = useState("India");
@@ -124,7 +126,13 @@ export const AddLoanForm = ({
     }
   }, [open, initialData]);
 
-  const banks = country === "India" ? INDIAN_BANKS : US_BANKS;
+  // Combine built-in banks with custom banks
+  const builtInBanks = country === "India" ? INDIAN_BANKS : US_BANKS;
+  const userCustomBanks = customBanks.filter(cb => cb.country === country || country === "Other");
+  const banks = [
+    ...builtInBanks,
+    ...userCustomBanks.map(cb => ({ name: cb.name, fullName: cb.full_name, color: cb.color })),
+  ];
 
   useEffect(() => {
     if (!emiOverride && principal && interestRate && tenure) {
@@ -177,9 +185,27 @@ export const AddLoanForm = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalBankName = bankName === "custom" ? customBank : bankName;
+
+    // Save custom bank to database if it's a new custom bank
+    if (bankName === "custom" && customBank && mode === "add") {
+      const existingCustom = customBanks.find(cb => cb.name.toLowerCase() === customBank.toLowerCase());
+      if (!existingCustom) {
+        try {
+          await addCustomBank.mutateAsync({
+            name: customBank,
+            full_name: customBank,
+            color: getBankColor(customBank),
+            logo_url: bankLogoUrl || undefined,
+            country: country,
+          });
+        } catch (error) {
+          console.error("Failed to save custom bank:", error);
+        }
+      }
+    }
 
     onSubmit({
       country,
