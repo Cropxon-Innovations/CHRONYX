@@ -255,6 +255,78 @@ export type Database = {
           },
         ]
       }
+      expense_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          expense_date: string
+          id: string
+          is_auto_generated: boolean | null
+          notes: string | null
+          payment_mode: string
+          source_id: string | null
+          source_type: string | null
+          sub_category: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          expense_date?: string
+          id?: string
+          is_auto_generated?: boolean | null
+          notes?: string | null
+          payment_mode: string
+          source_id?: string | null
+          source_type?: string | null
+          sub_category?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          expense_date?: string
+          id?: string
+          is_auto_generated?: boolean | null
+          notes?: string | null
+          payment_mode?: string
+          source_id?: string | null
+          source_type?: string | null
+          sub_category?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       family_members: {
         Row: {
           created_at: string
@@ -283,6 +355,83 @@ export type Database = {
           id?: string
           notes?: string | null
           relation?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      income_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          income_date: string
+          income_source_id: string | null
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          income_date?: string
+          income_source_id?: string | null
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          income_date?: string
+          income_source_id?: string | null
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_entries_income_source_id_fkey"
+            columns: ["income_source_id"]
+            isOneToOne: false
+            referencedRelation: "income_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      income_sources: {
+        Row: {
+          category: string
+          created_at: string
+          frequency: string
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          source_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          frequency: string
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          source_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          source_name?: string
           updated_at?: string
           user_id?: string
         }

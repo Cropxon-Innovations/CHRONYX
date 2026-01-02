@@ -7,6 +7,7 @@ import ActivityItem from "@/components/dashboard/ActivityItem";
 import AchievementItem from "@/components/dashboard/AchievementItem";
 import LoanWidget from "@/components/dashboard/LoanWidget";
 import InsuranceWidget from "@/components/dashboard/InsuranceWidget";
+import UpcomingReminders from "@/components/dashboard/UpcomingReminders";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, subDays, startOfWeek, addDays, parseISO, formatDistanceToNow } from "date-fns";
@@ -232,9 +233,10 @@ const Dashboard = () => {
       </section>
 
       {/* Loan & Insurance Widgets */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <LoanWidget />
         <InsuranceWidget />
+        <UpcomingReminders />
       </section>
 
       {/* Bottom Grid */}
