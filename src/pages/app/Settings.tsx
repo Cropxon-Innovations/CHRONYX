@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,13 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useActivityLog } from "@/hooks/useActivityLog";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { EnhancedCalendar } from "@/components/ui/date-picker-enhanced";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, differenceInYears, differenceInMonths, differenceInDays } from "date-fns";
-import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive } from "lucide-react";
+import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive, Camera, User, Upload, RotateCcw, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DataExport } from "@/components/export/DataExport";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -34,12 +36,30 @@ interface Profile {
   secondary_email: string | null;
   secondary_phone: string | null;
   primary_contact: string | null;
+  avatar_url: string | null;
 }
+
+// Avatar options for customization
+const AVATAR_OPTIONS = [
+  { id: "default", emoji: "👤", label: "Default" },
+  { id: "smile", emoji: "😊", label: "Smile" },
+  { id: "cool", emoji: "😎", label: "Cool" },
+  { id: "star", emoji: "⭐", label: "Star" },
+  { id: "rocket", emoji: "🚀", label: "Rocket" },
+  { id: "heart", emoji: "❤️", label: "Heart" },
+  { id: "fire", emoji: "🔥", label: "Fire" },
+  { id: "crown", emoji: "👑", label: "Crown" },
+  { id: "diamond", emoji: "💎", label: "Diamond" },
+  { id: "rainbow", emoji: "🌈", label: "Rainbow" },
+  { id: "thunder", emoji: "⚡", label: "Thunder" },
+  { id: "leaf", emoji: "🍀", label: "Leaf" },
+];
 
 const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
+  const { resetOnboarding } = useOnboarding();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -50,6 +70,14 @@ const Settings = () => {
   const [secondaryEmail, setSecondaryEmail] = useState("");
   const [secondaryPhone, setSecondaryPhone] = useState("");
   const [primaryContact, setPrimaryContact] = useState("email");
+  
+  // Avatar state
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showAvatarDialog, setShowAvatarDialog] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // OTP verification state
   const [verifyDialog, setVerifyDialog] = useState<{
@@ -79,7 +107,7 @@ const Settings = () => {
     if (error) {
       console.error("Error fetching profile:", error);
     } else if (data) {
-      setProfile(data);
+      setProfile(data as Profile);
       setDisplayName(data.display_name || "");
       setBirthDate(data.birth_date ? new Date(data.birth_date) : undefined);
       setTargetAge(data.target_age || 60);
@@ -87,8 +115,158 @@ const Settings = () => {
       setSecondaryEmail(data.secondary_email || "");
       setSecondaryPhone(data.secondary_phone || "");
       setPrimaryContact(data.primary_contact || "email");
+      setAvatarUrl((data as Profile).avatar_url || null);
+      // Check if avatar_url is an emoji reference
+      if ((data as Profile).avatar_url?.startsWith("emoji:")) {
+        setSelectedEmoji((data as Profile).avatar_url?.replace("emoji:", "") || null);
+      }
     }
     setLoading(false);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+      setSelectedEmoji(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const saveAvatar = async () => {
+    if (!user) return;
+    setUploadingAvatar(true);
+
+    try {
+      let newAvatarUrl: string | null = null;
+
+      if (selectedEmoji) {
+        // Save emoji as avatar
+        newAvatarUrl = `emoji:${selectedEmoji}`;
+      } else if (avatarPreview && fileInputRef.current?.files?.[0]) {
+        const file = fileInputRef.current.files[0];
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${user.id}/avatar.${fileExt}`;
+
+        // Delete old avatar if exists
+        if (avatarUrl && !avatarUrl.startsWith("emoji:")) {
+          const oldPath = avatarUrl.split("/").slice(-2).join("/");
+          await supabase.storage.from("documents").remove([oldPath]);
+        }
+
+        // Upload new avatar
+        const { error: uploadError } = await supabase.storage
+          .from("documents")
+          .upload(fileName, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from("documents")
+          .getPublicUrl(fileName);
+
+        newAvatarUrl = urlData.publicUrl;
+      }
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: newAvatarUrl })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(newAvatarUrl);
+      setAvatarPreview(null);
+      setShowAvatarDialog(false);
+      
+      toast({
+        title: "Avatar updated",
+        description: "Your profile picture has been saved.",
+      });
+      logActivity("Updated profile avatar", "Settings");
+    } catch (error) {
+      console.error("Error saving avatar:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save avatar",
+        variant: "destructive",
+      });
+    }
+    setUploadingAvatar(false);
+  };
+
+  const removeAvatar = async () => {
+    if (!user) return;
+    setUploadingAvatar(true);
+
+    try {
+      // Delete from storage if it's a file URL
+      if (avatarUrl && !avatarUrl.startsWith("emoji:")) {
+        const path = avatarUrl.split("/").slice(-2).join("/");
+        await supabase.storage.from("documents").remove([path]);
+      }
+
+      // Update profile
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: null })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      setAvatarUrl(null);
+      setAvatarPreview(null);
+      setSelectedEmoji(null);
+      setShowAvatarDialog(false);
+
+      toast({
+        title: "Avatar removed",
+        description: "Your profile picture has been removed.",
+      });
+    } catch (error) {
+      console.error("Error removing avatar:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove avatar",
+        variant: "destructive",
+      });
+    }
+    setUploadingAvatar(false);
+  };
+
+  const handleReplayOnboarding = () => {
+    resetOnboarding();
+    toast({
+      title: "Onboarding Reset",
+      description: "The onboarding flow will appear on your next dashboard visit.",
+    });
+    logActivity("Reset onboarding flow", "Settings");
   };
 
   const saveSettings = async () => {
@@ -232,11 +410,51 @@ const Settings = () => {
 
       {/* Profile Section */}
       <section className="bg-card border border-border rounded-lg p-6 space-y-6">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <User className="w-4 h-4" />
           Profile
         </h2>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Avatar Section */}
+          <div className="flex items-center gap-6">
+            <div className="relative group">
+              <Avatar className="w-24 h-24 border-2 border-border">
+                {avatarUrl?.startsWith("emoji:") ? (
+                  <AvatarFallback className="text-4xl bg-muted">
+                    {avatarUrl.replace("emoji:", "")}
+                  </AvatarFallback>
+                ) : avatarUrl ? (
+                  <AvatarImage src={avatarUrl} alt="Profile" />
+                ) : (
+                  <AvatarFallback className="bg-muted text-muted-foreground">
+                    <User className="w-10 h-10" />
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <button
+                onClick={() => setShowAvatarDialog(true)}
+                className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+              >
+                <Camera className="w-6 h-6 text-white" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-medium text-foreground">Profile Picture</h3>
+              <p className="text-sm text-muted-foreground">
+                Upload a photo or choose an avatar
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAvatarDialog(true)}
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                Change Avatar
+              </Button>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="email" className="text-xs uppercase tracking-wider text-muted-foreground">
               Email (Primary - Cannot be changed)
@@ -499,6 +717,21 @@ const Settings = () => {
         </Button>
       </section>
 
+      {/* Onboarding Section */}
+      <section className="bg-card border border-border rounded-lg p-6 space-y-4">
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <Sparkles className="w-4 h-4" />
+          Onboarding
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Want to see the app introduction again? Replay the onboarding flow to learn about VYOM's features.
+        </p>
+        <Button variant="outline" onClick={handleReplayOnboarding}>
+          <RotateCcw className="w-4 h-4 mr-2" />
+          Replay Onboarding
+        </Button>
+      </section>
+
       {/* Save Button */}
       <Button
         onClick={saveSettings}
@@ -580,6 +813,129 @@ const Settings = () => {
                 {isVerifying ? "Verifying..." : "Verify"}
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Avatar Customization Dialog */}
+      <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Customize Avatar</DialogTitle>
+            <DialogDescription>
+              Upload a photo or choose an emoji avatar
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Preview */}
+            <div className="flex justify-center">
+              <Avatar className="w-32 h-32 border-4 border-border">
+                {selectedEmoji ? (
+                  <AvatarFallback className="text-6xl bg-muted">
+                    {selectedEmoji}
+                  </AvatarFallback>
+                ) : avatarPreview ? (
+                  <AvatarImage src={avatarPreview} alt="Preview" />
+                ) : avatarUrl?.startsWith("emoji:") ? (
+                  <AvatarFallback className="text-6xl bg-muted">
+                    {avatarUrl.replace("emoji:", "")}
+                  </AvatarFallback>
+                ) : avatarUrl ? (
+                  <AvatarImage src={avatarUrl} alt="Current" />
+                ) : (
+                  <AvatarFallback className="bg-muted text-muted-foreground">
+                    <User className="w-16 h-16" />
+                  </AvatarFallback>
+                )}
+              </Avatar>
+            </div>
+
+            {/* Upload Button */}
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Upload Photo
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Max 5MB. Supports JPG, PNG, GIF
+              </p>
+            </div>
+
+            {/* Emoji Avatars */}
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                Or Choose an Avatar
+              </Label>
+              <div className="grid grid-cols-6 gap-2">
+                {AVATAR_OPTIONS.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => {
+                      setSelectedEmoji(option.emoji);
+                      setAvatarPreview(null);
+                    }}
+                    className={cn(
+                      "w-12 h-12 flex items-center justify-center text-2xl rounded-lg border-2 transition-all hover:scale-110",
+                      selectedEmoji === option.emoji
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-muted/30 hover:border-muted-foreground"
+                    )}
+                    title={option.label}
+                  >
+                    {option.emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {(avatarUrl || avatarPreview || selectedEmoji) && (
+              <Button
+                variant="destructive"
+                onClick={removeAvatar}
+                disabled={uploadingAvatar}
+                className="w-full sm:w-auto"
+              >
+                Remove Avatar
+              </Button>
+            )}
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAvatarDialog(false);
+                  setAvatarPreview(null);
+                  setSelectedEmoji(avatarUrl?.startsWith("emoji:") ? avatarUrl.replace("emoji:", "") : null);
+                }}
+                className="flex-1 sm:flex-none"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={saveAvatar}
+                disabled={uploadingAvatar || (!avatarPreview && !selectedEmoji)}
+                className="flex-1 sm:flex-none"
+              >
+                {uploadingAvatar ? (
+                  <>Saving...</>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Save Avatar
+                  </>
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

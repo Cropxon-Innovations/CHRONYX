@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SidebarQuickAdd } from "./SidebarQuickAdd";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   LayoutDashboard,
   CheckSquare,
@@ -78,6 +79,7 @@ interface UserProfile {
   secondary_email: string | null;
   secondary_phone: string | null;
   primary_contact: string | null;
+  avatar_url: string | null;
 }
 
 const AppSidebar = () => {
@@ -114,11 +116,11 @@ const AppSidebar = () => {
       if (!user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, phone_number, email_verified, phone_verified, secondary_email, secondary_phone, primary_contact")
+        .select("display_name, phone_number, email_verified, phone_verified, secondary_email, secondary_phone, primary_contact, avatar_url")
         .eq("id", user.id)
         .single();
       if (data) {
-        setProfile(data);
+        setProfile(data as UserProfile);
       }
     };
     fetchProfile();
@@ -261,48 +263,65 @@ const AppSidebar = () => {
 
           {/* User Info */}
           {!collapsed && (
-            <div className="space-y-2">
-              {/* Name */}
-              {profile?.display_name && (
-                <div className="flex items-center gap-2 text-sm font-medium text-sidebar-foreground">
-                  <User className="w-4 h-4" />
-                  <span className="truncate">{profile.display_name}</span>
+            <div className="space-y-3">
+              {/* Avatar and Name Row */}
+              <div className="flex items-center gap-3">
+                <Avatar className="w-10 h-10 border border-sidebar-border">
+                  {profile?.avatar_url?.startsWith("emoji:") ? (
+                    <AvatarFallback className="text-lg bg-sidebar-accent">
+                      {profile.avatar_url.replace("emoji:", "")}
+                    </AvatarFallback>
+                  ) : profile?.avatar_url ? (
+                    <AvatarImage src={profile.avatar_url} alt="Profile" />
+                  ) : (
+                    <AvatarFallback className="bg-sidebar-accent text-sidebar-foreground">
+                      <User className="w-5 h-5" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  {profile?.display_name && (
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">
+                      {profile.display_name}
+                    </p>
+                  )}
+                  <p className="text-xs text-sidebar-foreground/60 truncate">
+                    {user?.email}
+                  </p>
                 </div>
-              )}
-
-              {/* Email with verification status */}
-              <div className="flex items-center gap-2 text-xs text-sidebar-foreground/70">
-                <Mail className="w-3.5 h-3.5" />
-                <span className="truncate flex-1">{user?.email}</span>
-                {profile?.email_verified ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                ) : (
-                  <button
-                    onClick={() => setVerifyDialog({ open: true, type: "email", value: user?.email || "" })}
-                    className="hover:text-amber-400"
-                  >
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                  </button>
-                )}
               </div>
 
-              {/* Phone with verification status */}
-              {profile?.phone_number && (
-                <div className="flex items-center gap-2 text-xs text-sidebar-foreground/70">
-                  <Phone className="w-3.5 h-3.5" />
-                  <span className="truncate flex-1">{profile.phone_number}</span>
-                  {profile?.phone_verified ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+              {/* Verification Status */}
+              <div className="flex items-center gap-3 text-xs">
+                <div className="flex items-center gap-1 text-sidebar-foreground/70">
+                  <Mail className="w-3 h-3" />
+                  {profile?.email_verified ? (
+                    <CheckCircle2 className="w-3 h-3 text-green-500" />
                   ) : (
                     <button
-                      onClick={() => setVerifyDialog({ open: true, type: "phone", value: profile.phone_number || "" })}
+                      onClick={() => setVerifyDialog({ open: true, type: "email", value: user?.email || "" })}
                       className="hover:text-amber-400"
                     >
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                      <AlertCircle className="w-3 h-3 text-amber-500" />
                     </button>
                   )}
                 </div>
-              )}
+                {profile?.phone_number && (
+                  <div className="flex items-center gap-1 text-sidebar-foreground/70">
+                    <Phone className="w-3 h-3" />
+                    {profile?.phone_verified ? (
+                      <CheckCircle2 className="w-3 h-3 text-green-500" />
+                    ) : (
+                      <button
+                        onClick={() => setVerifyDialog({ open: true, type: "phone", value: profile.phone_number || "" })}
+                        className="hover:text-amber-400"
+                      >
+                        <AlertCircle className="w-3 h-3 text-amber-500" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -311,9 +330,19 @@ const AppSidebar = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex justify-center">
-                  <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
-                    <User className="w-4 h-4 text-sidebar-foreground" />
-                  </div>
+                  <Avatar className="w-8 h-8 border border-sidebar-border">
+                    {profile?.avatar_url?.startsWith("emoji:") ? (
+                      <AvatarFallback className="text-sm bg-sidebar-accent">
+                        {profile.avatar_url.replace("emoji:", "")}
+                      </AvatarFallback>
+                    ) : profile?.avatar_url ? (
+                      <AvatarImage src={profile.avatar_url} alt="Profile" />
+                    ) : (
+                      <AvatarFallback className="bg-sidebar-accent text-sidebar-foreground">
+                        <User className="w-4 h-4" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right">
