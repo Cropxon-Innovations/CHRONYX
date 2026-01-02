@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,7 +28,11 @@ import {
   Filter,
   SortAsc,
   FolderOpen,
-  Layers
+  Layers,
+  X,
+  Eye,
+  EyeOff,
+  Key
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -57,6 +61,66 @@ type Folder = {
   name: string;
   parent_folder_id: string | null;
   is_locked: boolean;
+  lock_hash: string | null;
+};
+
+// Utility to generate thumbnail from image
+const generateImageThumbnail = (file: File, maxSize: number = 300): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = document.createElement('img');
+    
+    img.onload = () => {
+      const ratio = Math.min(maxSize / img.width, maxSize / img.height);
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Failed to create thumbnail'));
+      }, 'image/jpeg', 0.7);
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+// Utility to generate thumbnail from video
+const generateVideoThumbnail = (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    video.onloadeddata = () => {
+      video.currentTime = 1; // Seek to 1 second
+    };
+    
+    video.onseeked = () => {
+      canvas.width = Math.min(300, video.videoWidth);
+      canvas.height = (canvas.width / video.videoWidth) * video.videoHeight;
+      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Failed to create video thumbnail'));
+      }, 'image/jpeg', 0.7);
+      URL.revokeObjectURL(video.src);
+    };
+    
+    video.onerror = () => reject(new Error('Failed to load video'));
+    video.src = URL.createObjectURL(file);
+  });
+};
+
+// Simple hash function for password (client-side, for demo - use proper hashing in production)
+const hashPassword = async (password: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
 
 const Memory = () => {
@@ -75,6 +139,22 @@ const Memory = () => {
   const [uploadTitle, setUploadTitle] = useState("");
   const [newCollectionName, setNewCollectionName] = useState("");
   const [newFolderName, setNewFolderName] = useState("");
+  
+  // Edit memory state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCollection, setEditCollection] = useState<string>("none");
+  
+  // Folder locking state
+  const [lockFolderDialogOpen, setLockFolderDialogOpen] = useState(false);
+  const [lockingFolder, setLockingFolder] = useState<Folder | null>(null);
+  const [lockPassword, setLockPassword] = useState("");
+  const [showLockPassword, setShowLockPassword] = useState(false);
+  const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
+  const [unlockingFolder, setUnlockingFolder] = useState<Folder | null>(null);
+  const [unlockPassword, setUnlockPassword] = useState("");
+  const [unlockedFolders, setUnlockedFolders] = useState<Set<string>>(new Set());
 
   // Fetch memories
   const { data: memories = [], isLoading: memoriesLoading } = useQuery({
@@ -118,7 +198,7 @@ const Memory = () => {
     enabled: !!user,
   });
 
-  // Upload memory mutation
+  // Upload memory mutation with thumbnail generation
   const uploadMutation = useMutation({
     mutationFn: async ({ files, title }: { files: File[]; title: string }) => {
       if (!user) throw new Error("Not authenticated");
@@ -152,11 +232,36 @@ const Memory = () => {
         
         const mediaType = file.type.startsWith("video") ? "video" : "photo";
         
+        // Generate thumbnail
+        let thumbnailUrl = null;
+        try {
+          setUploadProgress(`Creating thumbnail ${i + 1} of ${files.length}...`);
+          const thumbnailBlob = mediaType === "video" 
+            ? await generateVideoThumbnail(file)
+            : await generateImageThumbnail(file);
+          
+          const thumbPath = `${user.id}/${year}/${month}/${memoryId}/thumb_${fileName.replace(/\.[^.]+$/, '.jpg')}`;
+          
+          const { error: thumbError } = await supabase.storage
+            .from("memories")
+            .upload(thumbPath, thumbnailBlob);
+          
+          if (!thumbError) {
+            const { data: thumbUrlData } = supabase.storage
+              .from("memories")
+              .getPublicUrl(thumbPath);
+            thumbnailUrl = thumbUrlData.publicUrl;
+          }
+        } catch (e) {
+          console.log("Thumbnail generation failed, using original");
+        }
+        
         const { error: dbError } = await supabase.from("memories").insert({
           user_id: user.id,
           title: title || null,
           media_type: mediaType,
           file_url: urlData.publicUrl,
+          thumbnail_url: thumbnailUrl,
           file_name: fileName,
           file_size: file.size,
           created_date: datePart,
@@ -219,6 +324,84 @@ const Memory = () => {
     },
   });
 
+  // Update memory mutation
+  const updateMemoryMutation = useMutation({
+    mutationFn: async ({ id, title, description, collection_id }: { 
+      id: string; 
+      title: string | null; 
+      description: string | null;
+      collection_id: string | null;
+    }) => {
+      const { error } = await supabase.from("memories")
+        .update({ title, description, collection_id })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memories"] });
+      setEditDialogOpen(false);
+      setSelectedMemory(null);
+      toast({ title: "Memory updated" });
+    },
+  });
+
+  // Lock folder mutation
+  const lockFolderMutation = useMutation({
+    mutationFn: async ({ folderId, password }: { folderId: string; password: string }) => {
+      const hash = await hashPassword(password);
+      const { error } = await supabase.from("memory_folders")
+        .update({ is_locked: true, lock_hash: hash })
+        .eq("id", folderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memory_folders"] });
+      setLockFolderDialogOpen(false);
+      setLockingFolder(null);
+      setLockPassword("");
+      toast({ title: "Folder locked" });
+    },
+  });
+
+  // Unlock folder mutation
+  const unlockFolderMutation = useMutation({
+    mutationFn: async ({ folderId, password }: { folderId: string; password: string }) => {
+      const folder = folders.find(f => f.id === folderId);
+      if (!folder?.lock_hash) throw new Error("Folder not locked");
+      
+      const hash = await hashPassword(password);
+      if (hash !== folder.lock_hash) {
+        throw new Error("Incorrect password");
+      }
+      
+      return folderId;
+    },
+    onSuccess: (folderId) => {
+      setUnlockedFolders(prev => new Set([...prev, folderId]));
+      setUnlockDialogOpen(false);
+      setUnlockingFolder(null);
+      setUnlockPassword("");
+      toast({ title: "Folder unlocked" });
+    },
+    onError: (error) => {
+      toast({ title: "Unlock failed", description: String(error), variant: "destructive" });
+    },
+  });
+
+  // Remove lock from folder
+  const removeFolderLockMutation = useMutation({
+    mutationFn: async (folderId: string) => {
+      const { error } = await supabase.from("memory_folders")
+        .update({ is_locked: false, lock_hash: null })
+        .eq("id", folderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memory_folders"] });
+      toast({ title: "Folder lock removed" });
+    },
+  });
+
   // Delete memory mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -247,6 +430,14 @@ const Memory = () => {
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
   }, []);
+
+  // Open edit dialog
+  const openEditDialog = (memory: Memory) => {
+    setEditTitle(memory.title || "");
+    setEditDescription(memory.description || "");
+    setEditCollection(memory.collection_id || "none");
+    setEditDialogOpen(true);
+  };
 
   // Filter and sort memories
   const filteredMemories = memories
@@ -436,6 +627,78 @@ const Memory = () => {
         </Card>
       </div>
 
+      {/* Folders Section */}
+      {folders.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Folders</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {folders.map((folder) => {
+              const isUnlocked = unlockedFolders.has(folder.id);
+              return (
+                <Card 
+                  key={folder.id} 
+                  className="cursor-pointer hover:bg-accent/30 transition-colors"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FolderOpen className="w-5 h-5 text-muted-foreground" />
+                        <span className="text-sm font-medium truncate">{folder.name}</span>
+                      </div>
+                      {folder.is_locked ? (
+                        isUnlocked ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUnlockedFolders(prev => {
+                                const next = new Set(prev);
+                                next.delete(folder.id);
+                                return next;
+                              });
+                            }}
+                          >
+                            <Unlock className="w-3 h-3 text-green-500" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUnlockingFolder(folder);
+                              setUnlockDialogOpen(true);
+                            }}
+                          >
+                            <Lock className="w-3 h-3 text-amber-500" />
+                          </Button>
+                        )
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLockingFolder(folder);
+                            setLockFolderDialogOpen(true);
+                          }}
+                        >
+                          <Key className="w-3 h-3 text-muted-foreground" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <Select value={filterType} onValueChange={(v: "all" | "photo" | "video") => setFilterType(v)}>
@@ -515,13 +778,28 @@ const Memory = () => {
             >
               {memory.media_type === "photo" ? (
                 <img
-                  src={memory.file_url}
+                  src={memory.thumbnail_url || memory.file_url}
                   alt={memory.title || memory.file_name}
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-accent/40">
-                  <Video className="w-10 h-10 text-muted-foreground" />
+                memory.thumbnail_url ? (
+                  <img
+                    src={memory.thumbnail_url}
+                    alt={memory.title || memory.file_name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-accent/40">
+                    <Video className="w-10 h-10 text-muted-foreground" />
+                  </div>
+                )
+              )}
+              {memory.media_type === "video" && (
+                <div className="absolute top-2 left-2">
+                  <Video className="w-4 h-4 text-white drop-shadow" />
                 </div>
               )}
               <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
@@ -545,8 +823,10 @@ const Memory = () => {
             >
               <CardContent className="p-3 flex items-center gap-4">
                 <div className="w-16 h-16 bg-accent/30 rounded-md overflow-hidden flex-shrink-0">
-                  {memory.media_type === "photo" ? (
-                    <img src={memory.file_url} alt="" className="w-full h-full object-cover" />
+                  {memory.thumbnail_url ? (
+                    <img src={memory.thumbnail_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  ) : memory.media_type === "photo" ? (
+                    <img src={memory.file_url} alt="" className="w-full h-full object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Video className="w-6 h-6 text-muted-foreground" />
@@ -570,7 +850,7 @@ const Memory = () => {
       )}
 
       {/* Memory Detail Dialog */}
-      <Dialog open={!!selectedMemory} onOpenChange={() => setSelectedMemory(null)}>
+      <Dialog open={!!selectedMemory && !editDialogOpen} onOpenChange={() => setSelectedMemory(null)}>
         <DialogContent className="max-w-3xl">
           {selectedMemory && (
             <>
@@ -598,8 +878,24 @@ const Memory = () => {
                 {selectedMemory.description && (
                   <p className="text-sm">{selectedMemory.description}</p>
                 )}
+                {selectedMemory.collection_id && (
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      {collections.find(c => c.id === selectedMemory.collection_id)?.name || "Collection"}
+                    </span>
+                  </div>
+                )}
               </div>
               <DialogFooter className="gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEditDialog(selectedMemory)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -621,6 +917,145 @@ const Memory = () => {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Memory Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Memory</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Title</label>
+              <Input
+                placeholder="Memory title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Description</label>
+              <Textarea
+                placeholder="Add a description..."
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Collection</label>
+              <Select value={editCollection} onValueChange={setEditCollection}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select collection" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Collection</SelectItem>
+                  {collections.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (selectedMemory) {
+                  updateMemoryMutation.mutate({
+                    id: selectedMemory.id,
+                    title: editTitle || null,
+                    description: editDescription || null,
+                    collection_id: editCollection === "none" ? null : editCollection,
+                  });
+                }
+              }}
+              disabled={updateMemoryMutation.isPending}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Lock Folder Dialog */}
+      <Dialog open={lockFolderDialogOpen} onOpenChange={setLockFolderDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Lock Folder</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Set a password to protect "{lockingFolder?.name}". Contents will be hidden until unlocked.
+          </p>
+          <div className="relative">
+            <Input
+              type={showLockPassword ? "text" : "password"}
+              placeholder="Enter password"
+              value={lockPassword}
+              onChange={(e) => setLockPassword(e.target.value)}
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 h-full"
+              onClick={() => setShowLockPassword(!showLockPassword)}
+            >
+              {showLockPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLockFolderDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (lockingFolder && lockPassword) {
+                  lockFolderMutation.mutate({ folderId: lockingFolder.id, password: lockPassword });
+                }
+              }}
+              disabled={!lockPassword || lockFolderMutation.isPending}
+            >
+              <Lock className="w-4 h-4 mr-2" />
+              Lock Folder
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unlock Folder Dialog */}
+      <Dialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unlock Folder</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Enter the password to unlock "{unlockingFolder?.name}".
+          </p>
+          <Input
+            type="password"
+            placeholder="Enter password"
+            value={unlockPassword}
+            onChange={(e) => setUnlockPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && unlockingFolder && unlockPassword) {
+                unlockFolderMutation.mutate({ folderId: unlockingFolder.id, password: unlockPassword });
+              }
+            }}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnlockDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (unlockingFolder && unlockPassword) {
+                  unlockFolderMutation.mutate({ folderId: unlockingFolder.id, password: unlockPassword });
+                }
+              }}
+              disabled={!unlockPassword || unlockFolderMutation.isPending}
+            >
+              <Unlock className="w-4 h-4 mr-2" />
+              Unlock
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
