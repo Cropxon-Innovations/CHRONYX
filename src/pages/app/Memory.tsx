@@ -8,15 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Image, 
   Video, 
   Upload, 
   FolderPlus, 
-  Grid3X3, 
-  List, 
+  Grid3X3,
+  List,
   Calendar,
   Lock,
   Unlock,
@@ -37,6 +36,7 @@ import {
   GripVertical,
   MapPin
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { MemorySearch } from "@/components/memory/MemorySearch";
@@ -47,6 +47,7 @@ import { MemorySlideshow } from "@/components/memory/MemorySlideshow";
 import { FolderCard, FOLDER_COLORS, FOLDER_ICONS } from "@/components/memory/FolderCard";
 import { CollectionCard } from "@/components/memory/CollectionCard";
 import { MemoryMap } from "@/components/memory/MemoryMap";
+import { GalleryView, GalleryViewMode } from "@/components/memory/GalleryView";
 import { encryptFile, deriveKey } from "@/utils/crypto";
 
 type Memory = {
