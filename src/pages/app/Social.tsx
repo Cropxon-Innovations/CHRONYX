@@ -260,22 +260,48 @@ const Social = () => {
     }
   }, []);
 
-  // Check all links
+  // Check all links via edge function (webhook-based)
   const checkAllLinks = useCallback(async () => {
     setCheckingAll(true);
     
-    for (const profile of profiles) {
-      if (profile.profile_url) {
-        await checkLinkStatus(profile);
-        // Small delay to avoid overwhelming
-        await new Promise(resolve => setTimeout(resolve, 100));
+    // Set all profiles to checking state
+    profiles.forEach(p => {
+      if (p.profile_url) {
+        setLinkStatuses(prev => ({ ...prev, [p.id]: "checking" }));
       }
-    }
+    });
     
-    queryClient.invalidateQueries({ queryKey: ["social-profiles"] });
-    setCheckingAll(false);
-    toast({ title: "Link check complete", description: `Verified ${profiles.filter(p => p.profile_url).length} profiles` });
-  }, [profiles, checkLinkStatus, queryClient, toast]);
+    try {
+      // Use edge function for server-side checking
+      const { data, error } = await supabase.functions.invoke('check-social-profiles', {
+        body: { user_id: user?.id }
+      });
+      
+      if (error) throw error;
+      
+      // Update statuses from response
+      if (data?.results) {
+        data.results.forEach((result: { id: string; status: string }) => {
+          setLinkStatuses(prev => ({ ...prev, [result.id]: result.status as LinkStatus }));
+        });
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["social-profiles"] });
+      toast({ 
+        title: "Link check complete", 
+        description: `Verified ${data?.checked || 0} profiles via webhook` 
+      });
+    } catch (error) {
+      console.error("Error checking links:", error);
+      toast({ 
+        title: "Check failed", 
+        description: "Could not verify links. Try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setCheckingAll(false);
+    }
+  }, [profiles, user?.id, queryClient, toast]);
 
   // Get status display for a profile
   const getStatusDisplay = (profile: SocialProfile) => {

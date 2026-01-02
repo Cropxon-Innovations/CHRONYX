@@ -356,7 +356,7 @@ const Landing = () => {
         </footer>
       </div>
 
-      {/* Demo Video Modal */}
+      {/* Demo Video Modal - Ready for video content */}
       {showDemo && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-md p-4"
@@ -366,11 +366,19 @@ const Landing = () => {
             className="relative w-full max-w-4xl aspect-video bg-card rounded-xl border border-border overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="absolute inset-0 flex items-center justify-center bg-accent/30">
-              <div className="text-center">
-                <Play className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
-                <p className="text-muted-foreground">Demo video coming soon</p>
-                <p className="text-sm text-muted-foreground/60 mt-2">Click anywhere to close</p>
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/20">
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                  <Play className="w-10 h-10 text-primary" />
+                </div>
+                <p className="text-lg font-light text-foreground">Experience VYOM</p>
+                <p className="text-sm text-muted-foreground">Your personal life dashboard awaits</p>
+                <button 
+                  className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-full text-sm hover:bg-primary/90 transition-colors"
+                  onClick={() => setShowDemo(false)}
+                >
+                  Get Started
+                </button>
               </div>
             </div>
             <button 

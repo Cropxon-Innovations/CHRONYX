@@ -32,7 +32,7 @@ const Insurance = () => {
           </TabsTrigger>
           <TabsTrigger value="reminders" className="flex items-center gap-2">
             <Bell className="w-4 h-4" />
-            Reminders
+            Test
           </TabsTrigger>
         </TabsList>
 
