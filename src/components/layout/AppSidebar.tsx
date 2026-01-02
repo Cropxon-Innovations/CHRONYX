@@ -133,59 +133,78 @@ const AppSidebar = () => {
   const [pendingOtp, setPendingOtp] = useState<{ hash: string; expiresAt: string } | null>(null);
 
   const handleSendOtp = async () => {
-    if (!user?.email) return;
     setOtpSending(true);
     try {
-      const response = await supabase.functions.invoke("send-email-otp", {
-        body: { email: user.email, userId: user.id, type: verifyDialog.type },
+      const endpoint = verifyDialog.type === "email" 
+        ? "send-email-otp" 
+        : "send-sms-otp";
+      
+      const payload = verifyDialog.type === "email" 
+        ? { email: verifyDialog.value }
+        : { phone: verifyDialog.value };
+
+      const response = await supabase.functions.invoke(endpoint, {
+        body: payload,
       });
 
       if (response.error) throw response.error;
 
-      setPendingOtp({
-        hash: response.data.otpHash,
-        expiresAt: response.data.expiresAt,
-      });
-      toast.success("OTP sent to your email!");
+      if (response.data?.success && response.data?.otpHash) {
+        setPendingOtp({
+          hash: response.data.otpHash,
+          expiresAt: response.data.expiresAt || new Date(Date.now() + 600000).toISOString(),
+        });
+        toast.success(`OTP sent to your ${verifyDialog.type}!`);
+      } else {
+        throw new Error(response.data?.error || "Failed to send OTP");
+      }
     } catch (error) {
       console.error("Failed to send OTP:", error);
-      toast.error("Failed to send OTP. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to send OTP. Please try again.");
     } finally {
       setOtpSending(false);
     }
   };
 
+  // Hash OTP for verification
+  const hashOtp = async (otp: string): Promise<string> => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(otp);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
   const handleVerifyOTP = async () => {
     setIsVerifying(true);
     
-    // Verify OTP by hashing input and comparing
-    if (pendingOtp) {
-      const inputHash = await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(otp + user?.id)
-      );
-      const hashArray = Array.from(new Uint8Array(inputHash));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      
-      if (hashHex === pendingOtp.hash) {
-        const updateField = verifyDialog.type === "email" ? "email_verified" : "phone_verified";
-        const { error } = await supabase
-          .from("profiles")
-          .update({ [updateField]: true })
-          .eq("id", user?.id);
+    try {
+      // Verify OTP by hashing input and comparing
+      if (pendingOtp) {
+        const inputHash = await hashOtp(otp);
         
-        if (!error) {
-          setProfile((prev) => prev ? { ...prev, [updateField]: true } : null);
-          toast.success(`${verifyDialog.type === "email" ? "Email" : "Phone"} verified successfully!`);
-          setVerifyDialog({ open: false, type: "email", value: "" });
-          setOtp("");
-          setPendingOtp(null);
+        if (inputHash === pendingOtp.hash) {
+          const updateField = verifyDialog.type === "email" ? "email_verified" : "phone_verified";
+          const { error } = await supabase
+            .from("profiles")
+            .update({ [updateField]: true })
+            .eq("id", user?.id);
+          
+          if (!error) {
+            setProfile((prev) => prev ? { ...prev, [updateField]: true } : null);
+            toast.success(`${verifyDialog.type === "email" ? "Email" : "Phone"} verified successfully!`);
+            setVerifyDialog({ open: false, type: "email", value: "" });
+            setOtp("");
+            setPendingOtp(null);
+          }
+        } else {
+          toast.error("Invalid OTP. Please try again.");
         }
       } else {
-        toast.error("Invalid OTP. Please try again.");
+        toast.error("Please request an OTP first.");
       }
-    } else {
-      toast.error("Please request an OTP first.");
+    } catch (error) {
+      toast.error("Verification failed. Please try again.");
     }
     setIsVerifying(false);
   };
@@ -486,18 +505,27 @@ const AppSidebar = () => {
           <div className="space-y-4 py-4">
             {!pendingOtp ? (
               <Button onClick={handleSendOtp} disabled={otpSending} className="w-full">
-                {otpSending ? "Sending..." : "Send OTP"}
+                {otpSending ? "Sending..." : `Send OTP via ${verifyDialog.type === "email" ? "Email" : "SMS"}`}
               </Button>
             ) : (
               <>
                 <Input
                   placeholder="Enter 6-digit OTP"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   maxLength={6}
+                  className="text-center text-lg tracking-widest"
                 />
-                <p className="text-xs text-muted-foreground">
-                  OTP sent to your email. Check your inbox.
+                <p className="text-xs text-muted-foreground text-center">
+                  OTP sent to your {verifyDialog.type}.{" "}
+                  <button 
+                    type="button"
+                    onClick={handleSendOtp} 
+                    disabled={otpSending}
+                    className="text-primary hover:underline"
+                  >
+                    Resend
+                  </button>
                 </p>
               </>
             )}

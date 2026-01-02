@@ -157,6 +157,8 @@ const Memory = () => {
   const [uploadTitle, setUploadTitle] = useState("");
   const [newCollectionName, setNewCollectionName] = useState("");
   const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderColor, setNewFolderColor] = useState("bg-accent/30");
+  const [newFolderIcon, setNewFolderIcon] = useState("Default");
   const [isDragOver, setIsDragOver] = useState(false);
   
   // Edit memory state
@@ -430,11 +432,13 @@ const Memory = () => {
 
   // Create folder mutation
   const createFolderMutation = useMutation({
-    mutationFn: async (name: string) => {
+    mutationFn: async ({ name, color, icon }: { name: string; color: string; icon: string }) => {
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("memory_folders").insert({
         user_id: user.id,
         name,
+        color,
+        icon,
       });
       if (error) throw error;
     },
@@ -442,6 +446,8 @@ const Memory = () => {
       queryClient.invalidateQueries({ queryKey: ["memory_folders"] });
       setNewFolderDialogOpen(false);
       setNewFolderName("");
+      setNewFolderColor("bg-accent/30");
+      setNewFolderIcon("Default");
       toast({ title: "Folder created" });
     },
   });
@@ -875,21 +881,91 @@ const Memory = () => {
                 <span className="hidden sm:inline">Folder</span>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Create Folder</DialogTitle>
               </DialogHeader>
-              <Input
-                placeholder="Folder name"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-              />
-              <DialogFooter>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Folder Name</label>
+                  <Input
+                    placeholder="Enter folder name"
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                  />
+                </div>
+                
+                {/* Icon Selection */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Icon</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {FOLDER_ICONS.map((iconItem) => {
+                      const IconComp = iconItem.icon;
+                      return (
+                        <button
+                          key={iconItem.name}
+                          type="button"
+                          onClick={() => setNewFolderIcon(iconItem.name)}
+                          className={`h-10 flex items-center justify-center rounded-lg bg-accent/30 transition-all hover:bg-accent/50 ${
+                            newFolderIcon === iconItem.name ? 'ring-2 ring-primary ring-offset-2' : ''
+                          }`}
+                          title={iconItem.name}
+                        >
+                          <IconComp className="w-5 h-5" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                {/* Color Selection */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Color</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {FOLDER_COLORS.map((color) => (
+                      <button
+                        key={color.name}
+                        type="button"
+                        onClick={() => setNewFolderColor(color.value)}
+                        className={`h-8 rounded-lg ${color.value} transition-all hover:scale-105 ${
+                          newFolderColor === color.value ? 'ring-2 ring-primary ring-offset-2' : ''
+                        }`}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Preview */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Preview</label>
+                  <div className={`p-3 rounded-lg border ${newFolderColor}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-background/50 flex items-center justify-center">
+                        {(() => {
+                          const PreviewIcon = FOLDER_ICONS.find(i => i.name === newFolderIcon)?.icon || FolderOpen;
+                          const colorClass = FOLDER_COLORS.find(c => c.value === newFolderColor);
+                          return <PreviewIcon className={`w-4 h-4 ${colorClass?.textColor || 'text-muted-foreground'}`} />;
+                        })()}
+                      </div>
+                      <span className="text-sm font-medium">{newFolderName || "Folder Name"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setNewFolderDialogOpen(false)}>
+                  Cancel
+                </Button>
                 <Button
-                  onClick={() => createFolderMutation.mutate(newFolderName)}
-                  disabled={!newFolderName.trim()}
+                  onClick={() => createFolderMutation.mutate({ 
+                    name: newFolderName, 
+                    color: newFolderColor, 
+                    icon: newFolderIcon 
+                  })}
+                  disabled={!newFolderName.trim() || createFolderMutation.isPending}
                 >
-                  Create
+                  Create Folder
                 </Button>
               </DialogFooter>
             </DialogContent>

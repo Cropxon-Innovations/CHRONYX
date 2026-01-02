@@ -55,16 +55,17 @@ const AppLayout = () => {
         <main className={`min-h-screen pt-14 lg:pt-0 transition-all duration-300 ${
           isSidebarCollapsed ? "lg:ml-14" : "lg:ml-64"
         }`}>
-          <div className="p-4 sm:p-6 lg:p-8 max-w-full">
-            <div className="flex gap-4 lg:gap-6">
-              {/* Main Content - takes full width, max content width for readability */}
-              <div className="flex-1 min-w-0 max-w-full xl:max-w-5xl">
+          {/* Responsive container - full width with proper padding */}
+          <div className="w-full px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
+            <div className="w-full flex flex-col xl:flex-row gap-4 lg:gap-6">
+              {/* Main Content - full width responsive */}
+              <div className="w-full min-w-0 flex-1">
                 <Outlet />
               </div>
               
               {/* Net Worth Sidebar - Hidden on mobile, visible on xl screens unless pinned */}
               {!isNetWorthPinned && (
-                <div className="hidden xl:block w-56 2xl:w-64 flex-shrink-0">
+                <div className="hidden xl:block w-60 2xl:w-72 flex-shrink-0">
                   <div className="sticky top-6">
                     <CollapsibleNetWorth 
                       isPinned={isNetWorthPinned}

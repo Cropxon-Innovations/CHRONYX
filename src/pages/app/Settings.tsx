@@ -58,7 +58,10 @@ const Settings = () => {
     value: string;
   }>({ open: false, type: "email", value: "" });
   const [otp, setOtp] = useState("");
+  const [otpHash, setOtpHash] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -122,32 +125,89 @@ const Settings = () => {
     setSaving(false);
   };
 
+  // Hash OTP for verification
+  const hashOtp = async (otp: string): Promise<string> => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(otp);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  const sendOtp = async () => {
+    setIsSendingOtp(true);
+    try {
+      const endpoint = verifyDialog.type === "email" 
+        ? "send-email-otp" 
+        : "send-sms-otp";
+      
+      const payload = verifyDialog.type === "email" 
+        ? { email: verifyDialog.value }
+        : { phone: verifyDialog.value };
+
+      const { data, error } = await supabase.functions.invoke(endpoint, {
+        body: payload,
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.otpHash) {
+        setOtpHash(data.otpHash);
+        setOtpSent(true);
+        toast({
+          title: "OTP Sent",
+          description: `Verification code sent to your ${verifyDialog.type}.`,
+        });
+      } else {
+        throw new Error(data?.error || "Failed to send OTP");
+      }
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send OTP",
+        variant: "destructive",
+      });
+    }
+    setIsSendingOtp(false);
+  };
+
   const handleVerifyOTP = async () => {
     setIsVerifying(true);
-    // Simulate OTP verification
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    if (otp === "123456") {
-      const updateField = verifyDialog.type === "email" ? "email_verified" : "phone_verified";
-      const { error } = await supabase
-        .from("profiles")
-        .update({ [updateField]: true })
-        .eq("id", user?.id);
+    try {
+      // Hash the entered OTP and compare with stored hash
+      const enteredHash = await hashOtp(otp);
       
-      if (!error) {
-        setProfile((prev) => prev ? { ...prev, [updateField]: true } : null);
+      if (enteredHash === otpHash) {
+        const updateField = verifyDialog.type === "email" ? "email_verified" : "phone_verified";
+        const { error } = await supabase
+          .from("profiles")
+          .update({ [updateField]: true })
+          .eq("id", user?.id);
+        
+        if (!error) {
+          setProfile((prev) => prev ? { ...prev, [updateField]: true } : null);
+          toast({
+            title: "Verified",
+            description: `${verifyDialog.type === "email" ? "Email" : "Phone"} verified successfully!`,
+          });
+          setVerifyDialog({ open: false, type: "email", value: "" });
+          setOtp("");
+          setOtpHash("");
+          setOtpSent(false);
+          logActivity(`Verified ${verifyDialog.type}`, "Settings");
+        }
+      } else {
         toast({
-          title: "Verified",
-          description: `${verifyDialog.type === "email" ? "Email" : "Phone"} verified successfully!`,
+          title: "Invalid OTP",
+          description: "The code you entered is incorrect. Please try again.",
+          variant: "destructive",
         });
-        setVerifyDialog({ open: false, type: "email", value: "" });
-        setOtp("");
-        logActivity(`Verified ${verifyDialog.type}`, "Settings");
       }
-    } else {
+    } catch (error) {
       toast({
-        title: "Invalid OTP",
-        description: "Try 123456 for demo.",
+        title: "Verification failed",
+        description: "Please try again.",
         variant: "destructive",
       });
     }
@@ -450,32 +510,76 @@ const Settings = () => {
       </Button>
 
       {/* OTP Verification Dialog */}
-      <Dialog open={verifyDialog.open} onOpenChange={(open) => setVerifyDialog((v) => ({ ...v, open }))}>
+      <Dialog 
+        open={verifyDialog.open} 
+        onOpenChange={(open) => {
+          setVerifyDialog((v) => ({ ...v, open }));
+          if (!open) {
+            setOtp("");
+            setOtpHash("");
+            setOtpSent(false);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Verify {verifyDialog.type === "email" ? "Email" : "Phone"}</DialogTitle>
             <DialogDescription>
-              Enter the OTP sent to {verifyDialog.value}
+              {otpSent 
+                ? `Enter the verification code sent to ${verifyDialog.value}`
+                : `We'll send a verification code to ${verifyDialog.value}`
+              }
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <Input
-              placeholder="Enter 6-digit OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              maxLength={6}
-            />
-            <p className="text-xs text-muted-foreground">
-              Demo: Use OTP <code className="bg-muted px-1 rounded">123456</code>
-            </p>
+            {!otpSent ? (
+              <Button 
+                onClick={sendOtp} 
+                disabled={isSendingOtp}
+                className="w-full"
+              >
+                {isSendingOtp ? "Sending..." : `Send OTP via ${verifyDialog.type === "email" ? "Email" : "SMS"}`}
+              </Button>
+            ) : (
+              <>
+                <Input
+                  placeholder="Enter 6-digit OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  className="text-center text-lg tracking-widest"
+                />
+                <p className="text-xs text-muted-foreground text-center">
+                  Didn't receive it?{" "}
+                  <button 
+                    type="button"
+                    onClick={sendOtp} 
+                    disabled={isSendingOtp}
+                    className="text-primary hover:underline"
+                  >
+                    Resend code
+                  </button>
+                </p>
+              </>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setVerifyDialog({ open: false, type: "email", value: "" }); setOtp(""); }}>
+            <Button 
+              variant="outline" 
+              onClick={() => { 
+                setVerifyDialog({ open: false, type: "email", value: "" }); 
+                setOtp(""); 
+                setOtpHash("");
+                setOtpSent(false);
+              }}
+            >
               Cancel
             </Button>
-            <Button onClick={handleVerifyOTP} disabled={otp.length !== 6 || isVerifying}>
-              {isVerifying ? "Verifying..." : "Verify"}
-            </Button>
+            {otpSent && (
+              <Button onClick={handleVerifyOTP} disabled={otp.length !== 6 || isVerifying}>
+                {isVerifying ? "Verifying..." : "Verify"}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
