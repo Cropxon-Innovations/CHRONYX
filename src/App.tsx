@@ -13,6 +13,8 @@ import Todos from "./pages/app/Todos";
 import Study from "./pages/app/Study";
 import Loans from "./pages/app/Loans";
 import Insurance from "./pages/app/Insurance";
+import Expenses from "./pages/app/Expenses";
+import Income from "./pages/app/Income";
 import Lifespan from "./pages/app/Lifespan";
 import Achievements from "./pages/app/Achievements";
 import Activity from "./pages/app/Activity";
@@ -38,6 +40,8 @@ const App = () => (
                 <Route path="study" element={<Study />} />
                 <Route path="loans" element={<Loans />} />
                 <Route path="insurance" element={<Insurance />} />
+                <Route path="expenses" element={<Expenses />} />
+                <Route path="income" element={<Income />} />
                 <Route path="lifespan" element={<Lifespan />} />
                 <Route path="achievements" element={<Achievements />} />
                 <Route path="activity" element={<Activity />} />
