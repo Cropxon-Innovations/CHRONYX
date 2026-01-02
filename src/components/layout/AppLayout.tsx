@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import CollapsibleNetWorth from "./CollapsibleNetWorth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import Breadcrumbs from "./Breadcrumbs";
+import PageLoader from "./PageLoader";
 
 const AppLayout = () => {
   const [isNetWorthCollapsed, setIsNetWorthCollapsed] = useState(false);
@@ -57,10 +59,15 @@ const AppLayout = () => {
         }`}>
           {/* Responsive container - full width with proper padding */}
           <div className="w-full px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
+            {/* Breadcrumbs */}
+            <Breadcrumbs />
+            
             <div className="w-full flex flex-col xl:flex-row gap-4 lg:gap-6">
               {/* Main Content - full width responsive */}
               <div className="w-full min-w-0 flex-1">
-                <Outlet />
+                <Suspense fallback={<PageLoader />}>
+                  <Outlet />
+                </Suspense>
               </div>
               
               {/* Net Worth Sidebar - Hidden on mobile, visible on xl screens unless pinned */}
