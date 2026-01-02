@@ -5,6 +5,8 @@ import TrendChart from "@/components/dashboard/TrendChart";
 import Heatmap from "@/components/dashboard/Heatmap";
 import ActivityItem from "@/components/dashboard/ActivityItem";
 import AchievementItem from "@/components/dashboard/AchievementItem";
+import LoanWidget from "@/components/dashboard/LoanWidget";
+import InsuranceWidget from "@/components/dashboard/InsuranceWidget";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, subDays, startOfWeek, addDays, parseISO, formatDistanceToNow } from "date-fns";
@@ -227,6 +229,12 @@ const Dashboard = () => {
       <section>
         <h2 className="text-lg font-light text-foreground mb-4">Life</h2>
         <LifespanBar daysLived={daysLived} daysRemaining={daysRemaining} />
+      </section>
+
+      {/* Loan & Insurance Widgets */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <LoanWidget />
+        <InsuranceWidget />
       </section>
 
       {/* Bottom Grid */}
