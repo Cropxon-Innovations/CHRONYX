@@ -10,7 +10,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { EnhancedCalendar } from "@/components/ui/date-picker-enhanced";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, differenceInYears, differenceInMonths, differenceInDays } from "date-fns";
-import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive, Camera, User, Upload, RotateCcw, Sparkles } from "lucide-react";
+import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive, Camera, User, Upload, RotateCcw, Sparkles, Crop } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DataExport } from "@/components/export/DataExport";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -23,6 +23,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ProfileCompletionIndicator } from "@/components/profile/ProfileCompletionIndicator";
+import { ImageCropper } from "@/components/profile/ImageCropper";
 
 interface Profile {
   id: string;
@@ -77,6 +79,8 @@ const Settings = () => {
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showAvatarDialog, setShowAvatarDialog] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // OTP verification state
@@ -148,13 +152,29 @@ const Settings = () => {
       return;
     }
 
-    // Create preview
+    // Create preview and open cropper
     const reader = new FileReader();
     reader.onloadend = () => {
-      setAvatarPreview(reader.result as string);
+      setCropImageSrc(reader.result as string);
+      setShowCropper(true);
       setSelectedEmoji(null);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const croppedUrl = URL.createObjectURL(croppedBlob);
+    setAvatarPreview(croppedUrl);
+    setShowCropper(false);
+    setCropImageSrc(null);
+    
+    // Store the blob for upload
+    const file = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    if (fileInputRef.current) {
+      fileInputRef.current.files = dataTransfer.files;
+    }
   };
 
   const saveAvatar = async () => {
@@ -407,6 +427,11 @@ const Settings = () => {
         <h1 className="text-2xl font-light text-foreground tracking-wide">Settings</h1>
         <p className="text-sm text-muted-foreground mt-1">Configure your personal preferences</p>
       </header>
+
+      {/* Profile Completion */}
+      <section className="bg-card border border-border rounded-lg p-6">
+        <ProfileCompletionIndicator profile={profile} />
+      </section>
 
       {/* Profile Section */}
       <section className="bg-card border border-border rounded-lg p-6 space-y-6">
@@ -939,8 +964,35 @@ const Settings = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Image Cropper Dialog */}
+      <Dialog open={showCropper} onOpenChange={setShowCropper}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crop className="w-5 h-5" />
+              Crop Your Photo
+            </DialogTitle>
+            <DialogDescription>
+              Drag to reposition and resize your profile photo
+            </DialogDescription>
+          </DialogHeader>
+          {cropImageSrc && (
+            <ImageCropper
+              imageSrc={cropImageSrc}
+              onCropComplete={handleCropComplete}
+              onCancel={() => {
+                setShowCropper(false);
+                setCropImageSrc(null);
+              }}
+              aspectRatio={1}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 
 export default Settings;

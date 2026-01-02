@@ -431,7 +431,7 @@ export const SimpleSyllabusUploader = () => {
     setEditDialogOpen(true);
   };
 
-  // Open preview with signed URL
+  // Open preview with signed URL - fetch as blob to avoid Chrome blocking
   const openPreview = async (doc: SyllabusDocument) => {
     setPreviewLoading(true);
     setPreviewOpen(true);
@@ -449,18 +449,33 @@ export const SimpleSyllabusUploader = () => {
         .createSignedUrl(path, 60 * 60); // 1 hour expiry
       
       if (error) throw error;
-      setPreviewUrl(data.signedUrl);
+      
+      // Fetch as blob to create a local URL that Chrome won't block
+      const response = await fetch(data.signedUrl);
+      if (!response.ok) throw new Error("Failed to fetch document");
+      
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      setPreviewUrl(blobUrl);
     } catch (error) {
       console.error("Failed to generate preview URL:", error);
       toast({ 
         title: "Preview failed", 
-        description: "Could not load document preview",
+        description: "Could not load document preview. Try downloading instead.",
         variant: "destructive" 
       });
       setPreviewOpen(false);
     } finally {
       setPreviewLoading(false);
     }
+  };
+  
+  // Cleanup blob URLs when dialog closes
+  const handlePreviewClose = (open: boolean) => {
+    if (!open && previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewOpen(open);
   };
 
   // Get download URL with signed URL
@@ -479,17 +494,36 @@ export const SimpleSyllabusUploader = () => {
 
   const handleDownload = async (doc: SyllabusDocument) => {
     try {
-      const url = await getDownloadUrl(doc);
+      const path = doc.file_url.includes("/syllabus/") 
+        ? doc.file_url.split("/syllabus/")[1]
+        : doc.file_url;
+      
+      const { data, error } = await supabase.storage
+        .from("syllabus")
+        .createSignedUrl(path, 60 * 60);
+      
+      if (error) throw error;
+      
+      // Fetch as blob to avoid Chrome blocking
+      const response = await fetch(data.signedUrl);
+      if (!response.ok) throw new Error("Failed to fetch document");
+      
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
       const link = document.createElement("a");
-      link.href = url;
+      link.href = blobUrl;
       link.download = doc.file_name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      // Cleanup
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
     } catch (error) {
       toast({ 
         title: "Download failed", 
-        description: "Could not download document",
+        description: "Could not download document. Please try again.",
         variant: "destructive" 
       });
     }
@@ -883,7 +917,7 @@ export const SimpleSyllabusUploader = () => {
       </Dialog>
 
       {/* Inline PDF Preview Dialog - hideCloseButton to avoid duplicate X */}
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+      <Dialog open={previewOpen} onOpenChange={handlePreviewClose}>
         <DialogContent 
           className={cn(
             "transition-all duration-300",
