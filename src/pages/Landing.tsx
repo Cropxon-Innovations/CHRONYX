@@ -23,6 +23,7 @@ const Landing = () => {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
+          {/* Main arc */}
           <circle
             cx="300"
             cy="300"
@@ -33,6 +34,55 @@ const Landing = () => {
             strokeLinecap="round"
             fill="none"
             className="opacity-[0.04]"
+          />
+          {/* Secondary arc for depth */}
+          <circle
+            cx="300"
+            cy="300"
+            r="260"
+            stroke="hsl(var(--vyom-arc-stroke))"
+            strokeWidth="0.5"
+            strokeDasharray="220 1540"
+            strokeLinecap="round"
+            fill="none"
+            className="opacity-[0.03]"
+          />
+        </svg>
+      </div>
+
+      {/* Progress Ring - Subtle circular indicator */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <svg
+          className="vyom-ring-slow-rotate"
+          width="500"
+          height="500"
+          viewBox="0 0 500 500"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Ring track */}
+          <circle
+            cx="250"
+            cy="250"
+            r="220"
+            stroke="hsl(var(--vyom-arc-stroke))"
+            strokeWidth="1"
+            fill="none"
+            className="opacity-[0.02]"
+          />
+          {/* Ring progress fill */}
+          <circle
+            cx="250"
+            cy="250"
+            r="220"
+            stroke="hsl(var(--vyom-arc-stroke))"
+            strokeWidth="1.5"
+            strokeDasharray="345 1036"
+            strokeDashoffset="0"
+            strokeLinecap="round"
+            fill="none"
+            className="opacity-[0.05] vyom-ring-fill-animate"
+            transform="rotate(-90 250 250)"
           />
         </svg>
       </div>

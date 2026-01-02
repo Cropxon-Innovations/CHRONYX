@@ -1011,6 +1011,95 @@ export type Database = {
         }
         Relationships: []
       }
+      syllabus_modules: {
+        Row: {
+          created_at: string
+          id: string
+          module_name: string
+          module_order: number | null
+          notes: string | null
+          phase_id: string
+          source_page: string | null
+          status: string | null
+          time_spent_minutes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_name: string
+          module_order?: number | null
+          notes?: string | null
+          phase_id: string
+          source_page?: string | null
+          status?: string | null
+          time_spent_minutes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_name?: string
+          module_order?: number | null
+          notes?: string | null
+          phase_id?: string
+          source_page?: string | null
+          status?: string | null
+          time_spent_minutes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syllabus_modules_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "syllabus_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      syllabus_phases: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          phase_name: string
+          phase_order: number | null
+          source_page: string | null
+          status: string | null
+          syllabus_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          phase_name: string
+          phase_order?: number | null
+          source_page?: string | null
+          status?: string | null
+          syllabus_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          phase_name?: string
+          phase_order?: number | null
+          source_page?: string | null
+          status?: string | null
+          syllabus_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       syllabus_topics: {
         Row: {
           chapter_name: string
@@ -1021,12 +1110,16 @@ export type Database = {
           id: string
           interval_days: number | null
           is_completed: boolean | null
+          module_id: string | null
           next_review_date: string | null
           notes: string | null
           priority: number | null
           review_count: number | null
           sort_order: number | null
+          source_page: string | null
+          status: string | null
           subject: string
+          time_spent_minutes: number | null
           topic_name: string
           updated_at: string | null
           user_id: string
@@ -1040,12 +1133,16 @@ export type Database = {
           id?: string
           interval_days?: number | null
           is_completed?: boolean | null
+          module_id?: string | null
           next_review_date?: string | null
           notes?: string | null
           priority?: number | null
           review_count?: number | null
           sort_order?: number | null
+          source_page?: string | null
+          status?: string | null
           subject: string
+          time_spent_minutes?: number | null
           topic_name: string
           updated_at?: string | null
           user_id: string
@@ -1059,23 +1156,40 @@ export type Database = {
           id?: string
           interval_days?: number | null
           is_completed?: boolean | null
+          module_id?: string | null
           next_review_date?: string | null
           notes?: string | null
           priority?: number | null
           review_count?: number | null
           sort_order?: number | null
+          source_page?: string | null
+          status?: string | null
           subject?: string
+          time_spent_minutes?: number | null
           topic_name?: string
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "syllabus_topics_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "syllabus_modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       todos: {
         Row: {
           created_at: string | null
           date: string
           id: string
+          is_recurring: boolean | null
+          parent_recurring_id: string | null
+          priority: string | null
+          recurrence_days: number[] | null
+          recurrence_type: string | null
           status: string
           text: string
           updated_at: string | null
@@ -1085,6 +1199,11 @@ export type Database = {
           created_at?: string | null
           date?: string
           id?: string
+          is_recurring?: boolean | null
+          parent_recurring_id?: string | null
+          priority?: string | null
+          recurrence_days?: number[] | null
+          recurrence_type?: string | null
           status?: string
           text: string
           updated_at?: string | null
@@ -1094,12 +1213,25 @@ export type Database = {
           created_at?: string | null
           date?: string
           id?: string
+          is_recurring?: boolean | null
+          parent_recurring_id?: string | null
+          priority?: string | null
+          recurrence_days?: number[] | null
+          recurrence_type?: string | null
           status?: string
           text?: string
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "todos_parent_recurring_id_fkey"
+            columns: ["parent_recurring_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_study_schedule: {
         Row: {
