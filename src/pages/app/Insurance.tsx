@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, FileWarning } from "lucide-react";
+import { Shield, Users, FileWarning, Bell } from "lucide-react";
 import FamilyMembers from "@/components/insurance/FamilyMembers";
 import ClaimsList from "@/components/insurance/ClaimsList";
 import PoliciesList from "@/components/insurance/PoliciesList";
+import TestReminderButtons from "@/components/reminders/TestReminderButtons";
 
 const Insurance = () => {
   const [activeTab, setActiveTab] = useState("policies");
@@ -16,7 +17,7 @@ const Insurance = () => {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="policies" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
             Policies
@@ -28,6 +29,10 @@ const Insurance = () => {
           <TabsTrigger value="claims" className="flex items-center gap-2">
             <FileWarning className="w-4 h-4" />
             Claims
+          </TabsTrigger>
+          <TabsTrigger value="reminders" className="flex items-center gap-2">
+            <Bell className="w-4 h-4" />
+            Reminders
           </TabsTrigger>
         </TabsList>
 
@@ -41,6 +46,10 @@ const Insurance = () => {
 
         <TabsContent value="claims" className="mt-6">
           <ClaimsList />
+        </TabsContent>
+
+        <TabsContent value="reminders" className="mt-6">
+          <TestReminderButtons />
         </TabsContent>
       </Tabs>
     </div>

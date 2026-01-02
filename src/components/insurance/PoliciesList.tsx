@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Shield, Plus, Pencil, Trash2, Calendar, FileText } from "lucide-react";
+import { Shield, Plus, Pencil, Trash2, Calendar, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import AddInsuranceForm from "./AddInsuranceForm";
+import PolicyDetailDialog from "./PolicyDetailDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,7 @@ interface Insurance {
   notes: string | null;
   status: string;
   family_member?: { full_name: string } | null;
+  reminder_days?: number[] | null;
 }
 
 const formatCurrency = (amount: number) => {
@@ -57,6 +59,7 @@ const PoliciesList = () => {
   const [policies, setPolicies] = useState<Insurance[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<Insurance | null>(null);
 
@@ -139,7 +142,11 @@ const PoliciesList = () => {
             const isExpiringSoon = daysUntil <= 30 && daysUntil > 0;
 
             return (
-              <div key={policy.id} className="bg-card border border-border rounded-lg p-6">
+              <div 
+                key={policy.id} 
+                className="bg-card border border-border rounded-lg p-6 hover:bg-accent/30 transition-colors cursor-pointer group"
+                onClick={() => { setSelectedPolicy(policy); setDetailOpen(true); }}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -158,12 +165,25 @@ const PoliciesList = () => {
                       <Calendar className="w-3 h-3" />
                       {daysUntil > 0 ? `${daysUntil} days` : 'Expired'}
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => { setSelectedPolicy(policy); setFormOpen(true); }}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setSelectedPolicy(policy); setDeleteDialogOpen(true); }}>
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={(e) => { e.stopPropagation(); setSelectedPolicy(policy); setFormOpen(true); }}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => { e.stopPropagation(); setSelectedPolicy(policy); setDeleteDialogOpen(true); }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
 
@@ -194,6 +214,13 @@ const PoliciesList = () => {
       )}
 
       <AddInsuranceForm open={formOpen} onOpenChange={setFormOpen} insurance={selectedPolicy} onSuccess={fetchPolicies} />
+
+      <PolicyDetailDialog 
+        open={detailOpen} 
+        onOpenChange={setDetailOpen} 
+        policy={selectedPolicy} 
+        onUpdate={fetchPolicies} 
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

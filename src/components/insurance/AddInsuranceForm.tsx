@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -20,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import { toast } from "sonner";
+import PolicyDocumentScanner from "./PolicyDocumentScanner";
 
 interface FamilyMember {
   id: string;
@@ -136,6 +138,11 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
       return;
     }
 
+    if (!formData.start_date || !formData.renewal_date) {
+      toast.error("Please fill in start and renewal dates");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -183,14 +190,36 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
     }
   };
 
+  const handleOcrData = (data: any) => {
+    setFormData(prev => ({
+      ...prev,
+      policy_name: data.policy_name || prev.policy_name,
+      provider: data.provider || prev.provider,
+      policy_number: data.policy_number || prev.policy_number,
+      policy_type: data.policy_type || prev.policy_type,
+      premium_amount: data.premium_amount || prev.premium_amount,
+      sum_assured: data.sum_assured || prev.sum_assured,
+      start_date: data.start_date || prev.start_date,
+      renewal_date: data.renewal_date || prev.renewal_date,
+    }));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{insurance ? "Edit" : "Add"} Insurance Policy</DialogTitle>
+          <DialogDescription>
+            {!insurance && "Upload a document to auto-fill or enter details manually"}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
+          {!insurance && (
+            <div className="flex justify-end">
+              <PolicyDocumentScanner onDataExtracted={handleOcrData} />
+            </div>
+          )}
           <div className="space-y-2">
             <Label>Policy Name *</Label>
             <Input
@@ -255,19 +284,21 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Start Date</Label>
+              <Label>Start Date *</Label>
               <Input
                 type="date"
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label>Renewal Date</Label>
+              <Label>Renewal Date *</Label>
               <Input
                 type="date"
                 value={formData.renewal_date}
                 onChange={(e) => setFormData({ ...formData, renewal_date: e.target.value })}
+                required
               />
             </div>
           </div>

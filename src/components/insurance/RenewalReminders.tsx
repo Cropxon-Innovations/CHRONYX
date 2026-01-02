@@ -9,6 +9,7 @@ import { Bell, Loader2 } from "lucide-react";
 interface RenewalRemindersProps {
   insuranceId: string;
   currentReminderDays?: number[];
+  onUpdate?: () => void;
 }
 
 const REMINDER_OPTIONS = [
@@ -19,7 +20,7 @@ const REMINDER_OPTIONS = [
   { value: 1, label: "1 day before" },
 ];
 
-export const RenewalReminders = ({ insuranceId, currentReminderDays }: RenewalRemindersProps) => {
+export const RenewalReminders = ({ insuranceId, currentReminderDays, onUpdate }: RenewalRemindersProps) => {
   const { toast } = useToast();
   const [selectedDays, setSelectedDays] = useState<number[]>(currentReminderDays || [30, 7, 1]);
   const [saving, setSaving] = useState(false);
@@ -46,6 +47,7 @@ export const RenewalReminders = ({ insuranceId, currentReminderDays }: RenewalRe
 
       if (error) throw error;
       toast({ title: "Reminder settings saved" });
+      onUpdate?.();
     } catch (error) {
       console.error("Error saving reminders:", error);
       toast({ title: "Failed to save settings", variant: "destructive" });
