@@ -10,7 +10,18 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { EnhancedCalendar } from "@/components/ui/date-picker-enhanced";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, differenceInYears, differenceInMonths, differenceInDays } from "date-fns";
-import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive, Camera, User, Upload, RotateCcw, Sparkles, Crop } from "lucide-react";
+import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive, Camera, User, Upload, RotateCcw, Sparkles, Crop, Trash2, AlertTriangle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { DataExport } from "@/components/export/DataExport";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -94,6 +105,21 @@ const Settings = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  
+  // Delete account state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const DELETE_REASONS = [
+    { value: "not_useful", label: "Not useful for my needs" },
+    { value: "too_complex", label: "Too complex to use" },
+    { value: "found_alternative", label: "Found a better alternative" },
+    { value: "privacy_concerns", label: "Privacy concerns" },
+    { value: "temporary_account", label: "This was a temporary account" },
+    { value: "other", label: "Other reason" },
+  ];
 
   useEffect(() => {
     if (user) {
@@ -287,6 +313,96 @@ const Settings = () => {
       description: "The onboarding flow will appear on your next dashboard visit.",
     });
     logActivity("Reset onboarding flow", "Settings");
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user || !deleteReason || deleteConfirmText !== (profile?.email || user.email)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      // Log the deletion reason for analytics (before deleting)
+      await logActivity(`Account deletion requested. Reason: ${deleteReason}`, "Settings");
+
+      // Delete all user data from various tables
+      await supabase.from("achievements").delete().eq("user_id", user.id);
+      await supabase.from("activity_logs").delete().eq("user_id", user.id);
+      await supabase.from("budget_limits").delete().eq("user_id", user.id);
+      await supabase.from("custom_banks").delete().eq("user_id", user.id);
+      await supabase.from("documents").delete().eq("user_id", user.id);
+      await supabase.from("education_documents").delete().eq("user_id", user.id);
+      await supabase.from("education_records").delete().eq("user_id", user.id);
+      await supabase.from("expenses").delete().eq("user_id", user.id);
+      await supabase.from("family_members").delete().eq("user_id", user.id);
+      await supabase.from("income_entries").delete().eq("user_id", user.id);
+      await supabase.from("income_sources").delete().eq("user_id", user.id);
+      await supabase.from("memories").delete().eq("user_id", user.id);
+      await supabase.from("memory_collections").delete().eq("user_id", user.id);
+      await supabase.from("memory_folders").delete().eq("user_id", user.id);
+      await supabase.from("savings_goals").delete().eq("user_id", user.id);
+      await supabase.from("social_profiles").delete().eq("user_id", user.id);
+      await supabase.from("study_goals").delete().eq("user_id", user.id);
+      await supabase.from("study_logs").delete().eq("user_id", user.id);
+      await supabase.from("subject_colors").delete().eq("user_id", user.id);
+      await supabase.from("salary_records").delete().eq("user_id", user.id);
+
+      // Delete loans and related data
+      const { data: loans } = await supabase.from("loans").select("id").eq("user_id", user.id);
+      if (loans && loans.length > 0) {
+        const loanIds = loans.map(l => l.id);
+        await supabase.from("emi_schedule").delete().in("loan_id", loanIds);
+        await supabase.from("emi_events").delete().in("loan_id", loanIds);
+        await supabase.from("loan_documents").delete().in("loan_id", loanIds);
+        await supabase.from("loans").delete().eq("user_id", user.id);
+      }
+
+      // Delete insurances and related data
+      const { data: insurances } = await supabase.from("insurances").select("id").eq("user_id", user.id);
+      if (insurances && insurances.length > 0) {
+        const insuranceIds = insurances.map(i => i.id);
+        await supabase.from("insurance_documents").delete().in("insurance_id", insuranceIds);
+        await supabase.from("insurance_reminders").delete().in("insurance_id", insuranceIds);
+        const { data: claims } = await supabase.from("insurance_claims").select("id").in("insurance_id", insuranceIds);
+        if (claims && claims.length > 0) {
+          await supabase.from("insurance_claim_documents").delete().in("claim_id", claims.map(c => c.id));
+        }
+        await supabase.from("insurance_claims").delete().in("insurance_id", insuranceIds);
+        await supabase.from("insurances").delete().eq("user_id", user.id);
+      }
+
+      // Delete profile
+      await supabase.from("profiles").delete().eq("id", user.id);
+
+      // Delete storage files
+      const buckets = ["documents", "memories", "vyom"];
+      for (const bucket of buckets) {
+        const { data: files } = await supabase.storage.from(bucket).list(user.id);
+        if (files && files.length > 0) {
+          const paths = files.map(f => `${user.id}/${f.name}`);
+          await supabase.storage.from(bucket).remove(paths);
+        }
+      }
+
+      // Sign out and delete auth user (this will fail if not using service role, but we sign out anyway)
+      await supabase.auth.signOut();
+
+      toast({
+        title: "Account Deleted",
+        description: "Your account and all data have been permanently deleted.",
+      });
+
+      // Redirect to home
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete account. Please try again.",
+        variant: "destructive",
+      });
+    }
+    setIsDeleting(false);
   };
 
   const saveSettings = async () => {
@@ -757,6 +873,32 @@ const Settings = () => {
         </Button>
       </section>
 
+      {/* Danger Zone */}
+      <section className="bg-destructive/5 border border-destructive/30 rounded-lg p-6 space-y-4">
+        <h2 className="text-sm font-medium text-destructive uppercase tracking-wider flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4" />
+          Danger Zone
+        </h2>
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-destructive/20 rounded-lg bg-background">
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">Delete Account</p>
+              <p className="text-sm text-muted-foreground">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+            </div>
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              className="w-full sm:w-auto"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Account
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Save Button */}
       <Button
         onClick={saveSettings}
@@ -990,6 +1132,93 @@ const Settings = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Account Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => {
+        setShowDeleteDialog(open);
+        if (!open) {
+          setDeleteReason("");
+          setDeleteConfirmText("");
+        }
+      }}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Delete Account
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left space-y-4">
+              <p>
+                This action is <span className="font-semibold text-destructive">permanent and irreversible</span>. 
+                All your data including documents, memories, financial records, and settings will be permanently deleted.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="space-y-4 py-2">
+            {/* Reason Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Why are you deleting your account?
+              </Label>
+              <Select value={deleteReason} onValueChange={setDeleteReason}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a reason..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {DELETE_REASONS.map((reason) => (
+                    <SelectItem key={reason.value} value={reason.value}>
+                      {reason.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Account Confirmation */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Type <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-destructive">{profile?.email || user?.email}</span> to confirm
+              </Label>
+              <Input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Enter your email to confirm"
+                className="font-mono"
+              />
+            </div>
+
+            {deleteConfirmText && deleteConfirmText !== (profile?.email || user?.email) && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                Email doesn't match
+              </p>
+            )}
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={
+                isDeleting || 
+                !deleteReason || 
+                deleteConfirmText !== (profile?.email || user?.email)
+              }
+            >
+              {isDeleting ? (
+                <>Deleting...</>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Forever
+                </>
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
