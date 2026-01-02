@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Upload, FileText, Plus, Trash2, Check, GripVertical, ChevronDown, ChevronRight, BookOpen } from "lucide-react";
+import { FileText, Plus, Trash2, Check, GripVertical, ChevronDown, ChevronRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useSubjectColors } from "./SubjectColorPicker";
+import SyllabusUploader from "./SyllabusUploader";
 import {
   Select,
   SelectContent,
@@ -229,15 +230,7 @@ export const SyllabusPlanner = () => {
           <h3 className="text-sm text-muted-foreground uppercase tracking-wider">Syllabus Planner</h3>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsUploadingDialog(true)}
-            className="h-8 border-border text-muted-foreground hover:text-foreground"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Upload
-          </Button>
+          <SyllabusUploader />
           {subjectsWithTopics.length > 0 && (
             <Button
               variant="ghost"

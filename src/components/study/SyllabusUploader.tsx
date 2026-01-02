@@ -1,0 +1,564 @@
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Upload, FileText, Check, X, Loader2, BookOpen, Clock, Eye, Save } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
+
+interface ParsedModule {
+  chapter: string;
+  topics: { name: string; hours: number; selected: boolean }[];
+}
+
+interface ParsedSyllabus {
+  subject: string;
+  modules: ParsedModule[];
+  totalTopics: number;
+  totalHours: number;
+}
+
+const SyllabusUploader = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState("Programming");
+  const [parsedSyllabus, setParsedSyllabus] = useState<ParsedSyllabus | null>(null);
+  const [fileName, setFileName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const parseTextContent = (text: string): ParsedModule[] => {
+    const lines = text.split("\n").filter((line) => line.trim());
+    const modules: ParsedModule[] = [];
+    let currentModule: ParsedModule | null = null;
+
+    lines.forEach((line) => {
+      const trimmed = line.trim();
+
+      // Detect chapter/module headers
+      const isHeader =
+        trimmed.startsWith("#") ||
+        trimmed.startsWith("Module") ||
+        trimmed.startsWith("Chapter") ||
+        trimmed.startsWith("Unit") ||
+        trimmed.endsWith(":") ||
+        (trimmed === trimmed.toUpperCase() && trimmed.length > 3 && !trimmed.match(/^\d/));
+
+      if (isHeader) {
+        if (currentModule && currentModule.topics.length > 0) {
+          modules.push(currentModule);
+        }
+        const chapterName = trimmed
+          .replace(/^#+\s*/, "")
+          .replace(/^(Module|Chapter|Unit)\s*\d*[\.:]\s*/i, "")
+          .replace(/:$/, "")
+          .trim();
+        currentModule = { chapter: chapterName || "General", topics: [] };
+      } else if (trimmed.length > 0 && currentModule) {
+        // Parse topic with optional hours
+        const hoursMatch =
+          trimmed.match(/[-–]\s*(\d+(?:\.\d+)?)\s*h(?:ours?)?/i) ||
+          trimmed.match(/\((\d+(?:\.\d+)?)\s*h(?:ours?)?\)/i) ||
+          trimmed.match(/:\s*(\d+(?:\.\d+)?)\s*h(?:ours?)?$/i);
+
+        const hours = hoursMatch ? parseFloat(hoursMatch[1]) : 1;
+        const topicName = trimmed
+          .replace(/[-–]\s*\d+(?:\.\d+)?\s*h(?:ours?)?/i, "")
+          .replace(/\(\d+(?:\.\d+)?\s*h(?:ours?)?\)/i, "")
+          .replace(/:\s*\d+(?:\.\d+)?\s*h(?:ours?)?$/i, "")
+          .replace(/^[-•*\d.)\]]\s*/, "")
+          .trim();
+
+        if (topicName && topicName.length > 1) {
+          currentModule.topics.push({ name: topicName, hours, selected: true });
+        }
+      } else if (trimmed.length > 0 && !currentModule) {
+        // No module yet, create default
+        currentModule = { chapter: "General", topics: [] };
+        const topicName = trimmed.replace(/^[-•*\d.)\]]\s*/, "").trim();
+        if (topicName) {
+          currentModule.topics.push({ name: topicName, hours: 1, selected: true });
+        }
+      }
+    });
+
+    // Add last module
+    if (currentModule && currentModule.topics.length > 0) {
+      modules.push(currentModule);
+    }
+
+    return modules;
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setFileName(file.name);
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    // Simulate upload progress
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 100);
+
+    try {
+      setIsParsing(true);
+      const text = await file.text();
+      
+      // Complete upload
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
+      // Parse content
+      const modules = parseTextContent(text);
+
+      if (modules.length === 0 || modules.every((m) => m.topics.length === 0)) {
+        toast.error("Could not parse any topics from the file");
+        setParsedSyllabus(null);
+        return;
+      }
+
+      const totalTopics = modules.reduce((sum, m) => sum + m.topics.length, 0);
+      const totalHours = modules.reduce(
+        (sum, m) => sum + m.topics.reduce((s, t) => s + t.hours, 0),
+        0
+      );
+
+      setParsedSyllabus({
+        subject: selectedSubject,
+        modules,
+        totalTopics,
+        totalHours,
+      });
+    } catch (error) {
+      console.error("Error parsing file:", error);
+      toast.error("Failed to parse file");
+    } finally {
+      setIsUploading(false);
+      setIsParsing(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const toggleTopic = (moduleIndex: number, topicIndex: number) => {
+    if (!parsedSyllabus) return;
+
+    const newModules = [...parsedSyllabus.modules];
+    newModules[moduleIndex].topics[topicIndex].selected =
+      !newModules[moduleIndex].topics[topicIndex].selected;
+
+    const totalTopics = newModules.reduce(
+      (sum, m) => sum + m.topics.filter((t) => t.selected).length,
+      0
+    );
+    const totalHours = newModules.reduce(
+      (sum, m) => sum + m.topics.filter((t) => t.selected).reduce((s, t) => s + t.hours, 0),
+      0
+    );
+
+    setParsedSyllabus({
+      ...parsedSyllabus,
+      modules: newModules,
+      totalTopics,
+      totalHours,
+    });
+  };
+
+  const toggleModule = (moduleIndex: number, selected: boolean) => {
+    if (!parsedSyllabus) return;
+
+    const newModules = [...parsedSyllabus.modules];
+    newModules[moduleIndex].topics = newModules[moduleIndex].topics.map((t) => ({
+      ...t,
+      selected,
+    }));
+
+    const totalTopics = newModules.reduce(
+      (sum, m) => sum + m.topics.filter((t) => t.selected).length,
+      0
+    );
+    const totalHours = newModules.reduce(
+      (sum, m) => sum + m.topics.filter((t) => t.selected).reduce((s, t) => s + t.hours, 0),
+      0
+    );
+
+    setParsedSyllabus({
+      ...parsedSyllabus,
+      modules: newModules,
+      totalTopics,
+      totalHours,
+    });
+  };
+
+  const updateTopicHours = (moduleIndex: number, topicIndex: number, hours: number) => {
+    if (!parsedSyllabus) return;
+
+    const newModules = [...parsedSyllabus.modules];
+    newModules[moduleIndex].topics[topicIndex].hours = hours;
+
+    const totalHours = newModules.reduce(
+      (sum, m) => sum + m.topics.filter((t) => t.selected).reduce((s, t) => s + t.hours, 0),
+      0
+    );
+
+    setParsedSyllabus({
+      ...parsedSyllabus,
+      modules: newModules,
+      totalHours,
+    });
+  };
+
+  const saveSyllabus = async () => {
+    if (!user || !parsedSyllabus) return;
+
+    setIsSaving(true);
+    try {
+      const topicsToInsert: any[] = [];
+      let sortOrder = 0;
+
+      parsedSyllabus.modules.forEach((module) => {
+        module.topics
+          .filter((t) => t.selected)
+          .forEach((topic) => {
+            topicsToInsert.push({
+              user_id: user.id,
+              subject: parsedSyllabus.subject,
+              chapter_name: module.chapter,
+              topic_name: topic.name,
+              estimated_hours: topic.hours,
+              sort_order: sortOrder++,
+            });
+          });
+      });
+
+      if (topicsToInsert.length === 0) {
+        toast.error("No topics selected to save");
+        return;
+      }
+
+      const { error } = await supabase.from("syllabus_topics").insert(topicsToInsert);
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] });
+      toast.success(`Imported ${topicsToInsert.length} topics successfully`);
+      
+      setIsOpen(false);
+      setParsedSyllabus(null);
+      setFileName("");
+    } catch (error) {
+      console.error("Error saving syllabus:", error);
+      toast.error("Failed to save syllabus");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const resetUploader = () => {
+    setParsedSyllabus(null);
+    setFileName("");
+    setUploadProgress(0);
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setIsOpen(true)}
+        className="h-8 border-border text-muted-foreground hover:text-foreground"
+      >
+        <Upload className="w-4 h-4 mr-2" />
+        Upload Syllabus
+      </Button>
+
+      <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetUploader(); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              {parsedSyllabus ? "Preview & Edit Syllabus" : "Upload Syllabus"}
+            </DialogTitle>
+            <DialogDescription>
+              {parsedSyllabus
+                ? "Review and edit the parsed syllabus before saving"
+                : "Upload a text file with your syllabus. Use headings for chapters and bullet points for topics."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-hidden">
+            {!parsedSyllabus ? (
+              <div className="space-y-6 py-4">
+                {/* Subject Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">Subject</label>
+                  <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* File Format Example */}
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">Supported Format</label>
+                  <pre className="text-xs bg-muted/50 p-4 rounded-md text-muted-foreground overflow-x-auto">
+{`# Module 1: Introduction
+- What is Programming - 2h
+- Setting up Environment - 1h
+- First Program - 1.5h
+
+# Module 2: Variables
+- Data Types - 2h
+- Variables and Constants - 1h
+- Type Conversion - 1.5h`}
+                  </pre>
+                </div>
+
+                {/* Upload Area */}
+                <div
+                  className={cn(
+                    "border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer",
+                    isUploading
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50 hover:bg-accent/30"
+                  )}
+                  onClick={() => !isUploading && fileInputRef.current?.click()}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".txt,.md"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  
+                  {isUploading ? (
+                    <div className="space-y-4">
+                      <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
+                      <div className="space-y-2">
+                        <p className="text-sm text-foreground">{fileName}</p>
+                        <Progress value={uploadProgress} className="h-2 w-64 mx-auto" />
+                        <p className="text-xs text-muted-foreground">
+                          {isParsing ? "Parsing content..." : `Uploading... ${uploadProgress}%`}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <Upload className="w-10 h-10 mx-auto text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          TXT or MD files only
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 py-4 h-full flex flex-col">
+                {/* Summary Stats */}
+                <div className="grid grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="py-3 px-4">
+                      <p className="text-2xl font-semibold text-foreground">
+                        {parsedSyllabus.modules.length}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Modules</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="py-3 px-4">
+                      <p className="text-2xl font-semibold text-foreground">
+                        {parsedSyllabus.totalTopics}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Topics Selected</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="py-3 px-4">
+                      <p className="text-2xl font-semibold text-foreground">
+                        {parsedSyllabus.totalHours.toFixed(1)}h
+                      </p>
+                      <p className="text-xs text-muted-foreground">Total Hours</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="py-3 px-4">
+                      <p className="text-2xl font-semibold text-primary">
+                        {parsedSyllabus.subject}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Subject</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Modules Table */}
+                <ScrollArea className="flex-1 border rounded-lg">
+                  <div className="space-y-4 p-4">
+                    {parsedSyllabus.modules.map((module, moduleIndex) => {
+                      const allSelected = module.topics.every((t) => t.selected);
+                      const someSelected = module.topics.some((t) => t.selected);
+
+                      return (
+                        <div key={moduleIndex} className="space-y-2">
+                          <div className="flex items-center gap-3 py-2 px-3 bg-muted/50 rounded-lg">
+                            <Checkbox
+                              checked={allSelected}
+                              onCheckedChange={(checked) =>
+                                toggleModule(moduleIndex, !!checked)
+                              }
+                              className={cn(!allSelected && someSelected && "opacity-50")}
+                            />
+                            <div className="flex-1">
+                              <p className="font-medium text-foreground">{module.chapter}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {module.topics.filter((t) => t.selected).length} of{" "}
+                                {module.topics.length} topics •{" "}
+                                {module.topics
+                                  .filter((t) => t.selected)
+                                  .reduce((s, t) => s + t.hours, 0)
+                                  .toFixed(1)}
+                                h
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="pl-8 space-y-1">
+                            {module.topics.map((topic, topicIndex) => (
+                              <div
+                                key={topicIndex}
+                                className={cn(
+                                  "flex items-center gap-3 py-2 px-3 rounded-md transition-colors",
+                                  topic.selected
+                                    ? "bg-card border border-border"
+                                    : "bg-muted/30 opacity-60"
+                                )}
+                              >
+                                <Checkbox
+                                  checked={topic.selected}
+                                  onCheckedChange={() =>
+                                    toggleTopic(moduleIndex, topicIndex)
+                                  }
+                                />
+                                <span
+                                  className={cn(
+                                    "flex-1 text-sm",
+                                    !topic.selected && "line-through text-muted-foreground"
+                                  )}
+                                >
+                                  {topic.name}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <Clock className="w-3 h-3 text-muted-foreground" />
+                                  <Input
+                                    type="number"
+                                    value={topic.hours}
+                                    onChange={(e) =>
+                                      updateTopicHours(
+                                        moduleIndex,
+                                        topicIndex,
+                                        parseFloat(e.target.value) || 1
+                                      )
+                                    }
+                                    className="w-16 h-7 text-xs text-center"
+                                    min="0.5"
+                                    step="0.5"
+                                  />
+                                  <span className="text-xs text-muted-foreground">h</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            {parsedSyllabus ? (
+              <>
+                <Button variant="outline" onClick={resetUploader}>
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button onClick={saveSyllabus} disabled={isSaving || parsedSyllabus.totalTopics === 0}>
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  Save {parsedSyllabus.totalTopics} Topics
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" onClick={() => setIsOpen(false)}>
+                Cancel
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default SyllabusUploader;

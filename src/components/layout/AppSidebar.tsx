@@ -29,11 +29,11 @@ const navItems = [
   { path: "/app/study", label: "Study", icon: BookOpen },
   { path: "/app/expenses", label: "Expenses", icon: Receipt },
   { path: "/app/income", label: "Income", icon: TrendingUp },
+  { path: "/app/reports", label: "Reports & Budget", icon: Activity },
   { path: "/app/loans", label: "Loans & EMI", icon: Wallet },
   { path: "/app/insurance", label: "Insurance", icon: Shield },
   { path: "/app/lifespan", label: "Lifespan", icon: Clock },
   { path: "/app/achievements", label: "Achievements", icon: Trophy },
-  { path: "/app/activity", label: "Activity", icon: Activity },
   { path: "/app/settings", label: "Settings", icon: Settings },
 ];
 

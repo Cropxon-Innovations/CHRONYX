@@ -68,6 +68,33 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_limits: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          monthly_limit: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          monthly_limit: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          monthly_limit?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_banks: {
         Row: {
           color: string
