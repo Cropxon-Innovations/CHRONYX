@@ -290,7 +290,7 @@ export const SyllabusPlanner = () => {
             onClick={() => setIsUploadingDialog(true)}
             className="border-border"
           >
-            <Upload className="w-4 h-4 mr-2" />
+            <FileText className="w-4 h-4 mr-2" />
             Upload Syllabus
           </Button>
         </div>
@@ -440,7 +440,7 @@ export const SyllabusPlanner = () => {
               onClick={() => fileInputRef.current?.click()}
               className="w-full"
             >
-              <Upload className="w-4 h-4 mr-2" />
+              <FileText className="w-4 h-4 mr-2" />
               Select File
             </Button>
           </div>
