@@ -49,6 +49,7 @@ import { AnimatedFolderCard, FOLDER_COLORS, FOLDER_ICONS } from "@/components/me
 import { CollectionCard } from "@/components/memory/CollectionCard";
 import { MemoryMap } from "@/components/memory/MemoryMap";
 import { GalleryView, GalleryViewMode } from "@/components/memory/GalleryView";
+import { encryptFile } from "@/utils/crypto";
 
 type Memory = {
   id: string;
