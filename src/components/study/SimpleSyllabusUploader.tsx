@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useActivityLog } from "@/hooks/useActivityLog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,10 +37,14 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
-  Circle,
   Loader2,
   Download,
-  Plus
+  Plus,
+  X,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -71,8 +75,13 @@ export const SimpleSyllabusUploader = () => {
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadDescription, setUploadDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Preview state
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewZoom, setPreviewZoom] = useState(100);
+  const [previewFullscreen, setPreviewFullscreen] = useState(false);
 
   // Edit state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -107,7 +116,6 @@ export const SimpleSyllabusUploader = () => {
       setIsUploading(true);
       
       // Upload file to storage
-      const fileExt = selectedFile.name.split(".").pop();
       const fileName = `${user.id}/${Date.now()}_${selectedFile.name}`;
       
       const { error: uploadError } = await supabase.storage
@@ -116,20 +124,23 @@ export const SimpleSyllabusUploader = () => {
       
       if (uploadError) throw uploadError;
       
-      const { data: urlData } = supabase.storage
+      // Get signed URL for private bucket
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from("syllabus")
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year expiry
       
-      // Save to database
+      const fileUrl = signedUrlError ? fileName : signedUrlData.signedUrl;
+      
+      // Save to database (store path, not full URL)
       const { error: dbError } = await supabase
         .from("syllabus_documents")
         .insert({
           user_id: user.id,
           title: uploadTitle || selectedFile.name,
           description: uploadDescription || null,
-          file_url: urlData.publicUrl,
+          file_url: fileName, // Store path, generate signed URL on access
           file_name: selectedFile.name,
-          file_type: selectedFile.type || fileExt || "unknown",
+          file_type: selectedFile.type || "unknown",
           file_size: selectedFile.size,
           progress_percentage: 0,
         });
@@ -189,9 +200,12 @@ export const SimpleSyllabusUploader = () => {
     mutationFn: async (id: string) => {
       const doc = documents.find(d => d.id === id);
       
-      // Delete from storage
+      // Delete from storage using stored path
       if (doc?.file_url) {
-        const path = doc.file_url.split("/syllabus/")[1];
+        // file_url now stores the path, not full URL
+        const path = doc.file_url.includes("/syllabus/") 
+          ? doc.file_url.split("/syllabus/")[1]
+          : doc.file_url;
         if (path) {
           await supabase.storage.from("syllabus").remove([path]);
         }
@@ -234,23 +248,74 @@ export const SimpleSyllabusUploader = () => {
     setEditDialogOpen(true);
   };
 
-  const openPreview = (url: string) => {
-    setPreviewUrl(url);
+  // Open preview with signed URL
+  const openPreview = async (doc: SyllabusDocument) => {
+    setPreviewLoading(true);
     setPreviewOpen(true);
+    setPreviewZoom(100);
+    
+    try {
+      // Get the storage path
+      const path = doc.file_url.includes("/syllabus/") 
+        ? doc.file_url.split("/syllabus/")[1]
+        : doc.file_url;
+      
+      // Generate fresh signed URL
+      const { data, error } = await supabase.storage
+        .from("syllabus")
+        .createSignedUrl(path, 60 * 60); // 1 hour expiry
+      
+      if (error) throw error;
+      setPreviewUrl(data.signedUrl);
+    } catch (error) {
+      console.error("Failed to generate preview URL:", error);
+      toast({ 
+        title: "Preview failed", 
+        description: "Could not load document preview",
+        variant: "destructive" 
+      });
+      setPreviewOpen(false);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  // Get download URL with signed URL
+  const getDownloadUrl = async (doc: SyllabusDocument): Promise<string> => {
+    const path = doc.file_url.includes("/syllabus/") 
+      ? doc.file_url.split("/syllabus/")[1]
+      : doc.file_url;
+    
+    const { data, error } = await supabase.storage
+      .from("syllabus")
+      .createSignedUrl(path, 60 * 60); // 1 hour expiry
+    
+    if (error) throw error;
+    return data.signedUrl;
+  };
+
+  const handleDownload = async (doc: SyllabusDocument) => {
+    try {
+      const url = await getDownloadUrl(doc);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = doc.file_name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      toast({ 
+        title: "Download failed", 
+        description: "Could not download document",
+        variant: "destructive" 
+      });
+    }
   };
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const getProgressColor = (progress: number) => {
-    if (progress >= 100) return "bg-green-500";
-    if (progress >= 75) return "bg-emerald-500";
-    if (progress >= 50) return "bg-yellow-500";
-    if (progress >= 25) return "bg-orange-500";
-    return "bg-muted";
   };
 
   if (isLoading) {
@@ -415,7 +480,7 @@ export const SimpleSyllabusUploader = () => {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => openPreview(doc.file_url)}
+                        onClick={() => openPreview(doc)}
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -431,11 +496,9 @@ export const SimpleSyllabusUploader = () => {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        asChild
+                        onClick={() => handleDownload(doc)}
                       >
-                        <a href={doc.file_url} download={doc.file_name}>
-                          <Download className="w-4 h-4" />
-                        </a>
+                        <Download className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -527,18 +590,94 @@ export const SimpleSyllabusUploader = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Preview Dialog */}
+      {/* Inline PDF Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-4xl h-[80vh]">
-          <DialogHeader>
+        <DialogContent className={cn(
+          "transition-all duration-300",
+          previewFullscreen 
+            ? "max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none p-0" 
+            : "max-w-5xl w-[90vw] h-[85vh]"
+        )}>
+          <DialogHeader className={cn(
+            "flex flex-row items-center justify-between",
+            previewFullscreen && "absolute top-0 left-0 right-0 z-10 bg-background/95 backdrop-blur p-4"
+          )}>
             <DialogTitle>Document Preview</DialogTitle>
+            <div className="flex items-center gap-2">
+              {/* Zoom Controls */}
+              <div className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setPreviewZoom(Math.max(50, previewZoom - 25))}
+                  disabled={previewZoom <= 50}
+                >
+                  <ZoomOut className="w-3 h-3" />
+                </Button>
+                <span className="text-xs font-medium w-12 text-center">{previewZoom}%</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setPreviewZoom(Math.min(200, previewZoom + 25))}
+                  disabled={previewZoom >= 200}
+                >
+                  <ZoomIn className="w-3 h-3" />
+                </Button>
+              </div>
+              
+              {/* Fullscreen Toggle */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setPreviewFullscreen(!previewFullscreen)}
+              >
+                {previewFullscreen ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </Button>
+              
+              {/* Close Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setPreviewOpen(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </DialogHeader>
-          <div className="flex-1 h-full min-h-0">
-            <iframe
-              src={previewUrl}
-              className="w-full h-full min-h-[60vh] rounded-lg border"
-              title="Document Preview"
-            />
+          
+          <div className={cn(
+            "flex-1 overflow-auto",
+            previewFullscreen ? "h-full pt-16" : "h-full min-h-0 mt-4"
+          )}>
+            {previewLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">Loading preview...</span>
+              </div>
+            ) : (
+              <div 
+                className="w-full h-full flex items-start justify-center overflow-auto"
+                style={{ transform: `scale(${previewZoom / 100})`, transformOrigin: 'top center' }}
+              >
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-full min-h-[60vh] rounded-lg border bg-white"
+                  title="Document Preview"
+                  style={{ 
+                    width: previewFullscreen ? '100%' : 'calc(100% - 2rem)',
+                    height: previewFullscreen ? 'calc(100vh - 80px)' : 'calc(85vh - 120px)'
+                  }}
+                />
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useActivityLog } from "@/hooks/useActivityLog";
+import { useToast } from "@/hooks/use-toast";
 
 interface FloatingTimerProps {
   onComplete: (duration: number, subject: string, plannedDuration: number) => void;
@@ -31,6 +32,43 @@ interface FloatingTimerProps {
 }
 
 type TimerState = "idle" | "running" | "paused";
+
+// Completion sound using Web Audio API
+const playCompletionSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Create a pleasant completion chime
+    const playNote = (frequency: number, startTime: number, duration: number) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      
+      oscillator.start(startTime);
+      oscillator.stop(startTime + duration);
+    };
+    
+    const now = audioContext.currentTime;
+    // Play a pleasant ascending chime (C5 - E5 - G5)
+    playNote(523.25, now, 0.3);        // C5
+    playNote(659.25, now + 0.15, 0.3); // E5
+    playNote(783.99, now + 0.3, 0.5);  // G5
+    
+    // Clean up after sounds finish
+    setTimeout(() => audioContext.close(), 2000);
+  } catch (error) {
+    console.log("Could not play completion sound:", error);
+  }
+};
 
 export const FloatingTimer = ({ 
   onComplete, 
@@ -47,7 +85,9 @@ export const FloatingTimer = ({
   const [showStopWarning, setShowStopWarning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<Date | null>(null);
+  const timerRef = useRef<HTMLDivElement>(null);
   const { logActivity } = useActivityLog();
+  const { toast } = useToast();
 
   const clearTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -95,11 +135,19 @@ export const FloatingTimer = ({
     const durationMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
     const planned = parseInt(plannedMinutes) || 0;
     
+    // Play completion sound
+    playCompletionSound();
+    
     logActivity(`Completed study session: ${durationMinutes} minutes of ${subject}`, "Study");
+    toast({
+      title: "Session Complete! 🎉",
+      description: `You studied ${subject} for ${durationMinutes} minutes.`,
+    });
+    
     onComplete(durationMinutes, subject, planned);
     resetTimer();
     setShowStopWarning(false);
-  }, [elapsedSeconds, plannedMinutes, subject, onComplete, resetTimer, logActivity]);
+  }, [elapsedSeconds, plannedMinutes, subject, onComplete, resetTimer, logActivity, toast]);
 
   const handleClose = () => {
     if (timerState !== "idle") {
@@ -115,6 +163,38 @@ export const FloatingTimer = ({
     setShowStopWarning(false);
     onClose();
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
+      if (e.code === "Space" && timerState !== "idle") {
+        e.preventDefault();
+        if (timerState === "running") {
+          pauseTimer();
+          toast({ title: "Timer paused", description: "Press Space to resume" });
+        } else if (timerState === "paused") {
+          startTimer();
+          toast({ title: "Timer resumed" });
+        }
+      }
+      
+      if (e.code === "Escape") {
+        e.preventDefault();
+        setIsMinimized(true);
+        toast({ title: "Timer minimized", description: "Click to expand" });
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, timerState, pauseTimer, startTimer, toast]);
 
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -138,6 +218,7 @@ export const FloatingTimer = ({
     <>
       {/* Floating Timer Panel */}
       <div 
+        ref={timerRef}
         className={cn(
           "fixed z-50 transition-all duration-300 ease-out shadow-2xl",
           isMinimized 
@@ -167,6 +248,7 @@ export const FloatingTimer = ({
                 size="icon"
                 className="h-6 w-6"
                 onClick={() => setIsMinimized(!isMinimized)}
+                title={isMinimized ? "Expand" : "Minimize (Escape)"}
               >
                 {isMinimized ? <Maximize2 className="w-3 h-3" /> : <Minimize2 className="w-3 h-3" />}
               </Button>
@@ -183,7 +265,10 @@ export const FloatingTimer = ({
 
           {/* Content */}
           {isMinimized ? (
-            <div className="px-3 py-2 flex items-center gap-2">
+            <div 
+              className="px-3 py-2 flex items-center gap-2 cursor-pointer"
+              onClick={() => setIsMinimized(false)}
+            >
               <span className={cn(
                 "text-lg font-mono tabular-nums",
                 isOvertime && "text-amber-500",
@@ -192,11 +277,23 @@ export const FloatingTimer = ({
                 {formatTime(elapsedSeconds)}
               </span>
               {timerState === "running" ? (
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={pauseTimer}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6" 
+                  onClick={(e) => { e.stopPropagation(); pauseTimer(); }}
+                  title="Pause (Space)"
+                >
                   <Pause className="w-3 h-3" />
                 </Button>
               ) : timerState === "paused" ? (
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startTimer}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6" 
+                  onClick={(e) => { e.stopPropagation(); startTimer(); }}
+                  title="Resume (Space)"
+                >
                   <Play className="w-3 h-3" />
                 </Button>
               ) : null}
@@ -231,6 +328,20 @@ export const FloatingTimer = ({
                     )}
                     style={{ width: `${progressPercentage}%` }}
                   />
+                </div>
+              )}
+
+              {/* Keyboard shortcuts hint */}
+              {timerState !== "idle" && (
+                <div className="flex items-center justify-center gap-3 text-[10px] text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Space</kbd>
+                    {timerState === "running" ? "Pause" : "Resume"}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Esc</kbd>
+                    Minimize
+                  </span>
                 </div>
               )}
 
@@ -280,6 +391,7 @@ export const FloatingTimer = ({
                         variant="outline" 
                         className="flex-1"
                         onClick={pauseTimer}
+                        title="Pause (Space)"
                       >
                         <Pause className="w-4 h-4 mr-2" />
                         Pause
@@ -289,6 +401,7 @@ export const FloatingTimer = ({
                         variant="outline" 
                         className="flex-1"
                         onClick={startTimer}
+                        title="Resume (Space)"
                       >
                         <Play className="w-4 h-4 mr-2" />
                         Resume
