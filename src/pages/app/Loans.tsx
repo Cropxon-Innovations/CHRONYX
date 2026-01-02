@@ -21,6 +21,7 @@ const Loans = () => {
   const queryClient = useQueryClient();
   const [showAddLoan, setShowAddLoan] = useState(false);
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
+  const [editingLoan, setEditingLoan] = useState<any | null>(null);
 
   // Fetch loans
   const { data: loans = [], isLoading: loansLoading } = useQuery({
@@ -119,7 +120,6 @@ const Loans = () => {
         .single();
       if (error) throw error;
 
-      // Generate EMI schedule via edge function
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-emi-schedule`,
         {
@@ -147,6 +147,40 @@ const Loans = () => {
     },
     onError: () => {
       toast({ title: "Failed to add loan", variant: "destructive" });
+    },
+  });
+
+  // Edit loan mutation
+  const editLoanMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: LoanFormData }) => {
+      const { error } = await supabase.from("loans").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["loans"] });
+      toast({ title: "Loan updated" });
+      setEditingLoan(null);
+    },
+    onError: () => {
+      toast({ title: "Failed to update loan", variant: "destructive" });
+    },
+  });
+
+  // Delete loan mutation
+  const deleteLoanMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("emi_schedule").delete().eq("loan_id", id);
+      await supabase.from("emi_events").delete().eq("loan_id", id);
+      const { error } = await supabase.from("loans").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["loans"] });
+      queryClient.invalidateQueries({ queryKey: ["all-emis"] });
+      toast({ title: "Loan deleted" });
+    },
+    onError: () => {
+      toast({ title: "Failed to delete loan", variant: "destructive" });
     },
   });
 
@@ -342,6 +376,12 @@ const Loans = () => {
                     pendingCount={details.pendingCount}
                     nextEmiDate={details.nextEmiDate}
                     onClick={() => setSelectedLoanId(loan.id)}
+                    onEdit={() => setEditingLoan(loan)}
+                    onDelete={() => {
+                      if (confirm("Delete this loan and all EMI data?")) {
+                        deleteLoanMutation.mutate(loan.id);
+                      }
+                    }}
                   />
                 );
               })}
@@ -356,6 +396,16 @@ const Loans = () => {
         onOpenChange={setShowAddLoan}
         onSubmit={(data) => addLoanMutation.mutate(data)}
         isLoading={addLoanMutation.isPending}
+      />
+
+      {/* Edit Loan Dialog */}
+      <AddLoanForm
+        open={!!editingLoan}
+        onOpenChange={(open) => !open && setEditingLoan(null)}
+        onSubmit={(data) => editLoanMutation.mutate({ id: editingLoan.id, data })}
+        isLoading={editLoanMutation.isPending}
+        initialData={editingLoan}
+        mode="edit"
       />
     </div>
   );
