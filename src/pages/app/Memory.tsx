@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,9 +31,10 @@ import {
   EyeOff,
   Key,
   Clock,
-  MapPin,
   Camera,
-  FileArchive
+  FileArchive,
+  Play,
+  GripVertical
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -42,6 +42,8 @@ import { MemorySearch } from "@/components/memory/MemorySearch";
 import { BulkActions } from "@/components/memory/BulkActions";
 import { extractExifData, formatGpsCoords } from "@/components/memory/ExifExtractor";
 import { MemoryExport } from "@/components/memory/MemoryExport";
+import { MemorySlideshow } from "@/components/memory/MemorySlideshow";
+import { FolderCard, FOLDER_COLORS, FOLDER_ICONS } from "@/components/memory/FolderCard";
 
 type Memory = {
   id: string;
@@ -69,6 +71,8 @@ type Folder = {
   parent_folder_id: string | null;
   is_locked: boolean;
   lock_hash: string | null;
+  color?: string;
+  icon?: string;
 };
 
 // Utility to generate thumbnail from image
@@ -147,6 +151,7 @@ const Memory = () => {
   const [uploadTitle, setUploadTitle] = useState("");
   const [newCollectionName, setNewCollectionName] = useState("");
   const [newFolderName, setNewFolderName] = useState("");
+  const [isDragOver, setIsDragOver] = useState(false);
   
   // Edit memory state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -172,6 +177,13 @@ const Memory = () => {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportType, setExportType] = useState<"single" | "collection" | "full">("full");
   const [exportCollectionName, setExportCollectionName] = useState<string>("");
+
+  // Slideshow state
+  const [slideshowOpen, setSlideshowOpen] = useState(false);
+  const [slideshowStartIndex, setSlideshowStartIndex] = useState(0);
+
+  // Dragging memory state
+  const [draggingMemoryId, setDraggingMemoryId] = useState<string | null>(null);
 
   // Fetch memories
   const { data: memories = [], isLoading: memoriesLoading } = useQuery({
@@ -363,17 +375,44 @@ const Memory = () => {
     },
   });
 
+  // Update folder mutation
+  const updateFolderMutation = useMutation({
+    mutationFn: async ({ id, color, icon }: { id: string; color?: string; icon?: string }) => {
+      const { error } = await supabase.from("memory_folders")
+        .update({ color, icon })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memory_folders"] });
+      toast({ title: "Folder updated" });
+    },
+  });
+
+  // Delete folder mutation
+  const deleteFolderMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("memory_folders").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memory_folders"] });
+      toast({ title: "Folder deleted" });
+    },
+  });
+
   // Update memory mutation
   const updateMemoryMutation = useMutation({
-    mutationFn: async ({ id, title, description, collection_id }: { 
+    mutationFn: async ({ id, title, description, collection_id, folder_id }: { 
       id: string; 
       title: string | null; 
       description: string | null;
       collection_id: string | null;
+      folder_id?: string | null;
     }) => {
-      const { error } = await supabase.from("memories")
-        .update({ title, description, collection_id })
-        .eq("id", id);
+      const updateData: any = { title, description, collection_id };
+      if (folder_id !== undefined) updateData.folder_id = folder_id;
+      const { error } = await supabase.from("memories").update(updateData).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -472,9 +511,16 @@ const Memory = () => {
     },
   });
 
-  // Handle file drop
+  // Handle file drop on page
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    setIsDragOver(false);
+    
+    // Check if it's a memory being dragged
+    if (draggingMemoryId) {
+      return;
+    }
+    
     const files = Array.from(e.dataTransfer.files).filter(
       (f) => f.type.startsWith("image/") || f.type.startsWith("video/")
     );
@@ -482,11 +528,47 @@ const Memory = () => {
       setUploadFiles(files);
       setUploadDialogOpen(true);
     }
-  }, []);
+  }, [draggingMemoryId]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    if (!draggingMemoryId) {
+      setIsDragOver(true);
+    }
+  }, [draggingMemoryId]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
   }, []);
+
+  // Memory drag handlers
+  const handleMemoryDragStart = (e: React.DragEvent, memoryId: string) => {
+    setDraggingMemoryId(memoryId);
+    e.dataTransfer.setData("memoryId", memoryId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleMemoryDragEnd = () => {
+    setDraggingMemoryId(null);
+  };
+
+  // Handle drop on folder
+  const handleFolderDrop = (folderId: string, e: React.DragEvent) => {
+    e.preventDefault();
+    const memoryId = e.dataTransfer.getData("memoryId");
+    if (memoryId) {
+      updateMemoryMutation.mutate({
+        id: memoryId,
+        title: memories.find(m => m.id === memoryId)?.title || null,
+        description: memories.find(m => m.id === memoryId)?.description || null,
+        collection_id: memories.find(m => m.id === memoryId)?.collection_id || null,
+        folder_id: folderId,
+      });
+      toast({ title: "Memory moved to folder" });
+    }
+    setDraggingMemoryId(null);
+  };
 
   // Open edit dialog
   const openEditDialog = (memory: Memory) => {
@@ -507,6 +589,12 @@ const Memory = () => {
       }
       return next;
     });
+  };
+
+  // Open slideshow
+  const openSlideshow = (startIndex: number) => {
+    setSlideshowStartIndex(startIndex);
+    setSlideshowOpen(true);
   };
 
   // Filter and sort memories with search
@@ -541,23 +629,30 @@ const Memory = () => {
 
   return (
     <div 
-      className="space-y-6"
+      className={`space-y-4 sm:space-y-6 transition-all duration-200 ${isDragOver ? 'ring-2 ring-primary ring-offset-4 rounded-lg' : ''}`}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
     >
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-light tracking-wide text-foreground">Memory</h1>
+          <h1 className="text-xl sm:text-2xl font-light tracking-wide text-foreground">Memory</h1>
           <p className="text-sm text-muted-foreground mt-1">Your private archive</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" asChild>
             <Link to="/app/memory/timeline">
-              <Clock className="w-4 h-4 mr-2" />
-              Timeline
+              <Clock className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Timeline</span>
             </Link>
           </Button>
+          {filteredMemories.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => openSlideshow(0)}>
+              <Play className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Slideshow</span>
+            </Button>
+          )}
           <Button 
             variant="outline" 
             size="sm"
@@ -566,17 +661,17 @@ const Memory = () => {
               setExportDialogOpen(true);
             }}
           >
-            <FileArchive className="w-4 h-4 mr-2" />
-            Backup
+            <FileArchive className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Backup</span>
           </Button>
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
-                <Upload className="w-4 h-4 mr-2" />
-                Upload
+                <Upload className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Upload</span>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Save Memory</DialogTitle>
               </DialogHeader>
@@ -596,7 +691,7 @@ const Memory = () => {
                 ) : (
                   <div className="p-4 bg-accent/30 rounded-lg">
                     <p className="text-sm font-medium">{uploadFiles.length} file(s) selected</p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1 truncate">
                       {uploadFiles.map((f) => f.name).join(", ")}
                     </p>
                   </div>
@@ -627,8 +722,8 @@ const Memory = () => {
           <Dialog open={newCollectionDialogOpen} onOpenChange={setNewCollectionDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
-                <Layers className="w-4 h-4 mr-2" />
-                Collection
+                <Layers className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Collection</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -653,8 +748,8 @@ const Memory = () => {
           <Dialog open={newFolderDialogOpen} onOpenChange={setNewFolderDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
-                <FolderPlus className="w-4 h-4 mr-2" />
-                Folder
+                <FolderPlus className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Folder</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -680,46 +775,46 @@ const Memory = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <Card className="bg-card/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Image className="w-5 h-5 text-muted-foreground" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Image className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               <div>
-                <p className="text-2xl font-light">{stats.photos}</p>
+                <p className="text-xl sm:text-2xl font-light">{stats.photos}</p>
                 <p className="text-xs text-muted-foreground">Photos</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-card/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Video className="w-5 h-5 text-muted-foreground" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Video className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               <div>
-                <p className="text-2xl font-light">{stats.videos}</p>
+                <p className="text-xl sm:text-2xl font-light">{stats.videos}</p>
                 <p className="text-xs text-muted-foreground">Videos</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-card/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Layers className="w-5 h-5 text-muted-foreground" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               <div>
-                <p className="text-2xl font-light">{stats.collections}</p>
+                <p className="text-xl sm:text-2xl font-light">{stats.collections}</p>
                 <p className="text-xs text-muted-foreground">Collections</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card className="bg-card/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <FolderOpen className="w-5 h-5 text-muted-foreground" />
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <FolderOpen className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               <div>
-                <p className="text-2xl font-light">{folders.length}</p>
+                <p className="text-xl sm:text-2xl font-light">{folders.length}</p>
                 <p className="text-xs text-muted-foreground">Folders</p>
               </div>
             </div>
@@ -727,72 +822,43 @@ const Memory = () => {
         </Card>
       </div>
 
-      {/* Folders Section */}
+      {/* Folders Section - Interactive with drag/drop */}
       {folders.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Folders</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            Folders {draggingMemoryId && <span className="text-primary">(Drop memory here)</span>}
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {folders.map((folder) => {
               const isUnlocked = unlockedFolders.has(folder.id);
               return (
-                <Card 
-                  key={folder.id} 
-                  className="cursor-pointer hover:bg-accent/30 transition-colors group"
+                <div 
+                  key={folder.id}
+                  onDrop={(e) => handleFolderDrop(folder.id, e)}
+                  onDragOver={(e) => e.preventDefault()}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FolderOpen className="w-5 h-5 text-muted-foreground" />
-                        <span className="text-sm font-medium truncate">{folder.name}</span>
-                      </div>
-                      {folder.is_locked ? (
-                        isUnlocked ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setUnlockedFolders(prev => {
-                                const next = new Set(prev);
-                                next.delete(folder.id);
-                                return next;
-                              });
-                            }}
-                          >
-                            <Unlock className="w-3 h-3 text-green-500" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setUnlockingFolder(folder);
-                              setUnlockDialogOpen(true);
-                            }}
-                          >
-                            <Lock className="w-3 h-3 text-amber-500" />
-                          </Button>
-                        )
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setLockingFolder(folder);
-                            setLockFolderDialogOpen(true);
-                          }}
-                        >
-                          <Key className="w-3 h-3 text-muted-foreground" />
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                  <FolderCard
+                    folder={folder}
+                    isUnlocked={isUnlocked}
+                    onLock={() => {
+                      setLockingFolder(folder);
+                      setLockFolderDialogOpen(true);
+                    }}
+                    onUnlock={() => {
+                      setUnlockingFolder(folder);
+                      setUnlockDialogOpen(true);
+                    }}
+                    onRelock={() => {
+                      setUnlockedFolders(prev => {
+                        const next = new Set(prev);
+                        next.delete(folder.id);
+                        return next;
+                      });
+                    }}
+                    onUpdate={(updates) => updateFolderMutation.mutate({ id: folder.id, ...updates })}
+                    onDelete={() => deleteFolderMutation.mutate(folder.id)}
+                  />
+                </div>
               );
             })}
           </div>
@@ -800,11 +866,13 @@ const Memory = () => {
       )}
 
       {/* Search and Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <MemorySearch value={searchQuery} onChange={setSearchQuery} />
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="w-full sm:w-auto sm:flex-1 sm:max-w-xs">
+          <MemorySearch value={searchQuery} onChange={setSearchQuery} />
+        </div>
         <Select value={filterType} onValueChange={(v: "all" | "photo" | "video") => setFilterType(v)}>
-          <SelectTrigger className="w-32">
-            <Filter className="w-4 h-4 mr-2" />
+          <SelectTrigger className="w-[100px] sm:w-32">
+            <Filter className="w-4 h-4 mr-2 hidden sm:block" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -814,20 +882,20 @@ const Memory = () => {
           </SelectContent>
         </Select>
         <Select value={filterCollection} onValueChange={setFilterCollection}>
-          <SelectTrigger className="w-40">
-            <Layers className="w-4 h-4 mr-2" />
+          <SelectTrigger className="w-[120px] sm:w-40">
+            <Layers className="w-4 h-4 mr-2 hidden sm:block" />
             <SelectValue placeholder="Collection" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Collections</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             {collections.map((c) => (
               <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={(v: "date" | "name") => setSortBy(v)}>
-          <SelectTrigger className="w-32">
-            <SortAsc className="w-4 h-4 mr-2" />
+          <SelectTrigger className="w-[100px] sm:w-32">
+            <SortAsc className="w-4 h-4 mr-2 hidden sm:block" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -835,7 +903,7 @@ const Memory = () => {
             <SelectItem value="name">Name</SelectItem>
           </SelectContent>
         </Select>
-        <div className="flex-1" />
+        <div className="flex-1 hidden sm:block" />
         <Button
           variant={isSelectionMode ? "secondary" : "outline"}
           size="sm"
@@ -844,7 +912,7 @@ const Memory = () => {
             if (isSelectionMode) setSelectedMemories(new Set());
           }}
         >
-          {isSelectionMode ? "Cancel Selection" : "Select"}
+          {isSelectionMode ? "Cancel" : "Select"}
         </Button>
         <div className="flex items-center gap-1 border border-border rounded-md p-1">
           <Button
@@ -871,8 +939,8 @@ const Memory = () => {
         <div className="text-center py-12 text-muted-foreground">Loading memories...</div>
       ) : filteredMemories.length === 0 ? (
         <Card className="bg-card/30 border-dashed">
-          <CardContent className="py-12 text-center">
-            <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
+          <CardContent className="py-8 sm:py-12 text-center">
+            <Upload className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
               {searchQuery ? "No memories match your search" : "No memories yet"}
             </p>
@@ -882,15 +950,18 @@ const Memory = () => {
           </CardContent>
         </Card>
       ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {filteredMemories.map((memory) => {
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
+          {filteredMemories.map((memory, index) => {
             const isSelected = selectedMemories.has(memory.id);
             return (
               <div
                 key={memory.id}
+                draggable={!isSelectionMode}
+                onDragStart={(e) => handleMemoryDragStart(e, memory.id)}
+                onDragEnd={handleMemoryDragEnd}
                 className={`group relative aspect-square bg-accent/20 rounded-lg overflow-hidden cursor-pointer transition-all ${
                   isSelected ? "ring-2 ring-primary" : "hover:ring-2 ring-primary/20"
-                }`}
+                } ${draggingMemoryId === memory.id ? 'opacity-50' : ''}`}
                 onClick={() => {
                   if (isSelectionMode) {
                     toggleMemorySelection(memory.id);
@@ -899,6 +970,11 @@ const Memory = () => {
                   }
                 }}
               >
+                {!isSelectionMode && (
+                  <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <GripVertical className="w-4 h-4 text-white drop-shadow cursor-grab" />
+                  </div>
+                )}
                 {isSelectionMode && (
                   <div className="absolute top-2 left-2 z-10">
                     <Checkbox
@@ -926,37 +1002,48 @@ const Memory = () => {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-accent/40">
-                      <Video className="w-10 h-10 text-muted-foreground" />
+                      <Video className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground" />
                     </div>
                   )
                 )}
                 {memory.media_type === "video" && (
-                  <div className="absolute top-2 left-2">
+                  <div className="absolute top-2 right-2">
                     <Video className="w-4 h-4 text-white drop-shadow" />
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-xs text-white truncate">{memory.title || format(new Date(memory.created_date), "MMM d, yyyy")}</p>
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p className="text-xs text-white truncate">{memory.title || memory.file_name}</p>
+                  <p className="text-[10px] text-white/70">{memory.created_date}</p>
                 </div>
-                {memory.is_locked && (
-                  <div className="absolute top-2 right-2">
-                    <Lock className="w-4 h-4 text-white drop-shadow" />
-                  </div>
-                )}
+                {/* Slideshow button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 hover:bg-black/70"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openSlideshow(index);
+                  }}
+                >
+                  <Play className="w-3 h-3 text-white" />
+                </Button>
               </div>
             );
           })}
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredMemories.map((memory) => {
+          {filteredMemories.map((memory, index) => {
             const isSelected = selectedMemories.has(memory.id);
             return (
               <Card
                 key={memory.id}
-                className={`cursor-pointer transition-colors ${
+                draggable={!isSelectionMode}
+                onDragStart={(e) => handleMemoryDragStart(e, memory.id)}
+                onDragEnd={handleMemoryDragEnd}
+                className={`cursor-pointer transition-all ${
                   isSelected ? "ring-2 ring-primary" : "hover:bg-accent/30"
-                }`}
+                } ${draggingMemoryId === memory.id ? 'opacity-50' : ''}`}
                 onClick={() => {
                   if (isSelectionMode) {
                     toggleMemorySelection(memory.id);
@@ -965,7 +1052,10 @@ const Memory = () => {
                   }
                 }}
               >
-                <CardContent className="p-3 flex items-center gap-4">
+                <CardContent className="p-3 flex items-center gap-3">
+                  {!isSelectionMode && (
+                    <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab flex-shrink-0" />
+                  )}
                   {isSelectionMode && (
                     <Checkbox
                       checked={isSelected}
@@ -973,27 +1063,47 @@ const Memory = () => {
                       onCheckedChange={() => toggleMemorySelection(memory.id)}
                     />
                   )}
-                  <div className="w-16 h-16 bg-accent/30 rounded-md overflow-hidden flex-shrink-0">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden flex-shrink-0">
                     {memory.thumbnail_url ? (
-                      <img src={memory.thumbnail_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      <img
+                        src={memory.thumbnail_url}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
                     ) : memory.media_type === "photo" ? (
-                      <img src={memory.file_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      <img
+                        src={memory.file_url}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
+                      <div className="w-full h-full flex items-center justify-center bg-accent/40">
                         <Video className="w-6 h-6 text-muted-foreground" />
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{memory.title || memory.file_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(memory.created_date), "MMMM d, yyyy")}
-                    </p>
+                    <p className="font-medium truncate text-sm sm:text-base">{memory.title || memory.file_name}</p>
+                    <p className="text-xs text-muted-foreground">{memory.created_date}</p>
+                    {memory.collection_id && (
+                      <p className="text-xs text-muted-foreground/70 truncate">
+                        {collections.find(c => c.id === memory.collection_id)?.name}
+                      </p>
+                    )}
                   </div>
-                  <Badge variant="secondary" className="capitalize">
-                    {memory.media_type}
-                  </Badge>
-                  {memory.is_locked && <Lock className="w-4 h-4 text-muted-foreground" />}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 flex-shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openSlideshow(index);
+                    }}
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
                 </CardContent>
               </Card>
             );
@@ -1024,24 +1134,24 @@ const Memory = () => {
 
       {/* Memory Detail Dialog */}
       <Dialog open={!!selectedMemory && !editDialogOpen} onOpenChange={() => setSelectedMemory(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           {selectedMemory && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedMemory.title || selectedMemory.file_name}</DialogTitle>
+                <DialogTitle className="truncate">{selectedMemory.title || selectedMemory.file_name}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 {selectedMemory.media_type === "photo" ? (
                   <img
                     src={selectedMemory.file_url}
                     alt=""
-                    className="w-full max-h-[60vh] object-contain rounded-lg bg-accent/10"
+                    className="w-full max-h-[50vh] object-contain rounded-lg bg-accent/10"
                   />
                 ) : (
                   <video
                     src={selectedMemory.file_url}
                     controls
-                    className="w-full max-h-[60vh] rounded-lg bg-accent/10"
+                    className="w-full max-h-[50vh] rounded-lg bg-accent/10"
                   />
                 )}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1060,7 +1170,7 @@ const Memory = () => {
                   </div>
                 )}
               </div>
-              <DialogFooter className="gap-2">
+              <DialogFooter className="flex-wrap gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -1244,6 +1354,14 @@ const Memory = () => {
         exportType={exportType}
         collectionName={exportCollectionName}
         memory={selectedMemory || undefined}
+      />
+
+      {/* Slideshow */}
+      <MemorySlideshow
+        open={slideshowOpen}
+        onClose={() => setSlideshowOpen(false)}
+        memories={filteredMemories}
+        startIndex={slideshowStartIndex}
       />
     </div>
   );
