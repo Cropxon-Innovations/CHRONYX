@@ -8,6 +8,7 @@ import AchievementItem from "@/components/dashboard/AchievementItem";
 import LoanWidget from "@/components/dashboard/LoanWidget";
 import InsuranceWidget from "@/components/dashboard/InsuranceWidget";
 import UpcomingReminders from "@/components/dashboard/UpcomingReminders";
+import FinancialOverview from "@/components/dashboard/FinancialOverview";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, subDays, startOfWeek, addDays, parseISO, formatDistanceToNow } from "date-fns";
@@ -230,6 +231,12 @@ const Dashboard = () => {
       <section>
         <h2 className="text-lg font-light text-foreground mb-4">Life</h2>
         <LifespanBar daysLived={daysLived} daysRemaining={daysRemaining} />
+      </section>
+
+      {/* Financial Overview */}
+      <section>
+        <h2 className="text-lg font-light text-foreground mb-4">Financial Overview</h2>
+        <FinancialOverview />
       </section>
 
       {/* Loan & Insurance Widgets */}

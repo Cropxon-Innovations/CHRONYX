@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import AddInsuranceForm from "./AddInsuranceForm";
 import PolicyDetailDialog from "./PolicyDetailDialog";
+import PremiumPaymentButton from "./PremiumPaymentButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -166,6 +167,12 @@ const PoliciesList = () => {
                       {daysUntil > 0 ? `${daysUntil} days` : 'Expired'}
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                      <PremiumPaymentButton
+                        insuranceId={policy.id}
+                        policyName={policy.policy_name}
+                        premiumAmount={policy.premium_amount}
+                        onSuccess={fetchPolicies}
+                      />
                       <Button 
                         variant="ghost" 
                         size="icon" 

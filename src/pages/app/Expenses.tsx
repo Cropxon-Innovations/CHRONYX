@@ -9,6 +9,7 @@ import { format, startOfMonth, endOfMonth } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import ExpensesList from "@/components/expenses/ExpensesList";
 import AddExpenseForm from "@/components/expenses/AddExpenseForm";
+import ExpenseCharts from "@/components/expenses/ExpenseCharts";
 import {
   Dialog,
   DialogContent,
@@ -175,6 +176,12 @@ const Expenses = () => {
             </p>
           </CardContent>
         </Card>
+      </section>
+
+      {/* Charts Section */}
+      <section>
+        <h2 className="text-lg font-light text-foreground mb-4">Analytics</h2>
+        <ExpenseCharts key={`charts-${refreshKey}`} />
       </section>
 
       {/* Expenses List */}
