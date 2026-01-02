@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, differenceInDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns";
+import { format, startOfWeek, endOfWeek, isWithinInterval, parseISO, subDays, differenceInDays } from "date-fns";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import {
   Select,
@@ -34,8 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from "recharts";
+import { StudyInsights } from "@/components/study/StudyInsights";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 const focusLevels = ["low", "medium", "high"] as const;
@@ -236,81 +235,6 @@ const Study = () => {
   // Get unique subjects from logs
   const uniqueSubjects = [...new Set(studyLogs.map(log => log.subject))];
 
-  // Weekly chart data
-  const weeklyChartData = useMemo(() => {
-    const now = new Date();
-    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-    const days = eachDayOfInterval({ start: weekStart, end: now });
-    
-    return days.map(day => {
-      const dayStr = format(day, "yyyy-MM-dd");
-      const dayMinutes = studyLogs
-        .filter(log => log.date === dayStr)
-        .reduce((acc, log) => acc + log.duration, 0);
-      
-      return {
-        day: format(day, "EEE"),
-        minutes: dayMinutes,
-      };
-    });
-  }, [studyLogs]);
-
-  // Subject distribution data
-  const subjectDistribution = useMemo(() => {
-    const totals: Record<string, number> = {};
-    studyLogs.forEach(log => {
-      totals[log.subject] = (totals[log.subject] || 0) + log.duration;
-    });
-    
-    return Object.entries(totals)
-      .map(([subject, minutes]) => ({ subject, minutes }))
-      .sort((a, b) => b.minutes - a.minutes);
-  }, [studyLogs]);
-
-  // Monthly heatmap data
-  const monthlyHeatmap = useMemo(() => {
-    const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
-    const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-    
-    return days.map(day => {
-      const dayStr = format(day, "yyyy-MM-dd");
-      const dayMinutes = studyLogs
-        .filter(log => log.date === dayStr)
-        .reduce((acc, log) => acc + log.duration, 0);
-      
-      return {
-        date: day,
-        minutes: dayMinutes,
-      };
-    });
-  }, [studyLogs]);
-
-  // Calculate longest streak ever
-  const longestStreak = useMemo(() => {
-    if (studyLogs.length === 0) return 0;
-    
-    const sortedDates = [...new Set(studyLogs.map(log => log.date))].sort();
-    let maxStreak = 1;
-    let currentStreak = 1;
-    
-    for (let i = 1; i < sortedDates.length; i++) {
-      const prevDate = parseISO(sortedDates[i - 1]);
-      const currDate = parseISO(sortedDates[i]);
-      const diff = differenceInDays(currDate, prevDate);
-      
-      if (diff === 1) {
-        currentStreak++;
-        maxStreak = Math.max(maxStreak, currentStreak);
-      } else {
-        currentStreak = 1;
-      }
-    }
-    
-    return maxStreak;
-  }, [studyLogs]);
-
   const formatDuration = (minutes: number) => {
     if (minutes < 60) return `${minutes}m`;
     const hours = Math.floor(minutes / 60);
@@ -505,97 +429,8 @@ const Study = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="insights" className="space-y-8">
-          {studyLogs.length === 0 ? (
-            <div className="bg-card border border-border rounded-lg p-12 text-center">
-              <p className="text-muted-foreground">Log some study sessions to see insights.</p>
-            </div>
-          ) : (
-            <>
-              {/* Weekly Study Time */}
-              <div className="bg-card border border-border rounded-lg p-6">
-                <h3 className="text-sm text-muted-foreground mb-6">Weekly Study Time</h3>
-                <div className="h-48">
-                  <ChartContainer config={{ minutes: { label: "Minutes", color: "hsl(var(--primary))" } }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={weeklyChartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                        <XAxis 
-                          dataKey="day" 
-                          axisLine={false} 
-                          tickLine={false} 
-                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                        />
-                        <YAxis hide />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="minutes" radius={[4, 4, 0, 0]} fill="hsl(var(--primary) / 0.6)" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-              </div>
-
-              {/* Subject Distribution */}
-              <div className="bg-card border border-border rounded-lg p-6">
-                <h3 className="text-sm text-muted-foreground mb-4">Time by Subject</h3>
-                <div className="space-y-3">
-                  {subjectDistribution.slice(0, 6).map((item, index) => {
-                    const maxMinutes = subjectDistribution[0]?.minutes || 1;
-                    const percentage = (item.minutes / maxMinutes) * 100;
-                    
-                    return (
-                      <div key={item.subject} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-foreground">{item.subject}</span>
-                          <span className="text-muted-foreground">{formatDuration(item.minutes)}</span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary/50 rounded-full transition-all"
-                            style={{ width: `${percentage}%`, opacity: 1 - (index * 0.1) }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Monthly Heatmap */}
-              <div className="bg-card border border-border rounded-lg p-6">
-                <h3 className="text-sm text-muted-foreground mb-4">Monthly Consistency</h3>
-                <div className="grid grid-cols-7 gap-1">
-                  {["M", "T", "W", "T", "F", "S", "S"].map((day, i) => (
-                    <div key={i} className="text-xs text-muted-foreground text-center py-1">{day}</div>
-                  ))}
-                  {monthlyHeatmap.map((day, i) => {
-                    const intensity = day.minutes === 0 ? 0 : Math.min(day.minutes / 120, 1);
-                    const isToday = isSameDay(day.date, new Date());
-                    
-                    return (
-                      <div
-                        key={i}
-                        className={cn(
-                          "aspect-square rounded-sm transition-colors",
-                          isToday && "ring-1 ring-primary/30",
-                          intensity === 0 ? "bg-muted/50" : ""
-                        )}
-                        style={intensity > 0 ? { 
-                          backgroundColor: `hsl(var(--primary) / ${0.2 + intensity * 0.5})` 
-                        } : undefined}
-                        title={`${format(day.date, "MMM d")}: ${day.minutes}m`}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Longest Streak */}
-              <div className="bg-card border border-border rounded-lg p-6">
-                <h3 className="text-sm text-muted-foreground mb-2">Longest Streak</h3>
-                <p className="text-3xl font-light text-foreground">{longestStreak} days</p>
-              </div>
-            </>
-          )}
+        <TabsContent value="insights" className="space-y-6">
+          <StudyInsights studyLogs={studyLogs} />
         </TabsContent>
       </Tabs>
 
