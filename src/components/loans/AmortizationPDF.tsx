@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, Download, Share2, Loader2 } from "lucide-react";
+import { FileText, Download, Share2, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
 import { formatCurrency } from "./LoanSummaryCards";
@@ -308,6 +308,10 @@ export const AmortizationPDF = ({ loan, schedule }: AmortizationPDFProps) => {
         <DropdownMenuItem onClick={handleWhatsAppShare} className="cursor-pointer">
           <Share2 className="w-4 h-4 mr-2" />
           Share via WhatsApp
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleEmailShare} className="cursor-pointer">
+          <Mail className="w-4 h-4 mr-2" />
+          Share via Email
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

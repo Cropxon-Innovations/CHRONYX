@@ -28,7 +28,15 @@ import {
   Loader2,
   File,
   Image,
+  Mail,
+  MessageCircle,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { format, parseISO } from "date-fns";
 
 interface LoanDocumentsProps {
@@ -132,8 +140,8 @@ export const LoanDocuments = ({ loanId }: LoanDocumentsProps) => {
     document.body.removeChild(link);
   };
 
-  const handleShare = async (url: string, fileName: string) => {
-    if (navigator.share) {
+  const handleShare = async (url: string, fileName: string, method: "whatsapp" | "email" | "native") => {
+    if (method === "native" && navigator.share) {
       try {
         await navigator.share({
           title: fileName,
@@ -142,10 +150,13 @@ export const LoanDocuments = ({ loanId }: LoanDocumentsProps) => {
       } catch (err) {
         // User cancelled
       }
-    } else {
-      // Fallback to WhatsApp
+    } else if (method === "whatsapp") {
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${fileName}: ${url}`)}`;
       window.open(whatsappUrl, "_blank");
+    } else if (method === "email") {
+      const subject = encodeURIComponent(`Loan Document: ${fileName}`);
+      const body = encodeURIComponent(`Please find the loan document attached:\n\n${fileName}\n${url}`);
+      window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
     }
   };
 
@@ -237,14 +248,29 @@ export const LoanDocuments = ({ loanId }: LoanDocumentsProps) => {
                 >
                   <Download className="w-4 h-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handleShare(doc.file_url, doc.file_name)}
-                >
-                  <Share2 className="w-4 h-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Share2 className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-card border-border">
+                    <DropdownMenuItem onClick={() => handleShare(doc.file_url, doc.file_name, "whatsapp")}>
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      WhatsApp
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleShare(doc.file_url, doc.file_name, "email")}>
+                      <Mail className="w-4 h-4 mr-2" />
+                      Email
+                    </DropdownMenuItem>
+                    {navigator.share && (
+                      <DropdownMenuItem onClick={() => handleShare(doc.file_url, doc.file_name, "native")}>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Share...
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                   variant="ghost"
                   size="icon"
