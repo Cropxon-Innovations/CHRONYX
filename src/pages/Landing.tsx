@@ -14,9 +14,14 @@ import {
   Lock,
   Download,
   Eye,
-  X
+  X,
+  Check,
+  Sparkles,
+  Crown,
+  Zap
 } from "lucide-react";
 import chronyxPhilosophy from "@/assets/chronyx-philosophy.png";
+import SketchBorderCard from "@/components/landing/SketchBorderCard";
 
 // CHRONYX Logo Component
 const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
@@ -338,12 +343,11 @@ const Landing = () => {
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
-                  <div
+                  <SketchBorderCard
                     key={feature.label}
-                    className={`group relative p-4 sm:p-5 rounded-lg border border-border/30 bg-card/20 hover:border-primary/30 hover:bg-card/40 transition-all duration-400 cursor-default ${
-                      mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                    }`}
-                    style={{ transitionDelay: `${600 + index * 50}ms` }}
+                    delay={600 + index * 50}
+                    mounted={mounted}
+                    className="transition-all duration-400"
                   >
                     {/* Sketch corner decoration */}
                     <div className="absolute top-1.5 right-2 text-[10px] text-muted-foreground/15 font-mono">
@@ -360,7 +364,7 @@ const Landing = () => {
                     
                     {/* Hover line effect */}
                     <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-400" />
-                  </div>
+                  </SketchBorderCard>
                 );
               })}
             </div>
@@ -404,6 +408,65 @@ const Landing = () => {
           </div>
         </section>
 
+        {/* Pricing Section */}
+        <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/20 bg-card/20">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-center text-xl sm:text-2xl font-light text-foreground mb-2">
+              Simple Pricing
+            </h2>
+            <p className="text-center text-muted-foreground/70 mb-8 max-w-sm mx-auto text-xs sm:text-sm">
+              Start free, upgrade when you need more
+            </p>
+            
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Free */}
+              <div className="p-5 rounded-lg border border-border/30 bg-card/30">
+                <Zap className="w-6 h-6 text-muted-foreground mb-2" />
+                <h3 className="text-lg font-medium text-foreground">Free</h3>
+                <p className="text-2xl font-light text-foreground mt-1">₹0<span className="text-sm text-muted-foreground">/forever</span></p>
+                <p className="text-xs text-muted-foreground mt-2">Everything to get started</p>
+                <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
+                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />Unlimited tasks & todos</li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />Financial tracking</li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />2GB memory storage</li>
+                </ul>
+              </div>
+              
+              {/* Pro */}
+              <div className="p-5 rounded-lg border border-primary/50 bg-primary/5 relative">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-primary text-primary-foreground text-[10px] rounded-full">Popular</div>
+                <Sparkles className="w-6 h-6 text-primary mb-2" />
+                <h3 className="text-lg font-medium text-foreground">Pro</h3>
+                <p className="text-2xl font-light text-foreground mt-1">₹99<span className="text-sm text-muted-foreground">/month</span></p>
+                <p className="text-xs text-muted-foreground mt-2">Enhanced features</p>
+                <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
+                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />10GB storage</li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />Tax savings insights</li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />Advanced reports</li>
+                </ul>
+              </div>
+              
+              {/* Premium */}
+              <div className="p-5 rounded-lg border border-amber-500/30 bg-amber-500/5 relative">
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-amber-500 text-white text-[10px] rounded-full">Lifetime</div>
+                <Crown className="w-6 h-6 text-amber-500 mb-2" />
+                <h3 className="text-lg font-medium text-foreground">Premium</h3>
+                <p className="text-2xl font-light text-foreground mt-1">₹2,999<span className="text-sm text-muted-foreground">/once</span></p>
+                <p className="text-xs text-muted-foreground mt-2">Forever access</p>
+                <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
+                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-amber-500" />Unlimited storage</li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-amber-500" />All future updates</li>
+                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-amber-500" />Early access</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="text-center mt-6">
+              <Link to="/pricing" className="text-xs text-primary hover:underline">View full pricing details →</Link>
+            </div>
+          </div>
+        </section>
+
         {/* Quiet Closing Section */}
         <section className="px-4 sm:px-6 py-14 sm:py-20 text-center">
           <p className="text-base sm:text-lg font-light text-muted-foreground/60 mb-5">
@@ -418,12 +481,22 @@ const Landing = () => {
 
         {/* Footer */}
         <footer className="px-4 sm:px-6 py-6 border-t border-border/20">
-          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground/40">
-            <div className="flex items-center gap-2">
-              <ChronxyxLogo className="w-4 h-4 opacity-40" />
-              <span className="font-light tracking-wide">CHRONYX by CROPXON</span>
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <ChronxyxLogo className="w-4 h-4 opacity-40" />
+                <span className="font-light tracking-wide text-xs text-muted-foreground/40">CHRONYX by CROPXON</span>
+              </div>
+              
+              <div className="flex items-center gap-4 text-[10px] text-muted-foreground/50">
+                <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+                <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+                <Link to="/refund" className="hover:text-foreground transition-colors">Refund</Link>
+                <Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+              </div>
+              
+              <p className="text-[10px] text-muted-foreground/40">Private · Quiet · Timeless</p>
             </div>
-            <p className="text-[10px]">Private · Quiet · Timeless</p>
           </div>
         </footer>
       </div>
