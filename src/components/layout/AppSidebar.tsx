@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SidebarQuickAdd } from "./SidebarQuickAdd";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ChronyxMiniLogo } from "./ChronyxMiniLogo";
 import {
   LayoutDashboard,
   CheckSquare,
@@ -29,7 +30,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
-  HardDrive,
   Mail,
   Phone,
   CheckCircle2,
@@ -226,11 +226,18 @@ const AppSidebar = () => {
         )}>
           {/* Logo and collapse toggle */}
           <div className="flex items-center justify-between mb-3">
-            {!collapsed && (
-              <Link to="/app" className="text-xl font-light tracking-[0.25em] text-sidebar-foreground" onClick={closeMobile}>
-                CHRONYX
-              </Link>
-            )}
+            <Link 
+              to="/app" 
+              className="flex items-center gap-2 group" 
+              onClick={closeMobile}
+            >
+              <ChronyxMiniLogo size={collapsed ? "sm" : "md"} />
+              {!collapsed && (
+                <span className="text-lg font-light tracking-[0.2em] text-sidebar-foreground group-hover:text-primary transition-colors">
+                  CHRONYX
+                </span>
+              )}
+            </Link>
             <div className="flex items-center gap-1">
               {/* Mobile close button */}
               <button
