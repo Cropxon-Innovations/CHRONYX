@@ -88,6 +88,11 @@ export const AnimatedFolderCard = ({
   const IconComponent = isOpen ? iconData.icon : iconData.closedIcon;
   const colorClass = FOLDER_COLORS.find(c => c.value === selectedColor) || FOLDER_COLORS[0];
 
+  // Sync newName when folder.name changes
+  useEffect(() => {
+    setNewName(folder.name);
+  }, [folder.name]);
+
   useEffect(() => {
     if (isRenaming && inputRef.current) {
       inputRef.current.focus();
@@ -220,45 +225,47 @@ export const AnimatedFolderCard = ({
             </div>
             
             {/* Name and Controls */}
-            <div className="flex-1 min-w-0 flex items-center gap-2">
+            <div className="flex-1 min-w-0">
               {isRenaming ? (
-                <div className="flex items-center gap-1 flex-1">
+                <div className="flex items-center gap-1 w-full">
                   <Input
                     ref={inputRef}
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     onBlur={handleRename}
                     onKeyDown={handleKeyDown}
-                    className="h-7 text-sm py-0 px-2 bg-background"
+                    className="h-7 text-sm py-0 px-2 bg-background flex-1 min-w-0"
                     onClick={(e) => e.stopPropagation()}
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 flex-shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRename();
-                    }}
-                  >
-                    <Check className="w-3 h-3 text-green-500" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 flex-shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setNewName(folder.name);
-                      setIsRenaming(false);
-                    }}
-                  >
-                    <X className="w-3 h-3 text-red-500" />
-                  </Button>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRename();
+                      }}
+                    >
+                      <Check className="w-3 h-3 text-green-500" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setNewName(folder.name);
+                        setIsRenaming(false);
+                      }}
+                    >
+                      <X className="w-3 h-3 text-red-500" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <span 
-                  className="text-sm font-medium truncate flex-1 cursor-pointer"
+                  className="text-sm font-medium truncate block cursor-pointer"
                   onDoubleClick={(e) => {
                     e.stopPropagation();
                     setIsRenaming(true);
