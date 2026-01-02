@@ -13,6 +13,7 @@ import { AddLoanForm, LoanFormData } from "@/components/loans/AddLoanForm";
 import { EmiScheduleTable } from "@/components/loans/EmiScheduleTable";
 import { LoanActions } from "@/components/loans/LoanActions";
 import { getBankColor, getBankInitials } from "@/components/loans/BankLogos";
+import { AmortizationPDF } from "@/components/loans/AmortizationPDF";
 
 const Loans = () => {
   const { user } = useAuth();
@@ -280,10 +281,13 @@ const Loans = () => {
           </div>
 
           <Tabs defaultValue="schedule" className="space-y-6">
-            <TabsList className="bg-muted/50 border border-border">
-              <TabsTrigger value="schedule" className="data-[state=active]:bg-card">EMI Schedule</TabsTrigger>
-              <TabsTrigger value="actions" className="data-[state=active]:bg-card">Actions</TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-between">
+              <TabsList className="bg-muted/50 border border-border">
+                <TabsTrigger value="schedule" className="data-[state=active]:bg-card">EMI Schedule</TabsTrigger>
+                <TabsTrigger value="actions" className="data-[state=active]:bg-card">Actions</TabsTrigger>
+              </TabsList>
+              <AmortizationPDF loan={selectedLoan} schedule={selectedLoanDetails?.schedule || []} />
+            </div>
 
             <TabsContent value="schedule">
               <EmiScheduleTable

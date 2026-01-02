@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { Clock, ChevronDown, Plus, Trash2, Edit2, BarChart3, Timer, Target, BookOpen } from "lucide-react";
+import { Clock, ChevronDown, Plus, Trash2, Edit2, BarChart3, Timer, Target, BookOpen, Brain, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +40,8 @@ import { StudyTimer } from "@/components/study/StudyTimer";
 import { StudyGoals } from "@/components/study/StudyGoals";
 import { SyllabusPlanner } from "@/components/study/SyllabusPlanner";
 import { SubjectColorPicker, useSubjectColors } from "@/components/study/SubjectColorPicker";
+import { SpacedRepetition } from "@/components/study/SpacedRepetition";
+import { StudyNotes } from "@/components/study/StudyNotes";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 const focusLevels = ["low", "medium", "high"] as const;
@@ -326,9 +328,13 @@ const Study = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/50 border border-border">
+        <TabsList className="bg-muted/50 border border-border flex-wrap h-auto gap-1 p-1">
           <TabsTrigger value="logs" className="data-[state=active]:bg-card">
             Sessions
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="data-[state=active]:bg-card">
+            <FileText className="w-4 h-4 mr-1.5" />
+            Notes
           </TabsTrigger>
           <TabsTrigger value="goals" className="data-[state=active]:bg-card">
             <Target className="w-4 h-4 mr-1.5" />
@@ -337,6 +343,10 @@ const Study = () => {
           <TabsTrigger value="syllabus" className="data-[state=active]:bg-card">
             <BookOpen className="w-4 h-4 mr-1.5" />
             Syllabus
+          </TabsTrigger>
+          <TabsTrigger value="review" className="data-[state=active]:bg-card">
+            <Brain className="w-4 h-4 mr-1.5" />
+            Review
           </TabsTrigger>
           <TabsTrigger value="insights" className="data-[state=active]:bg-card">
             <BarChart3 className="w-4 h-4 mr-1.5" />
@@ -478,12 +488,20 @@ const Study = () => {
           )}
         </TabsContent>
 
+        <TabsContent value="notes" className="space-y-6">
+          <StudyNotes />
+        </TabsContent>
+
         <TabsContent value="goals" className="space-y-6">
           <StudyGoals studyLogs={studyLogs} />
         </TabsContent>
 
         <TabsContent value="syllabus" className="space-y-6">
           <SyllabusPlanner />
+        </TabsContent>
+
+        <TabsContent value="review" className="space-y-6">
+          <SpacedRepetition />
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-6">
