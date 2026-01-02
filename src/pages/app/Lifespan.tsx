@@ -1,20 +1,55 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LifespanBar from "@/components/dashboard/LifespanBar";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
+import { Settings } from "lucide-react";
 
 const Lifespan = () => {
   const [reflection, setReflection] = useState("");
+  const { user } = useAuth();
+  const [birthDate, setBirthDate] = useState<Date | null>(null);
+  const [targetAge, setTargetAge] = useState(60);
+  const [loading, setLoading] = useState(true);
 
-  // Sample data - birth date assumption: January 1, 1991 (age ~34)
-  const birthDate = new Date(1991, 0, 1);
-  const targetAge = 60;
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("birth_date, target_age")
+      .eq("id", user?.id)
+      .maybeSingle();
+
+    if (data) {
+      setBirthDate(data.birth_date ? new Date(data.birth_date) : null);
+      setTargetAge(data.target_age || 60);
+    }
+    setLoading(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  // Default to sample data if no birth date configured
+  const effectiveBirthDate = birthDate || new Date(1991, 0, 1);
   const today = new Date();
   
-  const daysLived = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24));
-  const targetDate = new Date(birthDate);
-  targetDate.setFullYear(birthDate.getFullYear() + targetAge);
-  const daysRemaining = Math.floor((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const daysLived = Math.floor((today.getTime() - effectiveBirthDate.getTime()) / (1000 * 60 * 60 * 24));
+  const targetDate = new Date(effectiveBirthDate);
+  targetDate.setFullYear(effectiveBirthDate.getFullYear() + targetAge);
+  const daysRemaining = Math.max(0, Math.floor((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
   
   const yearsLived = Math.floor(daysLived / 365);
   const monthsLived = Math.floor((daysLived % 365) / 30);
@@ -26,6 +61,21 @@ const Lifespan = () => {
         <h1 className="text-2xl font-light text-foreground tracking-wide">Lifespan</h1>
         <p className="text-sm text-muted-foreground mt-1">Perspective on time</p>
       </header>
+
+      {/* Configure Prompt */}
+      {!birthDate && (
+        <div className="bg-vyom-accent-soft border border-vyom-accent/20 rounded-lg p-4">
+          <p className="text-sm text-foreground mb-2">
+            Configure your birth date in settings for accurate lifespan calculations.
+          </p>
+          <Link to="/app/settings">
+            <Button variant="vyom" size="sm">
+              <Settings className="w-4 h-4 mr-2" />
+              Go to Settings
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Main Visualization */}
       <LifespanBar daysLived={daysLived} daysRemaining={daysRemaining} />
@@ -61,28 +111,24 @@ const Lifespan = () => {
           Life Markers
         </h3>
         <div className="space-y-4">
-          {[
-            { age: 25, status: yearsLived >= 25 ? "passed" : "upcoming" },
-            { age: 30, status: yearsLived >= 30 ? "passed" : "upcoming" },
-            { age: 35, status: yearsLived >= 35 ? "passed" : "upcoming" },
-            { age: 40, status: yearsLived >= 40 ? "passed" : "upcoming" },
-            { age: 50, status: yearsLived >= 50 ? "passed" : "upcoming" },
-            { age: 60, status: yearsLived >= 60 ? "passed" : "upcoming" },
-          ].map(({ age, status }) => (
-            <div key={age} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${
-                  status === "passed" ? "bg-vyom-success" : "bg-muted"
-                }`} />
-                <span className="text-sm text-foreground">Age {age}</span>
+          {[25, 30, 35, 40, 50, 60].map((age) => {
+            const status = yearsLived >= age ? "passed" : "upcoming";
+            return (
+              <div key={age} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${
+                    status === "passed" ? "bg-vyom-success" : "bg-muted"
+                  }`} />
+                  <span className="text-sm text-foreground">Age {age}</span>
+                </div>
+                <span className={`text-xs ${
+                  status === "passed" ? "text-vyom-success" : "text-muted-foreground"
+                }`}>
+                  {status === "passed" ? "Reached" : `${age - yearsLived} years away`}
+                </span>
               </div>
-              <span className={`text-xs ${
-                status === "passed" ? "text-vyom-success" : "text-muted-foreground"
-              }`}>
-                {status === "passed" ? "Reached" : `${age - yearsLived} years away`}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
