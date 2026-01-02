@@ -926,7 +926,9 @@ export type Database = {
       }
       memory_folders: {
         Row: {
+          color: string | null
           created_at: string
+          icon: string | null
           id: string
           is_locked: boolean | null
           lock_hash: string | null
@@ -936,7 +938,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
+          icon?: string | null
           id?: string
           is_locked?: boolean | null
           lock_hash?: string | null
@@ -946,7 +950,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           created_at?: string
+          icon?: string | null
           id?: string
           is_locked?: boolean | null
           lock_hash?: string | null
