@@ -34,7 +34,8 @@ import {
   Camera,
   FileArchive,
   Play,
-  GripVertical
+  GripVertical,
+  MapPin
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -44,6 +45,9 @@ import { extractExifData, formatGpsCoords } from "@/components/memory/ExifExtrac
 import { MemoryExport } from "@/components/memory/MemoryExport";
 import { MemorySlideshow } from "@/components/memory/MemorySlideshow";
 import { FolderCard, FOLDER_COLORS, FOLDER_ICONS } from "@/components/memory/FolderCard";
+import { CollectionCard } from "@/components/memory/CollectionCard";
+import { MemoryMap } from "@/components/memory/MemoryMap";
+import { encryptFile, deriveKey } from "@/utils/crypto";
 
 type Memory = {
   id: string;
@@ -137,12 +141,14 @@ const hashPassword = async (password: string): Promise<string> => {
 const Memory = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
   const [filterType, setFilterType] = useState<"all" | "photo" | "video">("all");
   const [filterCollection, setFilterCollection] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadToFolderId, setUploadToFolderId] = useState<string | null>(null);
+  const [encryptionPassword, setEncryptionPassword] = useState("");
   const [newCollectionDialogOpen, setNewCollectionDialogOpen] = useState(false);
   const [newFolderDialogOpen, setNewFolderDialogOpen] = useState(false);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
@@ -227,10 +233,19 @@ const Memory = () => {
     enabled: !!user,
   });
 
-  // Upload memory mutation with EXIF extraction
+  // Upload memory mutation with EXIF extraction and optional encryption
   const uploadMutation = useMutation({
-    mutationFn: async ({ files, title }: { files: File[]; title: string }) => {
+    mutationFn: async ({ files, title, folderId, password }: { 
+      files: File[]; 
+      title: string;
+      folderId?: string | null;
+      password?: string;
+    }) => {
       if (!user) throw new Error("Not authenticated");
+      
+      // Check if uploading to a locked folder
+      const targetFolder = folderId ? folders.find(f => f.id === folderId) : null;
+      const shouldEncrypt = targetFolder?.is_locked && password;
       
       const uploadedMemories = [];
       
@@ -253,14 +268,23 @@ const Memory = () => {
         const ext = file.name.split(".").pop();
         const datePart = format(dateToUse, "yyyy-MM-dd");
         const titlePart = title || "memory";
-        const fileName = `${datePart}_${titlePart.replace(/\s+/g, "_")}_${memoryId.slice(0, 8)}.${ext}`;
+        const baseFileName = `${datePart}_${titlePart.replace(/\s+/g, "_")}_${memoryId.slice(0, 8)}`;
+        const fileName = shouldEncrypt ? `${baseFileName}.enc` : `${baseFileName}.${ext}`;
         
         const storagePath = `${user.id}/${year}/${month}/${memoryId}/${fileName}`;
+        
+        // Encrypt file if uploading to locked folder
+        let fileToUpload: Blob = file;
+        if (shouldEncrypt && password) {
+          setUploadProgress(`Encrypting ${i + 1} of ${files.length}...`);
+          const { encryptedBlob } = await encryptFile(file, password);
+          fileToUpload = encryptedBlob;
+        }
         
         setUploadProgress(`Uploading ${i + 1} of ${files.length}...`);
         const { error: uploadError } = await supabase.storage
           .from("memories")
-          .upload(storagePath, file);
+          .upload(storagePath, fileToUpload);
         
         if (uploadError) throw uploadError;
         
@@ -270,28 +294,30 @@ const Memory = () => {
         
         const mediaType = file.type.startsWith("video") ? "video" : "photo";
         
-        // Generate thumbnail
+        // Generate thumbnail (only if not encrypting, or create a placeholder)
         let thumbnailUrl = null;
-        try {
-          setUploadProgress(`Creating thumbnail ${i + 1} of ${files.length}...`);
-          const thumbnailBlob = mediaType === "video" 
-            ? await generateVideoThumbnail(file)
-            : await generateImageThumbnail(file);
-          
-          const thumbPath = `${user.id}/${year}/${month}/${memoryId}/thumb_${fileName.replace(/\.[^.]+$/, '.jpg')}`;
-          
-          const { error: thumbError } = await supabase.storage
-            .from("memories")
-            .upload(thumbPath, thumbnailBlob);
-          
-          if (!thumbError) {
-            const { data: thumbUrlData } = supabase.storage
+        if (!shouldEncrypt) {
+          try {
+            setUploadProgress(`Creating thumbnail ${i + 1} of ${files.length}...`);
+            const thumbnailBlob = mediaType === "video" 
+              ? await generateVideoThumbnail(file)
+              : await generateImageThumbnail(file);
+            
+            const thumbPath = `${user.id}/${year}/${month}/${memoryId}/thumb_${baseFileName}.jpg`;
+            
+            const { error: thumbError } = await supabase.storage
               .from("memories")
-              .getPublicUrl(thumbPath);
-            thumbnailUrl = thumbUrlData.publicUrl;
+              .upload(thumbPath, thumbnailBlob);
+            
+            if (!thumbError) {
+              const { data: thumbUrlData } = supabase.storage
+                .from("memories")
+                .getPublicUrl(thumbPath);
+              thumbnailUrl = thumbUrlData.publicUrl;
+            }
+          } catch (e) {
+            console.log("Thumbnail generation failed, using original");
           }
-        } catch (e) {
-          console.log("Thumbnail generation failed, using original");
         }
         
         // Build description with EXIF info
@@ -300,13 +326,25 @@ const Memory = () => {
           description += `📷 ${exifData.make} ${exifData.model}`;
         }
         if (exifData.latitude && exifData.longitude) {
-          const coords = formatGpsCoords(exifData.latitude, exifData.longitude);
-          if (coords) {
-            description += description ? ` • 📍 ${coords}` : `📍 ${coords}`;
-          }
+          description += description ? ` • 📍 ${exifData.latitude},${exifData.longitude}` : `📍 ${exifData.latitude},${exifData.longitude}`;
+        }
+        if (shouldEncrypt) {
+          description += description ? " • 🔒 Encrypted" : "🔒 Encrypted";
         }
         
-        const { error: dbError } = await supabase.from("memories").insert({
+        const insertData: {
+          user_id: string;
+          title: string | null;
+          description: string | null;
+          media_type: string;
+          file_url: string;
+          thumbnail_url: string | null;
+          file_name: string;
+          file_size: number;
+          created_date: string;
+          folder_id?: string | null;
+          is_locked?: boolean;
+        } = {
           user_id: user.id,
           title: title || null,
           description: description || null,
@@ -316,7 +354,12 @@ const Memory = () => {
           file_name: fileName,
           file_size: file.size,
           created_date: datePart,
-        });
+        };
+        
+        if (folderId) insertData.folder_id = folderId;
+        if (shouldEncrypt) insertData.is_locked = true;
+        
+        const { error: dbError } = await supabase.from("memories").insert(insertData);
         
         if (dbError) throw dbError;
         
@@ -331,6 +374,8 @@ const Memory = () => {
       setUploadFiles([]);
       setUploadTitle("");
       setUploadProgress(null);
+      setUploadToFolderId(null);
+      setEncryptionPassword("");
       toast({ title: "Memories saved" });
     },
     onError: (error) => {
@@ -354,6 +399,32 @@ const Memory = () => {
       setNewCollectionDialogOpen(false);
       setNewCollectionName("");
       toast({ title: "Collection created" });
+    },
+  });
+
+  // Update collection mutation
+  const updateCollectionMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from("memory_collections")
+        .update({ name })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memory_collections"] });
+      toast({ title: "Collection updated" });
+    },
+  });
+
+  // Delete collection mutation
+  const deleteCollectionMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("memory_collections").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memory_collections"] });
+      toast({ title: "Collection deleted" });
     },
   });
 
@@ -701,6 +772,49 @@ const Memory = () => {
                   value={uploadTitle}
                   onChange={(e) => setUploadTitle(e.target.value)}
                 />
+                
+                {/* Folder Selection */}
+                {folders.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Upload to folder (optional)</label>
+                    <Select 
+                      value={uploadToFolderId || "none"} 
+                      onValueChange={(v) => setUploadToFolderId(v === "none" ? null : v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="No folder" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No folder</SelectItem>
+                        {folders.map((f) => (
+                          <SelectItem key={f.id} value={f.id}>
+                            {f.is_locked ? "🔒 " : ""}{f.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                
+                {/* Encryption Password for Locked Folders */}
+                {uploadToFolderId && folders.find(f => f.id === uploadToFolderId)?.is_locked && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg space-y-2">
+                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                      <Lock className="w-4 h-4" />
+                      Locked Folder - Files will be encrypted
+                    </p>
+                    <Input
+                      type="password"
+                      placeholder="Enter folder password to encrypt"
+                      value={encryptionPassword}
+                      onChange={(e) => setEncryptionPassword(e.target.value)}
+                    />
+                    <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
+                      You'll need this password to view these files later
+                    </p>
+                  </div>
+                )}
+                
                 <p className="text-xs text-muted-foreground flex items-center gap-2">
                   <Camera className="w-3 h-3" />
                   Dates and location will be extracted from photo metadata
@@ -711,8 +825,17 @@ const Memory = () => {
               </div>
               <DialogFooter>
                 <Button
-                  onClick={() => uploadMutation.mutate({ files: uploadFiles, title: uploadTitle })}
-                  disabled={uploadFiles.length === 0 || uploadMutation.isPending}
+                  onClick={() => uploadMutation.mutate({ 
+                    files: uploadFiles, 
+                    title: uploadTitle,
+                    folderId: uploadToFolderId,
+                    password: encryptionPassword || undefined,
+                  })}
+                  disabled={
+                    uploadFiles.length === 0 || 
+                    uploadMutation.isPending ||
+                    (uploadToFolderId && folders.find(f => f.id === uploadToFolderId)?.is_locked && !encryptionPassword)
+                  }
                 >
                   {uploadMutation.isPending ? "Saving..." : "Save Memory"}
                 </Button>
@@ -920,6 +1043,7 @@ const Memory = () => {
             size="icon"
             className="h-7 w-7"
             onClick={() => setViewMode("grid")}
+            title="Grid view"
           >
             <Grid3X3 className="w-4 h-4" />
           </Button>
@@ -928,15 +1052,62 @@ const Memory = () => {
             size="icon"
             className="h-7 w-7"
             onClick={() => setViewMode("list")}
+            title="List view"
           >
             <List className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={viewMode === "map" ? "secondary" : "ghost"}
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setViewMode("map")}
+            title="Map view"
+          >
+            <MapPin className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
-      {/* Memory Grid/List */}
+      {/* Collections Section */}
+      {collections.length > 0 && viewMode !== "map" && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            Collections
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {collections.map((collection) => (
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+                memoryCount={memories.filter(m => m.collection_id === collection.id).length}
+                onUpdate={(name) => updateCollectionMutation.mutate({ id: collection.id, name })}
+                onDelete={() => deleteCollectionMutation.mutate(collection.id)}
+                onClick={() => setFilterCollection(collection.id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Memory Grid/List/Map */}
       {memoriesLoading ? (
         <div className="text-center py-12 text-muted-foreground">Loading memories...</div>
+      ) : viewMode === "map" ? (
+        <MemoryMap
+          memories={filteredMemories.map(m => ({
+            id: m.id,
+            title: m.title,
+            thumbnail_url: m.thumbnail_url,
+            file_url: m.file_url,
+            latitude: m.description?.match(/📍\s*([-\d.]+),\s*([-\d.]+)/)?.[1] ? parseFloat(m.description.match(/📍\s*([-\d.]+),\s*([-\d.]+)/)?.[1] || "0") : 0,
+            longitude: m.description?.match(/📍\s*([-\d.]+),\s*([-\d.]+)/)?.[2] ? parseFloat(m.description.match(/📍\s*([-\d.]+),\s*([-\d.]+)/)?.[2] || "0") : 0,
+            created_date: m.created_date,
+          })).filter(m => m.latitude !== 0 && m.longitude !== 0)}
+          onSelectMemory={(id) => {
+            const memory = memories.find(m => m.id === id);
+            if (memory) setSelectedMemory(memory);
+          }}
+        />
       ) : filteredMemories.length === 0 ? (
         <Card className="bg-card/30 border-dashed">
           <CardContent className="py-8 sm:py-12 text-center">
