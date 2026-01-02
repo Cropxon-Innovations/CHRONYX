@@ -312,6 +312,39 @@
     );
     opacity: 0.4;
   }
+
+  /* Sketch-style animations for landing */
+  .sketch-element {
+    animation: sketchFloat 8s ease-in-out infinite;
+  }
+
+  .sketch-float {
+    animation: sketchFloat 6s ease-in-out infinite;
+  }
+
+  .sketch-rotate {
+    animation: sketchRotate 20s linear infinite;
+  }
+
+  .sketch-draw {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: sketchDraw 2s ease-out forwards 0.5s;
+  }
+
+  @keyframes sketchFloat {
+    0%, 100% { transform: translateY(0); opacity: 0.3; }
+    50% { transform: translateY(-8px); opacity: 0.6; }
+  }
+
+  @keyframes sketchRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes sketchDraw {
+    to { stroke-dashoffset: 0; }
+  }
 }
 
 @layer utilities {
