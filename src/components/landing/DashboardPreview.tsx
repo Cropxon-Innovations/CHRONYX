@@ -178,7 +178,120 @@ const CircularProgress = ({ progress, size = 40, delay = 0 }: { progress: number
   );
 };
 
-const DashboardPreview = () => {
+// Mobile-friendly simplified dashboard preview
+const MobileDashboardPreview = () => {
+  return (
+    <motion.div
+      className="relative w-full max-w-xs mx-auto"
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.8, delay: 0.2 }}
+    >
+      {/* Outer glow */}
+      <div className="absolute -inset-3 bg-primary/5 blur-xl rounded-2xl" />
+      
+      {/* Main dashboard container */}
+      <div className="relative bg-card/80 backdrop-blur-sm border border-border/40 rounded-lg overflow-hidden shadow-lg">
+        {/* Header bar */}
+        <motion.div
+          className="flex items-center justify-between px-2 py-1.5 border-b border-border/30 bg-card/50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="flex items-center gap-1">
+            <div className="w-1 h-1 rounded-full bg-destructive/60" />
+            <div className="w-1 h-1 rounded-full bg-chronyx-warning/60" />
+            <div className="w-1 h-1 rounded-full bg-chronyx-success/60" />
+          </div>
+          <span className="text-[7px] text-muted-foreground tracking-wider">CHRONYX</span>
+          <div className="w-6" />
+        </motion.div>
+
+        {/* Simplified content */}
+        <div className="p-2 space-y-2">
+          {/* Key metrics - 2 columns for mobile */}
+          <div className="grid grid-cols-2 gap-1.5">
+            <motion.div
+              className="p-1.5 rounded-md bg-background/50 border border-border/20"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <div className="flex items-center gap-1 mb-0.5">
+                <CheckSquare className="w-2 h-2 text-primary/70" />
+                <span className="text-[7px] text-muted-foreground">Tasks</span>
+              </div>
+              <div className="text-xs font-medium text-foreground">12/15</div>
+              <AnimatedProgress progress={80} delay={0.6} />
+            </motion.div>
+
+            <motion.div
+              className="p-1.5 rounded-md bg-background/50 border border-border/20"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <div className="flex items-center gap-1 mb-0.5">
+                <BookOpen className="w-2 h-2 text-primary/70" />
+                <span className="text-[7px] text-muted-foreground">Study</span>
+              </div>
+              <div className="text-xs font-medium text-foreground">4h</div>
+              <AnimatedProgress progress={65} delay={0.7} color="bg-chronyx-success" />
+            </motion.div>
+          </div>
+
+          {/* Mini progress section */}
+          <motion.div
+            className="flex items-center gap-2 p-1.5 rounded-md bg-background/50 border border-border/20"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <CircularProgress progress={32} size={28} delay={0.8} />
+            <div className="flex-1">
+              <div className="text-[7px] text-muted-foreground">Life Progress</div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium text-foreground">32%</span>
+                <div className="flex items-center gap-0.5 text-chronyx-success">
+                  <TrendingUp className="w-2 h-2" />
+                  <span className="text-[7px]">+12%</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Mini chart */}
+          <motion.div
+            className="p-1.5 rounded-md bg-background/50 border border-border/20"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[7px] font-medium text-foreground">Weekly Activity</span>
+              <BarChart3 className="w-2 h-2 text-muted-foreground" />
+            </div>
+            <MiniBarChart delay={0.9} />
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Floating label */}
+      <motion.div
+        className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-card/80 border border-border/30 rounded-full"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.2 }}
+      >
+        <span className="text-[7px] text-muted-foreground tracking-wide">Live Preview</span>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Full desktop dashboard preview
+const DesktopDashboardPreview = () => {
   return (
     <motion.div
       className="relative w-full max-w-sm"
@@ -383,6 +496,22 @@ const DashboardPreview = () => {
         <span className="text-[9px] text-muted-foreground tracking-wide">Live Preview</span>
       </motion.div>
     </motion.div>
+  );
+};
+
+// Main component that switches between mobile and desktop versions
+const DashboardPreview = () => {
+  return (
+    <>
+      {/* Mobile version - shown on small screens */}
+      <div className="block md:hidden">
+        <MobileDashboardPreview />
+      </div>
+      {/* Desktop version - hidden on small screens */}
+      <div className="hidden md:block">
+        <DesktopDashboardPreview />
+      </div>
+    </>
   );
 };
 
