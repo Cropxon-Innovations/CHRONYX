@@ -586,14 +586,14 @@ const Study = () => {
               >
                 Cancel
               </Button>
-              <Button
+                <Button
                 className="flex-1"
                 disabled={!duration || parseInt(duration) <= 0}
                 onClick={() => {
                   if (editingLog) {
                     updateLogMutation.mutate(editingLog);
                   } else {
-                    addLogMutation.mutate();
+                    addLogMutation.mutate({});
                   }
                 }}
               >

@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import AppLayout from "./components/layout/AppLayout";
@@ -21,32 +22,34 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/app" element={<AppLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="todos" element={<Todos />} />
-              <Route path="study" element={<Study />} />
-              <Route path="loans" element={<Loans />} />
-              <Route path="insurance" element={<Insurance />} />
-              <Route path="lifespan" element={<Lifespan />} />
-              <Route path="achievements" element={<Achievements />} />
-              <Route path="activity" element={<Activity />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/app" element={<AppLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="todos" element={<Todos />} />
+                <Route path="study" element={<Study />} />
+                <Route path="loans" element={<Loans />} />
+                <Route path="insurance" element={<Insurance />} />
+                <Route path="lifespan" element={<Lifespan />} />
+                <Route path="achievements" element={<Achievements />} />
+                <Route path="activity" element={<Activity />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
