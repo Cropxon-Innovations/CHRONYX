@@ -26,7 +26,8 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { extractPdfText, detectSyllabusStructure, needsOCR, extractViaOCR, SyllabusStructure } from "@/utils/pdfExtractor";
+import { extractSyllabusFromPdf, ParsedInput } from "@/utils/pdfSyllabusExtractor";
+import { detectSyllabusStructure, SyllabusStructure } from "@/utils/pdfExtractor";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 
@@ -164,37 +165,32 @@ const SyllabusUploader = () => {
       const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith('.pdf');
 
       if (isPDF) {
-        // Use PDF.js extraction
-        const pages = await extractPdfText(file);
-        const fullText = pages.join("\n");
+        // Use clean PDF extraction with garbage guard
+        const result = await extractSyllabusFromPdf(file, (msg) => {
+          // Update progress message
+          if (msg.includes("OCR")) setIsOCR(true);
+        });
         
-        // Check if OCR is needed
-        if (needsOCR(fullText)) {
-          setIsOCR(true);
-          toast.info("Scanned document detected. Running OCR...");
-          
-          try {
-            const ocrLines = await extractViaOCR(file);
-            const ocrText = ocrLines.join("\n");
-            const structure = detectSyllabusStructure(ocrLines);
-            
-            if (structure.modules.length > 0) {
-              modules = convertStructureToModules(structure);
-            } else {
-              modules = parseTextContent(ocrText);
-            }
-          } catch (ocrError) {
-            console.error("OCR failed:", ocrError);
-            warningMsg = "OCR extraction failed. Please try a text-based document.";
-          }
+        if (!result.success || !result.data) {
+          warningMsg = result.error || "Failed to extract text from PDF";
+          toast.error(warningMsg);
         } else {
-          // Parse extracted text
+          // Successfully extracted clean text
+          const { pages, source } = result.data;
+          
+          if (source === "ocr") {
+            setIsOCR(true);
+            toast.info("Document processed with OCR");
+          }
+          
+          // Parse the clean text into syllabus structure
           const structure = detectSyllabusStructure(pages);
           
           if (structure.modules.length > 0) {
             modules = convertStructureToModules(structure);
           } else {
-            modules = parseTextContent(fullText);
+            // Fallback to simpler text parsing
+            modules = parseTextContent(pages.join("\n"));
             if (modules.length === 0) {
               warningMsg = "No clear syllabus structure detected. The document may need manual organization.";
             }
