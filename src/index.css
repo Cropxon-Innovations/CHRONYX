@@ -233,6 +233,36 @@
     animation: vyomFlowLine 22s linear infinite 10s;
   }
 
+  /* Ring Slow Rotation - 90 seconds counter-clockwise */
+  .vyom-ring-slow-rotate {
+    animation: vyomRingSlowRotate 90s linear infinite;
+  }
+
+  @keyframes vyomRingSlowRotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+
+  /* Ring Fill Animation - Subtle pulse */
+  .vyom-ring-fill-animate {
+    animation: vyomRingFillPulse 8s ease-in-out infinite;
+  }
+
+  @keyframes vyomRingFillPulse {
+    0%, 100% {
+      stroke-dashoffset: 0;
+      opacity: 0.05;
+    }
+    50% {
+      stroke-dashoffset: -50;
+      opacity: 0.08;
+    }
+  }
+
   /* Metric Card Styling */
   .vyom-metric-value {
     @apply text-4xl font-semibold tracking-tight;
