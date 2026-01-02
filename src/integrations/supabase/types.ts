@@ -977,7 +977,13 @@ export type Database = {
           created_at: string | null
           display_name: string | null
           email: string | null
+          email_verified: boolean | null
           id: string
+          phone_number: string | null
+          phone_verified: boolean | null
+          primary_contact: string | null
+          secondary_email: string | null
+          secondary_phone: string | null
           target_age: number | null
           updated_at: string | null
         }
@@ -986,7 +992,13 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           email?: string | null
+          email_verified?: boolean | null
           id: string
+          phone_number?: string | null
+          phone_verified?: boolean | null
+          primary_contact?: string | null
+          secondary_email?: string | null
+          secondary_phone?: string | null
           target_age?: number | null
           updated_at?: string | null
         }
@@ -995,7 +1007,13 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           email?: string | null
+          email_verified?: boolean | null
           id?: string
+          phone_number?: string | null
+          phone_verified?: boolean | null
+          primary_contact?: string | null
+          secondary_email?: string | null
+          secondary_phone?: string | null
           target_age?: number | null
           updated_at?: string | null
         }
