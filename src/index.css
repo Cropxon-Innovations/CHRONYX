@@ -50,6 +50,18 @@
     --vyom-gradient-end: 40 20% 97%;
     --vyom-flow-line: 230 15% 85%;
 
+    /* Landing Page Tokens - Light */
+    --vyom-landing: 40 15% 98%;
+    --vyom-landing-vignette: 230 10% 92% / 0.4;
+    --vyom-landing-title: 220 15% 20%;
+    --vyom-landing-tagline: 220 10% 45%;
+    --vyom-landing-subtext: 220 8% 55%;
+    --vyom-arc-stroke: 230 20% 40%;
+    --vyom-landing-button-border: 220 10% 70%;
+    --vyom-landing-button-text: 220 15% 25%;
+    --vyom-landing-button-hover: 220 8% 95%;
+    --vyom-landing-button-hover-border: 220 10% 60%;
+
     /* Sidebar */
     --sidebar-background: 40 15% 98%;
     --sidebar-foreground: 230 15% 25%;
@@ -103,6 +115,18 @@
     --vyom-gradient-end: 235 15% 10%;
     --vyom-flow-line: 230 12% 20%;
 
+    /* Landing Page Tokens - Dark */
+    --vyom-landing: 230 15% 6%;
+    --vyom-landing-vignette: 230 15% 4% / 0.5;
+    --vyom-landing-title: 40 10% 88%;
+    --vyom-landing-tagline: 40 8% 60%;
+    --vyom-landing-subtext: 40 6% 50%;
+    --vyom-arc-stroke: 230 15% 60%;
+    --vyom-landing-button-border: 230 10% 40%;
+    --vyom-landing-button-text: 40 10% 85%;
+    --vyom-landing-button-hover: 230 12% 15%;
+    --vyom-landing-button-hover-border: 230 10% 50%;
+
     /* Sidebar - Dark */
     --sidebar-background: 230 15% 6%;
     --sidebar-foreground: 40 10% 85%;
@@ -130,6 +154,54 @@
 }
 
 @layer components {
+  /* VYOM Landing Page Styles */
+  .bg-vyom-landing {
+    background-color: hsl(var(--vyom-landing));
+  }
+
+  .text-vyom-landing-title {
+    color: hsl(var(--vyom-landing-title));
+  }
+
+  .text-vyom-landing-tagline {
+    color: hsl(var(--vyom-landing-tagline));
+  }
+
+  .text-vyom-landing-subtext {
+    color: hsl(var(--vyom-landing-subtext));
+    opacity: 0.6;
+  }
+
+  .border-vyom-landing-button-border {
+    border-color: hsl(var(--vyom-landing-button-border));
+  }
+
+  .text-vyom-landing-button-text {
+    color: hsl(var(--vyom-landing-button-text));
+  }
+
+  .hover\:bg-vyom-landing-button-hover:hover {
+    background-color: hsl(var(--vyom-landing-button-hover));
+  }
+
+  .hover\:border-vyom-landing-button-hover-border:hover {
+    border-color: hsl(var(--vyom-landing-button-hover-border));
+  }
+
+  /* Rotating Arc Animation - 75 seconds for one full rotation */
+  .vyom-arc-rotate {
+    animation: vyomArcRotate 75s linear infinite;
+  }
+
+  @keyframes vyomArcRotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   /* VYOM Animations */
   .vyom-fade-in {
     animation: vyomFadeIn 0.8s ease-out forwards;
