@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { LeftSketchAnimation, RightSketchAnimation } from "@/components/auth/LoginAnimations";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -94,7 +95,11 @@ const Login = () => {
 
   return (
     <main className="min-h-screen vyom-gradient-bg flex items-center justify-center px-4 sm:px-6">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-5xl flex items-center justify-center gap-8">
+        {/* Left Animation */}
+        <LeftSketchAnimation />
+        
+        <div className="w-full max-w-sm">
         {/* Back Link */}
         <Link 
           to="/" 
@@ -210,6 +215,10 @@ const Login = () => {
         <p className="mt-4 text-center text-xs text-muted-foreground">
           Note: Google sign-in requires OAuth configuration.
         </p>
+        </div>
+        
+        {/* Right Animation */}
+        <RightSketchAnimation />
       </div>
     </main>
   );
