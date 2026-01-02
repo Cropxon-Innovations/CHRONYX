@@ -105,8 +105,12 @@ export type Database = {
           duration: number
           focus_level: string | null
           id: string
+          is_timer_session: boolean | null
           notes: string | null
+          planned_duration: number | null
           subject: string
+          timer_ended_at: string | null
+          timer_started_at: string | null
           topic: string | null
           updated_at: string | null
           user_id: string
@@ -117,8 +121,12 @@ export type Database = {
           duration: number
           focus_level?: string | null
           id?: string
+          is_timer_session?: boolean | null
           notes?: string | null
+          planned_duration?: number | null
           subject: string
+          timer_ended_at?: string | null
+          timer_started_at?: string | null
           topic?: string | null
           updated_at?: string | null
           user_id: string
@@ -129,8 +137,12 @@ export type Database = {
           duration?: number
           focus_level?: string | null
           id?: string
+          is_timer_session?: boolean | null
           notes?: string | null
+          planned_duration?: number | null
           subject?: string
+          timer_ended_at?: string | null
+          timer_started_at?: string | null
           topic?: string | null
           updated_at?: string | null
           user_id?: string

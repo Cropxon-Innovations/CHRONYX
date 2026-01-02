@@ -2,9 +2,8 @@ import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Download, FileJson, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, subMonths, subDays, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, isWithinInterval, parseISO, isSameDay, getDay, addMonths, subYears, differenceInDays } from "date-fns";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, subMonths, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, isWithinInterval, parseISO, isSameDay, getDay, addMonths, subYears, differenceInDays } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useActivityLog } from "@/hooks/useActivityLog";
+import { YearlyHeatmap } from "./YearlyHeatmap";
 
 type DateRange = "week" | "month" | "halfYear" | "year" | "all";
 type ViewMode = "daily" | "weekly" | "monthly";
@@ -32,6 +32,7 @@ interface StudyLog {
   date: string;
   focus_level?: string | null;
   notes?: string | null;
+  planned_duration?: number | null;
 }
 
 interface StudyInsightsProps {
@@ -96,6 +97,7 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
   // Summary stats for selected period
   const periodStats = useMemo(() => {
     const totalMinutes = filteredLogs.reduce((acc, log) => acc + log.duration, 0);
+    const plannedMinutes = filteredLogs.reduce((acc, log) => acc + (log.planned_duration || 0), 0);
     const totalSessions = filteredLogs.length;
     const uniqueDays = new Set(filteredLogs.map(log => log.date)).size;
     const avgPerSession = totalSessions > 0 ? Math.round(totalMinutes / totalSessions) : 0;
@@ -111,25 +113,31 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
       .map(([subject, minutes]) => ({ subject, minutes }))
       .sort((a, b) => b.minutes - a.minutes);
 
-    return { totalMinutes, totalSessions, uniqueDays, avgPerSession, avgPerDay, topSubjects };
+    return { totalMinutes, plannedMinutes, totalSessions, uniqueDays, avgPerSession, avgPerDay, topSubjects };
   }, [filteredLogs]);
 
-  // Chart data based on view mode
+  // Chart data based on view mode - fixed for better display
   const chartData = useMemo(() => {
     if (filteredLogs.length === 0) return [];
 
     switch (viewMode) {
       case "daily": {
         const days = eachDayOfInterval({ start: dateBoundaries.start, end: dateBoundaries.end });
-        return days.slice(-30).map(day => {
+        // Limit to reasonable number of days for daily view
+        const displayDays = days.length > 31 ? days.slice(-31) : days;
+        return displayDays.map(day => {
           const dayStr = format(day, "yyyy-MM-dd");
           const dayMinutes = filteredLogs
             .filter(log => log.date === dayStr)
             .reduce((acc, log) => acc + log.duration, 0);
+          const plannedMinutes = filteredLogs
+            .filter(log => log.date === dayStr)
+            .reduce((acc, log) => acc + (log.planned_duration || 0), 0);
           return {
             label: format(day, "MMM d"),
             shortLabel: format(day, "d"),
             minutes: dayMinutes,
+            planned: plannedMinutes,
             date: dayStr,
           };
         });
@@ -141,16 +149,17 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
         );
         return weeks.map(weekStart => {
           const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-          const weekMinutes = filteredLogs
-            .filter(log => {
-              const logDate = parseISO(log.date);
-              return isWithinInterval(logDate, { start: weekStart, end: weekEnd });
-            })
-            .reduce((acc, log) => acc + log.duration, 0);
+          const weekLogs = filteredLogs.filter(log => {
+            const logDate = parseISO(log.date);
+            return isWithinInterval(logDate, { start: weekStart, end: weekEnd });
+          });
+          const weekMinutes = weekLogs.reduce((acc, log) => acc + log.duration, 0);
+          const plannedMinutes = weekLogs.reduce((acc, log) => acc + (log.planned_duration || 0), 0);
           return {
             label: `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d")}`,
-            shortLabel: format(weekStart, "MMM d"),
+            shortLabel: format(weekStart, "M/d"),
             minutes: weekMinutes,
+            planned: plannedMinutes,
           };
         });
       }
@@ -159,16 +168,17 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
         return months.map(month => {
           const monthStart = startOfMonth(month);
           const monthEnd = endOfMonth(month);
-          const monthMinutes = filteredLogs
-            .filter(log => {
-              const logDate = parseISO(log.date);
-              return isWithinInterval(logDate, { start: monthStart, end: monthEnd });
-            })
-            .reduce((acc, log) => acc + log.duration, 0);
+          const monthLogs = filteredLogs.filter(log => {
+            const logDate = parseISO(log.date);
+            return isWithinInterval(logDate, { start: monthStart, end: monthEnd });
+          });
+          const monthMinutes = monthLogs.reduce((acc, log) => acc + log.duration, 0);
+          const plannedMinutes = monthLogs.reduce((acc, log) => acc + (log.planned_duration || 0), 0);
           return {
             label: format(month, "MMMM yyyy"),
             shortLabel: format(month, "MMM"),
             minutes: monthMinutes,
+            planned: plannedMinutes,
           };
         });
       }
@@ -183,9 +193,7 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
     const monthEnd = endOfMonth(calendarMonth);
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
     
-    // Get the day of week for the first day (0 = Sunday, 1 = Monday, etc.)
     const firstDayOfWeek = getDay(monthStart);
-    // Adjust for Monday start (0 = Monday, 6 = Sunday)
     const startOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
     
     return {
@@ -316,7 +324,11 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
           <div class="stats-grid">
             <div class="stat">
               <div class="stat-value">${formatDuration(data.summary.totalMinutes)}</div>
-              <div class="stat-label">Total Time</div>
+              <div class="stat-label">Actual Time</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">${formatDuration(data.summary.plannedMinutes)}</div>
+              <div class="stat-label">Planned Time</div>
             </div>
             <div class="stat">
               <div class="stat-value">${data.summary.totalSessions}</div>
@@ -350,7 +362,7 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
           ${data.sessions.slice(0, 25).map((s: any) => `
             <div class="session">
               <div class="session-title">${s.subject}${s.topic ? ` — ${s.topic}` : ''}</div>
-              <div class="session-meta">${format(parseISO(s.date), "MMM d, yyyy")} • ${s.duration}m • Focus: ${s.focus_level || 'medium'}</div>
+              <div class="session-meta">${format(parseISO(s.date), "MMM d, yyyy")} • Actual: ${s.duration}m${s.planned_duration ? ` • Planned: ${s.planned_duration}m` : ''} • Focus: ${s.focus_level || 'medium'}</div>
             </div>
           `).join('')}
         </body>
@@ -364,6 +376,23 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
     halfYear: "Last 6 Months",
     year: "This Year",
     all: "All Time",
+  };
+
+  // Custom tooltip for chart
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+          <p className="text-xs text-muted-foreground mb-1">{data.label}</p>
+          <p className="text-sm font-medium">Actual: {formatDuration(data.minutes)}</p>
+          {data.planned > 0 && (
+            <p className="text-xs text-muted-foreground">Planned: {formatDuration(data.planned)}</p>
+          )}
+        </div>
+      );
+    }
+    return null;
   };
 
   if (studyLogs.length === 0) {
@@ -433,10 +462,14 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
           </span>
         </div>
         
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <div>
             <p className="text-2xl font-light text-foreground">{formatDuration(periodStats.totalMinutes)}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Total Time</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Actual Time</p>
+          </div>
+          <div>
+            <p className="text-2xl font-light text-foreground">{formatDuration(periodStats.plannedMinutes)}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Planned Time</p>
           </div>
           <div>
             <p className="text-2xl font-light text-foreground">{periodStats.totalSessions}</p>
@@ -457,45 +490,50 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
         </div>
       </div>
 
-      {/* Progress Chart */}
+      {/* Progress Chart - Fixed layout */}
       {chartData.length > 0 && (
         <div className="bg-card border border-border rounded-lg p-6">
           <h3 className="text-sm text-muted-foreground mb-6">
             {viewMode === "daily" ? "Daily" : viewMode === "weekly" ? "Weekly" : "Monthly"} Progress
           </h3>
-          <div className="h-52">
-            <ChartContainer config={{ minutes: { label: "Minutes", color: "hsl(var(--primary))" } }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                  <XAxis 
-                    dataKey="shortLabel" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
-                    interval={viewMode === "daily" && chartData.length > 15 ? Math.floor(chartData.length / 10) : 0}
-                  />
-                  <YAxis hide />
-                  <ChartTooltip 
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-popover border border-border rounded-lg p-2 shadow-lg">
-                            <p className="text-xs text-muted-foreground">{data.label}</p>
-                            <p className="text-sm font-medium">{formatDuration(data.minutes)}</p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Bar dataKey="minutes" radius={[3, 3, 0, 0]} fill="hsl(var(--primary) / 0.5)" />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart 
+                data={chartData} 
+                margin={{ top: 8, right: 8, left: -20, bottom: 8 }}
+                barCategoryGap="20%"
+              >
+                <XAxis 
+                  dataKey="shortLabel" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                  interval={viewMode === "daily" && chartData.length > 15 ? Math.ceil(chartData.length / 10) : 0}
+                  height={30}
+                />
+                <YAxis 
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                  tickFormatter={(value) => value > 0 ? `${Math.floor(value / 60)}h` : '0'}
+                  width={40}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar 
+                  dataKey="minutes" 
+                  radius={[4, 4, 0, 0]} 
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.6}
+                  maxBarSize={40}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}
+
+      {/* Yearly GitHub-style Heatmap */}
+      <YearlyHeatmap studyLogs={studyLogs} />
 
       {/* Subject Distribution */}
       {periodStats.topSubjects.length > 0 && (
@@ -525,7 +563,7 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
         </div>
       )}
 
-      {/* Calendar Heatmap */}
+      {/* Calendar Heatmap - Monthly view */}
       <div className="bg-card border border-border rounded-lg p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-sm text-muted-foreground">Monthly Consistency</h3>
@@ -552,16 +590,16 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
         </div>
 
         {/* Weekday headers */}
-        <div className="grid grid-cols-7 gap-1 mb-1">
+        <div className="grid grid-cols-7 gap-2 mb-2">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-            <div key={day} className="text-[10px] text-muted-foreground text-center py-1.5 font-medium">
+            <div key={day} className="text-[10px] text-muted-foreground text-center py-2 font-medium">
               {day}
             </div>
           ))}
         </div>
 
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-2">
           {/* Empty cells for offset */}
           {Array.from({ length: calendarData.startOffset }).map((_, i) => (
             <div key={`empty-${i}`} className="aspect-square" />
@@ -577,23 +615,31 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
               <div
                 key={i}
                 className={cn(
-                  "aspect-square rounded-md flex items-center justify-center text-[10px] relative transition-colors",
-                  isToday && "ring-1 ring-primary/40",
+                  "aspect-square rounded-lg flex flex-col items-center justify-center text-xs relative transition-colors p-1",
+                  isToday && "ring-2 ring-primary/50",
                   isFuture && "opacity-30"
                 )}
                 style={!isFuture && intensity > 0 ? { 
                   backgroundColor: `hsl(var(--primary) / ${0.15 + intensity * 0.45})` 
                 } : !isFuture && intensity === 0 ? {
-                  backgroundColor: `hsl(var(--muted) / 0.5)`
+                  backgroundColor: `hsl(var(--muted) / 0.4)`
                 } : undefined}
                 title={`${format(day.date, "EEEE, MMM d")}: ${day.minutes > 0 ? formatDuration(day.minutes) : 'No study'}`}
               >
                 <span className={cn(
-                  "tabular-nums",
-                  intensity > 0.5 ? "text-primary-foreground/80" : "text-muted-foreground"
+                  "tabular-nums font-medium",
+                  intensity > 0.5 ? "text-primary-foreground" : "text-muted-foreground"
                 )}>
                   {format(day.date, "d")}
                 </span>
+                {day.minutes > 0 && (
+                  <span className={cn(
+                    "text-[8px] tabular-nums",
+                    intensity > 0.5 ? "text-primary-foreground/80" : "text-muted-foreground/80"
+                  )}>
+                    {day.minutes}m
+                  </span>
+                )}
               </div>
             );
           })}
@@ -602,15 +648,15 @@ export const StudyInsights = ({ studyLogs }: StudyInsightsProps) => {
         {/* Legend */}
         <div className="flex items-center justify-end gap-2 mt-4 text-[10px] text-muted-foreground">
           <span>Less</span>
-          <div className="flex gap-0.5">
+          <div className="flex gap-1">
             {[0, 0.25, 0.5, 0.75, 1].map((intensity) => (
               <div
                 key={intensity}
-                className="w-3 h-3 rounded-sm"
+                className="w-4 h-4 rounded-sm"
                 style={intensity > 0 ? { 
                   backgroundColor: `hsl(var(--primary) / ${0.15 + intensity * 0.45})` 
                 } : {
-                  backgroundColor: `hsl(var(--muted) / 0.5)`
+                  backgroundColor: `hsl(var(--muted) / 0.4)`
                 }}
               />
             ))}

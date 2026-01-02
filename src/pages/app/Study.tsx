@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { Clock, ChevronDown, Plus, Trash2, Edit2, BarChart3 } from "lucide-react";
+import { Clock, ChevronDown, Plus, Trash2, Edit2, BarChart3, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -35,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudyInsights } from "@/components/study/StudyInsights";
+import { StudyTimer } from "@/components/study/StudyTimer";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 const focusLevels = ["low", "medium", "high"] as const;
@@ -66,12 +68,14 @@ const Study = () => {
   const [editingLog, setEditingLog] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("logs");
+  const [showTimer, setShowTimer] = useState(false);
   
   // Form state
   const [logDate, setLogDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [subject, setSubject] = useState("Programming");
   const [topic, setTopic] = useState("");
   const [duration, setDuration] = useState("");
+  const [plannedDuration, setPlannedDuration] = useState("");
   const [focusLevel, setFocusLevel] = useState<FocusLevel>("medium");
   const [notes, setNotes] = useState("");
 
@@ -136,22 +140,29 @@ const Study = () => {
 
   // Add study log mutation
   const addLogMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (params?: { timerDuration?: number; timerSubject?: string; timerPlanned?: number }) => {
+      const finalDuration = params?.timerDuration || parseInt(duration);
+      const finalSubject = params?.timerSubject || subject;
+      const finalPlanned = params?.timerPlanned || (plannedDuration ? parseInt(plannedDuration) : null);
+      
       const { error } = await supabase.from("study_logs").insert({
         user_id: user!.id,
-        subject,
+        subject: finalSubject,
         topic: topic || null,
-        duration: parseInt(duration),
+        duration: finalDuration,
+        planned_duration: finalPlanned,
         date: logDate,
         focus_level: focusLevel,
         notes: notes || null,
+        is_timer_session: !!params?.timerDuration,
       });
       if (error) throw error;
+      return { duration: finalDuration, subject: finalSubject };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["study-logs"] });
       toast({ title: "Study session logged" });
-      logActivity(`Logged ${duration} minutes of ${subject} study`, "Study");
+      logActivity(`Logged ${data?.duration || duration} minutes of ${data?.subject || subject} study`, "Study");
       resetForm();
       setIsAddingLog(false);
     },
@@ -214,8 +225,14 @@ const Study = () => {
     setSubject("Programming");
     setTopic("");
     setDuration("");
+    setPlannedDuration("");
     setFocusLevel("medium");
     setNotes("");
+  };
+
+  const handleTimerComplete = (timerDuration: number, timerSubject: string, timerPlanned: number) => {
+    addLogMutation.mutate({ timerDuration, timerSubject, timerPlanned });
+    setShowTimer(false);
   };
 
   const openEditDialog = (log: typeof studyLogs[0]) => {
@@ -282,6 +299,27 @@ const Study = () => {
           <p className="text-xs text-muted-foreground mt-1.5 tracking-wide">Primary Focus</p>
         </div>
       </div>
+
+      {/* Timer Toggle */}
+      <div className="flex justify-end">
+        <Button 
+          variant="outline" 
+          className="border-border"
+          onClick={() => setShowTimer(!showTimer)}
+        >
+          <Timer className="w-4 h-4 mr-2" />
+          {showTimer ? "Hide Timer" : "Start Timer"}
+        </Button>
+      </div>
+
+      {/* Timer */}
+      {showTimer && (
+        <StudyTimer 
+          onComplete={handleTimerComplete}
+          subjects={subjects}
+          defaultSubject={subject}
+        />
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -481,15 +519,29 @@ const Study = () => {
               />
             </div>
             
-            <div className="space-y-2">
-              <label className="text-xs text-muted-foreground uppercase tracking-wider">Duration (minutes)</label>
-              <Input
-                type="number"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                placeholder="30"
-                className="bg-background border-border"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground uppercase tracking-wider">Actual (minutes)</label>
+                <Input
+                  type="number"
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  placeholder="30"
+                  min="1"
+                  className="bg-background border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground uppercase tracking-wider">Planned (minutes)</label>
+                <Input
+                  type="number"
+                  value={plannedDuration}
+                  onChange={(e) => setPlannedDuration(e.target.value)}
+                  placeholder="30"
+                  min="1"
+                  className="bg-background border-border"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
