@@ -9,12 +9,15 @@ import LoanWidget from "@/components/dashboard/LoanWidget";
 import InsuranceWidget from "@/components/dashboard/InsuranceWidget";
 import UpcomingReminders from "@/components/dashboard/UpcomingReminders";
 import FinancialOverview from "@/components/dashboard/FinancialOverview";
+import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { format, subDays, startOfWeek, addDays, parseISO, formatDistanceToNow } from "date-fns";
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { showOnboarding, isLoading: onboardingLoading, completeOnboarding } = useOnboarding();
   const [loading, setLoading] = useState(true);
   const [todosStats, setTodosStats] = useState({ completed: 0, total: 0 });
   const [studyMinutes, setStudyMinutes] = useState(0);
@@ -170,12 +173,16 @@ const Dashboard = () => {
     ? Math.round((todosStats.completed / todosStats.total) * 100) 
     : 0;
 
-  if (loading) {
+  if (loading || onboardingLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-muted-foreground">Loading...</div>
       </div>
     );
+  }
+
+  if (showOnboarding) {
+    return <OnboardingFlow onComplete={completeOnboarding} />;
   }
 
   return (
