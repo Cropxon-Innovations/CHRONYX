@@ -489,6 +489,7 @@ const Landing = () => {
               </div>
               
               <div className="flex items-center gap-4 text-[10px] text-muted-foreground/50">
+                <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
                 <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
                 <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
                 <Link to="/refund" className="hover:text-foreground transition-colors">Refund</Link>
