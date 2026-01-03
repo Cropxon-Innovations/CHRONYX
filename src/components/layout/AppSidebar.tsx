@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SidebarQuickAdd } from "./SidebarQuickAdd";
+import { SyncStatusIndicator } from "./SyncStatusIndicator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ChronyxMiniLogo } from "./ChronyxMiniLogo";
 import {
@@ -240,6 +241,8 @@ const AppSidebar = () => {
               )}
             </Link>
             <div className="flex items-center gap-1">
+              {/* Sync Status */}
+              <SyncStatusIndicator />
               {/* Mobile close button */}
               <button
                 onClick={() => setMobileOpen(false)}

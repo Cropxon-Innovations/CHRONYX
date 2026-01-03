@@ -1,14 +1,16 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useSubscription, PaymentHistory } from "@/hooks/useSubscription";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Crown, Sparkles, User, CreditCard, Calendar, CheckCircle2, XCircle, Clock, RefreshCw } from "lucide-react";
+import { Crown, Sparkles, User, CreditCard, Calendar, CheckCircle2, XCircle, Clock, RefreshCw, Download, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { jsPDF } from "jspdf";
+import { toast } from "sonner";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -49,6 +51,76 @@ const Profile = () => {
       style: 'currency',
       currency: currency || 'INR',
     }).format(amount);
+  };
+
+  const generateInvoice = (payment: PaymentHistory) => {
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      // Header
+      doc.setFontSize(24);
+      doc.setFont("helvetica", "bold");
+      doc.text("CHRONYX", 20, 30);
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("Invoice", pageWidth - 40, 30);
+      
+      // Invoice details box
+      doc.setFontSize(10);
+      doc.text(`Invoice No: INV-${payment.razorpay_order_id?.slice(-8).toUpperCase() || payment.id.slice(0, 8).toUpperCase()}`, 20, 50);
+      doc.text(`Date: ${format(new Date(payment.created_at), 'MMMM d, yyyy')}`, 20, 57);
+      doc.text(`Payment ID: ${payment.razorpay_payment_id || 'N/A'}`, 20, 64);
+      
+      // Customer details
+      doc.setFont("helvetica", "bold");
+      doc.text("Bill To:", 20, 80);
+      doc.setFont("helvetica", "normal");
+      doc.text(user?.email || 'Customer', 20, 88);
+      doc.text(`User ID: ${user?.id?.slice(0, 8)}...`, 20, 95);
+      
+      // Table header
+      const tableTop = 115;
+      doc.setFillColor(240, 240, 240);
+      doc.rect(20, tableTop - 5, pageWidth - 40, 10, 'F');
+      doc.setFont("helvetica", "bold");
+      doc.text("Description", 25, tableTop);
+      doc.text("Amount", pageWidth - 50, tableTop);
+      
+      // Table content
+      doc.setFont("helvetica", "normal");
+      const planName = payment.plan_type.charAt(0).toUpperCase() + payment.plan_type.slice(1);
+      doc.text(`CHRONYX ${planName} Plan - Monthly Subscription`, 25, tableTop + 15);
+      doc.text(formatAmount(payment.amount, payment.currency), pageWidth - 50, tableTop + 15);
+      
+      // Total
+      doc.line(20, tableTop + 25, pageWidth - 20, tableTop + 25);
+      doc.setFont("helvetica", "bold");
+      doc.text("Total", 25, tableTop + 35);
+      doc.text(formatAmount(payment.amount, payment.currency), pageWidth - 50, tableTop + 35);
+      
+      // Payment status
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      const statusText = payment.status === 'success' ? 'PAID' : payment.status.toUpperCase();
+      doc.text(`Status: ${statusText}`, 20, tableTop + 55);
+      
+      // Footer
+      doc.setFontSize(8);
+      doc.text("Thank you for your purchase!", pageWidth / 2, 250, { align: 'center' });
+      doc.text("For support, contact support@chronyx.app", pageWidth / 2, 257, { align: 'center' });
+      doc.text("This is a computer-generated invoice.", pageWidth / 2, 264, { align: 'center' });
+      
+      // Save
+      const fileName = `CHRONYX-Invoice-${format(new Date(payment.created_at), 'yyyy-MM-dd')}.pdf`;
+      doc.save(fileName);
+      
+      toast.success("Invoice downloaded successfully");
+    } catch (error) {
+      console.error("Error generating invoice:", error);
+      toast.error("Failed to generate invoice");
+    }
   };
 
   if (loading) {
@@ -260,13 +332,15 @@ const Profile = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {payment.receipt_sent ? (
-                        <Badge variant="secondary" className="text-xs">
-                          Sent
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => generateInvoice(payment)}
+                        className="h-8 px-2"
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Invoice
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
