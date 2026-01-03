@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AnimatePresence, motion } from "framer-motion";
+import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
+import { PWAUpdater } from "@/components/pwa/PWAUpdater";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Privacy from "./pages/Privacy";
@@ -147,6 +149,8 @@ const App = () => (
         <AuthProvider>
           <Toaster />
           <Sonner />
+          <OfflineIndicator />
+          <PWAUpdater />
           <BrowserRouter>
             <AnimatedRoutes />
           </BrowserRouter>
