@@ -18,7 +18,9 @@ import {
   Check,
   Sparkles,
   Crown,
-  Zap
+  Zap,
+  Monitor,
+  Apple
 } from "lucide-react";
 import chronyxPhilosophy from "@/assets/chronyx-philosophy.png";
 import SketchBorderCard from "@/components/landing/SketchBorderCard";
@@ -30,6 +32,13 @@ import {
 } from "@/components/landing/SketchAnimations";
 import DashboardPreview from "@/components/landing/DashboardPreview";
 import ScrollReveal, { StaggerContainer, StaggerItem } from "@/components/landing/ScrollReveal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // CHRONYX Logo Component
 const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
@@ -80,6 +89,7 @@ const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
 const Landing = () => {
   const [mounted, setMounted] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
+  const [showDesktopDialog, setShowDesktopDialog] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -503,6 +513,54 @@ const Landing = () => {
           </section>
         </ScrollReveal>
 
+        {/* Chronyx Desktop Section */}
+        <ScrollReveal direction="up" delay={0.1}>
+          <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/20">
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="relative inline-block mb-4">
+                <div className="w-16 h-16 mx-auto rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 flex items-center justify-center">
+                  <Monitor className="w-8 h-8 text-primary" />
+                </div>
+                {/* Coming Soon Badge */}
+                <div className="absolute -top-2 -right-8 px-2 py-0.5 bg-amber-500 text-white text-[9px] font-medium rounded-full transform rotate-12 shadow-lg">
+                  Coming Soon
+                </div>
+              </div>
+              
+              <h2 className="text-xl sm:text-2xl font-light text-foreground mb-2">
+                CHRONYX Desktop
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground/70 leading-relaxed mb-6 max-w-md mx-auto">
+                Experience CHRONYX as a native desktop application. 
+                Faster, offline-capable, and seamlessly integrated with your system.
+              </p>
+              
+              <button 
+                onClick={() => setShowDesktopDialog(true)}
+                className="group inline-flex items-center gap-2 px-5 py-2.5 text-xs sm:text-sm tracking-wider font-light border border-border/40 text-muted-foreground bg-card/30 rounded-md hover:border-primary/40 hover:text-foreground transition-all duration-300"
+              >
+                <Download className="w-4 h-4 group-hover:text-primary transition-colors" />
+                <span>Download for Desktop</span>
+              </button>
+              
+              {/* Platform Icons Preview */}
+              <div className="mt-4 flex items-center justify-center gap-4">
+                <div className="flex items-center gap-1.5 text-muted-foreground/50">
+                  <Apple className="w-4 h-4" />
+                  <span className="text-[10px]">macOS</span>
+                </div>
+                <div className="w-px h-4 bg-border/30" />
+                <div className="flex items-center gap-1.5 text-muted-foreground/50">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 5.557l7.357-1.002v7.1H3V5.557zm0 12.886l7.357 1.002v-7.06H3v6.058zM11.543 5.03L21 3.674v8.074h-9.457V5.03zm0 13.94L21 20.326v-8.064h-9.457v6.708z"/>
+                  </svg>
+                  <span className="text-[10px]">Windows</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </ScrollReveal>
+
         {/* Privacy Section */}
         <ScrollReveal direction="none" delay={0.1}>
           <section className="px-4 sm:px-6 py-10 sm:py-14 border-t border-border/20">
@@ -672,6 +730,67 @@ const Landing = () => {
           </div>
         </div>
       )}
+
+      {/* Desktop Platform Selection Dialog */}
+      <Dialog open={showDesktopDialog} onOpenChange={setShowDesktopDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-light tracking-wide">
+              <Monitor className="w-5 h-5 text-primary" />
+              CHRONYX Desktop
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Choose your platform to download CHRONYX Desktop
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-3 mt-4">
+            {/* macOS Option */}
+            <button 
+              className="group relative flex items-center gap-4 p-4 rounded-lg border border-border/40 bg-card/30 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
+              onClick={() => {
+                // Future download link
+              }}
+            >
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
+                <Apple className="w-6 h-6 text-foreground" />
+              </div>
+              <div className="flex-1 text-left">
+                <h4 className="text-sm font-medium text-foreground">macOS</h4>
+                <p className="text-xs text-muted-foreground">Apple Silicon (M1/M2/M3)</p>
+              </div>
+              <div className="px-2 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-medium rounded-full">
+                Coming Soon
+              </div>
+            </button>
+            
+            {/* Windows Option */}
+            <button 
+              className="group relative flex items-center gap-4 p-4 rounded-lg border border-border/40 bg-card/30 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
+              onClick={() => {
+                // Future download link
+              }}
+            >
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 5.557l7.357-1.002v7.1H3V5.557zm0 12.886l7.357 1.002v-7.06H3v6.058zM11.543 5.03L21 3.674v8.074h-9.457V5.03zm0 13.94L21 20.326v-8.064h-9.457v6.708z"/>
+                </svg>
+              </div>
+              <div className="flex-1 text-left">
+                <h4 className="text-sm font-medium text-foreground">Windows</h4>
+                <p className="text-xs text-muted-foreground">Intel / AMD (x64)</p>
+              </div>
+              <div className="px-2 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-medium rounded-full">
+                Coming Soon
+              </div>
+            </button>
+          </div>
+          
+          <p className="text-center text-[10px] text-muted-foreground/60 mt-4">
+            Sign up to be notified when CHRONYX Desktop is available
+          </p>
+        </DialogContent>
+      </Dialog>
     </motion.main>
   );
 };
