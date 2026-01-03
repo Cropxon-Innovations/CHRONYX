@@ -291,7 +291,7 @@ const Backup = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Create a complete backup of all your VYOM data. This includes memories metadata, 
+            Create a complete backup of all your CHRONYX data. This includes memories metadata, 
             financial records, study progress, documents, and all settings.
           </p>
 
