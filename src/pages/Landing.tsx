@@ -20,8 +20,11 @@ import {
   Crown,
   Zap,
   Monitor,
-  Apple
+  Apple,
+  WifiOff,
+  RefreshCw
 } from "lucide-react";
+import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import chronyxPhilosophy from "@/assets/chronyx-philosophy.png";
 import SketchBorderCard from "@/components/landing/SketchBorderCard";
 import { 
@@ -325,6 +328,19 @@ const Landing = () => {
                     Watch Demo
                   </button>
                 </div>
+
+                {/* PWA Install Button for Offline Use */}
+                <motion.div 
+                  className={`mt-4 transition-all duration-[600ms] ease-out ${
+                    mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}
+                  style={{ transitionDelay: '600ms' }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <PWAInstallPrompt variant="hero" />
+                </motion.div>
 
                 {/* Scroll indicator - smaller, only on mobile */}
                 <div 
