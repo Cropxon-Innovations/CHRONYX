@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn, signUp, signInWithGoogle, user, loading } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
@@ -19,11 +20,15 @@ const Login = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
+  // Get the intended destination from state, or default to /app
+  const from = (location.state as { from?: string })?.from || "/app";
+
   useEffect(() => {
     if (!loading && user) {
-      navigate("/app");
+      // Navigate to the intended destination after login
+      navigate(from, { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +56,7 @@ const Login = () => {
             title: "Welcome to CHRONYX",
             description: "Your account has been created.",
           });
-          navigate("/app");
+          navigate(from, { replace: true });
         }
       } else {
         const { error } = await signIn(email, password);
@@ -62,7 +67,7 @@ const Login = () => {
             variant: "destructive",
           });
         } else {
-          navigate("/app");
+          navigate(from, { replace: true });
         }
       }
     } finally {

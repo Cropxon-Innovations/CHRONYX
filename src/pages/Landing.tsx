@@ -29,6 +29,7 @@ import {
   SectionConnector 
 } from "@/components/landing/SketchAnimations";
 import DashboardPreview from "@/components/landing/DashboardPreview";
+import ScrollReveal, { StaggerContainer, StaggerItem } from "@/components/landing/ScrollReveal";
 
 // CHRONYX Logo Component
 const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
@@ -82,6 +83,11 @@ const Landing = () => {
 
   useEffect(() => {
     setMounted(true);
+    // Enable smooth scrolling for the page
+    document.documentElement.style.scrollBehavior = 'smooth';
+    return () => {
+      document.documentElement.style.scrollBehavior = 'auto';
+    };
   }, []);
 
   const features = [
@@ -365,203 +371,233 @@ const Landing = () => {
           </div>
         </section>
 
+        {/* Section Connector */}
+        <SectionConnector className="hidden md:block" />
+
         {/* What is CHRONYX Section */}
-        <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/20">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-xl sm:text-2xl font-light text-foreground mb-4">
-              What is CHRONYX?
-            </h2>
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              CHRONYX is a <strong className="text-foreground font-medium">personal system of record</strong> — 
-              a quiet place to hold the threads of your life. Tasks, knowledge, finances, and memories.
-            </p>
-            <p className="text-muted-foreground/60 mt-2 text-xs sm:text-sm">
-              Not a productivity tool. Just a place for continuity.
-            </p>
-          </div>
-        </section>
+        <ScrollReveal direction="up" delay={0.1}>
+          <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/20">
+            <div className="max-w-2xl mx-auto text-center">
+              <h2 className="text-xl sm:text-2xl font-light text-foreground mb-4">
+                What is CHRONYX?
+              </h2>
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                CHRONYX is a <strong className="text-foreground font-medium">personal system of record</strong> — 
+                a quiet place to hold the threads of your life. Tasks, knowledge, finances, and memories.
+              </p>
+              <p className="text-muted-foreground/60 mt-2 text-xs sm:text-sm">
+                Not a productivity tool. Just a place for continuity.
+              </p>
+            </div>
+          </section>
+        </ScrollReveal>
 
         {/* Why CHRONYX Section */}
-        <section className="px-4 sm:px-6 py-12 sm:py-16 bg-card/20">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-xl sm:text-2xl font-light text-foreground mb-8">
-              Why CHRONYX?
-            </h2>
-            <div className="grid grid-cols-3 gap-4 sm:gap-6">
-              <div className="text-center">
-                <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-accent/40 flex items-center justify-center">
-                  <Eye className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <h3 className="text-xs sm:text-sm font-medium text-foreground mb-1">No Gamification</h3>
-                <p className="text-[10px] sm:text-xs text-muted-foreground/70">No streaks. No pressure.</p>
-              </div>
-              <div className="text-center">
-                <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-accent/40 flex items-center justify-center">
-                  <Lock className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <h3 className="text-xs sm:text-sm font-medium text-foreground mb-1">Completely Private</h3>
-                <p className="text-[10px] sm:text-xs text-muted-foreground/70">Your data. Your control.</p>
-              </div>
-              <div className="text-center">
-                <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-accent/40 flex items-center justify-center">
-                  <Download className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <h3 className="text-xs sm:text-sm font-medium text-foreground mb-1">Full Control</h3>
-                <p className="text-[10px] sm:text-xs text-muted-foreground/70">Export everything anytime.</p>
-              </div>
+        <ScrollReveal direction="up" delay={0.15}>
+          <section className="px-4 sm:px-6 py-12 sm:py-16 bg-card/20">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-xl sm:text-2xl font-light text-foreground mb-8">
+                Why CHRONYX?
+              </h2>
+              <StaggerContainer className="grid grid-cols-3 gap-4 sm:gap-6" staggerDelay={0.15}>
+                <StaggerItem>
+                  <div className="text-center">
+                    <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-accent/40 flex items-center justify-center">
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-medium text-foreground mb-1">No Gamification</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground/70">No streaks. No pressure.</p>
+                  </div>
+                </StaggerItem>
+                <StaggerItem>
+                  <div className="text-center">
+                    <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-accent/40 flex items-center justify-center">
+                      <Lock className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-medium text-foreground mb-1">Completely Private</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground/70">Your data. Your control.</p>
+                  </div>
+                </StaggerItem>
+                <StaggerItem>
+                  <div className="text-center">
+                    <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-accent/40 flex items-center justify-center">
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <h3 className="text-xs sm:text-sm font-medium text-foreground mb-1">Full Control</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground/70">Export everything anytime.</p>
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* Features Grid Section */}
-        <section className="px-4 sm:px-6 py-12 sm:py-16">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-center text-xl sm:text-2xl font-light text-foreground mb-2">
-              Everything in one place
-            </h2>
-            <p className="text-center text-muted-foreground/70 mb-8 max-w-sm mx-auto text-xs sm:text-sm">
-              A personal dashboard for tasks, studies, finances, and memories
-            </p>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <SketchBorderCard
-                    key={feature.label}
-                    delay={600 + index * 50}
-                    mounted={mounted}
-                    className="transition-all duration-400"
-                  >
-                    {/* Sketch corner decoration */}
-                    <div className="absolute top-1.5 right-2 text-[10px] text-muted-foreground/15 font-mono">
-                      {feature.sketch}
-                    </div>
-                    
-                    <div className="flex flex-col items-start">
-                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-md bg-accent/40 flex items-center justify-center mb-2.5 group-hover:bg-primary/10 transition-colors">
-                        <Icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                      </div>
-                      <h3 className="text-sm sm:text-base font-medium text-foreground mb-0.5">{feature.label}</h3>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground/70">{feature.desc}</p>
-                    </div>
-                    
-                    {/* Hover line effect */}
-                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-400" />
-                  </SketchBorderCard>
-                );
-              })}
+        <ScrollReveal direction="up" delay={0.1}>
+          <section className="px-4 sm:px-6 py-12 sm:py-16">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-center text-xl sm:text-2xl font-light text-foreground mb-2">
+                Everything in one place
+              </h2>
+              <p className="text-center text-muted-foreground/70 mb-8 max-w-sm mx-auto text-xs sm:text-sm">
+                A personal dashboard for tasks, studies, finances, and memories
+              </p>
+              
+              <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4" staggerDelay={0.08}>
+                {features.map((feature, index) => {
+                  const Icon = feature.icon;
+                  return (
+                    <StaggerItem key={feature.label}>
+                      <SketchBorderCard
+                        delay={0}
+                        mounted={true}
+                        className="transition-all duration-400"
+                      >
+                        {/* Sketch corner decoration */}
+                        <div className="absolute top-1.5 right-2 text-[10px] text-muted-foreground/15 font-mono">
+                          {feature.sketch}
+                        </div>
+                        
+                        <div className="flex flex-col items-start">
+                          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-md bg-accent/40 flex items-center justify-center mb-2.5 group-hover:bg-primary/10 transition-colors">
+                            <Icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          </div>
+                          <h3 className="text-sm sm:text-base font-medium text-foreground mb-0.5">{feature.label}</h3>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground/70">{feature.desc}</p>
+                        </div>
+                        
+                        {/* Hover line effect */}
+                        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-400" />
+                      </SketchBorderCard>
+                    </StaggerItem>
+                  );
+                })}
+              </StaggerContainer>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* Philosophy Image Section */}
-        <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/20">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-center text-xl sm:text-2xl font-light text-foreground mb-2">
-              The Philosophy of CHRONYX
-            </h2>
-            <p className="text-center text-muted-foreground/70 mb-6 max-w-md mx-auto text-xs sm:text-sm">
-              An integrated view of your life — from finances to memories
-            </p>
-            {/* Image with bottom cropped to hide NotebookLM watermark */}
-            <div className="relative rounded-lg overflow-hidden border border-border/30 shadow-md">
-              <div className="overflow-hidden" style={{ marginBottom: '-40px' }}>
-                <img 
-                  src={chronyxPhilosophy} 
-                  alt="CHRONYX Philosophy - A quiet space for your life" 
-                  className="w-full h-auto"
-                />
+        <ScrollReveal direction="up" delay={0.1}>
+          <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/20">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-center text-xl sm:text-2xl font-light text-foreground mb-2">
+                The Philosophy of CHRONYX
+              </h2>
+              <p className="text-center text-muted-foreground/70 mb-6 max-w-md mx-auto text-xs sm:text-sm">
+                An integrated view of your life — from finances to memories
+              </p>
+              {/* Image with bottom cropped to hide NotebookLM watermark */}
+              <div className="relative rounded-lg overflow-hidden border border-border/30 shadow-md">
+                <div className="overflow-hidden" style={{ marginBottom: '-40px' }}>
+                  <img 
+                    src={chronyxPhilosophy} 
+                    alt="CHRONYX Philosophy - A quiet space for your life" 
+                    className="w-full h-auto"
+                  />
+                </div>
+                {/* Gradient overlay at bottom to smoothly hide watermark area */}
+                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background via-background/90 to-transparent" />
               </div>
-              {/* Gradient overlay at bottom to smoothly hide watermark area */}
-              <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-background via-background/90 to-transparent" />
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* Privacy Section */}
-        <section className="px-4 sm:px-6 py-10 sm:py-14 border-t border-border/20">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-lg sm:text-xl font-light text-foreground mb-3">
-              Privacy, Ownership, Control
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground/70 leading-relaxed">
-              Your data never leaves your account. Export everything as JSON or PDF anytime. 
-              This is a system you can trust for many years.
-            </p>
-          </div>
-        </section>
+        <ScrollReveal direction="none" delay={0.1}>
+          <section className="px-4 sm:px-6 py-10 sm:py-14 border-t border-border/20">
+            <div className="max-w-2xl mx-auto text-center">
+              <h2 className="text-lg sm:text-xl font-light text-foreground mb-3">
+                Privacy, Ownership, Control
+              </h2>
+              <p className="text-xs sm:text-sm text-muted-foreground/70 leading-relaxed">
+                Your data never leaves your account. Export everything as JSON or PDF anytime. 
+                This is a system you can trust for many years.
+              </p>
+            </div>
+          </section>
+        </ScrollReveal>
 
         {/* Pricing Section */}
-        <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/20 bg-card/20">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-center text-xl sm:text-2xl font-light text-foreground mb-2">
-              Simple Pricing
-            </h2>
-            <p className="text-center text-muted-foreground/70 mb-8 max-w-sm mx-auto text-xs sm:text-sm">
-              Start free, upgrade when you need more
-            </p>
-            
-            <div className="grid md:grid-cols-3 gap-4">
-              {/* Free */}
-              <div className="p-5 rounded-lg border border-border/30 bg-card/30">
-                <Zap className="w-6 h-6 text-muted-foreground mb-2" />
-                <h3 className="text-lg font-medium text-foreground">Free</h3>
-                <p className="text-2xl font-light text-foreground mt-1">₹0<span className="text-sm text-muted-foreground">/forever</span></p>
-                <p className="text-xs text-muted-foreground mt-2">Everything to get started</p>
-                <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
-                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />Unlimited tasks & todos</li>
-                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />Financial tracking</li>
-                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />2GB memory storage</li>
-                </ul>
-              </div>
+        <ScrollReveal direction="up" delay={0.1}>
+          <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/20 bg-card/20">
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-center text-xl sm:text-2xl font-light text-foreground mb-2">
+                Simple Pricing
+              </h2>
+              <p className="text-center text-muted-foreground/70 mb-8 max-w-sm mx-auto text-xs sm:text-sm">
+                Start free, upgrade when you need more
+              </p>
               
-              {/* Pro */}
-              <div className="p-5 rounded-lg border border-primary/50 bg-primary/5 relative">
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-primary text-primary-foreground text-[10px] rounded-full">Popular</div>
-                <Sparkles className="w-6 h-6 text-primary mb-2" />
-                <h3 className="text-lg font-medium text-foreground">Pro</h3>
-                <p className="text-2xl font-light text-foreground mt-1">₹99<span className="text-sm text-muted-foreground">/month</span></p>
-                <p className="text-xs text-muted-foreground mt-2">Enhanced features</p>
-                <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
-                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />10GB storage</li>
-                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />Tax savings insights</li>
-                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />Advanced reports</li>
-                </ul>
-              </div>
+              <StaggerContainer className="grid md:grid-cols-3 gap-4" staggerDelay={0.12}>
+                {/* Free */}
+                <StaggerItem direction="up">
+                  <div className="p-5 rounded-lg border border-border/30 bg-card/30 h-full">
+                    <Zap className="w-6 h-6 text-muted-foreground mb-2" />
+                    <h3 className="text-lg font-medium text-foreground">Free</h3>
+                    <p className="text-2xl font-light text-foreground mt-1">₹0<span className="text-sm text-muted-foreground">/forever</span></p>
+                    <p className="text-xs text-muted-foreground mt-2">Everything to get started</p>
+                    <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />Unlimited tasks & todos</li>
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />Financial tracking</li>
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />2GB memory storage</li>
+                    </ul>
+                  </div>
+                </StaggerItem>
+                
+                {/* Pro */}
+                <StaggerItem direction="up">
+                  <div className="p-5 rounded-lg border border-primary/50 bg-primary/5 relative h-full">
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-primary text-primary-foreground text-[10px] rounded-full">Popular</div>
+                    <Sparkles className="w-6 h-6 text-primary mb-2" />
+                    <h3 className="text-lg font-medium text-foreground">Pro</h3>
+                    <p className="text-2xl font-light text-foreground mt-1">₹99<span className="text-sm text-muted-foreground">/month</span></p>
+                    <p className="text-xs text-muted-foreground mt-2">Enhanced features</p>
+                    <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />10GB storage</li>
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />Tax savings insights</li>
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />Advanced reports</li>
+                    </ul>
+                  </div>
+                </StaggerItem>
+                
+                {/* Premium */}
+                <StaggerItem direction="up">
+                  <div className="p-5 rounded-lg border border-amber-500/30 bg-amber-500/5 relative h-full">
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-amber-500 text-white text-[10px] rounded-full">Lifetime</div>
+                    <Crown className="w-6 h-6 text-amber-500 mb-2" />
+                    <h3 className="text-lg font-medium text-foreground">Premium</h3>
+                    <p className="text-2xl font-light text-foreground mt-1">₹2,999<span className="text-sm text-muted-foreground">/once</span></p>
+                    <p className="text-xs text-muted-foreground mt-2">Forever access</p>
+                    <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-amber-500" />Unlimited storage</li>
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-amber-500" />All future updates</li>
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-amber-500" />Early access</li>
+                    </ul>
+                  </div>
+                </StaggerItem>
+              </StaggerContainer>
               
-              {/* Premium */}
-              <div className="p-5 rounded-lg border border-amber-500/30 bg-amber-500/5 relative">
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-amber-500 text-white text-[10px] rounded-full">Lifetime</div>
-                <Crown className="w-6 h-6 text-amber-500 mb-2" />
-                <h3 className="text-lg font-medium text-foreground">Premium</h3>
-                <p className="text-2xl font-light text-foreground mt-1">₹2,999<span className="text-sm text-muted-foreground">/once</span></p>
-                <p className="text-xs text-muted-foreground mt-2">Forever access</p>
-                <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
-                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-amber-500" />Unlimited storage</li>
-                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-amber-500" />All future updates</li>
-                  <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-amber-500" />Early access</li>
-                </ul>
+              <div className="text-center mt-6">
+                <Link to="/pricing" className="text-xs text-primary hover:underline">View full pricing details →</Link>
               </div>
             </div>
-            
-            <div className="text-center mt-6">
-              <Link to="/pricing" className="text-xs text-primary hover:underline">View full pricing details →</Link>
-            </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* Quiet Closing Section */}
-        <section className="px-4 sm:px-6 py-14 sm:py-20 text-center">
-          <p className="text-base sm:text-lg font-light text-muted-foreground/60 mb-5">
-            A system someone could trust<br />and live with for many years.
-          </p>
-          <Link to="/login">
-            <button className="px-6 py-2.5 text-xs sm:text-sm tracking-wider font-light border border-primary/80 text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-all duration-300">
-              Enter CHRONYX
-            </button>
-          </Link>
-        </section>
+        <ScrollReveal direction="none" delay={0.1}>
+          <section className="px-4 sm:px-6 py-14 sm:py-20 text-center">
+            <p className="text-base sm:text-lg font-light text-muted-foreground/60 mb-5">
+              A system someone could trust<br />and live with for many years.
+            </p>
+            <Link to="/login">
+              <button className="px-6 py-2.5 text-xs sm:text-sm tracking-wider font-light border border-primary/80 text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-all duration-300">
+                Enter CHRONYX
+              </button>
+            </Link>
+          </section>
+        </ScrollReveal>
 
         {/* Footer */}
         <footer className="px-4 sm:px-6 py-6 border-t border-border/20">
