@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/components/ui/use-toast";
 import { useActivityLog } from "@/hooks/useActivityLog";
+import MigrationGuidePDF from "@/components/export/MigrationGuidePDF";
 import { 
   Download, 
   Upload, 
@@ -23,7 +24,8 @@ import {
   Activity,
   AlertCircle,
   Check,
-  Loader2
+  Loader2,
+  FileCode
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -389,6 +391,22 @@ const Backup = () => {
             )}
             Validate & Preview
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Developer Tools */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <FileCode className="w-5 h-5" />
+            Developer Tools
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Export database schema and configuration for migrating to your own Supabase project.
+          </p>
+          <MigrationGuidePDF />
         </CardContent>
       </Card>
 
