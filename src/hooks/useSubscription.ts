@@ -31,8 +31,27 @@ export interface PaymentHistory {
   plan_type: string;
   receipt_sent: boolean;
   receipt_sent_at: string | null;
+  payment_method: string | null;
+  payment_method_details: Record<string, unknown> | null;
+  bank_reference: string | null;
+  refund_id: string | null;
+  refund_amount: number;
+  refunded_at: string | null;
+  failure_reason: string | null;
+  notes: Record<string, unknown> | null;
+  ip_address: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface PaymentEvent {
+  id: string;
+  payment_history_id: string | null;
+  razorpay_event_id: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+  processed_at: string;
+  created_at: string;
 }
 
 export const useSubscription = () => {
