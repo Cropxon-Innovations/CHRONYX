@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Crown, Sparkles, User, CreditCard, Calendar, CheckCircle2, XCircle, Clock, RefreshCw, Download, FileText } from "lucide-react";
+import { Crown, Sparkles, User, CreditCard, Calendar, CheckCircle2, XCircle, Clock, RefreshCw, Download, FileText, Smartphone, Building2, Wallet, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,8 +43,30 @@ const Profile = () => {
       case 'refunded':
         return <RefreshCw className="h-4 w-4 text-blue-500" />;
       default:
-        return null;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
+  };
+
+  const getPaymentMethodIcon = (method: string | null) => {
+    if (!method) return <CreditCard className="h-4 w-4 text-muted-foreground" />;
+    const lowerMethod = method.toLowerCase();
+    if (lowerMethod.includes('upi')) return <Smartphone className="h-4 w-4 text-green-600" />;
+    if (lowerMethod.includes('netbanking') || lowerMethod.includes('bank')) return <Building2 className="h-4 w-4 text-blue-600" />;
+    if (lowerMethod.includes('wallet')) return <Wallet className="h-4 w-4 text-purple-600" />;
+    return <CreditCard className="h-4 w-4 text-primary" />;
+  };
+
+  const getPaymentMethodLabel = (payment: PaymentHistory) => {
+    if (!payment.payment_method) return 'N/A';
+    const method = payment.payment_method;
+    const details = payment.payment_method_details as Record<string, unknown> | null;
+    
+    if (details) {
+      if (details.last4) return `${method} ****${details.last4}`;
+      if (details.vpa) return `UPI (${details.vpa})`;
+      if (details.bank) return `${details.bank}`;
+    }
+    return method;
   };
 
   const formatAmount = (amount: number, currency: string) => {
@@ -298,54 +321,99 @@ const Profile = () => {
               <p className="text-sm">Your transactions will appear here</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Plan</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Receipt</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paymentHistory.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        {format(new Date(payment.created_at), 'MMM d, yyyy')}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">
-                        {payment.plan_type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatAmount(payment.amount, payment.currency)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(payment.status)}
-                        <span className="capitalize">{payment.status}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => generateInvoice(payment)}
-                        className="h-8 px-2"
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        Invoice
-                      </Button>
-                    </TableCell>
+            <TooltipProvider>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>Payment Method</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Receipt</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paymentHistory.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          {format(new Date(payment.created_at), 'MMM d, yyyy')}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">
+                          {payment.plan_type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getPaymentMethodIcon(payment.payment_method)}
+                          <span className="text-sm">{getPaymentMethodLabel(payment)}</span>
+                          {payment.bank_reference && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Info className="h-3 w-3 text-muted-foreground" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs">Ref: {payment.bank_reference}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col">
+                          <span>{formatAmount(payment.amount, payment.currency)}</span>
+                          {payment.status === 'refunded' && payment.refund_amount > 0 && (
+                            <span className="text-xs text-blue-600">
+                              Refunded: {formatAmount(payment.refund_amount, payment.currency)}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(payment.status)}
+                            <span className="capitalize">{payment.status}</span>
+                          </div>
+                          {payment.status === 'failed' && payment.failure_reason && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <span className="text-xs text-destructive cursor-help underline decoration-dotted">
+                                  View reason
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs max-w-[200px]">{payment.failure_reason}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                          {payment.status === 'refunded' && payment.refunded_at && (
+                            <span className="text-xs text-muted-foreground">
+                              on {format(new Date(payment.refunded_at), 'MMM d')}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => generateInvoice(payment)}
+                          className="h-8 px-2"
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Invoice
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
           )}
         </CardContent>
       </Card>

@@ -1102,18 +1102,65 @@ export type Database = {
           },
         ]
       }
+      payment_events: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          payload: Json
+          payment_history_id: string | null
+          processed_at: string | null
+          razorpay_event_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          payload?: Json
+          payment_history_id?: string | null
+          processed_at?: string | null
+          razorpay_event_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          payment_history_id?: string | null
+          processed_at?: string | null
+          razorpay_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_payment_history_id_fkey"
+            columns: ["payment_history_id"]
+            isOneToOne: false
+            referencedRelation: "payment_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_history: {
         Row: {
           amount: number
+          bank_reference: string | null
           created_at: string
           currency: string
+          failure_reason: string | null
           id: string
+          ip_address: string | null
+          notes: Json | null
+          payment_method: string | null
+          payment_method_details: Json | null
           plan_type: string
           razorpay_order_id: string
           razorpay_payment_id: string | null
           razorpay_signature: string | null
           receipt_sent: boolean | null
           receipt_sent_at: string | null
+          refund_amount: number | null
+          refund_id: string | null
+          refunded_at: string | null
           status: string
           subscription_id: string | null
           updated_at: string
@@ -1121,15 +1168,24 @@ export type Database = {
         }
         Insert: {
           amount: number
+          bank_reference?: string | null
           created_at?: string
           currency?: string
+          failure_reason?: string | null
           id?: string
+          ip_address?: string | null
+          notes?: Json | null
+          payment_method?: string | null
+          payment_method_details?: Json | null
           plan_type: string
           razorpay_order_id: string
           razorpay_payment_id?: string | null
           razorpay_signature?: string | null
           receipt_sent?: boolean | null
           receipt_sent_at?: string | null
+          refund_amount?: number | null
+          refund_id?: string | null
+          refunded_at?: string | null
           status?: string
           subscription_id?: string | null
           updated_at?: string
@@ -1137,21 +1193,37 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bank_reference?: string | null
           created_at?: string
           currency?: string
+          failure_reason?: string | null
           id?: string
+          ip_address?: string | null
+          notes?: Json | null
+          payment_method?: string | null
+          payment_method_details?: Json | null
           plan_type?: string
           razorpay_order_id?: string
           razorpay_payment_id?: string | null
           razorpay_signature?: string | null
           receipt_sent?: boolean | null
           receipt_sent_at?: string | null
+          refund_amount?: number | null
+          refund_id?: string | null
+          refunded_at?: string | null
           status?: string
           subscription_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_payment_subscription"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payment_history_subscription_id_fkey"
             columns: ["subscription_id"]
