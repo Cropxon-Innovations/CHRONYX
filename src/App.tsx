@@ -8,34 +8,40 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AnimatePresence, motion } from "framer-motion";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { PWAUpdater } from "@/components/pwa/PWAUpdater";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
-import Refund from "./pages/Refund";
-import Pricing from "./pages/Pricing";
-import About from "./pages/About";
-import AppLayout from "./components/layout/AppLayout";
-import Dashboard from "./pages/app/Dashboard";
-import Todos from "./pages/app/Todos";
-import Study from "./pages/app/Study";
-import Loans from "./pages/app/Loans";
-import Insurance from "./pages/app/Insurance";
-import Expenses from "./pages/app/Expenses";
-import Income from "./pages/app/Income";
-import Reports from "./pages/app/Reports";
-import Lifespan from "./pages/app/Lifespan";
-import Achievements from "./pages/app/Achievements";
-import Activity from "./pages/app/Activity";
-import Settings from "./pages/app/Settings";
-import Profile from "./pages/app/Profile";
-import Memory from "./pages/app/Memory";
-import MemoryTimeline from "./pages/app/MemoryTimeline";
-import Search from "./pages/app/Search";
-import Backup from "./pages/app/Backup";
-import Documents from "./pages/app/Documents";
-import Social from "./pages/app/Social";
-import NotFound from "./pages/NotFound";
+import { useState, useEffect, lazy, Suspense } from "react";
+import SplashScreen from "@/components/layout/SplashScreen";
+import PageLoader from "@/components/layout/PageLoader";
+
+// Lazy load pages for better performance
+const Landing = lazy(() => import("./pages/Landing"));
+const Login = lazy(() => import("./pages/Login"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Refund = lazy(() => import("./pages/Refund"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const About = lazy(() => import("./pages/About"));
+const AppLayout = lazy(() => import("./components/layout/AppLayout"));
+const Dashboard = lazy(() => import("./pages/app/Dashboard"));
+const Todos = lazy(() => import("./pages/app/Todos"));
+const Study = lazy(() => import("./pages/app/Study"));
+const Loans = lazy(() => import("./pages/app/Loans"));
+const Insurance = lazy(() => import("./pages/app/Insurance"));
+const Expenses = lazy(() => import("./pages/app/Expenses"));
+const Income = lazy(() => import("./pages/app/Income"));
+const Reports = lazy(() => import("./pages/app/Reports"));
+const Lifespan = lazy(() => import("./pages/app/Lifespan"));
+const Achievements = lazy(() => import("./pages/app/Achievements"));
+const Activity = lazy(() => import("./pages/app/Activity"));
+const Settings = lazy(() => import("./pages/app/Settings"));
+const Profile = lazy(() => import("./pages/app/Profile"));
+const Memory = lazy(() => import("./pages/app/Memory"));
+const MemoryTimeline = lazy(() => import("./pages/app/MemoryTimeline"));
+const Search = lazy(() => import("./pages/app/Search"));
+const Backup = lazy(() => import("./pages/app/Backup"));
+const Documents = lazy(() => import("./pages/app/Documents"));
+const Social = lazy(() => import("./pages/app/Social"));
+const PaymentAnalytics = lazy(() => import("./pages/app/PaymentAnalytics"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -56,7 +62,9 @@ const AnimatedRoutes = () => {
           path="/" 
           element={
             <motion.div {...pageTransition}>
-              <Landing />
+              <Suspense fallback={<PageLoader />}>
+                <Landing />
+              </Suspense>
             </motion.div>
           } 
         />
@@ -64,7 +72,9 @@ const AnimatedRoutes = () => {
           path="/login" 
           element={
             <motion.div {...pageTransition}>
-              <Login />
+              <Suspense fallback={<PageLoader />}>
+                <Login />
+              </Suspense>
             </motion.div>
           } 
         />
@@ -72,7 +82,9 @@ const AnimatedRoutes = () => {
           path="/privacy" 
           element={
             <motion.div {...pageTransition}>
-              <Privacy />
+              <Suspense fallback={<PageLoader />}>
+                <Privacy />
+              </Suspense>
             </motion.div>
           } 
         />
@@ -80,7 +92,9 @@ const AnimatedRoutes = () => {
           path="/terms" 
           element={
             <motion.div {...pageTransition}>
-              <Terms />
+              <Suspense fallback={<PageLoader />}>
+                <Terms />
+              </Suspense>
             </motion.div>
           } 
         />
@@ -88,7 +102,9 @@ const AnimatedRoutes = () => {
           path="/refund" 
           element={
             <motion.div {...pageTransition}>
-              <Refund />
+              <Suspense fallback={<PageLoader />}>
+                <Refund />
+              </Suspense>
             </motion.div>
           } 
         />
@@ -96,7 +112,9 @@ const AnimatedRoutes = () => {
           path="/pricing" 
           element={
             <motion.div {...pageTransition}>
-              <Pricing />
+              <Suspense fallback={<PageLoader />}>
+                <Pricing />
+              </Suspense>
             </motion.div>
           } 
         />
@@ -104,36 +122,49 @@ const AnimatedRoutes = () => {
           path="/about" 
           element={
             <motion.div {...pageTransition}>
-              <About />
+              <Suspense fallback={<PageLoader />}>
+                <About />
+              </Suspense>
             </motion.div>
           } 
         />
-        <Route path="/app" element={<AppLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="todos" element={<Todos />} />
-          <Route path="study" element={<Study />} />
-          <Route path="loans" element={<Loans />} />
-          <Route path="insurance" element={<Insurance />} />
-          <Route path="expenses" element={<Expenses />} />
-          <Route path="income" element={<Income />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="lifespan" element={<Lifespan />} />
-          <Route path="achievements" element={<Achievements />} />
-          <Route path="activity" element={<Activity />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="memory" element={<Memory />} />
-          <Route path="memory/timeline" element={<MemoryTimeline />} />
-          <Route path="search" element={<Search />} />
-          <Route path="backup" element={<Backup />} />
-          <Route path="documents" element={<Documents />} />
-          <Route path="social" element={<Social />} />
+        <Route 
+          path="/app" 
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <AppLayout />
+            </Suspense>
+          }
+        >
+          <Route index element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
+          <Route path="todos" element={<Suspense fallback={<PageLoader />}><Todos /></Suspense>} />
+          <Route path="study" element={<Suspense fallback={<PageLoader />}><Study /></Suspense>} />
+          <Route path="loans" element={<Suspense fallback={<PageLoader />}><Loans /></Suspense>} />
+          <Route path="insurance" element={<Suspense fallback={<PageLoader />}><Insurance /></Suspense>} />
+          <Route path="expenses" element={<Suspense fallback={<PageLoader />}><Expenses /></Suspense>} />
+          <Route path="income" element={<Suspense fallback={<PageLoader />}><Income /></Suspense>} />
+          <Route path="reports" element={<Suspense fallback={<PageLoader />}><Reports /></Suspense>} />
+          <Route path="lifespan" element={<Suspense fallback={<PageLoader />}><Lifespan /></Suspense>} />
+          <Route path="achievements" element={<Suspense fallback={<PageLoader />}><Achievements /></Suspense>} />
+          <Route path="activity" element={<Suspense fallback={<PageLoader />}><Activity /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
+          <Route path="profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
+          <Route path="memory" element={<Suspense fallback={<PageLoader />}><Memory /></Suspense>} />
+          <Route path="memory/timeline" element={<Suspense fallback={<PageLoader />}><MemoryTimeline /></Suspense>} />
+          <Route path="search" element={<Suspense fallback={<PageLoader />}><Search /></Suspense>} />
+          <Route path="backup" element={<Suspense fallback={<PageLoader />}><Backup /></Suspense>} />
+          <Route path="documents" element={<Suspense fallback={<PageLoader />}><Documents /></Suspense>} />
+          <Route path="social" element={<Suspense fallback={<PageLoader />}><Social /></Suspense>} />
+          <Route path="analytics" element={<Suspense fallback={<PageLoader />}><PaymentAnalytics /></Suspense>} />
+          <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         </Route>
         <Route 
           path="*" 
           element={
             <motion.div {...pageTransition}>
-              <NotFound />
+              <Suspense fallback={<PageLoader />}>
+                <NotFound />
+              </Suspense>
             </motion.div>
           } 
         />
@@ -142,18 +173,48 @@ const AnimatedRoutes = () => {
   );
 };
 
+const AppContent = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+
+  useEffect(() => {
+    // Check if this is first visit in this session
+    const hasSeenSplash = sessionStorage.getItem("chronyx_splash_shown");
+    if (hasSeenSplash) {
+      setShowSplash(false);
+      setIsFirstLoad(false);
+    }
+  }, []);
+
+  const handleSplashComplete = () => {
+    sessionStorage.setItem("chronyx_splash_shown", "true");
+    setShowSplash(false);
+    setIsFirstLoad(false);
+  };
+
+  return (
+    <>
+      <SplashScreen 
+        isVisible={showSplash && isFirstLoad} 
+        onComplete={handleSplashComplete}
+      />
+      <Toaster />
+      <Sonner />
+      <OfflineIndicator />
+      <PWAUpdater />
+      <BrowserRouter>
+        <AnimatedRoutes />
+      </BrowserRouter>
+    </>
+  );
+};
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <OfflineIndicator />
-          <PWAUpdater />
-          <BrowserRouter>
-            <AnimatedRoutes />
-          </BrowserRouter>
+          <AppContent />
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
