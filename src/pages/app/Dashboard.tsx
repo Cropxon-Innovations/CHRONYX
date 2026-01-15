@@ -10,6 +10,7 @@ import InsuranceWidget from "@/components/dashboard/InsuranceWidget";
 import UpcomingReminders from "@/components/dashboard/UpcomingReminders";
 import FinancialOverview from "@/components/dashboard/FinancialOverview";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
+import PendingYesterdayTasks from "@/components/dashboard/PendingYesterdayTasks";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -186,11 +187,11 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in px-1 sm:px-0">
       {/* Header */}
       <header>
-        <h1 className="text-2xl font-light text-foreground tracking-wide">Today</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-xl sm:text-2xl font-light text-foreground tracking-wide">Today</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
           {new Date().toLocaleDateString('en-US', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -200,8 +201,11 @@ const Dashboard = () => {
         </p>
       </header>
 
+      {/* Pending Yesterday Tasks */}
+      <PendingYesterdayTasks />
+
       {/* Metric Cards */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard value={completionRate} suffix="%" label="Todo Completion" />
         <MetricCard value={studyMinutes} suffix="min" label="Study Today" />
         <MetricCard value="—" label="EMI Due" />
@@ -209,16 +213,16 @@ const Dashboard = () => {
       </section>
 
       {/* Days Remaining Highlight */}
-      <section className="bg-card border border-border rounded-lg p-6">
+      <section className="bg-card border border-border rounded-lg p-4 sm:p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground uppercase tracking-wider">Days Until {targetAge}</p>
-            <p className="text-4xl md:text-5xl font-semibold text-foreground mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground uppercase tracking-wider">Days Until {targetAge}</p>
+            <p className="text-3xl sm:text-4xl md:text-5xl font-semibold text-foreground mt-2">
               {daysRemaining.toLocaleString()}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               ~{Math.floor(daysRemaining / 365)} years
             </p>
           </div>
@@ -227,8 +231,8 @@ const Dashboard = () => {
 
       {/* Trends Section */}
       <section>
-        <h2 className="text-lg font-light text-foreground mb-4">Trends</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <h2 className="text-base sm:text-lg font-light text-foreground mb-3 sm:mb-4">Trends</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
           <Heatmap title="Productivity" data={heatmapData.length > 0 ? heatmapData : Array(84).fill(0)} />
           <TrendChart title="Study This Week" data={studyTrend.length > 0 ? studyTrend : []} />
         </div>
@@ -236,28 +240,28 @@ const Dashboard = () => {
 
       {/* Life Section */}
       <section>
-        <h2 className="text-lg font-light text-foreground mb-4">Life</h2>
+        <h2 className="text-base sm:text-lg font-light text-foreground mb-3 sm:mb-4">Life</h2>
         <LifespanBar daysLived={daysLived} daysRemaining={daysRemaining} />
       </section>
 
       {/* Financial Overview */}
       <section>
-        <h2 className="text-lg font-light text-foreground mb-4">Financial Overview</h2>
+        <h2 className="text-base sm:text-lg font-light text-foreground mb-3 sm:mb-4">Financial Overview</h2>
         <FinancialOverview />
       </section>
 
       {/* Loan & Insurance Widgets */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <LoanWidget />
         <InsuranceWidget />
         <UpcomingReminders />
       </section>
 
       {/* Bottom Grid */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         {/* Recent Achievements */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-6">
+        <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
+          <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6">
             Recent Achievements
           </h3>
           <div className="space-y-0">
@@ -266,14 +270,14 @@ const Dashboard = () => {
                 <AchievementItem key={i} {...achievement} />
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">No achievements yet</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">No achievements yet</p>
             )}
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-6">
+        <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
+          <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6">
             Recent Activity
           </h3>
           <div>
@@ -282,7 +286,7 @@ const Dashboard = () => {
                 <ActivityItem key={i} {...activity} />
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">No recent activity</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">No recent activity</p>
             )}
           </div>
         </div>

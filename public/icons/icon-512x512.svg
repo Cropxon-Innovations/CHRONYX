@@ -1,10 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#0f172a" rx="64"/>
-  <circle cx="256" cy="256" r="170" fill="none" stroke="#475569" stroke-width="8" stroke-opacity="0.9"/>
-  <circle cx="256" cy="256" r="130" fill="none" stroke="#475569" stroke-width="4" stroke-dasharray="16 12" stroke-opacity="0.5"/>
-  <circle cx="256" cy="256" r="18" fill="#475569" fill-opacity="0.95"/>
-  <circle cx="256" cy="96" r="10" fill="#475569" fill-opacity="0.6"/>
-  <circle cx="416" cy="256" r="10" fill="#475569" fill-opacity="0.6"/>
-  <circle cx="256" cy="416" r="10" fill="#475569" fill-opacity="0.6"/>
-  <circle cx="96" cy="256" r="10" fill="#475569" fill-opacity="0.6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="64" fill="#0f172a"/>
+  <defs>
+    <linearGradient id="stackGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5b7596;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3d5a80;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="stackGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a6890;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#354f6e;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="stackGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3d5a80;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2c4a6e;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <g transform="translate(86, 305)">
+    <path d="M0 43 L170 0 L340 43 L170 86 Z" fill="url(#stackGrad3)"/>
+    <path d="M0 43 L0 72 L170 115 L170 86 Z" fill="#2c4a6e"/>
+    <path d="M170 86 L170 115 L340 72 L340 43 Z" fill="#354f6e"/>
+  </g>
+  
+  <g transform="translate(86, 205)">
+    <path d="M0 43 L170 0 L340 43 L170 86 Z" fill="url(#stackGrad2)"/>
+    <path d="M0 43 L0 72 L170 115 L170 86 Z" fill="#354f6e"/>
+    <path d="M170 86 L170 115 L340 72 L340 43 Z" fill="#4a6890"/>
+  </g>
+  
+  <g transform="translate(86, 95)">
+    <path d="M0 43 L170 0 L340 43 L170 86 Z" fill="url(#stackGrad1)"/>
+    <path d="M0 43 L0 100 L170 143 L170 86 Z" fill="#3d5a80"/>
+    <path d="M170 86 L170 143 L340 100 L340 43 Z" fill="#5b7596"/>
+  </g>
 </svg>
