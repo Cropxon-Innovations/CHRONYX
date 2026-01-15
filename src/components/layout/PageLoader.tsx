@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import chronyxLogo from "@/assets/chronyx-logo.png";
 
 const PageLoader = () => {
   return (
@@ -8,11 +9,11 @@ const PageLoader = () => {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background"
     >
-      {/* CHRONYX Logo with pulse animation */}
+      {/* CHRONYX Logo with stack animation */}
       <motion.div
         animate={{
           scale: [1, 1.05, 1],
-          opacity: [0.7, 1, 0.7],
+          opacity: [0.8, 1, 0.8],
         }}
         transition={{
           duration: 2,
@@ -21,13 +22,33 @@ const PageLoader = () => {
         }}
         className="flex flex-col items-center gap-4"
       >
+        {/* Stack Logo with bounce effect */}
+        <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+          <motion.div
+            animate={{
+              y: [0, -5, 0],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <img 
+              src={chronyxLogo} 
+              alt="CHRONYX" 
+              className="w-full h-full object-contain drop-shadow-lg"
+            />
+          </motion.div>
+        </div>
+        
         {/* Logo Text */}
-        <h1 className="text-4xl md:text-5xl font-light tracking-[0.3em] text-foreground">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-[0.3em] text-foreground">
           CHRONYX
         </h1>
         
         {/* Loading bar */}
-        <div className="w-48 h-0.5 bg-muted overflow-hidden rounded-full">
+        <div className="w-40 sm:w-48 h-0.5 bg-muted overflow-hidden rounded-full">
           <motion.div
             initial={{ x: "-100%" }}
             animate={{ x: "100%" }}
@@ -41,7 +62,7 @@ const PageLoader = () => {
         </div>
         
         {/* Skeleton content preview */}
-        <div className="mt-8 w-64 space-y-3">
+        <div className="mt-6 sm:mt-8 w-56 sm:w-64 space-y-3">
           <motion.div
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 1.5, repeat: Infinity }}
@@ -65,7 +86,7 @@ const PageLoader = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.5 }}
         transition={{ delay: 0.5 }}
-        className="absolute bottom-8 text-xs tracking-[0.2em] text-muted-foreground"
+        className="absolute bottom-4 sm:bottom-6 md:bottom-8 text-[9px] sm:text-[10px] md:text-xs tracking-[0.2em] text-muted-foreground"
       >
         CHRONYX by CROPXON
       </motion.p>

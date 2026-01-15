@@ -87,7 +87,6 @@
     }
     </script>
     <style>
-      /* Inline splash screen for immediate display */
       #splash-screen {
         position: fixed;
         inset: 0;
@@ -100,23 +99,36 @@
         transition: opacity 0.5s ease-out;
       }
       #splash-screen.hidden { opacity: 0; pointer-events: none; }
-      #splash-logo { 
-        font-size: 2.5rem; 
+      #splash-logo-img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        animation: bounceStack 1.5s ease-in-out infinite;
+      }
+      #splash-text { 
+        margin-top: 1.5rem;
+        font-size: 1.75rem; 
         font-weight: 300; 
-        letter-spacing: 0.4em; 
+        letter-spacing: 0.3em; 
         color: #f8fafc;
-        animation: pulse 2s ease-in-out infinite;
       }
       #splash-tagline {
-        margin-top: 1rem;
-        font-size: 0.875rem;
+        margin-top: 0.75rem;
+        font-size: 0.75rem;
         letter-spacing: 0.15em;
         color: #94a3b8;
         opacity: 0;
         animation: fadeIn 0.5s ease-out 0.5s forwards;
       }
+      #splash-footer {
+        position: absolute;
+        bottom: 1.5rem;
+        font-size: 0.625rem;
+        letter-spacing: 0.2em;
+        color: #64748b;
+      }
       #splash-loader {
-        margin-top: 2rem;
+        margin-top: 1.5rem;
         width: 8rem;
         height: 2px;
         background: #1e293b;
@@ -131,17 +143,18 @@
         background: linear-gradient(90deg, transparent, #475569, transparent);
         animation: slide 1.2s ease-in-out infinite;
       }
-      @keyframes pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+      @keyframes bounceStack { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
       @keyframes fadeIn { to { opacity: 0.7; } }
       @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(200%); } }
     </style>
   </head>
   <body>
-    <!-- Inline splash for immediate display before React loads -->
     <div id="splash-screen">
-      <div id="splash-logo">CHRONYX</div>
+      <img id="splash-logo-img" src="/chronyx-logo.png" alt="CHRONYX" />
+      <div id="splash-text">CHRONYX</div>
       <div id="splash-tagline">A Quiet Space for Your Life</div>
       <div id="splash-loader"></div>
+      <div id="splash-footer">CHRONYX by CROPXON</div>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
