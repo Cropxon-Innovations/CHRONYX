@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import chronyxLogo from "@/assets/chronyx-logo.png";
+import chronyxStack from "@/assets/chronyx-stack.svg";
 
 const PageLoader = () => {
   return (
@@ -23,7 +23,7 @@ const PageLoader = () => {
         className="flex flex-col items-center gap-4"
       >
         {/* Stack Logo with bounce effect */}
-        <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+        <div className="relative w-20 h-12 sm:w-24 sm:h-14">
           <motion.div
             animate={{
               y: [0, -5, 0],
@@ -35,7 +35,7 @@ const PageLoader = () => {
             }}
           >
             <img 
-              src={chronyxLogo} 
+              src={chronyxStack} 
               alt="CHRONYX" 
               className="w-full h-full object-contain drop-shadow-lg"
             />

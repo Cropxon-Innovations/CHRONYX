@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import chronyxLogo from "@/assets/chronyx-logo.png";
+import chronyxStack from "@/assets/chronyx-stack.svg";
 
 interface ChronyxStackLogoProps {
   className?: string;
@@ -8,11 +8,11 @@ interface ChronyxStackLogoProps {
 }
 
 const sizeConfig = {
-  xs: "w-6 h-6",
-  sm: "w-8 h-8",
-  md: "w-12 h-12",
-  lg: "w-16 h-16",
-  xl: "w-24 h-24",
+  xs: "w-8 h-5",
+  sm: "w-10 h-6",
+  md: "w-14 h-8",
+  lg: "w-20 h-12",
+  xl: "w-28 h-16",
 };
 
 export const ChronyxStackLogo = ({ 
@@ -31,7 +31,7 @@ export const ChronyxStackLogo = ({
           className="absolute inset-0"
         >
           <img 
-            src={chronyxLogo} 
+            src={chronyxStack} 
             alt="CHRONYX" 
             className="w-full h-full object-contain"
           />
@@ -43,7 +43,7 @@ export const ChronyxStackLogo = ({
   return (
     <div className={`relative ${sizeConfig[size]} ${className}`}>
       <img 
-        src={chronyxLogo} 
+        src={chronyxStack} 
         alt="CHRONYX" 
         className="w-full h-full object-contain"
       />
