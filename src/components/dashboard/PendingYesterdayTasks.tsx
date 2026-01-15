@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Check, AlertCircle, ChevronRight } from "lucide-react";
+import { Check, AlertCircle, ChevronRight, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +7,15 @@ import { useActivityLog } from "@/hooks/useActivityLog";
 import { format, subDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PendingTask {
   id: string;
@@ -25,6 +34,10 @@ const PendingYesterdayTasks = () => {
   const [tasks, setTasks] = useState<PendingTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [newTaskText, setNewTaskText] = useState("");
+  const [newTaskPriority, setNewTaskPriority] = useState<"high" | "medium" | "low">("medium");
+  const [isAdding, setIsAdding] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
@@ -72,6 +85,34 @@ const PendingYesterdayTasks = () => {
     setCompletingId(null);
   };
 
+  const handleQuickAdd = async () => {
+    if (!newTaskText.trim() || !user) return;
+    
+    setIsAdding(true);
+    const today = format(new Date(), "yyyy-MM-dd");
+    
+    const { error } = await supabase
+      .from("todos")
+      .insert({
+        text: newTaskText.trim(),
+        priority: newTaskPriority,
+        date: today,
+        status: "pending",
+        user_id: user.id,
+      });
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to add task", variant: "destructive" });
+    } else {
+      toast({ title: "Task added!", description: newTaskText.trim() });
+      logActivity(`Quick added task: ${newTaskText.substring(0, 30)}`, "Todos");
+      setNewTaskText("");
+      setNewTaskPriority("medium");
+      setShowQuickAdd(false);
+    }
+    setIsAdding(false);
+  };
+
   if (loading) {
     return (
       <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
@@ -83,24 +124,73 @@ const PendingYesterdayTasks = () => {
     );
   }
 
-  if (tasks.length === 0) return null;
-
   return (
     <div className="bg-gradient-to-br from-amber-500/10 via-card to-card border border-amber-500/30 rounded-lg p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
           <AlertCircle className="w-5 h-5 text-amber-500" />
           <h3 className="text-sm font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-            Pending from Yesterday
+            {tasks.length > 0 ? "Pending from Yesterday" : "Quick Add Task"}
           </h3>
         </div>
-        <Link 
-          to="/app/todos" 
-          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-        >
-          View all tasks <ChevronRight className="w-3 h-3" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowQuickAdd(!showQuickAdd)}
+            className="text-xs bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors"
+          >
+            <Plus className="w-3 h-3" />
+            Add Task
+          </button>
+          <Link 
+            to="/app/todos" 
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+          >
+            View all <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
       </div>
+
+      {/* Quick Add Form */}
+      {showQuickAdd && (
+        <div className="mb-4 p-3 bg-background/50 rounded-lg border border-border space-y-3">
+          <Input
+            placeholder="What needs to be done?"
+            value={newTaskText}
+            onChange={(e) => setNewTaskText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleQuickAdd()}
+            className="bg-background"
+            autoFocus
+          />
+          <div className="flex items-center gap-2">
+            <Select value={newTaskPriority} onValueChange={(v) => setNewTaskPriority(v as "high" | "medium" | "low")}>
+              <SelectTrigger className="w-32 h-8 text-xs bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="high">🔴 High</SelectItem>
+                <SelectItem value="medium">🟡 Medium</SelectItem>
+                <SelectItem value="low">⚪ Low</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              onClick={handleQuickAdd}
+              disabled={!newTaskText.trim() || isAdding}
+              className="h-8 text-xs"
+            >
+              {isAdding ? "Adding..." : "Add"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowQuickAdd(false)}
+              className="h-8 text-xs"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
       
       <div className="space-y-2">
         {tasks.slice(0, 5).map((task) => (

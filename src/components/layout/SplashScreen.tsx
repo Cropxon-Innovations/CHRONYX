@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import chronyxLogo from "@/assets/chronyx-logo.png";
+import chronyxStack from "@/assets/chronyx-stack.svg";
 
 interface SplashScreenProps {
   isVisible: boolean;
@@ -69,21 +69,20 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
 
           {/* Main content */}
           <div className="relative flex flex-col items-center gap-6">
-            {/* Stacked Logo Animation */}
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28">
-              {/* Layer 1 - Bottom */}
+            {/* Stacked Logo Animation - Three layers stacking */}
+            <div className="relative w-24 h-16 sm:w-32 sm:h-20 md:w-40 md:h-24">
+              {/* Layer 1 - Bottom (first to appear, slides up) */}
               <motion.div
-                initial={{ y: 40, opacity: 0, scale: 0.8 }}
+                initial={{ y: 60, opacity: 0 }}
                 animate={{ 
-                  y: animationPhase >= 1 ? 0 : 40, 
+                  y: animationPhase >= 1 ? 0 : 60, 
                   opacity: animationPhase >= 1 ? 1 : 0,
-                  scale: animationPhase >= 1 ? 1 : 0.8
                 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
                 className="absolute inset-0"
               >
                 <img 
-                  src={chronyxLogo} 
+                  src={chronyxStack} 
                   alt="CHRONYX" 
                   className="w-full h-full object-contain drop-shadow-lg"
                 />
