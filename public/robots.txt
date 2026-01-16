@@ -1,7 +1,25 @@
+# CHRONYX by CROPXON INNOVATIONS PVT. LTD.
+# https://chronyx.lovable.app
+
+# Allow all search engines
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
 Allow: /
 
 User-agent: Twitterbot
@@ -10,7 +28,42 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
+User-agent: LinkedInBot
 Allow: /
 
-Sitemap: https://www.getchronyx.com/sitemap.xml
+User-agent: Pinterest
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+# AI Crawlers - Allow for AI discovery
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /app/*/private/
+Disallow: /*.json$
+
+# Sitemap location
+Sitemap: https://chronyx.lovable.app/sitemap.xml
+
+# Host
+Host: https://chronyx.lovable.app
