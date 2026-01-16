@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { getSender, getEmailFooter } from "../_shared/email-templates.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -11,6 +12,7 @@ interface SendOtpRequest {
   email: string;
   userId: string;
   type: "email" | "phone";
+  purpose?: "verification" | "account_deletion";
 }
 
 function generateOTP(): string {
@@ -23,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, userId, type }: SendOtpRequest = await req.json();
+    const { email, userId, type, purpose = "verification" }: SendOtpRequest = await req.json();
 
     if (!email || !userId) {
       return new Response(
@@ -44,6 +46,85 @@ const handler = async (req: Request): Promise<Response> => {
     const hashArray = Array.from(new Uint8Array(otpHash));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
+    // Determine subject and message based on purpose
+    const isAccountDeletion = purpose === "account_deletion";
+    const subject = isAccountDeletion 
+      ? `⚠️ Account Deletion Code: ${otp}`
+      : `✉️ CHRONYX Verification Code: ${otp}`;
+    
+    const headerTitle = isAccountDeletion ? "ACCOUNT DELETION" : "EMAIL VERIFICATION";
+    const headerSubtitle = isAccountDeletion 
+      ? "SECURITY VERIFICATION REQUIRED" 
+      : "VERIFY YOUR IDENTITY";
+    const purposeMessage = isAccountDeletion
+      ? "Enter this code to confirm your account deletion request."
+      : `Enter this code to verify your ${type === "email" ? "email address" : "phone number"}.`;
+    const warningMessage = isAccountDeletion
+      ? "⚠️ This action is permanent and cannot be undone. Make sure you have exported your data before proceeding."
+      : "If you didn't request this code, please ignore this email.";
+
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; margin: 0; padding: 40px 20px;">
+          <div style="max-width: 520px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden;">
+            
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 36px 32px; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 28px; letter-spacing: 0.2em; font-weight: 300;">CHRONYX</h1>
+              <p style="color: #64748b; font-size: 9px; letter-spacing: 0.15em; margin-top: 6px;">BY CROPXON</p>
+              <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <p style="color: #94a3b8; font-size: 11px; letter-spacing: 0.2em; margin: 0;">${headerTitle}</p>
+                <p style="color: #64748b; font-size: 9px; letter-spacing: 0.1em; margin-top: 4px;">${headerSubtitle}</p>
+              </div>
+            </div>
+            
+            <!-- Content -->
+            <div style="padding: 48px 40px; text-align: center;">
+              <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 50%; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 32px;">${isAccountDeletion ? '🔐' : '✉️'}</span>
+              </div>
+              
+              <p style="color: #475569; font-size: 16px; margin: 0 0 28px; line-height: 1.5;">
+                Your one-time verification code is:
+              </p>
+              
+              <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 2px solid #e2e8f0; border-radius: 16px; padding: 32px; margin: 0 0 28px;">
+                <span style="font-size: 44px; font-weight: 700; letter-spacing: 12px; color: #0f172a; font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;">${otp}</span>
+              </div>
+              
+              <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+                ${purposeMessage}
+              </p>
+              
+              <div style="background: ${isAccountDeletion ? '#fef2f2' : '#fef3c7'}; border-radius: 12px; padding: 16px 20px; margin: 0 0 24px; border: 1px solid ${isAccountDeletion ? '#fecaca' : '#fcd34d'};">
+                <p style="color: ${isAccountDeletion ? '#dc2626' : '#92400e'}; font-size: 13px; margin: 0; font-weight: 500;">
+                  ⏱ This code expires in <strong>10 minutes</strong>
+                </p>
+              </div>
+              
+              <p style="color: #94a3b8; font-size: 12px; margin: 0; line-height: 1.5;">
+                ${warningMessage}
+              </p>
+            </div>
+            
+            <!-- Security Badge -->
+            <div style="padding: 20px 40px; background: #f0fdf4; border-top: 1px solid #dcfce7; text-align: center;">
+              <p style="color: #16a34a; font-size: 12px; margin: 0; font-weight: 500;">
+                🔒 Secured by CHRONYX Authentication
+              </p>
+            </div>
+            
+            ${getEmailFooter()}
+          </div>
+        </body>
+      </html>
+    `;
+
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -51,69 +132,10 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "CHRONYX <onboarding@resend.dev>", // Use no-reply@getchronyx.com in production
+        from: getSender("auth"),
         to: [email],
-        subject: `Your CHRONYX Verification Code: ${otp}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; margin: 0; padding: 40px 20px;">
-              <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
-                
-                <!-- Header -->
-                <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 32px; text-align: center;">
-                  <h1 style="color: white; margin: 0; font-size: 24px; letter-spacing: 6px; font-weight: 300;">CHRONYX</h1>
-                  <p style="color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 8px;">VERIFICATION CODE</p>
-                </div>
-                
-                <!-- Content -->
-                <div style="padding: 40px 32px; text-align: center;">
-                  <p style="color: #475569; font-size: 15px; margin: 0 0 24px;">Your verification code is:</p>
-                  
-                  <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 2px solid #e2e8f0; border-radius: 12px; padding: 28px; margin: 0 0 24px;">
-                    <span style="font-size: 40px; font-weight: 600; letter-spacing: 10px; color: #0f172a; font-family: 'SF Mono', 'Monaco', monospace;">${otp}</span>
-                  </div>
-                  
-                  <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0;">
-                    Enter this code to verify your ${type === "email" ? "email address" : "phone number"}.
-                  </p>
-                  
-                  <div style="background: #fef3c7; border-radius: 8px; padding: 12px 16px; margin: 24px 0 0; border: 1px solid #fcd34d;">
-                    <p style="color: #92400e; font-size: 12px; margin: 0; font-weight: 500;">
-                      ⏱ This code expires in <strong>10 minutes</strong>
-                    </p>
-                  </div>
-                  
-                  <p style="color: #94a3b8; font-size: 12px; margin: 24px 0 0;">
-                    If you didn't request this code, please ignore this email.
-                  </p>
-                </div>
-                
-                <!-- Footer -->
-                <div style="padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
-                  <p style="margin: 0 0 8px; font-size: 11px; color: #64748b;">
-                    This email was sent by <a href="https://getchronyx.com" style="color: #64748b; text-decoration: underline;">Chronyx</a> (getchronyx.com)
-                  </p>
-                  <p style="margin: 0 0 12px; font-size: 10px; color: #94a3b8;">
-                    For support, contact <a href="mailto:support@getchronyx.com" style="color: #64748b; text-decoration: underline;">support@getchronyx.com</a>
-                  </p>
-                  <div style="padding-top: 12px; border-top: 1px solid #e2e8f0;">
-                    <p style="margin: 0 0 2px; font-size: 10px; color: #94a3b8; font-weight: 500;">
-                      CHRONYX by CROPXON INNOVATIONS PVT. LTD.
-                    </p>
-                    <p style="margin: 0; font-size: 9px; color: #94a3b8;">
-                      <a href="https://www.cropxon.com" style="color: #94a3b8; text-decoration: underline;">www.cropxon.com</a>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </body>
-          </html>
-        `,
+        subject: subject,
+        html: emailHtml,
       }),
     });
 
@@ -123,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to send email");
     }
 
-    console.log("Email sent successfully");
+    console.log("OTP email sent successfully to:", email);
 
     return new Response(
       JSON.stringify({ 

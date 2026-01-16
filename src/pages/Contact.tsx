@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Mail, Phone, MapPin, Send, MessageSquare, Clock, CheckCircle } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Send, MessageSquare, Clock, CheckCircle, Sparkles, CreditCard, LifeBuoy, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -299,18 +299,206 @@ const Contact = () => {
           </motion.div>
         </div>
 
-        {/* FAQ Teaser */}
+        {/* FAQ Section */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="mt-16 text-center"
+          className="mt-16"
         >
-          <h2 className="text-2xl font-bold mb-4">Need Quick Answers?</h2>
-          <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-            Check our documentation or reach out directly to our support team for immediate assistance.
-          </p>
-          <div className="flex items-center justify-center gap-4 flex-wrap">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Find answers to common questions about CHRONYX features, pricing, and support.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Features FAQs */}
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                  </div>
+                  Features & Usage
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h4 className="font-medium mb-2">What is CHRONYX?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    CHRONYX is an all-in-one personal life management platform that helps you track finances, 
+                    study sessions, tasks, memories, and more. It's designed to give you complete control 
+                    over your personal data in a quiet, minimal interface.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">What can I track with CHRONYX?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    You can track expenses, income, loans, insurance policies, study sessions with syllabus planning, 
+                    daily todos, achievements, memories with photo storage, documents, and more. Everything 
+                    is organized in one secure place.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Is my data secure?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Yes! CHRONYX uses enterprise-grade encryption and secure cloud infrastructure. Your data 
+                    is protected with industry-standard security protocols, and you have full control over 
+                    your information with data export options.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Can I use CHRONYX offline?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    CHRONYX is a Progressive Web App (PWA) with offline capabilities. You can install it 
+                    on your device and access certain features even without an internet connection. Data 
+                    syncs automatically when you're back online.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pricing FAQs */}
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 text-primary" />
+                  </div>
+                  Pricing & Plans
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h4 className="font-medium mb-2">Is CHRONYX free to use?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Yes! CHRONYX offers a generous free tier with core features including expense tracking, 
+                    income management, study tracking, todos, and basic reports. Premium features are 
+                    available through Pro and Premium plans.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">What's included in the Pro plan?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Pro plan includes extra memory storage, advanced financial insights, tax savings tools, 
+                    detailed analytics, email reminders for EMIs and insurance renewals, and priority 
+                    customer support.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">What's the Premium Lifetime plan?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Premium Lifetime gives you permanent access to all CHRONYX features with a one-time payment. 
+                    This includes unlimited storage, early access to new features, dedicated support, and 
+                    all future updates forever.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">What payment methods are accepted?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    We accept UPI, credit/debit cards, net banking, and popular wallets through our 
+                    secure Razorpay integration. All transactions are encrypted and PCI-DSS compliant.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Support FAQs */}
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <LifeBuoy className="w-4 h-4 text-primary" />
+                  </div>
+                  Support & Help
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h4 className="font-medium mb-2">How can I get help?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    You can reach our support team at <a href="mailto:support@getchronyx.com" className="text-primary hover:underline">support@getchronyx.com</a>. 
+                    We typically respond within 24 hours on business days. For urgent issues, 
+                    Pro and Premium users get priority support.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Can I export my data?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Absolutely! CHRONYX allows you to export all your data at any time. Go to Settings 
+                    and use the Data Export feature to download your complete data in JSON format. 
+                    PDF reports are also available for financial data.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">How do I delete my account?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    You can delete your account from Settings → Delete Account. We'll send an OTP 
+                    verification for security. Before deletion, we recommend exporting your data 
+                    as this action is permanent and cannot be undone.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Do you offer refunds?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Yes, we offer refunds within 7 days of purchase if you're not satisfied. 
+                    Contact <a href="mailto:office@getchronyx.com" className="text-primary hover:underline">office@getchronyx.com</a> with 
+                    your payment details and reason for the refund request.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Account FAQs */}
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <User className="w-4 h-4 text-primary" />
+                  </div>
+                  Account & Privacy
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h4 className="font-medium mb-2">How do I verify my email?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    After signing up, go to Settings and click "Verify" next to your email. We'll send 
+                    a 6-digit OTP to your email which you can enter to complete verification. 
+                    Verified emails appear with a green tick.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Can I sign in with Google?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Yes! CHRONYX supports Google Sign-In for a faster and more secure login experience. 
+                    Just click "Continue with Google" on the login page to authenticate with your 
+                    Google account.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Who owns my data?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    You do! CHRONYX believes in data sovereignty. You have complete ownership and 
+                    control over your data. We don't sell or share your personal information with 
+                    third parties. Read our <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link> for details.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Is there a desktop app?</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Desktop apps for Mac and Windows are coming soon! Meanwhile, you can use CHRONYX 
+                    as a PWA by installing it from your browser. It works just like a native app 
+                    with offline support.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="flex items-center justify-center gap-4 flex-wrap mt-10">
             <Button variant="outline" asChild>
               <Link to="/about">About CHRONYX</Link>
             </Button>
