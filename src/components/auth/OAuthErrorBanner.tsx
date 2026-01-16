@@ -62,44 +62,46 @@ export const OAuthErrorBanner = () => {
   const [showSteps, setShowSteps] = useState(false);
 
   useEffect(() => {
-    // Check for OAuth error in URL params
+    // Only check for OAuth error in URL params - these come from OAuth redirects
     const errorParam = searchParams.get("error");
     const errorDescription = searchParams.get("error_description");
     
-    if (errorParam) {
-      // Map error to our known errors
-      let matchedError = OAUTH_ERRORS[errorParam];
-      
-      // Check error description for more specific errors
-      if (errorDescription) {
-        if (errorDescription.includes("invalid_client")) {
-          matchedError = OAUTH_ERRORS.invalid_client;
-        } else if (errorDescription.includes("redirect")) {
-          matchedError = OAUTH_ERRORS.redirect_uri_mismatch;
-        }
-      }
-      
-      setError(matchedError || {
-        code: errorParam,
-        title: "Authentication Error",
-        description: errorDescription || "An error occurred during sign-in.",
-        steps: ["Try signing in again", "Clear browser cache", "Contact support if the issue persists"]
-      });
+    // Skip if no error param or if it's not an OAuth-related error
+    if (!errorParam) {
+      setError(null);
+      return;
+    }
+    
+    // Only show banner for known OAuth errors
+    const oauthErrorCodes = ['invalid_client', 'redirect_uri_mismatch', 'access_denied', 'server_error', 'unauthorized_client', 'invalid_request'];
+    const isOAuthError = oauthErrorCodes.some(code => 
+      errorParam.toLowerCase().includes(code) || 
+      (errorDescription && errorDescription.toLowerCase().includes(code))
+    );
+    
+    if (!isOAuthError) {
+      setError(null);
+      return;
     }
 
-    // Also check localStorage for OAuth errors (set by auth callback)
-    const storedError = localStorage.getItem("chronyx_oauth_error");
-    if (storedError) {
-      try {
-        const parsedError = JSON.parse(storedError);
-        if (parsedError.code && OAUTH_ERRORS[parsedError.code]) {
-          setError(OAUTH_ERRORS[parsedError.code]);
-        }
-        localStorage.removeItem("chronyx_oauth_error");
-      } catch (e) {
-        console.error("Failed to parse OAuth error", e);
+    // Map error to our known errors
+    let matchedError = OAUTH_ERRORS[errorParam];
+    
+    // Check error description for more specific errors
+    if (errorDescription) {
+      if (errorDescription.includes("invalid_client")) {
+        matchedError = OAUTH_ERRORS.invalid_client;
+      } else if (errorDescription.includes("redirect")) {
+        matchedError = OAUTH_ERRORS.redirect_uri_mismatch;
       }
     }
+    
+    setError(matchedError || {
+      code: errorParam,
+      title: "Authentication Error",
+      description: errorDescription || "An error occurred during sign-in with Google.",
+      steps: ["Try signing in again", "Clear browser cache", "Contact support if the issue persists"]
+    });
   }, [searchParams]);
 
   const handleDismiss = () => {
