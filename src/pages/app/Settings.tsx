@@ -404,34 +404,44 @@ const Settings = () => {
   };
 
   const sendDeleteOtp = async () => {
+    if (!user?.id) return;
     if (!profile?.email && !user?.email) return;
+
     setSendingDeleteOtp(true);
-    
+
     try {
       const email = profile?.email || user?.email;
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const hash = await hashOtp(code);
-      setDeleteOtpHash(hash);
-      
-      const { error } = await supabase.functions.invoke("send-email-otp", {
-        body: { email, otp: code, purpose: "account_deletion" },
+
+      const { data, error } = await supabase.functions.invoke("send-email-otp", {
+        body: {
+          email,
+          userId: user.id,
+          type: "email",
+          purpose: "account_deletion",
+        },
       });
-      
+
       if (error) throw error;
-      
-      setDeleteOtpSent(true);
-      toast({
-        title: "Verification Code Sent",
-        description: `A 6-digit code has been sent to ${email}`,
-      });
+
+      if (data?.success && data?.otpHash) {
+        setDeleteOtpHash(data.otpHash);
+        setDeleteOtpSent(true);
+        toast({
+          title: "Verification Code Sent",
+          description: `A 6-digit code has been sent to ${email}`,
+        });
+      } else {
+        throw new Error(data?.message || data?.error || "Failed to send verification code");
+      }
     } catch (error) {
       console.error("Error sending OTP:", error);
       toast({
         title: "Error",
-        description: "Failed to send verification code. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send verification code. Please try again.",
         variant: "destructive",
       });
     }
+
     setSendingDeleteOtp(false);
   };
 
@@ -589,25 +599,27 @@ const Settings = () => {
     setSaving(false);
   };
 
-  // Hash OTP for verification
+  // Hash OTP for verification (must match backend: otp + userId)
   const hashOtp = async (otp: string): Promise<string> => {
+    if (!user?.id) return "";
     const encoder = new TextEncoder();
-    const data = encoder.encode(otp);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const data = encoder.encode(otp + user.id);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
   };
 
   const sendOtp = async () => {
+    if (!user?.id) return;
+
     setIsSendingOtp(true);
     try {
-      const endpoint = verifyDialog.type === "email" 
-        ? "send-email-otp" 
-        : "send-sms-otp";
-      
-      const payload = verifyDialog.type === "email" 
-        ? { email: verifyDialog.value }
-        : { phone: verifyDialog.value };
+      const endpoint = verifyDialog.type === "email" ? "send-email-otp" : "send-sms-otp";
+
+      const payload =
+        verifyDialog.type === "email"
+          ? { email: verifyDialog.value, userId: user.id, type: "email" }
+          : { phone: verifyDialog.value, userId: user.id, type: "phone" };
 
       const { data, error } = await supabase.functions.invoke(endpoint, {
         body: payload,
@@ -623,7 +635,7 @@ const Settings = () => {
           description: `Verification code sent to your ${verifyDialog.type}.`,
         });
       } else {
-        throw new Error(data?.error || "Failed to send OTP");
+        throw new Error(data?.message || data?.error || "Failed to send OTP");
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
