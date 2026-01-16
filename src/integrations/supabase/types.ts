@@ -256,6 +256,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_verification_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          otp_hash: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          otp_hash: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          otp_hash?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       emi_events: {
         Row: {
           amount: number
@@ -1102,6 +1132,33 @@ export type Database = {
           },
         ]
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token_hash: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token_hash: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token_hash?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_events: {
         Row: {
           created_at: string | null
@@ -1249,6 +1306,7 @@ export type Database = {
           secondary_phone: string | null
           target_age: number | null
           updated_at: string | null
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1265,6 +1323,7 @@ export type Database = {
           secondary_phone?: string | null
           target_age?: number | null
           updated_at?: string | null
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -1281,6 +1340,7 @@ export type Database = {
           secondary_phone?: string | null
           target_age?: number | null
           updated_at?: string | null
+          username?: string | null
         }
         Relationships: []
       }
