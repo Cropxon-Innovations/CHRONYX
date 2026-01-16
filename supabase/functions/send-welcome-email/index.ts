@@ -14,7 +14,6 @@ interface WelcomeEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -25,14 +24,12 @@ const handler = async (req: Request): Promise<Response> => {
     if (!email) {
       return new Response(
         JSON.stringify({ error: "Email is required" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
     const displayName = name || email.split("@")[0];
+    const appUrl = "https://chronyx.lovable.app";
 
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -41,9 +38,9 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "CHRONYX <onboarding@resend.dev>",
+        from: "CHRONYX <onboarding@resend.dev>", // Use no-reply@getchronyx.com in production
         to: [email],
-        subject: "Welcome to CHRONYX - A Quiet Space for Your Life",
+        subject: "Welcome to CHRONYX — A Quiet Space for Your Life",
         html: `
         <!DOCTYPE html>
         <html>
@@ -52,70 +49,96 @@ const handler = async (req: Request): Promise<Response> => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Welcome to CHRONYX</title>
         </head>
-        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #faf9f7;">
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
           <table role="presentation" style="width: 100%; border-collapse: collapse;">
             <tr>
-              <td align="center" style="padding: 40px 0;">
-                <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #e8e6e3;">
+              <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
                   
                   <!-- Header -->
                   <tr>
-                    <td style="padding: 40px 40px 20px; text-align: center; background: #1a1a1a; border-radius: 8px 8px 0 0;">
-                      <h1 style="margin: 0; font-size: 28px; font-weight: 300; letter-spacing: 0.25em; color: #ffffff;">CHRONYX</h1>
-                      <p style="margin: 8px 0 0; font-size: 10px; color: #94a3b8; letter-spacing: 0.15em;">A QUIET SPACE FOR YOUR LIFE</p>
+                    <td style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 40px; text-align: center;">
+                      <h1 style="margin: 0; font-size: 32px; font-weight: 300; letter-spacing: 0.25em; color: #ffffff;">CHRONYX</h1>
+                      <p style="margin: 10px 0 0; font-size: 11px; color: #94a3b8; letter-spacing: 0.2em;">A QUIET SPACE FOR YOUR LIFE</p>
                     </td>
                   </tr>
                   
                   <!-- Content -->
                   <tr>
-                    <td style="padding: 40px;">
-                      <h2 style="margin: 0 0 20px; font-size: 24px; font-weight: 500; color: #1a1a1a;">Welcome, ${displayName}</h2>
+                    <td style="padding: 48px 40px;">
+                      <h2 style="margin: 0 0 24px; font-size: 26px; font-weight: 500; color: #0f172a;">Welcome, ${displayName}!</h2>
                       
-                      <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #64748b;">
-                        Thank you for joining CHRONYX. We're here to help you hold, record, and reflect on the moments that matter.
+                      <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.7; color: #475569;">
+                        Thank you for joining CHRONYX. We're delighted to have you in our community of people who value simplicity, privacy, and meaningful organization.
                       </p>
                       
-                      <p style="margin: 0 0 30px; font-size: 16px; line-height: 1.6; color: #64748b;">
-                        CHRONYX is your personal system of record — a quiet, private space where you can track your finances, studies, memories, and the continuity of your life.
+                      <p style="margin: 0 0 32px; font-size: 16px; line-height: 1.7; color: #475569;">
+                        CHRONYX is your <strong style="color: #0f172a;">personal system of record</strong> — a quiet, private space where you can hold the threads of your life with continuity and calm.
                       </p>
                       
-                      <!-- Features List -->
-                      <div style="background-color: #faf9f7; border-radius: 8px; padding: 24px; margin: 0 0 30px; border: 1px solid #e8e6e3;">
-                        <h3 style="margin: 0 0 16px; font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">What you can hold in CHRONYX:</h3>
-                        <ul style="margin: 0; padding: 0 0 0 20px; color: #1a1a1a; line-height: 1.8;">
-                          <li>Track expenses, income, and savings</li>
-                          <li>Manage loans and EMI schedules</li>
-                          <li>Organize insurance policies</li>
-                          <li>Plan and track your study progress</li>
-                          <li>Store and organize memories</li>
-                          <li>Manage daily todos and tasks</li>
-                          <li>Visualize your lifespan journey</li>
-                        </ul>
+                      <!-- Features Box -->
+                      <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 28px; margin: 0 0 32px; border: 1px solid #e2e8f0;">
+                        <h3 style="margin: 0 0 18px; font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">What you can organize in CHRONYX:</h3>
+                        <table style="width: 100%;">
+                          <tr>
+                            <td style="padding: 6px 0; color: #334155; font-size: 15px;">📋 Daily tasks and todos</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 6px 0; color: #334155; font-size: 15px;">💰 Expenses, income & savings</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 6px 0; color: #334155; font-size: 15px;">🏦 Loans and EMI schedules</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 6px 0; color: #334155; font-size: 15px;">🛡️ Insurance policies</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 6px 0; color: #334155; font-size: 15px;">📚 Study plans and progress</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 6px 0; color: #334155; font-size: 15px;">🖼️ Private photo memories</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 6px 0; color: #334155; font-size: 15px;">⏳ Lifespan visualization</td>
+                          </tr>
+                        </table>
                       </div>
                       
                       <!-- CTA Button -->
                       <table role="presentation" style="width: 100%;">
                         <tr>
                           <td align="center">
-                            <a href="${Deno.env.get("SUPABASE_URL")?.replace('/rest/v1', '') || 'https://chronyx.app'}/app" 
-                               style="display: inline-block; padding: 14px 32px; background-color: #1a1a1a; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500; letter-spacing: 0.05em;">
-                              ENTER CHRONYX
+                            <a href="${appUrl}/app/dashboard" 
+                               style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 15px; font-weight: 500; letter-spacing: 0.08em;">
+                              ENTER CHRONYX →
                             </a>
                           </td>
                         </tr>
                       </table>
+                      
+                      <p style="margin: 32px 0 0; font-size: 14px; color: #64748b; text-align: center;">
+                        We're here if you need us. Just reply to this email or reach out anytime.
+                      </p>
                     </td>
                   </tr>
                   
                   <!-- Footer -->
                   <tr>
-                    <td style="padding: 24px 40px; background-color: #faf9f7; border-top: 1px solid #e8e6e3; border-radius: 0 0 8px 8px;">
+                    <td style="padding: 28px 40px; background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
                       <p style="margin: 0 0 8px; font-size: 12px; color: #64748b; text-align: center;">
-                        CHRONYX by CropXon Innovations Pvt Ltd
+                        This email was sent by <a href="https://getchronyx.com" style="color: #64748b; text-decoration: underline;">Chronyx</a> (getchronyx.com)
                       </p>
-                      <p style="margin: 0; font-size: 11px; color: #94a3b8; text-align: center;">
-                        This is an automated welcome email. Please do not reply directly to this message.
+                      <p style="margin: 0 0 16px; font-size: 11px; color: #94a3b8; text-align: center;">
+                        For support, contact <a href="mailto:support@getchronyx.com" style="color: #64748b; text-decoration: underline;">support@getchronyx.com</a>
                       </p>
+                      <div style="text-align: center; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                        <p style="margin: 0 0 4px; font-size: 11px; color: #94a3b8; font-weight: 500;">
+                          CHRONYX by CROPXON INNOVATIONS PVT. LTD.
+                        </p>
+                        <p style="margin: 0; font-size: 10px; color: #94a3b8;">
+                          <a href="https://www.cropxon.com" style="color: #94a3b8; text-decoration: underline;">www.cropxon.com</a>
+                        </p>
+                      </div>
                     </td>
                   </tr>
                   
@@ -134,19 +157,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify({ success: true, ...result }), {
       status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
     console.error("Error in send-welcome-email function:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };

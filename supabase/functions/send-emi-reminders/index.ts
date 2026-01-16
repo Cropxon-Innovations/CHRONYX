@@ -9,18 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface EMIReminder {
-  emi_id: string;
-  emi_date: string;
-  emi_amount: number;
-  loan_id: string;
-  bank_name: string;
-  loan_type: string;
-  user_email: string;
-  user_id: string;
-  days_until: number;
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -34,7 +22,6 @@ serve(async (req) => {
 
     console.log("Fetching upcoming EMIs for reminders...");
 
-    // Get EMIs due in 7, 3, or 1 days that haven't been reminded yet
     const today = new Date();
     const reminderDays = [7, 3, 1];
     const emailsSent: string[] = [];
@@ -46,7 +33,6 @@ serve(async (req) => {
 
       console.log(`Checking EMIs due on ${targetDateStr} (${days} days away)...`);
 
-      // Get pending EMIs for this date
       const { data: emis, error: emiError } = await supabase
         .from("emi_schedule")
         .select(`
@@ -80,7 +66,6 @@ serve(async (req) => {
         const loan = emi.loans as any;
         const reminderType = `upcoming_${days}`;
 
-        // Check if reminder already sent
         const { data: existingReminder } = await supabase
           .from("emi_reminders")
           .select("id")
@@ -93,10 +78,9 @@ serve(async (req) => {
           continue;
         }
 
-        // Get user email
         const { data: profile } = await supabase
           .from("profiles")
-          .select("email")
+          .select("email, display_name")
           .eq("id", loan.user_id)
           .single();
 
@@ -105,7 +89,6 @@ serve(async (req) => {
           continue;
         }
 
-        // Send email
         const formattedAmount = new Intl.NumberFormat("en-IN", {
           style: "currency",
           currency: "INR",
@@ -118,47 +101,101 @@ serve(async (req) => {
           day: "numeric",
         });
 
+        const userName = profile.display_name || "there";
+
         try {
           const { error: emailError } = await resend.emails.send({
-            from: "CHRONYX <notifications@resend.dev>",
+            from: "CHRONYX <onboarding@resend.dev>", // Use no-reply@getchronyx.com in production
             to: [profile.email],
             subject: `EMI Reminder: ${loan.bank_name} payment due in ${days} day${days > 1 ? "s" : ""}`,
             html: `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #faf9f7;">
-                <div style="background: #1a1a1a; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
-                  <h1 style="color: white; margin: 0; font-size: 20px; letter-spacing: 4px; font-weight: 300;">CHRONYX</h1>
-                  <p style="color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 4px;">BY CROPXON</p>
-                </div>
-                <div style="background: white; padding: 32px; border: 1px solid #e8e6e3; border-top: none; border-radius: 0 0 8px 8px;">
-                  <h2 style="color: #1a1a1a; margin-bottom: 20px; font-weight: 500;">EMI Payment Reminder</h2>
-                  <p style="color: #64748b; font-size: 16px; line-height: 1.5;">
-                    Your EMI payment is due in <strong>${days} day${days > 1 ? "s" : ""}</strong>.
-                  </p>
-                  <div style="background: #faf9f7; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e8e6e3;">
-                    <table style="width: 100%; border-collapse: collapse;">
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              </head>
+              <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; margin: 0; padding: 40px 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
+                  
+                  <!-- Header -->
+                  <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 28px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 20px; letter-spacing: 4px; font-weight: 300;">CHRONYX</h1>
+                    <p style="color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 6px;">EMI REMINDER</p>
+                  </div>
+                  
+                  <!-- Alert Banner -->
+                  <div style="background: ${days === 1 ? '#fef2f2' : days === 3 ? '#fffbeb' : '#f0f9ff'}; padding: 16px 24px; border-bottom: 1px solid ${days === 1 ? '#fecaca' : days === 3 ? '#fed7aa' : '#bae6fd'};">
+                    <p style="margin: 0; color: ${days === 1 ? '#b91c1c' : days === 3 ? '#c2410c' : '#0369a1'}; font-size: 14px; font-weight: 500; text-align: center;">
+                      ${days === 1 ? '⚠️ Payment due tomorrow!' : days === 3 ? '📅 Payment due in 3 days' : '🔔 Upcoming payment reminder'}
+                    </p>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div style="padding: 32px;">
+                    <p style="color: #475569; font-size: 16px; margin: 0 0 24px;">
+                      Hi ${userName}, your EMI payment is due in <strong>${days} day${days > 1 ? "s" : ""}</strong>.
+                    </p>
+                    
+                    <!-- EMI Details -->
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+                      <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                          <td style="padding: 10px 0; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0;">Bank</td>
+                          <td style="padding: 10px 0; font-weight: 600; text-align: right; color: #0f172a; font-size: 14px; border-bottom: 1px solid #e2e8f0;">${loan.bank_name}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 10px 0; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0;">Loan Type</td>
+                          <td style="padding: 10px 0; font-weight: 500; text-align: right; color: #0f172a; font-size: 14px; border-bottom: 1px solid #e2e8f0;">${loan.loan_type}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 10px 0; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0;">Due Date</td>
+                          <td style="padding: 10px 0; font-weight: 500; text-align: right; color: #0f172a; font-size: 14px; border-bottom: 1px solid #e2e8f0;">${formattedDate}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 12px 0; color: #0f172a; font-size: 15px; font-weight: 600;">EMI Amount</td>
+                          <td style="padding: 12px 0; font-weight: 700; text-align: right; color: #dc2626; font-size: 18px;">${formattedAmount}</td>
+                        </tr>
+                      </table>
+                    </div>
+                    
+                    <p style="color: #64748b; font-size: 13px; margin: 0 0 24px; padding: 12px; background: #f1f5f9; border-radius: 8px;">
+                      💡 <strong>Tip:</strong> Ensure sufficient balance in your account to avoid late payment charges.
+                    </p>
+                    
+                    <!-- CTA -->
+                    <table role="presentation" style="width: 100%;">
                       <tr>
-                        <td style="padding: 8px 0; color: #64748b;">Bank</td>
-                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${loan.bank_name}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b;">Loan Type</td>
-                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${loan.loan_type}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b;">Due Date</td>
-                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${formattedDate}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 8px 0; color: #64748b;">Amount</td>
-                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #dc2626;">${formattedAmount}</td>
+                        <td align="center">
+                          <a href="https://chronyx.lovable.app/app/loans" 
+                             style="display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500;">
+                            View in CHRONYX →
+                          </a>
+                        </td>
                       </tr>
                     </table>
                   </div>
-                  <p style="color: #94a3b8; font-size: 14px; margin-top: 30px;">
-                    This is an automated reminder from CHRONYX. Please ensure sufficient balance in your account.
-                  </p>
+                  
+                  <!-- Footer -->
+                  <div style="padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                    <p style="margin: 0 0 8px; font-size: 11px; color: #64748b;">
+                      This email was sent by <a href="https://getchronyx.com" style="color: #64748b; text-decoration: underline;">Chronyx</a> (getchronyx.com)
+                    </p>
+                    <p style="margin: 0 0 12px; font-size: 10px; color: #94a3b8;">
+                      For support, contact <a href="mailto:support@getchronyx.com" style="color: #64748b; text-decoration: underline;">support@getchronyx.com</a>
+                    </p>
+                    <div style="padding-top: 12px; border-top: 1px solid #e2e8f0;">
+                      <p style="margin: 0 0 2px; font-size: 10px; color: #94a3b8; font-weight: 500;">
+                        CHRONYX by CROPXON INNOVATIONS PVT. LTD.
+                      </p>
+                      <p style="margin: 0; font-size: 9px; color: #94a3b8;">
+                        <a href="https://www.cropxon.com" style="color: #94a3b8; text-decoration: underline;">www.cropxon.com</a>
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </body>
+              </html>
             `,
           });
 
@@ -167,7 +204,6 @@ serve(async (req) => {
             continue;
           }
 
-          // Record the reminder
           await supabase.from("emi_reminders").insert({
             emi_id: emi.id,
             reminder_type: reminderType,
@@ -188,19 +224,13 @@ serve(async (req) => {
         reminders_sent: emailsSent.length,
         details: emailsSent,
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
     console.error("Error in send-emi-reminders:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 });

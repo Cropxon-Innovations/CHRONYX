@@ -714,6 +714,16 @@ const Landing = () => {
                     </a>
                   </li>
                   <li>
+                    <a href="mailto:contact@getchronyx.com" className="hover:text-foreground transition-colors">
+                      contact@getchronyx.com
+                    </a>
+                  </li>
+                  <li>
+                    <a href="mailto:office@getchronyx.com" className="hover:text-foreground transition-colors">
+                      office@getchronyx.com (Billing)
+                    </a>
+                  </li>
+                  <li>
                     <a href="https://www.cropxon.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                       www.cropxon.com
                     </a>
