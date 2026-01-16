@@ -20,6 +20,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Refund = lazy(() => import("./pages/Refund"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
 const AppLayout = lazy(() => import("./components/layout/AppLayout"));
 const Dashboard = lazy(() => import("./pages/app/Dashboard"));
 const Todos = lazy(() => import("./pages/app/Todos"));
@@ -129,7 +130,17 @@ const AnimatedRoutes = () => {
           } 
         />
         <Route 
-          path="/app" 
+          path="/contact" 
+          element={
+            <motion.div {...pageTransition}>
+              <Suspense fallback={<PageLoader />}>
+                <Contact />
+              </Suspense>
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/app"
           element={
             <Suspense fallback={<PageLoader />}>
               <AppLayout />

@@ -36,6 +36,14 @@
     <priority>0.8</priority>
   </url>
   
+  <!-- Contact Page -->
+  <url>
+    <loc>https://chronyx.lovable.app/contact</loc>
+    <lastmod>2026-01-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
   <!-- App Dashboard -->
   <url>
     <loc>https://chronyx.lovable.app/app/dashboard</loc>
