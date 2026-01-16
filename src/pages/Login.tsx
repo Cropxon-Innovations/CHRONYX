@@ -10,6 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { LeftSketchAnimation, RightSketchAnimation, FloatingParticles } from "@/components/auth/LoginAnimations";
 import { motion } from "framer-motion";
 import { Github, Apple, Lock, Loader2 } from "lucide-react";
+import { DomainWarningBanner } from "@/components/auth/DomainCanonicalizer";
+import { OAuthErrorBanner } from "@/components/auth/OAuthErrorBanner";
 
 // CHRONYX Logo Component (same as Landing page)
 const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
@@ -175,25 +177,30 @@ const Login = () => {
   }
 
   return (
-    <motion.main 
-      className="min-h-screen vyom-gradient-bg flex items-center justify-center px-4 sm:px-6 relative overflow-hidden"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-    >
-      <FloatingParticles />
-      
-      <div className="w-full max-w-5xl flex items-center justify-center gap-8 relative z-10">
-        <LeftSketchAnimation />
+    <>
+      <DomainWarningBanner />
+      <motion.main 
+        className="min-h-screen vyom-gradient-bg flex items-center justify-center px-4 sm:px-6 relative overflow-hidden"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <FloatingParticles />
         
-        <div className="w-full max-w-sm">
-          <Link 
-            to="/" 
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8 sm:mb-12"
-          >
-            ← Back
-          </Link>
+        <div className="w-full max-w-5xl flex items-center justify-center gap-8 relative z-10">
+          <LeftSketchAnimation />
+          
+          <div className="w-full max-w-sm">
+            <Link 
+              to="/" 
+              className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8 sm:mb-12"
+            >
+              ← Back
+            </Link>
+
+            {/* OAuth Error Banner */}
+            <OAuthErrorBanner />
 
           <motion.div 
             className="bg-card border border-border rounded-lg p-6 sm:p-8 shadow-sm relative"
@@ -443,7 +450,7 @@ const Login = () => {
               {!isSignUp && (
                 <div className="pt-2 border-t border-border/50">
                   <Link 
-                    to="/forgot-password"
+                    to="/contact"
                     className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
                   >
                     Forgot your email? Contact support
@@ -458,6 +465,7 @@ const Login = () => {
         <RightSketchAnimation />
       </div>
     </motion.main>
+    </>
   );
 };
 
