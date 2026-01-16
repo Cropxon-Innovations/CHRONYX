@@ -1,12 +1,35 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import chronyxCircularLogo from "@/assets/chronyx-circular-logo.png";
 
 interface SplashScreenProps {
   isVisible: boolean;
   onComplete?: () => void;
   minimal?: boolean;
 }
+
+// Inline SVG Logo Component - No Background
+const ChronyxLogoSVG = ({ className = "" }: { className?: string }) => (
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className={className}>
+    {/* Outer ring */}
+    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.4"/>
+    {/* Inner ring with gradient */}
+    <defs>
+      <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style={{ stopColor: '#64748b' }}/>
+        <stop offset="50%" style={{ stopColor: '#94a3b8' }}/>
+        <stop offset="100%" style={{ stopColor: '#64748b' }}/>
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="url(#ringGradient)" strokeWidth="3"/>
+    {/* Center C letter */}
+    <text x="50" y="58" textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif" fontSize="32" fontWeight="300" fill="currentColor">C</text>
+    {/* Decorative dots */}
+    <circle cx="50" cy="12" r="3" fill="currentColor" opacity="0.6"/>
+    <circle cx="88" cy="50" r="3" fill="currentColor" opacity="0.6"/>
+    <circle cx="50" cy="88" r="3" fill="currentColor" opacity="0.6"/>
+    <circle cx="12" cy="50" r="3" fill="currentColor" opacity="0.6"/>
+  </svg>
+);
 
 const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenProps) => {
   const [showTagline, setShowTagline] = useState(false);
@@ -41,28 +64,28 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.3 }}
               transition={{ duration: 1 }}
-              className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"
+              className="absolute inset-0 bg-gradient-to-br from-slate-800/20 via-transparent to-slate-700/10"
             />
             {/* Subtle animated circles */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1.2, opacity: 0.1 }}
+              animate={{ scale: 1.2, opacity: 0.15 }}
               transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-              className="absolute left-1/4 top-1/4 h-64 w-64 rounded-full bg-primary/20 blur-3xl"
+              className="absolute left-1/4 top-1/4 h-64 w-64 rounded-full bg-slate-500/20 blur-3xl"
             />
             <motion.div
               initial={{ scale: 1, opacity: 0 }}
-              animate={{ scale: 1.3, opacity: 0.08 }}
+              animate={{ scale: 1.3, opacity: 0.1 }}
               transition={{ duration: 2.5, repeat: Infinity, repeatType: "reverse", delay: 0.5 }}
-              className="absolute bottom-1/4 right-1/4 h-48 w-48 rounded-full bg-primary/20 blur-3xl"
+              className="absolute bottom-1/4 right-1/4 h-48 w-48 rounded-full bg-slate-600/20 blur-3xl"
             />
           </div>
 
           {/* Main content */}
           <div className="relative flex flex-col items-center gap-6">
-            {/* Spinning Circular Logo */}
+            {/* Spinning Circular Logo - Inline SVG */}
             <motion.div
-              className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32"
+              className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 text-slate-50"
               animate={{ rotate: 360 }}
               transition={{
                 duration: 2,
@@ -70,11 +93,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
                 ease: "linear",
               }}
             >
-              <img 
-                src={chronyxCircularLogo} 
-                alt="CHRONYX" 
-                className="w-full h-full object-contain"
-              />
+              <ChronyxLogoSVG className="w-full h-full" />
             </motion.div>
 
             {/* Logo text */}
@@ -151,6 +170,14 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
               CHRONYX BY CROPXON<br />
               INNOVATIONS PVT. LTD.
             </p>
+            <a 
+              href="https://www.cropxon.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[8px] tracking-[0.1em] text-slate-600 hover:text-slate-400 transition-colors sm:text-[9px]"
+            >
+              www.cropxon.com
+            </a>
           </motion.div>
         </motion.div>
       )}
