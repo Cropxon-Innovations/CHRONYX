@@ -142,15 +142,21 @@ const AppSidebar = () => {
   const [pendingOtp, setPendingOtp] = useState<{ hash: string; expiresAt: string } | null>(null);
 
   const handleSendOtp = async () => {
+    if (!user?.id) {
+      toast.error("User not found. Please sign in again.");
+      return;
+    }
+    
     setOtpSending(true);
     try {
       const endpoint = verifyDialog.type === "email" 
         ? "send-email-otp" 
         : "send-sms-otp";
       
+      // Include userId which is required by the edge function
       const payload = verifyDialog.type === "email" 
-        ? { email: verifyDialog.value }
-        : { phone: verifyDialog.value };
+        ? { email: verifyDialog.value, userId: user.id, type: "email" }
+        : { phone: verifyDialog.value, userId: user.id, type: "phone" };
 
       const response = await supabase.functions.invoke(endpoint, {
         body: payload,
@@ -175,10 +181,11 @@ const AppSidebar = () => {
     }
   };
 
-  // Hash OTP for verification
+  // Hash OTP for verification - must match backend hash (includes userId)
   const hashOtp = async (otp: string): Promise<string> => {
+    if (!user?.id) return "";
     const encoder = new TextEncoder();
-    const data = encoder.encode(otp);
+    const data = encoder.encode(otp + user.id);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import MetricCard from "@/components/dashboard/MetricCard";
 import LifespanBar from "@/components/dashboard/LifespanBar";
 import TrendChart from "@/components/dashboard/TrendChart";
@@ -15,11 +15,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { format, subDays, startOfWeek, addDays, parseISO, formatDistanceToNow } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, Settings, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "next-themes";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const { showOnboarding, isLoading: onboardingLoading, completeOnboarding } = useOnboarding();
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [todosStats, setTodosStats] = useState({ completed: 0, total: 0 });
   const [studyMinutes, setStudyMinutes] = useState(0);
   const [birthDate, setBirthDate] = useState<Date | null>(null);
@@ -28,6 +43,7 @@ const Dashboard = () => {
   const [heatmapData, setHeatmapData] = useState<number[]>([]);
   const [recentActivity, setRecentActivity] = useState<Array<{ action: string; module: string; timestamp: string }>>([]);
   const [recentAchievements, setRecentAchievements] = useState<Array<{ date: string; title: string; description: string; category: string }>>([]);
+  const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -35,7 +51,9 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async (showRefreshIndicator = false) => {
+    if (showRefreshIndicator) setIsRefreshing(true);
+    
     const today = new Date().toISOString().split("T")[0];
 
     // Fetch todos for today
@@ -60,18 +78,19 @@ const Dashboard = () => {
       setStudyMinutes(total);
     }
 
-    // Fetch profile for lifespan calculations
-    const { data: profile } = await supabase
+    // Fetch profile for lifespan calculations and display
+    const { data: profileData } = await supabase
       .from("profiles")
-      .select("birth_date, target_age")
+      .select("birth_date, target_age, display_name, avatar_url")
       .eq("id", user?.id)
       .maybeSingle();
 
-    if (profile) {
-      if (profile.birth_date) {
-        setBirthDate(new Date(profile.birth_date));
+    if (profileData) {
+      if (profileData.birth_date) {
+        setBirthDate(new Date(profileData.birth_date));
       }
-      setTargetAge(profile.target_age || 60);
+      setTargetAge(profileData.target_age || 60);
+      setProfile({ display_name: profileData.display_name, avatar_url: profileData.avatar_url });
     }
 
     // Fetch study trend for this week
@@ -160,6 +179,11 @@ const Dashboard = () => {
     }
 
     setLoading(false);
+    if (showRefreshIndicator) setIsRefreshing(false);
+  }, [user]);
+
+  const handleRefresh = () => {
+    fetchDashboardData(true);
   };
 
   // Calculate lifespan data
@@ -188,17 +212,91 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in px-1 sm:px-0">
-      {/* Header */}
-      <header>
-        <h1 className="text-xl sm:text-2xl font-light text-foreground tracking-wide">Today</h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-          {new Date().toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
-        </p>
+      {/* Header with User Menu */}
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-light text-foreground tracking-wide">
+            {profile?.display_name ? `Welcome back, ${profile.display_name.split(' ')[0]}` : 'Today'}
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            {new Date().toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {/* Refresh Button */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="h-9 w-9"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+          
+          {/* User Dropdown Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Avatar className="h-9 w-9">
+                  {profile?.avatar_url?.startsWith("emoji:") ? (
+                    <AvatarFallback className="bg-primary/10 text-lg">
+                      {profile.avatar_url.replace("emoji:", "")}
+                    </AvatarFallback>
+                  ) : profile?.avatar_url ? (
+                    <AvatarImage src={profile.avatar_url} alt="Profile" />
+                  ) : (
+                    <AvatarFallback className="bg-primary/10">
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{profile?.display_name || 'User'}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/app/profile" className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile & Plan</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/app/settings" className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="cursor-pointer"
+              >
+                {theme === 'dark' ? '☀️' : '🌙'} 
+                <span className="ml-2">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => signOut()} 
+                className="cursor-pointer text-destructive focus:text-destructive"
+              >
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </header>
 
       {/* Pending Yesterday Tasks */}
