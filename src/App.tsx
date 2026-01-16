@@ -15,6 +15,8 @@ import PageLoader from "@/components/layout/PageLoader";
 // Lazy load pages for better performance
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Refund = lazy(() => import("./pages/Refund"));
@@ -75,6 +77,26 @@ const AnimatedRoutes = () => {
             <motion.div {...pageTransition}>
               <Suspense fallback={<PageLoader />}>
                 <Login />
+              </Suspense>
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/forgot-password" 
+          element={
+            <motion.div {...pageTransition}>
+              <Suspense fallback={<PageLoader />}>
+                <ForgotPassword />
+              </Suspense>
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/reset-password" 
+          element={
+            <motion.div {...pageTransition}>
+              <Suspense fallback={<PageLoader />}>
+                <ResetPassword />
               </Suspense>
             </motion.div>
           } 

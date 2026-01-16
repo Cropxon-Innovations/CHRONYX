@@ -7,27 +7,49 @@ interface SplashScreenProps {
   minimal?: boolean;
 }
 
-// Inline SVG Logo Component - No Background
-const ChronyxLogoSVG = ({ className = "" }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className={className}>
-    {/* Outer ring */}
-    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.4"/>
-    {/* Inner ring with gradient */}
+// CHRONYX Logo Component - Same as Landing Page
+const ChronxyxLogo = ({ className = "w-24 h-24" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style={{ stopColor: '#64748b' }}/>
-        <stop offset="50%" style={{ stopColor: '#94a3b8' }}/>
-        <stop offset="100%" style={{ stopColor: '#64748b' }}/>
+      <linearGradient id="splash-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#e2e8f0" />
+        <stop offset="100%" stopColor="#94a3b8" />
       </linearGradient>
     </defs>
-    <circle cx="50" cy="50" r="38" fill="none" stroke="url(#ringGradient)" strokeWidth="3"/>
-    {/* Center C letter */}
-    <text x="50" y="58" textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif" fontSize="32" fontWeight="300" fill="currentColor">C</text>
-    {/* Decorative dots */}
-    <circle cx="50" cy="12" r="3" fill="currentColor" opacity="0.6"/>
-    <circle cx="88" cy="50" r="3" fill="currentColor" opacity="0.6"/>
-    <circle cx="50" cy="88" r="3" fill="currentColor" opacity="0.6"/>
-    <circle cx="12" cy="50" r="3" fill="currentColor" opacity="0.6"/>
+    {/* Outer ring */}
+    <circle 
+      cx="50" cy="50" r="45" 
+      stroke="url(#splash-logo-gradient)" 
+      strokeWidth="2" 
+      fill="none"
+      className="opacity-80"
+    />
+    {/* Inner dashed ring */}
+    <circle 
+      cx="50" cy="50" r="35" 
+      stroke="#94a3b8" 
+      strokeWidth="1" 
+      strokeDasharray="6 4"
+      fill="none"
+      className="opacity-40"
+    />
+    {/* Center dot */}
+    <circle 
+      cx="50" cy="50" r="5" 
+      fill="#e2e8f0"
+      className="opacity-90"
+    />
+    {/* Time markers */}
+    {[0, 90, 180, 270].map((angle, i) => (
+      <circle 
+        key={i}
+        cx={50 + 40 * Math.cos((angle - 90) * Math.PI / 180)}
+        cy={50 + 40 * Math.sin((angle - 90) * Math.PI / 180)}
+        r="2"
+        fill="#e2e8f0"
+        className="opacity-50"
+      />
+    ))}
   </svg>
 );
 
@@ -83,17 +105,17 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
 
           {/* Main content */}
           <div className="relative flex flex-col items-center gap-6">
-            {/* Spinning Circular Logo - Inline SVG */}
+            {/* Spinning CHRONYX Logo - Same as Landing Page */}
             <motion.div
-              className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 text-slate-50"
+              className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32"
               animate={{ rotate: 360 }}
               transition={{
-                duration: 2,
+                duration: 8,
                 repeat: Infinity,
                 ease: "linear",
               }}
             >
-              <ChronyxLogoSVG className="w-full h-full" />
+              <ChronxyxLogo className="w-full h-full" />
             </motion.div>
 
             {/* Logo text */}
