@@ -39,8 +39,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Use custom domain for production, fallback to current origin for dev
+  const getRedirectUrl = () => {
+    // Always prefer custom domain in production
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      // If on Vercel custom domain or production
+      if (hostname === 'getchronyx.com' || hostname === 'www.getchronyx.com') {
+        return 'https://getchronyx.com/app';
+      }
+      // If on any lovable preview/dev domain, still redirect to custom domain for consistency
+      if (hostname.includes('lovable') || hostname.includes('lovableproject')) {
+        return 'https://getchronyx.com/app';
+      }
+    }
+    // Fallback for local development
+    return `${window.location.origin}/app`;
+  };
+
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/app`;
+    const redirectUrl = getRedirectUrl();
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -72,10 +90,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
+    const redirectUrl = getRedirectUrl();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/app`,
+        redirectTo: redirectUrl,
       },
     });
     return { error };
