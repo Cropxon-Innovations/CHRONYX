@@ -35,6 +35,7 @@ import {
 } from "@/components/landing/SketchAnimations";
 import DashboardPreview from "@/components/landing/DashboardPreview";
 import ScrollReveal, { StaggerContainer, StaggerItem } from "@/components/landing/ScrollReveal";
+import LandingNav from "@/components/landing/LandingNav";
 import {
   Dialog,
   DialogContent,
@@ -194,20 +195,11 @@ const Landing = () => {
       {/* Main Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
         
-        {/* Header */}
-        <header className="w-full px-6 py-6">
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <ChronxyxLogo className="w-8 h-8" />
-              <span className="text-lg font-light tracking-[0.2em] text-foreground/80">CHRONYX</span>
-            </div>
-            <Link to="/login">
-              <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Enter
-              </button>
-            </Link>
-          </div>
-        </header>
+        {/* Navigation */}
+        <LandingNav onDesktopDownload={() => setShowDesktopDialog(true)} />
+
+        {/* Spacer for fixed nav */}
+        <div className="h-16" />
 
         {/* Hero Section - Two Column Layout */}
         <section className="relative flex-1 flex items-center justify-center px-4 sm:px-6 py-8 lg:py-12">
@@ -460,7 +452,7 @@ const Landing = () => {
 
         {/* Features Grid Section */}
         <ScrollReveal direction="up" delay={0.1}>
-          <section className="px-4 sm:px-6 py-12 sm:py-16">
+          <section id="features" className="px-4 sm:px-6 py-12 sm:py-16">
             <div className="max-w-5xl mx-auto">
               <h2 className="text-center text-xl sm:text-2xl font-light text-foreground mb-2">
                 Everything in one place
@@ -674,22 +666,67 @@ const Landing = () => {
         </ScrollReveal>
 
         {/* Footer */}
-        <footer className="px-4 sm:px-6 py-6 border-t border-border/20">
+        <footer id="footer" className="px-4 sm:px-6 py-10 sm:py-12 border-t border-border/20 bg-card/20">
           <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <ChronxyxLogo className="w-4 h-4 opacity-40" />
-                <span className="font-light tracking-wide text-xs text-muted-foreground/40">CHRONYX by CROPXON</span>
+            {/* Main Footer Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+              {/* Brand */}
+              <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <ChronxyxLogo className="w-6 h-6" />
+                  <span className="font-light tracking-[0.15em] text-sm text-foreground">CHRONYX</span>
+                </div>
+                <p className="text-xs text-muted-foreground/70 leading-relaxed mb-3">
+                  A quiet space for your life. Manage tasks, finances, studies, and memories — all in one private, secure platform.
+                </p>
+                <p className="text-[10px] text-muted-foreground/50">
+                  Built by CROPXON INNOVATIONS PVT. LTD.
+                </p>
               </div>
-              
-              <div className="flex items-center gap-4 text-[10px] text-muted-foreground/50">
-                <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
-                <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
-                <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
-                <Link to="/refund" className="hover:text-foreground transition-colors">Refund</Link>
-                <Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+
+              {/* Product Links */}
+              <div>
+                <h4 className="text-xs font-medium text-foreground mb-3 tracking-wide">Product</h4>
+                <ul className="space-y-2 text-xs text-muted-foreground/70">
+                  <li><button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-foreground transition-colors">Features</button></li>
+                  <li><Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link></li>
+                  <li><Link to="/about" className="hover:text-foreground transition-colors">About</Link></li>
+                </ul>
               </div>
-              
+
+              {/* Legal Links */}
+              <div>
+                <h4 className="text-xs font-medium text-foreground mb-3 tracking-wide">Legal</h4>
+                <ul className="space-y-2 text-xs text-muted-foreground/70">
+                  <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+                  <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
+                  <li><Link to="/refund" className="hover:text-foreground transition-colors">Refund Policy</Link></li>
+                </ul>
+              </div>
+
+              {/* Contact */}
+              <div>
+                <h4 className="text-xs font-medium text-foreground mb-3 tracking-wide">Contact</h4>
+                <ul className="space-y-2 text-xs text-muted-foreground/70">
+                  <li>
+                    <a href="mailto:support@getchronyx.com" className="hover:text-foreground transition-colors">
+                      support@getchronyx.com
+                    </a>
+                  </li>
+                  <li>
+                    <a href="https://www.cropxon.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                      www.cropxon.com
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Bottom Bar */}
+            <div className="pt-6 border-t border-border/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-[10px] text-muted-foreground/50 text-center sm:text-left">
+                © 2024-2026 CROPXON INNOVATIONS PVT. LTD. All rights reserved.
+              </p>
               <p className="text-[10px] text-muted-foreground/40">Private · Quiet · Timeless</p>
             </div>
           </div>
