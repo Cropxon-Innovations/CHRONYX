@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import chronyxStack from "@/assets/chronyx-stack.svg";
+import chronyxCircularLogo from "@/assets/chronyx-circular-logo.png";
 
 interface SplashScreenProps {
   isVisible: boolean;
@@ -10,22 +10,13 @@ interface SplashScreenProps {
 
 const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenProps) => {
   const [showTagline, setShowTagline] = useState(false);
-  const [animationPhase, setAnimationPhase] = useState(0);
 
   useEffect(() => {
     if (isVisible && !minimal) {
-      // Phase 1: Stack animation starts
-      const phase1 = setTimeout(() => setAnimationPhase(1), 100);
-      // Phase 2: Show logo fully
-      const phase2 = setTimeout(() => setAnimationPhase(2), 600);
-      // Phase 3: Show tagline
       const taglineTimer = setTimeout(() => setShowTagline(true), 800);
-      // Complete
       const completeTimer = setTimeout(() => onComplete?.(), 2200);
       
       return () => {
-        clearTimeout(phase1);
-        clearTimeout(phase2);
         clearTimeout(taglineTimer);
         clearTimeout(completeTimer);
       };
@@ -42,7 +33,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background overflow-hidden"
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900 overflow-hidden"
         >
           {/* Background gradient effect */}
           <div className="absolute inset-0 overflow-hidden">
@@ -69,25 +60,22 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
 
           {/* Main content */}
           <div className="relative flex flex-col items-center gap-6">
-            {/* Stacked Logo Animation - Three layers stacking */}
-            <div className="relative w-24 h-16 sm:w-32 sm:h-20 md:w-40 md:h-24">
-              {/* Layer 1 - Bottom (first to appear, slides up) */}
-              <motion.div
-                initial={{ y: 60, opacity: 0 }}
-                animate={{ 
-                  y: animationPhase >= 1 ? 0 : 60, 
-                  opacity: animationPhase >= 1 ? 1 : 0,
-                }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="absolute inset-0"
-              >
-                <img 
-                  src={chronyxStack} 
-                  alt="CHRONYX" 
-                  className="w-full h-full object-contain drop-shadow-lg"
-                />
-              </motion.div>
-            </div>
+            {/* Spinning Circular Logo */}
+            <motion.div
+              className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32"
+              animate={{ rotate: 360 }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            >
+              <img 
+                src={chronyxCircularLogo} 
+                alt="CHRONYX" 
+                className="w-full h-full object-contain"
+              />
+            </motion.div>
 
             {/* Logo text */}
             <motion.div
@@ -101,7 +89,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
               className="relative"
             >
               <motion.h1
-                className="text-3xl font-light tracking-[0.3em] text-foreground sm:text-4xl md:text-5xl"
+                className="text-3xl font-light tracking-[0.3em] text-slate-50 sm:text-4xl md:text-5xl"
                 initial={{ letterSpacing: "0.6em", opacity: 0 }}
                 animate={{ letterSpacing: "0.3em", opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.5 }}
@@ -114,7 +102,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
                 initial={{ scaleX: 0, opacity: 0 }}
                 animate={{ scaleX: 1, opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.8 }}
-                className="mt-2 h-px w-full origin-center bg-gradient-to-r from-transparent via-primary/60 to-transparent"
+                className="mt-2 h-px w-full origin-center bg-gradient-to-r from-transparent via-slate-400/60 to-transparent"
               />
             </motion.div>
 
@@ -124,7 +112,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: showTagline ? 0.7 : 0, y: showTagline ? 0 : 10 }}
                 transition={{ duration: 0.5 }}
-                className="text-center text-xs tracking-[0.15em] text-muted-foreground sm:text-sm"
+                className="text-center text-xs tracking-[0.15em] text-slate-400 sm:text-sm"
               >
                 A Quiet Space for Your Life
               </motion.p>
@@ -137,7 +125,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
               transition={{ delay: 0.8 }}
               className="mt-4"
             >
-              <div className="relative h-0.5 w-32 overflow-hidden rounded-full bg-muted sm:w-48">
+              <div className="relative h-0.5 w-32 overflow-hidden rounded-full bg-slate-800 sm:w-48">
                 <motion.div
                   initial={{ x: "-100%" }}
                   animate={{ x: "200%" }}
@@ -146,7 +134,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
                     repeat: Infinity,
                     ease: "easeInOut",
                   }}
-                  className="absolute h-full w-1/2 bg-gradient-to-r from-transparent via-primary/60 to-transparent"
+                  className="absolute h-full w-1/2 bg-gradient-to-r from-transparent via-slate-500 to-transparent"
                 />
               </div>
             </motion.div>
@@ -159,8 +147,9 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
             transition={{ delay: 1, duration: 0.5 }}
             className="absolute bottom-4 flex flex-col items-center gap-1 sm:bottom-6 md:bottom-8"
           >
-            <p className="text-[9px] tracking-[0.2em] text-muted-foreground sm:text-[10px] md:text-xs">
-              CHRONYX by CROPXON
+            <p className="text-[9px] tracking-[0.15em] text-slate-500 sm:text-[10px] md:text-xs text-center leading-relaxed">
+              CHRONYX BY CROPXON<br />
+              INNOVATIONS PVT. LTD.
             </p>
           </motion.div>
         </motion.div>

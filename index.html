@@ -7,9 +7,9 @@
     <!-- Primary Meta Tags -->
     <title>CHRONYX — A Quiet Space for Your Life | Life Management App</title>
     <meta name="title" content="CHRONYX — A Quiet Space for Your Life | Life Management App" />
-    <meta name="description" content="CHRONYX is a private, calm system to hold your life with continuity. Manage tasks, learning, finances, and memories — all in one quiet, focused space. Built by CROPXON." />
+    <meta name="description" content="CHRONYX is a private, calm system to hold your life with continuity. Manage tasks, learning, finances, and memories — all in one quiet, focused space. Built by CROPXON INNOVATIONS PVT. LTD." />
     <meta name="keywords" content="life management, task management, expense tracker, study planner, memory vault, personal finance, productivity app, CHRONYX, CROPXON" />
-    <meta name="author" content="CHRONYX by CROPXON" />
+    <meta name="author" content="CHRONYX by CROPXON INNOVATIONS PVT. LTD." />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#475569" />
     <meta name="language" content="English" />
@@ -76,7 +76,7 @@
       },
       "author": {
         "@type": "Organization",
-        "name": "CROPXON",
+        "name": "CROPXON INNOVATIONS PVT. LTD.",
         "url": "https://www.getchronyx.com"
       },
       "aggregateRating": {
@@ -99,11 +99,16 @@
         transition: opacity 0.5s ease-out;
       }
       #splash-screen.hidden { opacity: 0; pointer-events: none; }
+      #splash-logo-container {
+        position: relative;
+        width: 100px;
+        height: 100px;
+      }
       #splash-logo-img {
-        width: 80px;
-        height: 80px;
+        width: 100%;
+        height: 100%;
         object-fit: contain;
-        animation: bounceStack 1.5s ease-in-out infinite;
+        animation: spinLogo 2s linear infinite;
       }
       #splash-text { 
         margin-top: 1.5rem;
@@ -124,8 +129,10 @@
         position: absolute;
         bottom: 1.5rem;
         font-size: 0.625rem;
-        letter-spacing: 0.2em;
+        letter-spacing: 0.15em;
         color: #64748b;
+        text-align: center;
+        line-height: 1.6;
       }
       #splash-loader {
         margin-top: 1.5rem;
@@ -143,18 +150,26 @@
         background: linear-gradient(90deg, transparent, #475569, transparent);
         animation: slide 1.2s ease-in-out infinite;
       }
-      @keyframes bounceStack { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+      @keyframes spinLogo { 
+        from { transform: rotate(0deg); } 
+        to { transform: rotate(360deg); } 
+      }
       @keyframes fadeIn { to { opacity: 0.7; } }
       @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(200%); } }
     </style>
   </head>
   <body>
     <div id="splash-screen">
-      <img id="splash-logo-img" src="/chronyx-logo.png" alt="CHRONYX" />
+      <div id="splash-logo-container">
+        <img id="splash-logo-img" src="/chronyx-circular-logo.png" alt="CHRONYX" />
+      </div>
       <div id="splash-text">CHRONYX</div>
       <div id="splash-tagline">A Quiet Space for Your Life</div>
       <div id="splash-loader"></div>
-      <div id="splash-footer">CHRONYX by CROPXON</div>
+      <div id="splash-footer">
+        CHRONYX BY CROPXON<br/>
+        INNOVATIONS PVT. LTD.
+      </div>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

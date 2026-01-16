@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import chronyxStack from "@/assets/chronyx-stack.svg";
+import chronyxCircularLogo from "@/assets/chronyx-circular-logo.png";
 
 const PageLoader = () => {
   return (
@@ -9,55 +9,46 @@ const PageLoader = () => {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background"
     >
-      {/* CHRONYX Logo with stack animation */}
-      <motion.div
-        animate={{
-          scale: [1, 1.05, 1],
-          opacity: [0.8, 1, 0.8],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="flex flex-col items-center gap-4"
-      >
-        {/* Stack Logo with bounce effect */}
-        <div className="relative w-20 h-12 sm:w-24 sm:h-14">
-          <motion.div
-            animate={{
-              y: [0, -5, 0],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
-            <img 
-              src={chronyxStack} 
-              alt="CHRONYX" 
-              className="w-full h-full object-contain drop-shadow-lg"
-            />
-          </motion.div>
-        </div>
+      {/* CHRONYX Logo with spinning animation */}
+      <div className="flex flex-col items-center gap-4">
+        {/* Spinning Circular Logo */}
+        <motion.div
+          className="w-16 h-16 sm:w-20 sm:h-20"
+          animate={{ rotate: 360 }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        >
+          <img 
+            src={chronyxCircularLogo} 
+            alt="CHRONYX" 
+            className="w-full h-full object-contain"
+          />
+        </motion.div>
         
         {/* Logo Text */}
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-light tracking-[0.3em] text-foreground">
-          CHRONYX
-        </h1>
+        <div className="flex flex-col items-center">
+          <h1 className="text-2xl sm:text-3xl font-light tracking-[0.3em] text-foreground">
+            CHRONYX
+          </h1>
+          <span className="text-[8px] sm:text-[9px] tracking-[0.12em] text-muted-foreground mt-0.5">
+            BY CROPXON
+          </span>
+        </div>
         
         {/* Loading bar */}
-        <div className="w-40 sm:w-48 h-0.5 bg-muted overflow-hidden rounded-full">
+        <div className="w-32 sm:w-40 h-0.5 bg-muted overflow-hidden rounded-full mt-2">
           <motion.div
             initial={{ x: "-100%" }}
-            animate={{ x: "100%" }}
+            animate={{ x: "200%" }}
             transition={{
-              duration: 1.5,
+              duration: 1.2,
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="h-full w-1/2 bg-primary/60"
+            className="h-full w-1/2 bg-gradient-to-r from-transparent via-primary/60 to-transparent"
           />
         </div>
         
@@ -79,16 +70,17 @@ const PageLoader = () => {
             className="h-3 bg-muted rounded w-1/2"
           />
         </div>
-      </motion.div>
+      </div>
       
       {/* By CROPXON text */}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.5 }}
         transition={{ delay: 0.5 }}
-        className="absolute bottom-4 sm:bottom-6 md:bottom-8 text-[9px] sm:text-[10px] md:text-xs tracking-[0.2em] text-muted-foreground"
+        className="absolute bottom-4 sm:bottom-6 md:bottom-8 text-[9px] sm:text-[10px] md:text-xs tracking-[0.15em] text-muted-foreground text-center leading-relaxed"
       >
-        CHRONYX by CROPXON
+        CHRONYX BY CROPXON<br />
+        INNOVATIONS PVT. LTD.
       </motion.p>
     </motion.div>
   );
