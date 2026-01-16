@@ -15,27 +15,43 @@ const sizeConfig = {
   xl: "w-24 h-24",
 };
 
-// Inline SVG Logo Component - No Background
+// CHRONYX Logo Component - Consistent with Landing Page (no "C" letter)
 const LogoSVG = () => (
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-    {/* Outer ring */}
-    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.4"/>
-    {/* Inner ring with gradient */}
+  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
     <defs>
-      <linearGradient id="circularRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style={{ stopColor: '#64748b' }}/>
-        <stop offset="50%" style={{ stopColor: '#94a3b8' }}/>
-        <stop offset="100%" style={{ stopColor: '#64748b' }}/>
+      <linearGradient id="circular-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="hsl(var(--primary))" />
+        <stop offset="100%" stopColor="hsl(var(--primary) / 0.6)" />
       </linearGradient>
     </defs>
-    <circle cx="50" cy="50" r="38" fill="none" stroke="url(#circularRingGradient)" strokeWidth="3"/>
-    {/* Center C letter */}
-    <text x="50" y="58" textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif" fontSize="32" fontWeight="300" fill="currentColor">C</text>
-    {/* Decorative dots */}
-    <circle cx="50" cy="12" r="3" fill="currentColor" opacity="0.6"/>
-    <circle cx="88" cy="50" r="3" fill="currentColor" opacity="0.6"/>
-    <circle cx="50" cy="88" r="3" fill="currentColor" opacity="0.6"/>
-    <circle cx="12" cy="50" r="3" fill="currentColor" opacity="0.6"/>
+    {/* Outer ring */}
+    <circle 
+      cx="50" cy="50" r="45" 
+      stroke="url(#circular-logo-gradient)" 
+      strokeWidth="2" 
+      fill="none"
+      opacity="0.8"
+    />
+    {/* Inner dashed ring */}
+    <circle 
+      cx="50" cy="50" r="35" 
+      stroke="hsl(var(--primary))" 
+      strokeWidth="1" 
+      strokeDasharray="6 4"
+      fill="none"
+      opacity="0.4"
+    />
+    {/* Center dot */}
+    <circle 
+      cx="50" cy="50" r="5" 
+      fill="hsl(var(--primary))"
+      opacity="0.9"
+    />
+    {/* Time markers at 12, 3, 6, 9 o'clock positions */}
+    <circle cx="50" cy="10" r="2" fill="hsl(var(--primary))" opacity="0.5"/>
+    <circle cx="90" cy="50" r="2" fill="hsl(var(--primary))" opacity="0.5"/>
+    <circle cx="50" cy="90" r="2" fill="hsl(var(--primary))" opacity="0.5"/>
+    <circle cx="10" cy="50" r="2" fill="hsl(var(--primary))" opacity="0.5"/>
   </svg>
 );
 

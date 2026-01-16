@@ -267,26 +267,25 @@
     <div id="splash-screen">
       <div id="splash-glow"></div>
       <div id="splash-logo-container">
-        <!-- Inline SVG Logo - No Background -->
-        <svg id="splash-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <!-- Outer ring -->
-          <circle cx="50" cy="50" r="46" fill="none" stroke="#475569" stroke-width="2" opacity="0.6"/>
-          <!-- Inner ring with gradient -->
+        <!-- CHRONYX Logo - Consistent with Landing Page (no "C" letter) -->
+        <svg id="splash-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="splashRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="splashLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" style="stop-color:#64748b"/>
-              <stop offset="50%" style="stop-color:#94a3b8"/>
-              <stop offset="100%" style="stop-color:#64748b"/>
+              <stop offset="100%" style="stop-color:#64748b; stop-opacity:0.6"/>
             </linearGradient>
           </defs>
-          <circle cx="50" cy="50" r="38" fill="none" stroke="url(#splashRingGradient)" stroke-width="3"/>
-          <!-- Center C letter -->
-          <text x="50" y="58" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="300" fill="#f8fafc">C</text>
-          <!-- Decorative dots -->
-          <circle cx="50" cy="12" r="3" fill="#64748b"/>
-          <circle cx="88" cy="50" r="3" fill="#64748b"/>
-          <circle cx="50" cy="88" r="3" fill="#64748b"/>
-          <circle cx="12" cy="50" r="3" fill="#64748b"/>
+          <!-- Outer ring -->
+          <circle cx="50" cy="50" r="45" stroke="url(#splashLogoGradient)" stroke-width="2" fill="none" opacity="0.8"/>
+          <!-- Inner dashed ring -->
+          <circle cx="50" cy="50" r="35" stroke="#64748b" stroke-width="1" stroke-dasharray="6 4" fill="none" opacity="0.4"/>
+          <!-- Center dot -->
+          <circle cx="50" cy="50" r="5" fill="#64748b" opacity="0.9"/>
+          <!-- Time markers at 12, 3, 6, 9 o'clock positions -->
+          <circle cx="50" cy="10" r="2" fill="#64748b" opacity="0.5"/>
+          <circle cx="90" cy="50" r="2" fill="#64748b" opacity="0.5"/>
+          <circle cx="50" cy="90" r="2" fill="#64748b" opacity="0.5"/>
+          <circle cx="10" cy="50" r="2" fill="#64748b" opacity="0.5"/>
         </svg>
       </div>
       <div id="splash-text">CHRONYX</div>
