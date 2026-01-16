@@ -235,9 +235,14 @@ const AppSidebar = () => {
             >
               <ChronyxMiniLogo size={collapsed ? "sm" : "md"} />
               {!collapsed && (
-                <span className="text-lg font-light tracking-[0.2em] text-sidebar-foreground group-hover:text-primary transition-colors">
-                  CHRONYX
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-lg font-light tracking-[0.2em] text-primary group-hover:text-primary/80 transition-colors">
+                    CHRONYX
+                  </span>
+                  <span className="text-[8px] tracking-[0.1em] text-muted-foreground -mt-0.5">
+                    BY CROPXON
+                  </span>
+                </div>
               )}
             </Link>
             <div className="flex items-center gap-1">
