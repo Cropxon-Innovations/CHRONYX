@@ -9,6 +9,7 @@ import LoanWidget from "@/components/dashboard/LoanWidget";
 import InsuranceWidget from "@/components/dashboard/InsuranceWidget";
 import UpcomingReminders from "@/components/dashboard/UpcomingReminders";
 import FinancialOverview from "@/components/dashboard/FinancialOverview";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import PendingYesterdayTasks from "@/components/dashboard/PendingYesterdayTasks";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Settings, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -199,11 +200,7 @@ const Dashboard = () => {
     : 0;
 
   if (loading || onboardingLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (showOnboarding) {

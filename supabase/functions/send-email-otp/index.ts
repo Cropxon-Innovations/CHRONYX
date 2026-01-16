@@ -19,46 +19,62 @@ function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+const okJson = (payload: unknown) =>
+  new Response(JSON.stringify(payload), {
+    status: 200,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    if (!RESEND_API_KEY) {
+      return okJson({
+        success: false,
+        errorCode: "missing_resend_key",
+        message: "Email service is not configured. Please contact support.",
+      });
+    }
+
     const { email, userId, type, purpose = "verification" }: SendOtpRequest = await req.json();
 
     if (!email || !userId) {
-      return new Response(
-        JSON.stringify({ error: "Email and userId are required" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      return okJson({
+        success: false,
+        errorCode: "invalid_request",
+        message: "Email and userId are required.",
+      });
     }
 
     const otp = generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    console.log(`Generated OTP for ${email}: ${otp}`);
-
+    // Hash OTP (tie it to this userId so it can't be reused across accounts)
     const otpHash = await crypto.subtle.digest(
       "SHA-256",
       new TextEncoder().encode(otp + userId)
     );
     const hashArray = Array.from(new Uint8Array(otpHash));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 
     // Determine subject and message based on purpose
     const isAccountDeletion = purpose === "account_deletion";
-    const subject = isAccountDeletion 
+    const subject = isAccountDeletion
       ? `⚠️ Account Deletion Code: ${otp}`
       : `✉️ CHRONYX Verification Code: ${otp}`;
-    
+
     const headerTitle = isAccountDeletion ? "ACCOUNT DELETION" : "EMAIL VERIFICATION";
-    const headerSubtitle = isAccountDeletion 
-      ? "SECURITY VERIFICATION REQUIRED" 
+    const headerSubtitle = isAccountDeletion
+      ? "SECURITY VERIFICATION REQUIRED"
       : "VERIFY YOUR IDENTITY";
+
     const purposeMessage = isAccountDeletion
       ? "Enter this code to confirm your account deletion request."
       : `Enter this code to verify your ${type === "email" ? "email address" : "phone number"}.`;
+
     const warningMessage = isAccountDeletion
       ? "⚠️ This action is permanent and cannot be undone. Make sure you have exported your data before proceeding."
       : "If you didn't request this code, please ignore this email.";
@@ -86,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
             <!-- Content -->
             <div style="padding: 48px 40px; text-align: center;">
               <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 50%; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 32px;">${isAccountDeletion ? '🔐' : '✉️'}</span>
+                <span style="font-size: 32px;">${isAccountDeletion ? "🔐" : "✉️"}</span>
               </div>
               
               <p style="color: #475569; font-size: 16px; margin: 0 0 28px; line-height: 1.5;">
@@ -101,8 +117,8 @@ const handler = async (req: Request): Promise<Response> => {
                 ${purposeMessage}
               </p>
               
-              <div style="background: ${isAccountDeletion ? '#fef2f2' : '#fef3c7'}; border-radius: 12px; padding: 16px 20px; margin: 0 0 24px; border: 1px solid ${isAccountDeletion ? '#fecaca' : '#fcd34d'};">
-                <p style="color: ${isAccountDeletion ? '#dc2626' : '#92400e'}; font-size: 13px; margin: 0; font-weight: 500;">
+              <div style="background: ${isAccountDeletion ? "#fef2f2" : "#fef3c7"}; border-radius: 12px; padding: 16px 20px; margin: 0 0 24px; border: 1px solid ${isAccountDeletion ? "#fecaca" : "#fcd34d"};">
+                <p style="color: ${isAccountDeletion ? "#dc2626" : "#92400e"}; font-size: 13px; margin: 0; font-weight: 500;">
                   ⏱ This code expires in <strong>10 minutes</strong>
                 </p>
               </div>
@@ -125,43 +141,57 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
+    // IMPORTANT: use production sender (getchronyx.com) for real deliveries
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: getSender("auth"),
+        from: getSender("auth", false),
         to: [email],
-        subject: subject,
+        subject,
         html: emailHtml,
       }),
     });
 
     if (!emailResponse.ok) {
-      const errorData = await emailResponse.text();
-      console.error("Resend API error:", errorData);
-      throw new Error("Failed to send email");
+      const raw = await emailResponse.text();
+
+      // Provide a helpful, user-facing message without breaking the frontend with non-2xx
+      const isDomainVerificationError =
+        emailResponse.status === 403 &&
+        (raw.toLowerCase().includes("verify a domain") ||
+          raw.toLowerCase().includes("testing emails"));
+
+      const message = isDomainVerificationError
+        ? "Email sending is still in test mode. Please verify your getchronyx.com domain in Resend and use a from-address on that domain (e.g., no-reply@getchronyx.com)."
+        : "Failed to send OTP email. Please try again in a moment.";
+
+      console.error("Resend API error:", raw);
+
+      return okJson({
+        success: false,
+        errorCode: "email_send_failed",
+        message,
+        resendStatus: emailResponse.status,
+      });
     }
 
-    console.log("OTP email sent successfully to:", email);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: "OTP sent successfully",
-        otpHash: hashHex,
-        expiresAt: expiresAt.toISOString()
-      }),
-      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return okJson({
+      success: true,
+      message: "OTP sent successfully",
+      otpHash: hashHex,
+      expiresAt: expiresAt.toISOString(),
+    });
   } catch (error: any) {
     console.error("Error in send-email-otp function:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-    );
+    return okJson({
+      success: false,
+      errorCode: "internal_error",
+      message: error?.message || "Unexpected error",
+    });
   }
 };
 
