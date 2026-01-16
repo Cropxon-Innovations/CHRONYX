@@ -1,21 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" fill="none">
+  <!-- Background -->
   <rect width="72" height="72" rx="12" fill="#0f172a"/>
   
   <!-- Outer ring -->
-  <circle cx="36" cy="36" r="24" stroke="#5b7596" stroke-width="2.5" fill="none"/>
-  
-  <!-- Outer dashed ring -->
-  <circle cx="36" cy="36" r="20" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" fill="none" opacity="0.6"/>
+  <circle cx="36" cy="36" r="28" stroke="#64748b" stroke-width="2" fill="none" opacity="0.8"/>
   
   <!-- Inner dashed ring -->
-  <circle cx="36" cy="36" r="14" stroke="#64748b" stroke-width="1" stroke-dasharray="2 2" fill="none" opacity="0.5"/>
+  <circle cx="36" cy="36" r="22" stroke="#64748b" stroke-width="1" stroke-dasharray="4 3" fill="none" opacity="0.4"/>
   
   <!-- Center dot -->
-  <circle cx="36" cy="36" r="3" fill="#5b7596"/>
+  <circle cx="36" cy="36" r="4" fill="#64748b" opacity="0.9"/>
   
-  <!-- Orbital dots on outer ring -->
-  <circle cx="36" cy="12" r="2" fill="#5b7596"/>
-  <circle cx="60" cy="36" r="2" fill="#5b7596"/>
-  <circle cx="36" cy="60" r="2" fill="#5b7596"/>
-  <circle cx="12" cy="36" r="2" fill="#5b7596"/>
+  <!-- Time markers -->
+  <circle cx="36" cy="10" r="2" fill="#64748b" opacity="0.6"/>
+  <circle cx="62" cy="36" r="2" fill="#64748b" opacity="0.6"/>
+  <circle cx="36" cy="62" r="2" fill="#64748b" opacity="0.6"/>
+  <circle cx="10" cy="36" r="2" fill="#64748b" opacity="0.6"/>
 </svg>
