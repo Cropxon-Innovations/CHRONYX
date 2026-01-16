@@ -39,23 +39,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Use custom domain for production, fallback to current origin for dev
-  const getRedirectUrl = () => {
-    // Always prefer custom domain in production
-    if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      // If on Vercel custom domain or production
-      if (hostname === 'getchronyx.com' || hostname === 'www.getchronyx.com') {
-        return 'https://getchronyx.com/app';
-      }
-      // If on any lovable preview/dev domain, still redirect to custom domain for consistency
-      if (hostname.includes('lovable') || hostname.includes('lovableproject')) {
-        return 'https://getchronyx.com/app';
-      }
-    }
-    // Fallback for local development
-    return `${window.location.origin}/app`;
-  };
+  // IMPORTANT: keep OAuth redirect on the SAME origin that started the flow.
+  // Otherwise the PKCE verifier/state stored in localStorage won't be found after the redirect.
+  // Your hosting (Vercel) should enforce whether you use apex or www.
+  const getRedirectUrl = () => `${window.location.origin}/app`;
 
   const signUp = async (email: string, password: string) => {
     const redirectUrl = getRedirectUrl();
