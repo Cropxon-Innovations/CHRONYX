@@ -36,9 +36,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const supabaseApi = createClient(supabaseUrl, supabaseServiceKey, {
-      db: { schema: 'api' }
-    });
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -53,10 +50,10 @@ serve(async (req) => {
     const body = await req.json();
     const { 
       financial_year, 
-      gross_income,
-      deductions,
-      incomes,
-      regime 
+      gross_income = 0,
+      deductions = {},
+      incomes = [],
+      regime = 'new'
     } = body;
 
     const flags: AuditFlag[] = [];
@@ -152,26 +149,7 @@ serve(async (req) => {
       });
     }
 
-    // 7. Missing PAN verification
-    const { data: profile } = await supabaseApi
-      .from('tax_profiles')
-      .select('pan_number')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!profile?.pan_number) {
-      auditScore -= 10;
-      flags.push({
-        flag_type: 'verification_needed',
-        severity: 'warning',
-        title: 'PAN Not Verified',
-        description: 'Add your PAN for complete tax profile',
-        resolution_required: true,
-        resolution_action: 'Add PAN in tax profile',
-      });
-    }
-
-    // 8. Income mismatch check (basic)
+    // 7. Income mismatch check (basic)
     const declaredIncome = incomes?.reduce((sum: number, i: any) => sum + Number(i.gross_amount || 0), 0) || 0;
     if (Math.abs(declaredIncome - gross_income) > 10000 && declaredIncome > 0) {
       auditScore -= 10;
@@ -183,6 +161,19 @@ serve(async (req) => {
         affected_amount: Math.abs(declaredIncome - gross_income),
         resolution_required: true,
         resolution_action: 'Verify all income sources are included',
+      });
+    }
+
+    // 8. No income reported
+    if (gross_income <= 0 && incomes.length === 0) {
+      auditScore -= 30;
+      flags.push({
+        flag_type: 'verification_needed',
+        severity: 'critical',
+        title: 'No Income Reported',
+        description: 'Please add your income sources for accurate tax calculation',
+        resolution_required: true,
+        resolution_action: 'Add income from salary, business, or other sources',
       });
     }
 

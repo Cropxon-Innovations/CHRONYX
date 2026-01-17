@@ -473,11 +473,36 @@ export function TaxWizard() {
                     </div>
                   </ScrollArea>
                 ) : (
-                  <div className="text-center py-8">
-                    <AlertTriangle className="w-12 h-12 mx-auto text-amber-500 mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      No income data found. Please add your income manually.
-                    </p>
+                  <div className="text-center py-8 space-y-6">
+                    <div>
+                      <AlertTriangle className="w-12 h-12 mx-auto text-amber-500 mb-4" />
+                      <p className="text-muted-foreground mb-4">
+                        No income data found. Fetch from your CHRONYX data or add manually.
+                      </p>
+                    </div>
+                    
+                    <Button 
+                      onClick={() => discoverIncomeMutation.mutate()}
+                      disabled={discoverIncomeMutation.isPending}
+                      className="gap-2"
+                    >
+                      {discoverIncomeMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-4 h-4" />
+                      )}
+                      Fetch from CHRONYX
+                    </Button>
+
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">Or add manually</span>
+                      </div>
+                    </div>
+                    
                     <div className="max-w-xs mx-auto space-y-2">
                       <Label>Gross Annual Income</Label>
                       <Input

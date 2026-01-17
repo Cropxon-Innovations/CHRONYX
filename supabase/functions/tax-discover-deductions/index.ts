@@ -19,6 +19,28 @@ interface DiscoveredDeduction {
   savings_impact: number;
 }
 
+// Hardcoded deduction limits
+const DEDUCTION_LIMITS: Record<string, number | null> = {
+  '80C': 150000,
+  '80CCC': 150000,
+  '80CCD1': 150000,
+  '80CCD1B': 50000,
+  '80CCD2': null,
+  '80D': 75000,
+  '80DD': 125000,
+  '80DDB': 100000,
+  '80E': null,
+  '80EE': 50000,
+  '80EEA': 150000,
+  '80G': null,
+  '80GG': 60000,
+  '80TTA': 10000,
+  '80TTB': 50000,
+  '80U': 125000,
+  '24B': 200000,
+  'HRA': null,
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -38,9 +60,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const supabaseApi = createClient(supabaseUrl, supabaseServiceKey, {
-      db: { schema: 'api' }
-    });
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -61,31 +80,6 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Get FY data
-    const { data: fyData } = await supabaseApi
-      .from('tax_financial_years')
-      .select('*')
-      .eq('code', financial_year)
-      .single();
-
-    if (!fyData) {
-      return new Response(
-        JSON.stringify({ error: 'Financial year not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Get deduction limits from rules
-    const { data: deductionRules } = await supabaseApi
-      .from('tax_deductions')
-      .select('*')
-      .eq('financial_year_id', fyData.id);
-
-    const deductionLimits: Record<string, number | null> = {};
-    deductionRules?.forEach((d: any) => {
-      deductionLimits[d.section_code] = d.max_limit;
-    });
 
     const discoveredDeductions: DiscoveredDeduction[] = [];
     const suggestedDeductions: any[] = [];
@@ -110,7 +104,7 @@ serve(async (req) => {
         .reduce((sum: number, i: any) => sum + Number(i.premium_amount), 0);
 
       if (healthPremiums > 0) {
-        const limit = deductionLimits['80D'] || 25000;
+        const limit = DEDUCTION_LIMITS['80D'] || 25000;
         const claimable = Math.min(healthPremiums, limit);
         discoveredDeductions.push({
           section_code: '80D',
@@ -166,7 +160,7 @@ serve(async (req) => {
         }, 0);
 
         if (totalHomeLoanInterest > 0) {
-          const limit = 200000;
+          const limit = DEDUCTION_LIMITS['24B'] || 200000;
           const claimable = Math.min(totalHomeLoanInterest, limit);
           discoveredDeductions.push({
             section_code: '24B',

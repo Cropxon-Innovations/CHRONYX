@@ -18,6 +18,16 @@ interface DiscoveredIncome {
   document_ref?: string;
 }
 
+// Hardcoded FY data
+function getFYDates(financialYear: string): { start: string; end: string } | null {
+  const fyDates: Record<string, { start: string; end: string }> = {
+    'FY2024_25': { start: '2024-04-01', end: '2025-03-31' },
+    'FY2025_26': { start: '2025-04-01', end: '2026-03-31' },
+    'FY2026_27': { start: '2026-04-01', end: '2027-03-31' },
+  };
+  return fyDates[financialYear] || null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -37,9 +47,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const supabaseApi = createClient(supabaseUrl, supabaseServiceKey, {
-      db: { schema: 'api' }
-    });
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -61,22 +68,17 @@ serve(async (req) => {
       );
     }
 
-    // Get FY data
-    const { data: fyData } = await supabaseApi
-      .from('tax_financial_years')
-      .select('*')
-      .eq('code', financial_year)
-      .single();
-
-    if (!fyData) {
+    // Get FY dates from hardcoded data
+    const fyDates = getFYDates(financial_year);
+    if (!fyDates) {
       return new Response(
-        JSON.stringify({ error: 'Financial year not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: `Financial year ${financial_year} not supported` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const fyStart = fyData.start_date;
-    const fyEnd = fyData.end_date;
+    const fyStart = fyDates.start;
+    const fyEnd = fyDates.end;
 
     const discoveredIncomes: DiscoveredIncome[] = [];
     const missingSources: string[] = [];
@@ -127,18 +129,11 @@ serve(async (req) => {
     }
 
     // 2. Discover interest income from savings (if any bank statements)
-    // For now, mark as potentially missing
     if (!discoveredIncomes.some(i => i.income_type === 'interest')) {
       missingSources.push('interest');
     }
 
-    // 3. Check for rental income in expenses (rent paid = potential HRA, but we also check if user receives rent)
-    // This would come from income_entries with rental category
-    if (!discoveredIncomes.some(i => i.income_type === 'rental')) {
-      // Don't add to missing - rental is optional
-    }
-
-    // 4. Return discovered incomes and what's missing
+    // 3. Return discovered incomes and what's missing
     const summary = {
       discovered_count: discoveredIncomes.length,
       total_gross_income: discoveredIncomes.reduce((sum, i) => sum + i.gross_amount, 0),
