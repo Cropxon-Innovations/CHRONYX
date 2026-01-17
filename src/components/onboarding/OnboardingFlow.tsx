@@ -544,7 +544,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
                 transition={{ delay: 0.5 }}
               >
                 <div className="flex items-center justify-center">
-                  {renderPreview(step.preview)}
+                  {renderPreview(step.preview as string)}
                 </div>
               </motion.div>
             )}
