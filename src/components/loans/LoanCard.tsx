@@ -41,15 +41,14 @@ export const LoanCard = ({
   onDelete,
 }: LoanCardProps) => {
   const totalEmis = paidCount + pendingCount;
+  const principal = Number(loan.principal_amount) || 0;
   
-  // Calculate paid amount from EMIs already paid (principal portion sum)
-  // paidAmount = Principal - Remaining Principal gives accurate paid principal
-  const paidPrincipal = Number(loan.principal_amount) - remainingPrincipal;
+  // Calculate paid principal = Total Principal - Remaining Principal
+  // Clamp to valid range [0, principal]
+  const paidPrincipal = Math.max(0, Math.min(principal, principal - remainingPrincipal));
   
-  // Progress based on principal paid vs total principal
-  const progress = Number(loan.principal_amount) > 0 
-    ? (paidPrincipal / Number(loan.principal_amount)) * 100 
-    : 0;
+  // Progress percentage based on principal paid
+  const progress = principal > 0 ? (paidPrincipal / principal) * 100 : 0;
   
   const currency = loan.country === "USA" ? "USD" : "INR";
   const bankColor = getBankColor(loan.bank_name);

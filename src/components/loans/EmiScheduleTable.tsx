@@ -63,16 +63,23 @@ export const EmiScheduleTable = ({
 
   const displaySchedule = showAll ? schedule : schedule.slice(0, 12);
   
-  const statusIcon = (status: string) => {
-    switch (status) {
-      case "Paid":
+  // Normalize payment status (handle null, case variations)
+  const normalizeStatus = (status: string | null | undefined): string => {
+    if (!status) return "pending";
+    return status.toLowerCase();
+  };
+  
+  const statusIcon = (status: string | null | undefined) => {
+    const normalized = normalizeStatus(status);
+    switch (normalized) {
+      case "paid":
         return <Check className="w-4 h-4 text-green-600 dark:text-green-400" />;
-      case "Pending":
+      case "pending":
         return <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />;
-      case "Cancelled":
+      case "cancelled":
         return <X className="w-4 h-4 text-muted-foreground" />;
       default:
-        return null;
+        return <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />;
     }
   };
 
@@ -101,64 +108,69 @@ export const EmiScheduleTable = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {displaySchedule.map((emi) => (
-                <TableRow 
-                  key={emi.id}
-                  className={cn(
-                    "hover:bg-muted/20",
-                    emi.payment_status === "Paid" && "bg-muted/10",
-                    emi.is_adjusted && "border-l-2 border-l-amber-500"
-                  )}
-                >
-                  <TableCell className="text-sm text-muted-foreground">{emi.emi_month}</TableCell>
-                  <TableCell className="text-sm">
-                    {format(parseISO(emi.emi_date), "MMM dd, yyyy")}
-                  </TableCell>
-                  <TableCell className="text-sm text-right font-medium">
-                    {formatCurrency(Number(emi.emi_amount), currency)}
-                  </TableCell>
-                  <TableCell className="text-sm text-right text-muted-foreground">
-                    {formatCurrency(Number(emi.principal_component), currency)}
-                  </TableCell>
-                  <TableCell className="text-sm text-right text-muted-foreground">
-                    {formatCurrency(Number(emi.interest_component), currency)}
-                  </TableCell>
-                  <TableCell className="text-sm text-right">
-                    {formatCurrency(Number(emi.remaining_principal), currency)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {statusIcon(emi.payment_status)}
-                      <span className={cn(
-                        "text-xs",
-                        emi.payment_status === "Paid" && "text-green-600 dark:text-green-400",
-                        emi.payment_status === "Pending" && "text-amber-600 dark:text-amber-400",
-                        emi.payment_status === "Cancelled" && "text-muted-foreground"
-                      )}>
-                        {emi.payment_status}
-                      </span>
-                    </div>
-                    {emi.paid_date && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {format(parseISO(emi.paid_date), "MMM dd")} via {emi.payment_method}
-                      </p>
+              {displaySchedule.map((emi) => {
+                const status = normalizeStatus(emi.payment_status);
+                const displayStatus = status.charAt(0).toUpperCase() + status.slice(1);
+                
+                return (
+                  <TableRow 
+                    key={emi.id}
+                    className={cn(
+                      "hover:bg-muted/20",
+                      status === "paid" && "bg-muted/10",
+                      emi.is_adjusted && "border-l-2 border-l-amber-500"
                     )}
-                  </TableCell>
-                  <TableCell>
-                    {emi.payment_status === "Pending" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setMarkPaidId(emi.id)}
-                        className="h-7 text-xs"
-                        disabled={isLoading}
-                      >
-                        Mark Paid
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                  >
+                    <TableCell className="text-sm text-muted-foreground">{emi.emi_month}</TableCell>
+                    <TableCell className="text-sm">
+                      {format(parseISO(emi.emi_date), "MMM dd, yyyy")}
+                    </TableCell>
+                    <TableCell className="text-sm text-right font-medium">
+                      {formatCurrency(Number(emi.emi_amount), currency)}
+                    </TableCell>
+                    <TableCell className="text-sm text-right text-muted-foreground">
+                      {formatCurrency(Number(emi.principal_component), currency)}
+                    </TableCell>
+                    <TableCell className="text-sm text-right text-muted-foreground">
+                      {formatCurrency(Number(emi.interest_component), currency)}
+                    </TableCell>
+                    <TableCell className="text-sm text-right">
+                      {formatCurrency(Number(emi.remaining_principal), currency)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {statusIcon(emi.payment_status)}
+                        <span className={cn(
+                          "text-xs",
+                          status === "paid" && "text-green-600 dark:text-green-400",
+                          status === "pending" && "text-amber-600 dark:text-amber-400",
+                          status === "cancelled" && "text-muted-foreground"
+                        )}>
+                          {displayStatus}
+                        </span>
+                      </div>
+                      {emi.paid_date && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {format(parseISO(emi.paid_date), "MMM dd")} via {emi.payment_method}
+                        </p>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {status === "pending" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setMarkPaidId(emi.id)}
+                          className="h-7 text-xs"
+                          disabled={isLoading}
+                        >
+                          Mark Paid
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

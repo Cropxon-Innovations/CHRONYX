@@ -26,11 +26,17 @@ interface NetWorthData {
   monthlyDelta: number;
   breakdown: {
     totalIncome: number;
-    totalExpenses: number;
     outstandingLoans: number;
     totalLoansTaken: number;
     totalLoansPaid: number;
     insuranceValue: number;
+    // Expenses breakdown by period
+    expensesToday: number;
+    expensesThisWeek: number;
+    expensesThisMonth: number;
+    expensesThisQuarter: number;
+    expensesThisYear: number;
+    totalExpenses: number;
   };
 }
 
@@ -48,6 +54,12 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
   const [refreshing, setRefreshing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
 
+  // Normalize payment status (handle null, case variations)
+  const normalizeStatus = (status: string | null | undefined): string => {
+    if (!status) return "pending";
+    return status.toLowerCase();
+  };
+
   const calculateNetWorth = useCallback(async () => {
     if (!user) return;
 
@@ -62,6 +74,46 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
       const totalIncome = incomeResult.data?.reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
       const totalExpenses = expensesResult.data?.reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
 
+      // Calculate expenses by period
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      
+      // Start of week (Sunday)
+      const startOfWeekDate = new Date(now);
+      startOfWeekDate.setDate(now.getDate() - now.getDay());
+      const startOfWeekStr = startOfWeekDate.toISOString().split('T')[0];
+      
+      // Start of month
+      const startOfMonthStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const endOfMonthStr = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      
+      // Start of quarter
+      const currentQuarter = Math.floor(now.getMonth() / 3);
+      const startOfQuarterStr = new Date(now.getFullYear(), currentQuarter * 3, 1).toISOString().split('T')[0];
+      
+      // Start of year
+      const startOfYearStr = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+
+      const expensesToday = expensesResult.data
+        ?.filter(e => e.expense_date === todayStr)
+        .reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
+
+      const expensesThisWeek = expensesResult.data
+        ?.filter(e => e.expense_date >= startOfWeekStr && e.expense_date <= todayStr)
+        .reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
+
+      const expensesThisMonth = expensesResult.data
+        ?.filter(e => e.expense_date >= startOfMonthStr && e.expense_date <= endOfMonthStr)
+        .reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
+
+      const expensesThisQuarter = expensesResult.data
+        ?.filter(e => e.expense_date >= startOfQuarterStr && e.expense_date <= todayStr)
+        .reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
+
+      const expensesThisYear = expensesResult.data
+        ?.filter(e => e.expense_date >= startOfYearStr && e.expense_date <= todayStr)
+        .reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
+
       // Calculate loans: total principal, outstanding, and paid
       let totalLoansTaken = 0;
       let outstandingLoans = 0;
@@ -73,23 +125,20 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
 
         const loanIds = loansResult.data.map(l => l.id);
         
-        // Get all EMI data
+        // Get all EMI data with emi_date for proper sorting
         const { data: emiData } = await supabase
           .from("emi_schedule")
-          .select("loan_id, principal_component, remaining_principal, payment_status")
-          .in("loan_id", loanIds);
+          .select("loan_id, emi_date, principal_component, remaining_principal, payment_status")
+          .in("loan_id", loanIds)
+          .order("emi_date", { ascending: true });
 
         if (emiData) {
           // Calculate outstanding (remaining principal from first pending EMI of each loan)
           const loanRemainingMap = new Map<string, number>();
-          const sortedEmis = [...emiData].sort((a, b) => {
-            if (a.payment_status === 'Pending' && b.payment_status !== 'Pending') return -1;
-            if (a.payment_status !== 'Pending' && b.payment_status === 'Pending') return 1;
-            return 0;
-          });
 
-          sortedEmis.forEach(emi => {
-            if (emi.payment_status === 'Pending' && !loanRemainingMap.has(emi.loan_id)) {
+          emiData.forEach(emi => {
+            const status = normalizeStatus(emi.payment_status);
+            if (status === 'pending' && !loanRemainingMap.has(emi.loan_id)) {
               // Remaining = remaining_principal + current principal component (since this EMI is not paid yet)
               loanRemainingMap.set(emi.loan_id, Number(emi.remaining_principal) + Number(emi.principal_component));
             }
@@ -98,27 +147,25 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
           outstandingLoans = Array.from(loanRemainingMap.values()).reduce((sum, val) => sum + val, 0);
 
           // Calculate paid = Total principal - Outstanding
-          totalLoansPaid = totalLoansTaken - outstandingLoans;
+          totalLoansPaid = Math.max(0, totalLoansTaken - outstandingLoans);
         }
       }
 
       const insuranceValue = insurancesResult.data?.reduce((sum, ins) => sum + Number(ins.sum_assured), 0) || 0;
 
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-
       const thisMonthIncome = incomeResult.data
-        ?.filter(e => e.income_date >= startOfMonth && e.income_date <= endOfMonth)
+        ?.filter(e => e.income_date >= startOfMonthStr && e.income_date <= endOfMonthStr)
         .reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
 
-      const thisMonthExpenses = expensesResult.data
-        ?.filter(e => e.expense_date >= startOfMonth && e.expense_date <= endOfMonth)
-        .reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
-
-      const monthlyDelta = thisMonthIncome - thisMonthExpenses;
+      const monthlyDelta = thisMonthIncome - expensesThisMonth;
+      
+      // Assets = Total Income + Insurance Coverage
       const assets = totalIncome + insuranceValue;
-      const liabilities = totalExpenses + outstandingLoans;
+      
+      // Liabilities = Only Outstanding Loans (NOT expenses)
+      const liabilities = outstandingLoans;
+      
+      // Net Worth = Assets - Liabilities
       const netWorth = assets - liabilities;
 
       setData({ 
@@ -128,11 +175,16 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
         monthlyDelta, 
         breakdown: { 
           totalIncome, 
-          totalExpenses, 
           outstandingLoans,
           totalLoansTaken,
           totalLoansPaid,
-          insuranceValue 
+          insuranceValue,
+          expensesToday,
+          expensesThisWeek,
+          expensesThisMonth,
+          expensesThisQuarter,
+          expensesThisYear,
+          totalExpenses,
         } 
       });
     } catch (error) {
@@ -256,12 +308,25 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
               </div>
             </div>
             <div className="space-y-1 text-[11px]">
-              <div className="flex justify-between"><span className="text-muted-foreground">Income</span><span>{formatCurrency(data.breakdown.totalIncome)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Expenses</span><span>{formatCurrency(data.breakdown.totalExpenses)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Loans Taken</span><span>{formatCurrency(data.breakdown.totalLoansTaken)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Loans Paid</span><span className="text-vyom-success">{formatCurrency(data.breakdown.totalLoansPaid)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Loans Outstanding</span><span className="text-destructive">{formatCurrency(data.breakdown.outstandingLoans)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Total Income</span><span className="text-vyom-success">{formatCurrency(data.breakdown.totalIncome)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Insurance</span><span>{formatCurrency(data.breakdown.insuranceValue)}</span></div>
+              
+              <div className="pt-2 mt-2 border-t border-border">
+                <p className="text-[10px] text-muted-foreground uppercase mb-1">Liabilities</p>
+                <div className="flex justify-between"><span className="text-muted-foreground">Loans Taken</span><span>{formatCurrency(data.breakdown.totalLoansTaken)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Loans Paid</span><span className="text-vyom-success">{formatCurrency(data.breakdown.totalLoansPaid)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Loans Outstanding</span><span className="text-destructive">{formatCurrency(data.breakdown.outstandingLoans)}</span></div>
+              </div>
+              
+              <div className="pt-2 mt-2 border-t border-border">
+                <p className="text-[10px] text-muted-foreground uppercase mb-1">Expenses</p>
+                <div className="flex justify-between"><span className="text-muted-foreground">Today</span><span>{formatCurrency(data.breakdown.expensesToday)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">This Week</span><span>{formatCurrency(data.breakdown.expensesThisWeek)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">This Month</span><span>{formatCurrency(data.breakdown.expensesThisMonth)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">This Quarter</span><span>{formatCurrency(data.breakdown.expensesThisQuarter)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">This Year</span><span>{formatCurrency(data.breakdown.expensesThisYear)}</span></div>
+                <div className="flex justify-between font-medium"><span className="text-muted-foreground">All Time</span><span>{formatCurrency(data.breakdown.totalExpenses)}</span></div>
+              </div>
             </div>
           </CollapsibleContent>
         </Collapsible>

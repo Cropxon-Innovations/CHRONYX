@@ -60,24 +60,53 @@ const Loans = () => {
     enabled: !!user,
   });
 
+  // Fetch this month's expenses
+  const { data: monthlyExpenses = 0 } = useQuery({
+    queryKey: ["monthly-expenses", user?.id],
+    queryFn: async () => {
+      const now = new Date();
+      const startOfMonthStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const endOfMonthStr = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("amount")
+        .gte("expense_date", startOfMonthStr)
+        .lte("expense_date", endOfMonthStr);
+      if (error) throw error;
+      return data?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+    },
+    enabled: !!user,
+  });
+
+  // Normalize payment status (handle null, case variations)
+  const normalizeStatusForSummary = (status: string | null | undefined): string => {
+    if (!status) return "pending";
+    return status.toLowerCase();
+  };
+
   // Calculate summary metrics
   const summary = useMemo(() => {
     const now = new Date();
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
 
-    const activeLoans = loans.filter(l => l.status === "active");
+    const activeLoans = loans.filter(l => l.status === "active" || !l.status);
     
     let totalOutstanding = 0;
     let emiDueThisMonth = 0;
     let totalEmiThisMonth = 0;
 
     activeLoans.forEach(loan => {
-      const loanEmis = allEmis.filter(e => e.loan_id === loan.id);
-      const pendingEmis = loanEmis.filter(e => e.payment_status === "Pending");
+      const loanEmis = allEmis
+        .filter(e => e.loan_id === loan.id)
+        .sort((a, b) => parseISO(a.emi_date).getTime() - parseISO(b.emi_date).getTime());
+      
+      const pendingEmis = loanEmis.filter(e => normalizeStatusForSummary(e.payment_status) === "pending");
       
       if (pendingEmis.length > 0) {
-        totalOutstanding += Number(pendingEmis[0].remaining_principal) + Number(pendingEmis[0].principal_component);
+        const firstPending = pendingEmis[0];
+        totalOutstanding += Number(firstPending.remaining_principal) + Number(firstPending.principal_component);
       }
 
       // EMIs due this month
@@ -97,24 +126,33 @@ const Loans = () => {
       totalEmiThisMonth,
     };
   }, [loans, allEmis]);
+  // Normalize payment status (handle null, case variations)
+  const normalizeStatus = (status: string | null | undefined): string => {
+    if (!status) return "pending";
+    return status.toLowerCase();
+  };
 
   // Get loan details for cards
   const getLoanDetails = (loanId: string) => {
-    const loanEmis = allEmis.filter(e => e.loan_id === loanId);
-    const paidEmis = loanEmis.filter(e => e.payment_status === "Paid");
-    const pendingEmis = loanEmis.filter(e => e.payment_status === "Pending");
+    const loanEmis = allEmis
+      .filter(e => e.loan_id === loanId)
+      .sort((a, b) => parseISO(a.emi_date).getTime() - parseISO(b.emi_date).getTime());
     
-    const remainingPrincipal = pendingEmis.length > 0
-      ? Number(pendingEmis[0].remaining_principal) + Number(pendingEmis[0].principal_component)
+    const paidEmis = loanEmis.filter(e => normalizeStatus(e.payment_status) === "paid");
+    const pendingEmis = loanEmis.filter(e => normalizeStatus(e.payment_status) === "pending");
+    
+    // Remaining principal = first pending EMI's remaining_principal (after this EMI is paid)
+    // Since remaining_principal in DB is "balance after this EMI", we use it directly
+    const firstPendingEmi = pendingEmis[0];
+    const remainingPrincipal = firstPendingEmi 
+      ? Number(firstPendingEmi.remaining_principal) + Number(firstPendingEmi.principal_component)
       : 0;
-
-    const nextEmi = pendingEmis[0];
 
     return {
       remainingPrincipal,
       paidCount: paidEmis.length,
       pendingCount: pendingEmis.length,
-      nextEmiDate: nextEmi ? format(parseISO(nextEmi.emi_date), "MMM dd") : undefined,
+      nextEmiDate: firstPendingEmi ? format(parseISO(firstPendingEmi.emi_date), "MMM dd") : undefined,
       schedule: loanEmis,
     };
   };
@@ -372,12 +410,28 @@ const Loans = () => {
         totalEmiThisMonth={summary.totalEmiThisMonth}
         currency="INR"
       />
-      {/* EMI Card (inline on small screens) */}
-      <div className="xl:hidden">
-        {floatingEmiCard}
+
+      {/* Monthly Expenses Badge */}
+      <div className="flex items-center justify-between bg-card border border-border rounded-lg p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">Expenses This Month</p>
+            <p className="text-xs text-muted-foreground">{format(new Date(), "MMMM yyyy")}</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-xl font-semibold text-foreground">{formatCurrency(monthlyExpenses, "INR")}</p>
+          <p className="text-xs text-muted-foreground">Total spent</p>
+        </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_24rem]">
+      {/* EMI Card - shown inline for all screen sizes */}
+      {floatingEmiCard}
+
+      <div className="space-y-6">
         <div className="min-w-0">
           {/* Main Content */}
           {selectedLoan ? (
@@ -505,13 +559,6 @@ const Loans = () => {
             </section>
           )}
         </div>
-
-        {/* EMI Card (right column on desktop) */}
-        <aside className="hidden xl:block">
-          <div className="sticky top-20">
-            {floatingEmiCard}
-          </div>
-        </aside>
       </div>
 
       {/* Add Loan Dialog */}

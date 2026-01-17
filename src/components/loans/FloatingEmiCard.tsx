@@ -76,6 +76,12 @@ const FloatingEmiCard = ({ loans, allEmis, onMarkPaid, isLoading, className }: F
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer");
 
+  // Normalize payment status (handle null, case variations)
+  const normalizeStatus = (status: string | null | undefined): string => {
+    if (!status) return "pending";
+    return status.toLowerCase();
+  };
+
   // Get this month's EMIs
   const thisMonthEmis = useMemo(() => {
     const now = new Date();
@@ -90,8 +96,8 @@ const FloatingEmiCard = ({ loans, allEmis, onMarkPaid, isLoading, className }: F
 
   // Calculate summary
   const summary = useMemo(() => {
-    const pendingEmis = thisMonthEmis.filter(e => e.payment_status === "Pending");
-    const paidEmis = thisMonthEmis.filter(e => e.payment_status === "Paid");
+    const pendingEmis = thisMonthEmis.filter(e => normalizeStatus(e.payment_status) === "pending");
+    const paidEmis = thisMonthEmis.filter(e => normalizeStatus(e.payment_status) === "paid");
     
     const totalDue = pendingEmis.reduce((sum, e) => sum + Number(e.emi_amount), 0);
     const totalPaid = paidEmis.reduce((sum, e) => sum + Number(e.emi_amount), 0);
