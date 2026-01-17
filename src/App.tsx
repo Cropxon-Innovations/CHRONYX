@@ -79,6 +79,16 @@ const AnimatedRoutes = () => {
           } 
         />
         <Route 
+          path="/home" 
+          element={
+            <motion.div {...pageTransition}>
+              <Suspense fallback={<PageLoader />}>
+                <Landing />
+              </Suspense>
+            </motion.div>
+          } 
+        />
+        <Route 
           path="/login" 
           element={
             <motion.div {...pageTransition}>
