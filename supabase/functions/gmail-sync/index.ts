@@ -133,7 +133,11 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Unauthorized',
+        code: 'INVALID_TOKEN',
+        message: 'Authorization header is required'
+      }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -151,7 +155,11 @@ serve(async (req) => {
     ).auth.getUser(token);
     
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Invalid token',
+        code: 'INVALID_TOKEN',
+        message: 'Your session is invalid. Please log in again.'
+      }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -168,7 +176,11 @@ serve(async (req) => {
       .single();
     
     if (settingsError || !settings || !settings.is_enabled) {
-      return new Response(JSON.stringify({ error: 'Gmail sync not enabled' }), {
+      return new Response(JSON.stringify({ 
+        error: 'Gmail sync not enabled',
+        code: 'NOT_CONNECTED',
+        message: 'Please connect your Gmail account first.'
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -185,7 +197,11 @@ serve(async (req) => {
           .update({ sync_status: 'token_expired', is_enabled: false })
           .eq('user_id', userId);
         
-        return new Response(JSON.stringify({ error: 'Token expired, please reconnect Gmail' }), {
+        return new Response(JSON.stringify({ 
+          error: 'Token expired',
+          code: 'TOKEN_EXPIRED',
+          message: 'Your Gmail session has expired. Please reconnect your account.'
+        }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -223,10 +239,28 @@ serve(async (req) => {
     console.log('[Gmail Sync] Search query:', query);
     
     // Fetch messages from Gmail
-    const messagesResponse = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=50`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
+    let messagesResponse;
+    try {
+      messagesResponse = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=50`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+    } catch (fetchError) {
+      console.error('[Gmail Sync] Network error:', fetchError);
+      await supabase
+        .from('gmail_sync_settings')
+        .update({ sync_status: 'error' })
+        .eq('user_id', userId);
+      
+      return new Response(JSON.stringify({ 
+        error: 'Connection failed',
+        code: 'CONNECTION_FAILED',
+        message: 'Unable to connect to Gmail. Please check your internet connection.'
+      }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     const messagesData = await messagesResponse.json();
     
@@ -237,8 +271,33 @@ serve(async (req) => {
         .update({ sync_status: 'error' })
         .eq('user_id', userId);
       
-      return new Response(JSON.stringify({ error: 'Gmail API error' }), {
-        status: 500,
+      // Parse Gmail API errors
+      const gmailError = messagesData.error;
+      let errorCode = 'UNKNOWN';
+      let errorMessage = 'An error occurred while syncing Gmail.';
+      
+      if (gmailError.code === 401) {
+        errorCode = 'INVALID_TOKEN';
+        errorMessage = 'Gmail authorization is invalid. Please reconnect your account.';
+      } else if (gmailError.code === 403) {
+        if (gmailError.message?.includes('quota')) {
+          errorCode = 'QUOTA_EXCEEDED';
+          errorMessage = 'Daily Gmail sync limit reached. Try again tomorrow.';
+        } else {
+          errorCode = 'PERMISSION_DENIED';
+          errorMessage = 'Gmail access was denied. Please grant the required permissions.';
+        }
+      } else if (gmailError.code === 429) {
+        errorCode = 'RATE_LIMIT_EXCEEDED';
+        errorMessage = 'Gmail API limit reached. Please wait a few minutes before trying again.';
+      }
+      
+      return new Response(JSON.stringify({ 
+        error: gmailError.message || 'Gmail API error',
+        code: errorCode,
+        message: errorMessage
+      }), {
+        status: gmailError.code || 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -445,7 +504,21 @@ serve(async (req) => {
     
   } catch (error) {
     console.error('[Gmail Sync] Unexpected error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    
+    // Determine error type
+    let errorCode = 'UNKNOWN';
+    let errorMessage = 'An unexpected error occurred. Please try again.';
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      errorCode = 'CONNECTION_FAILED';
+      errorMessage = 'Unable to connect to Gmail. Please check your internet connection.';
+    }
+    
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      code: errorCode,
+      message: errorMessage
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

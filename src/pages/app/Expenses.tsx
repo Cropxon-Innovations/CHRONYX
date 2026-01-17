@@ -13,6 +13,8 @@ import AddExpenseForm from "@/components/expenses/AddExpenseForm";
 import ExpenseCharts from "@/components/expenses/ExpenseCharts";
 import FinanceFlowSettings from "@/components/finance/FinanceFlowSettings";
 import FinanceFlowButton from "@/components/finance/FinanceFlowButton";
+import GmailConnectionSuccess from "@/components/finance/GmailConnectionSuccess";
+import FinanceFlowErrorAlert, { parseFinanceFlowError, type FinanceFlowErrorCode } from "@/components/finance/FinanceFlowErrorAlert";
 import {
   Dialog,
   DialogContent,
@@ -41,30 +43,41 @@ const Expenses = () => {
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Gmail connection success dialog
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [connectedGmailEmail, setConnectedGmailEmail] = useState<string | null>(null);
+  
+  // Error state
+  const [gmailError, setGmailError] = useState<FinanceFlowErrorCode | null>(null);
 
   // Handle Gmail OAuth callback messages
   useEffect(() => {
     const gmailConnected = searchParams.get("gmail_connected");
-    const gmailError = searchParams.get("gmail_error");
+    const gmailEmail = searchParams.get("gmail_email");
+    const gmailErrorParam = searchParams.get("gmail_error");
     
     if (gmailConnected) {
-      toast({
-        title: "Gmail Connected!",
-        description: "FinanceFlow is now connected. Click 'Sync Now' to import transactions.",
-      });
+      setConnectedGmailEmail(gmailEmail ? decodeURIComponent(gmailEmail) : null);
+      setShowSuccessDialog(true);
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
     }
     
-    if (gmailError) {
-      toast({
-        title: "Gmail Connection Failed",
-        description: `Error: ${gmailError}. Please try again.`,
-        variant: "destructive",
-      });
+    if (gmailErrorParam) {
+      // Map error parameter to our error codes
+      const errorMap: Record<string, FinanceFlowErrorCode> = {
+        'PERMISSION_DENIED': 'PERMISSION_DENIED',
+        'INVALID_TOKEN': 'INVALID_TOKEN',
+        'CONFIG_ERROR': 'CONFIG_ERROR',
+        'DATABASE_ERROR': 'UNKNOWN',
+        'access_denied': 'PERMISSION_DENIED',
+        'invalid_grant': 'INVALID_TOKEN',
+      };
+      setGmailError(errorMap[gmailErrorParam] || 'UNKNOWN');
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, [searchParams, toast]);
+  }, [searchParams]);
 
   useEffect(() => {
     if (user) {
@@ -123,8 +136,84 @@ const Expenses = () => {
     logActivity("Added expense", "Expenses");
   };
 
+  const handleStartSync = async () => {
+    // Trigger initial sync after connection
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      await supabase.functions.invoke("gmail-sync", {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+      setRefreshKey((k) => k + 1);
+      toast({
+        title: "Initial Sync Started",
+        description: "FinanceFlow is scanning your Gmail for transactions.",
+      });
+    } catch (error) {
+      console.error("Initial sync error:", error);
+    }
+  };
+
+  const handleErrorAction = () => {
+    if (gmailError === 'TOKEN_EXPIRED' || gmailError === 'INVALID_TOKEN' || gmailError === 'PERMISSION_DENIED') {
+      // Redirect to connect Gmail again
+      handleConnectGmail();
+    } else {
+      // Just dismiss for other errors
+      setGmailError(null);
+    }
+  };
+
+  const handleConnectGmail = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("get-google-client-id");
+      
+      if (error || !data?.client_id) {
+        toast({
+          title: "Configuration Error",
+          description: "Google OAuth is not configured. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const clientId = data.client_id;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const redirectUri = `${supabaseUrl}/functions/v1/gmail-oauth-callback`;
+      const state = btoa(JSON.stringify({ user_id: user.id }));
+      
+      const scope = encodeURIComponent("https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email");
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&state=${state}`;
+      
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error("OAuth error:", error);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
+      {/* Gmail Connection Success Dialog */}
+      <GmailConnectionSuccess
+        open={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+        gmailEmail={connectedGmailEmail}
+        onStartSync={handleStartSync}
+      />
+
+      {/* Error Alert */}
+      {gmailError && (
+        <FinanceFlowErrorAlert
+          errorCode={gmailError}
+          onAction={handleErrorAction}
+          onDismiss={() => setGmailError(null)}
+        />
+      )}
+
       {/* Header */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
