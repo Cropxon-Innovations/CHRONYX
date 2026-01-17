@@ -128,6 +128,42 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_badges: {
+        Row: {
+          badge_date: string
+          badge_icon: string | null
+          badge_name: string
+          badge_type: string
+          created_at: string
+          description: string | null
+          id: string
+          points: number | null
+          user_id: string
+        }
+        Insert: {
+          badge_date?: string
+          badge_icon?: string | null
+          badge_name: string
+          badge_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number | null
+          user_id: string
+        }
+        Update: {
+          badge_date?: string
+          badge_icon?: string | null
+          badge_name?: string
+          badge_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           category: string
@@ -1132,6 +1168,48 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          color: string | null
+          content: string | null
+          created_at: string
+          folder: string | null
+          id: string
+          is_archived: boolean | null
+          is_pinned: boolean | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          folder?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_pinned?: boolean | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          folder?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_pinned?: boolean | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       password_reset_tokens: {
         Row: {
           created_at: string
@@ -1980,6 +2058,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vault_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          encrypted_data: string
+          icon: string | null
+          id: string
+          last_accessed_at: string | null
+          name: string
+          notes: string | null
+          updated_at: string
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          encrypted_data: string
+          icon?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          encrypted_data?: string
+          icon?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: []
       }
       weekly_study_schedule: {
         Row: {
