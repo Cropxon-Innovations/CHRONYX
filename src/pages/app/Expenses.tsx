@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, IndianRupee, TrendingUp, Calendar, Wallet } from "lucide-react";
+import { Plus, IndianRupee, TrendingUp, Calendar, Wallet, Sparkles, FlaskConical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActivityLog } from "@/hooks/useActivityLog";
@@ -16,6 +16,7 @@ import FinanceFlowButton from "@/components/finance/FinanceFlowButton";
 import GmailConnectionSuccess from "@/components/finance/GmailConnectionSuccess";
 import FinanceFlowErrorAlert, { parseFinanceFlowError, type FinanceFlowErrorCode } from "@/components/finance/FinanceFlowErrorAlert";
 import FinanceFlowAnalytics from "@/components/finance/FinanceFlowAnalytics";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -197,7 +198,7 @@ const Expenses = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in">
       {/* Gmail Connection Success Dialog */}
       <GmailConnectionSuccess
         open={showSuccessDialog}
@@ -216,83 +217,86 @@ const Expenses = () => {
       )}
 
       {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-light text-foreground tracking-wide">Expenses</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track your daily spending</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <FinanceFlowButton onImportComplete={() => setRefreshKey((k) => k + 1)} />
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="vyom">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Expense
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Add Expense</DialogTitle>
-              </DialogHeader>
-              <AddExpenseForm onSuccess={handleExpenseAdded} />
-            </DialogContent>
-          </Dialog>
+      <header className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground tracking-wide">Expenses</h1>
+            <p className="text-sm text-muted-foreground mt-1">Track your daily spending</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <FinanceFlowButton onImportComplete={() => setRefreshKey((k) => k + 1)} />
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="vyom" size="sm" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add Expense</span>
+                  <span className="sm:hidden">Add</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Add Expense</DialogTitle>
+                </DialogHeader>
+                <AddExpenseForm onSuccess={handleExpenseAdded} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </header>
 
       {/* Stats Cards */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Calendar className="w-3.5 h-3.5" />
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1 sm:gap-2">
+              <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               Today
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold text-foreground">
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <p className="text-lg sm:text-2xl font-semibold text-foreground">
               ₹{stats.todayTotal.toLocaleString()}
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Wallet className="w-3.5 h-3.5" />
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1 sm:gap-2">
+              <Wallet className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               This Month
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold text-foreground">
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <p className="text-lg sm:text-2xl font-semibold text-foreground">
               ₹{stats.monthTotal.toLocaleString()}
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <TrendingUp className="w-3.5 h-3.5" />
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1 sm:gap-2">
+              <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               Top Category
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold text-foreground truncate">
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <p className="text-lg sm:text-2xl font-semibold text-foreground truncate">
               {stats.topCategory}
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <IndianRupee className="w-3.5 h-3.5" />
+          <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1 sm:gap-2">
+              <IndianRupee className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               Avg Daily
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold text-foreground">
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <p className="text-lg sm:text-2xl font-semibold text-foreground">
               ₹{stats.avgDaily.toLocaleString()}
             </p>
           </CardContent>
@@ -301,20 +305,24 @@ const Expenses = () => {
 
       {/* Charts Section */}
       <section>
-        <h2 className="text-lg font-light text-foreground mb-4">Analytics</h2>
+        <h2 className="text-base sm:text-lg font-light text-foreground mb-4">Analytics</h2>
         <ExpenseCharts key={`charts-${refreshKey}`} />
       </section>
 
       {/* FinanceFlow AI Section */}
-      <section className="grid lg:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-lg font-light text-foreground mb-4 flex items-center gap-2">
-            Auto Finance
-            <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded">BETA</span>
-          </h2>
-          <FinanceFlowSettings />
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="w-4 h-4 text-red-500" />
+          <h2 className="text-base sm:text-lg font-light text-foreground">Auto Finance</h2>
+          <Badge variant="outline" className="text-[9px] py-0 px-1.5 bg-red-500/10 text-red-500 border-red-500/30">
+            <FlaskConical className="w-2.5 h-2.5 mr-0.5" />
+            BETA
+          </Badge>
         </div>
-        <FinanceFlowAnalytics />
+        <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
+          <FinanceFlowSettings />
+          <FinanceFlowAnalytics />
+        </div>
       </section>
 
       {/* Expenses List */}

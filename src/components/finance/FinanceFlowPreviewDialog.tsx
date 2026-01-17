@@ -498,16 +498,16 @@ const FinanceFlowPreviewDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-red-500" />
-            <DialogTitle>FinanceFlow AI Preview</DialogTitle>
-            <Badge variant="outline" className="text-[9px] bg-red-500/10 text-red-500 border-red-500/30">
+      <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-4 sm:p-6">
+        <DialogHeader className="space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
+            <DialogTitle className="text-base sm:text-lg">FinanceFlow AI</DialogTitle>
+            <Badge variant="outline" className="text-[8px] sm:text-[9px] py-0 px-1 bg-red-500/10 text-red-500 border-red-500/30">
               BETA
             </Badge>
           </div>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             Review and categorize detected transactions before importing
           </DialogDescription>
         </DialogHeader>

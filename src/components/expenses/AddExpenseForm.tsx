@@ -12,7 +12,25 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { 
+  CalendarIcon, 
+  Utensils, 
+  Car, 
+  Home, 
+  Lightbulb, 
+  ShoppingBag, 
+  Heart, 
+  GraduationCap, 
+  Film, 
+  Plane, 
+  Shield, 
+  CreditCard, 
+  MoreHorizontal,
+  Banknote,
+  Smartphone,
+  Wallet,
+  Building2
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +50,31 @@ interface AddExpenseFormProps {
   };
 }
 
-const PAYMENT_MODES = ["Cash", "UPI", "Card", "Bank Transfer"];
+const PAYMENT_MODES = [
+  { value: "Cash", icon: Banknote },
+  { value: "UPI", icon: Smartphone },
+  { value: "Card", icon: CreditCard },
+  { value: "Bank Transfer", icon: Building2 },
+];
+
+// Category icons map
+const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  "Food": Utensils,
+  "Transport": Car,
+  "Rent": Home,
+  "Utilities": Lightbulb,
+  "Shopping": ShoppingBag,
+  "Health": Heart,
+  "Healthcare": Heart,
+  "Education": GraduationCap,
+  "Entertainment": Film,
+  "Travel": Plane,
+  "Insurance Premium": Shield,
+  "Loan EMI": CreditCard,
+  "Subscriptions": Wallet,
+  "Other": MoreHorizontal,
+  "Others": MoreHorizontal,
+};
 
 const DEFAULT_CATEGORIES = [
   "Food",
@@ -78,6 +120,11 @@ const AddExpenseForm = ({ onSuccess, editExpense }: AddExpenseFormProps) => {
       const uniqueCategories = [...new Set(data.map((c) => c.name))];
       setCategories(uniqueCategories);
     }
+  };
+
+  const getCategoryIcon = (cat: string) => {
+    const Icon = CATEGORY_ICONS[cat] || MoreHorizontal;
+    return Icon;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -168,19 +215,35 @@ const AddExpenseForm = ({ onSuccess, editExpense }: AddExpenseFormProps) => {
         />
       </div>
 
-      {/* Category */}
+      {/* Category with icons */}
       <div className="space-y-2">
         <Label>Category</Label>
         <Select value={category} onValueChange={setCategory} required>
           <SelectTrigger>
-            <SelectValue placeholder="Select category" />
+            <SelectValue placeholder="Select category">
+              {category && (
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const Icon = getCategoryIcon(category);
+                    return <Icon className="w-4 h-4 text-muted-foreground" />;
+                  })()}
+                  <span>{category}</span>
+                </div>
+              )}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>
-                {cat}
-              </SelectItem>
-            ))}
+            {categories.map((cat) => {
+              const Icon = getCategoryIcon(cat);
+              return (
+                <SelectItem key={cat} value={cat}>
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4 text-muted-foreground" />
+                    <span>{cat}</span>
+                  </div>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -196,19 +259,36 @@ const AddExpenseForm = ({ onSuccess, editExpense }: AddExpenseFormProps) => {
         />
       </div>
 
-      {/* Payment Mode */}
+      {/* Payment Mode with icons */}
       <div className="space-y-2">
         <Label>Payment Mode</Label>
         <Select value={paymentMode} onValueChange={setPaymentMode} required>
           <SelectTrigger>
-            <SelectValue placeholder="Select mode" />
+            <SelectValue placeholder="Select mode">
+              {paymentMode && (
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const mode = PAYMENT_MODES.find(m => m.value === paymentMode);
+                    const Icon = mode?.icon || CreditCard;
+                    return <Icon className="w-4 h-4 text-muted-foreground" />;
+                  })()}
+                  <span>{paymentMode}</span>
+                </div>
+              )}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {PAYMENT_MODES.map((mode) => (
-              <SelectItem key={mode} value={mode}>
-                {mode}
-              </SelectItem>
-            ))}
+            {PAYMENT_MODES.map((mode) => {
+              const Icon = mode.icon;
+              return (
+                <SelectItem key={mode.value} value={mode.value}>
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4 text-muted-foreground" />
+                    <span>{mode.value}</span>
+                  </div>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
