@@ -82,6 +82,7 @@ export type Database = {
           id: string
           is_duplicate: boolean | null
           is_processed: boolean | null
+          learned_category: string | null
           linked_expense_id: string | null
           merchant_name: string | null
           payment_mode: string | null
@@ -90,6 +91,7 @@ export type Database = {
           transaction_date: string
           updated_at: string
           user_id: string
+          user_verified: boolean | null
         }
         Insert: {
           amount: number
@@ -104,6 +106,7 @@ export type Database = {
           id?: string
           is_duplicate?: boolean | null
           is_processed?: boolean | null
+          learned_category?: string | null
           linked_expense_id?: string | null
           merchant_name?: string | null
           payment_mode?: string | null
@@ -112,6 +115,7 @@ export type Database = {
           transaction_date: string
           updated_at?: string
           user_id: string
+          user_verified?: boolean | null
         }
         Update: {
           amount?: number
@@ -126,6 +130,7 @@ export type Database = {
           id?: string
           is_duplicate?: boolean | null
           is_processed?: boolean | null
+          learned_category?: string | null
           linked_expense_id?: string | null
           merchant_name?: string | null
           payment_mode?: string | null
@@ -134,6 +139,7 @@ export type Database = {
           transaction_date?: string
           updated_at?: string
           user_id?: string
+          user_verified?: boolean | null
         }
         Relationships: [
           {
@@ -678,6 +684,86 @@ export type Database = {
           notes?: string | null
           relation?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      financeflow_corrections: {
+        Row: {
+          corrected_value: Json | null
+          correction_type: string
+          created_at: string
+          id: string
+          original_transaction_id: string | null
+          original_value: Json | null
+          user_id: string
+        }
+        Insert: {
+          corrected_value?: Json | null
+          correction_type: string
+          created_at?: string
+          id?: string
+          original_transaction_id?: string | null
+          original_value?: Json | null
+          user_id: string
+        }
+        Update: {
+          corrected_value?: Json | null
+          correction_type?: string
+          created_at?: string
+          id?: string
+          original_transaction_id?: string | null
+          original_value?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financeflow_corrections_original_transaction_id_fkey"
+            columns: ["original_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "auto_imported_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financeflow_sync_history: {
+        Row: {
+          created_at: string
+          duplicates_detected: number
+          emails_scanned: number
+          error_message: string | null
+          id: string
+          imported_count: number
+          status: string
+          sync_duration_ms: number | null
+          sync_type: string
+          transactions_found: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duplicates_detected?: number
+          emails_scanned?: number
+          error_message?: string | null
+          id?: string
+          imported_count?: number
+          status?: string
+          sync_duration_ms?: number | null
+          sync_type?: string
+          transactions_found?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duplicates_detected?: number
+          emails_scanned?: number
+          error_message?: string | null
+          id?: string
+          imported_count?: number
+          status?: string
+          sync_duration_ms?: number | null
+          sync_type?: string
+          transactions_found?: number
           user_id?: string
         }
         Relationships: []

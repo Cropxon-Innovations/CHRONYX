@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -17,7 +16,8 @@ import {
   AlertTriangle,
   Trash2,
   Eye,
-  FlaskConical
+  FlaskConical,
+  History
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +33,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import SyncHistoryList from "./SyncHistoryList";
+import FinanceFlowErrorAlert, { parseFinanceFlowError, type FinanceFlowErrorCode } from "./FinanceFlowErrorAlert";
 
 interface GmailSettings {
   id: string;
@@ -50,6 +57,8 @@ const FinanceFlowSettings = () => {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [disconnectDialogOpen, setDisconnectDialogOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [syncError, setSyncError] = useState<FinanceFlowErrorCode | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -114,6 +123,7 @@ const FinanceFlowSettings = () => {
     if (!user || syncing) return;
     
     setSyncing(true);
+    setSyncError(null);
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -132,17 +142,14 @@ const FinanceFlowSettings = () => {
       
       toast({
         title: "Sync Complete",
-        description: `Processed ${result.processed} emails. Imported ${result.imported} new transactions. Found ${result.duplicates} duplicates.`,
+        description: `Processed ${result.processed} emails. Imported ${result.imported} new transactions.`,
       });
       
       fetchSettings();
     } catch (error: any) {
       console.error("Sync error:", error);
-      toast({
-        title: "Sync Failed",
-        description: error.message || "Failed to sync Gmail. Please try again.",
-        variant: "destructive",
-      });
+      const errorCode = parseFinanceFlowError(error);
+      setSyncError(errorCode);
     } finally {
       setSyncing(false);
     }
@@ -314,6 +321,20 @@ const FinanceFlowSettings = () => {
               
               <Separator />
               
+              {/* Sync Error */}
+              {syncError && (
+                <FinanceFlowErrorAlert
+                  errorCode={syncError}
+                  onAction={() => {
+                    setSyncError(null);
+                    if (syncError === 'TOKEN_EXPIRED') {
+                      handleConnectGmail();
+                    }
+                  }}
+                  onDismiss={() => setSyncError(null)}
+                />
+              )}
+              
               {/* Sync Button */}
               <Button 
                 onClick={handleSync} 
@@ -324,6 +345,21 @@ const FinanceFlowSettings = () => {
                 <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
                 {syncing ? "Syncing..." : "Sync Now"}
               </Button>
+              
+              {/* Sync History */}
+              <Collapsible open={showHistory} onOpenChange={setShowHistory}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full gap-2 text-xs">
+                    <History className="w-3.5 h-3.5" />
+                    {showHistory ? "Hide" : "Show"} Sync History
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="pt-2">
+                    <SyncHistoryList />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
               
               {/* Token Expired Warning */}
               {settings.sync_status === "token_expired" && (

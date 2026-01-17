@@ -15,6 +15,7 @@ import FinanceFlowSettings from "@/components/finance/FinanceFlowSettings";
 import FinanceFlowButton from "@/components/finance/FinanceFlowButton";
 import GmailConnectionSuccess from "@/components/finance/GmailConnectionSuccess";
 import FinanceFlowErrorAlert, { parseFinanceFlowError, type FinanceFlowErrorCode } from "@/components/finance/FinanceFlowErrorAlert";
+import FinanceFlowAnalytics from "@/components/finance/FinanceFlowAnalytics";
 import {
   Dialog,
   DialogContent,
@@ -305,12 +306,15 @@ const Expenses = () => {
       </section>
 
       {/* FinanceFlow AI Section */}
-      <section>
-        <h2 className="text-lg font-light text-foreground mb-4 flex items-center gap-2">
-          Auto Finance
-          <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded">BETA</span>
-        </h2>
-        <FinanceFlowSettings />
+      <section className="grid lg:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-lg font-light text-foreground mb-4 flex items-center gap-2">
+            Auto Finance
+            <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded">BETA</span>
+          </h2>
+          <FinanceFlowSettings />
+        </div>
+        <FinanceFlowAnalytics />
       </section>
 
       {/* Expenses List */}
