@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback } from "react";
 import MetricCard from "@/components/dashboard/MetricCard";
 import LifespanBar from "@/components/dashboard/LifespanBar";
 import TrendChart from "@/components/dashboard/TrendChart";
@@ -12,10 +11,9 @@ import FinancialOverview from "@/components/dashboard/FinancialOverview";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import PendingYesterdayTasks from "@/components/dashboard/PendingYesterdayTasks";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
-import { format, subDays, startOfWeek, addDays, parseISO, formatDistanceToNow } from "date-fns";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Settings, User } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -34,158 +32,25 @@ const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { showOnboarding, isLoading: onboardingLoading, completeOnboarding } = useOnboarding();
-  const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [todosStats, setTodosStats] = useState({ completed: 0, total: 0 });
-  const [studyMinutes, setStudyMinutes] = useState(0);
-  const [birthDate, setBirthDate] = useState<Date | null>(null);
-  const [targetAge, setTargetAge] = useState(60);
-  const [studyTrend, setStudyTrend] = useState<Array<{ name: string; value: number }>>([]);
-  const [heatmapData, setHeatmapData] = useState<number[]>([]);
-  const [recentActivity, setRecentActivity] = useState<Array<{ action: string; module: string; timestamp: string }>>([]);
-  const [recentAchievements, setRecentAchievements] = useState<Array<{ date: string; title: string; description: string; category: string }>>([]);
-  const [profile, setProfile] = useState<{ display_name: string | null; avatar_url: string | null } | null>(null);
+  
+  // Use React Query with stale-while-revalidate pattern
+  const { 
+    data, 
+    isLoading, 
+    isRefreshing, 
+    refresh 
+  } = useDashboardData();
 
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData();
-    }
-  }, [user]);
-
-  const fetchDashboardData = useCallback(async (showRefreshIndicator = false) => {
-    if (showRefreshIndicator) setIsRefreshing(true);
-    
-    const today = new Date().toISOString().split("T")[0];
-
-    // Fetch todos for today
-    const { data: todos } = await supabase
-      .from("todos")
-      .select("status")
-      .eq("date", today);
-
-    if (todos) {
-      const completed = todos.filter(t => t.status === "done").length;
-      setTodosStats({ completed, total: todos.length });
-    }
-
-    // Fetch study logs for today
-    const { data: studyLogs } = await supabase
-      .from("study_logs")
-      .select("duration")
-      .eq("date", today);
-
-    if (studyLogs) {
-      const total = studyLogs.reduce((acc, log) => acc + log.duration, 0);
-      setStudyMinutes(total);
-    }
-
-    // Fetch profile for lifespan calculations and display
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("birth_date, target_age, display_name, avatar_url")
-      .eq("id", user?.id)
-      .maybeSingle();
-
-    if (profileData) {
-      if (profileData.birth_date) {
-        setBirthDate(new Date(profileData.birth_date));
-      }
-      setTargetAge(profileData.target_age || 60);
-      setProfile({ display_name: profileData.display_name, avatar_url: profileData.avatar_url });
-    }
-
-    // Fetch study trend for this week
-    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-    const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-    const weekDates = weekDays.map(d => format(d, "yyyy-MM-dd"));
-    
-    const { data: weeklyStudy } = await supabase
-      .from("study_logs")
-      .select("date, duration")
-      .gte("date", weekDates[0])
-      .lte("date", weekDates[6]);
-
-    const studyByDay: Record<string, number> = {};
-    weeklyStudy?.forEach(log => {
-      studyByDay[log.date] = (studyByDay[log.date] || 0) + log.duration;
-    });
-
-    const trendData = weekDays.map(day => ({
-      name: format(day, "EEE"),
-      value: studyByDay[format(day, "yyyy-MM-dd")] || 0,
-    }));
-    setStudyTrend(trendData);
-
-    // Fetch heatmap data (last 84 days of todos)
-    const heatmapStartDate = format(subDays(new Date(), 83), "yyyy-MM-dd");
-    const { data: heatmapTodos } = await supabase
-      .from("todos")
-      .select("date, status")
-      .gte("date", heatmapStartDate)
-      .order("date", { ascending: true });
-
-    const todosByDay: Record<string, { done: number; total: number }> = {};
-    heatmapTodos?.forEach(todo => {
-      if (!todosByDay[todo.date]) {
-        todosByDay[todo.date] = { done: 0, total: 0 };
-      }
-      todosByDay[todo.date].total++;
-      if (todo.status === "done") {
-        todosByDay[todo.date].done++;
-      }
-    });
-
-    const heatmap: number[] = [];
-    for (let i = 83; i >= 0; i--) {
-      const date = format(subDays(new Date(), i), "yyyy-MM-dd");
-      const dayData = todosByDay[date];
-      if (dayData && dayData.total > 0) {
-        const ratio = dayData.done / dayData.total;
-        heatmap.push(Math.round(ratio * 4));
-      } else {
-        heatmap.push(0);
-      }
-    }
-    setHeatmapData(heatmap);
-
-    // Fetch recent activity
-    const { data: activityLogs } = await supabase
-      .from("activity_logs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(5);
-
-    if (activityLogs) {
-      setRecentActivity(activityLogs.map(log => ({
-        action: log.action,
-        module: log.module,
-        timestamp: formatDistanceToNow(new Date(log.created_at!), { addSuffix: true }),
-      })));
-    }
-
-    // Fetch recent achievements
-    const { data: achievements } = await supabase
-      .from("achievements")
-      .select("*")
-      .order("achieved_at", { ascending: false })
-      .limit(3);
-
-    if (achievements) {
-      setRecentAchievements(achievements.map(a => ({
-        date: format(parseISO(a.achieved_at), "MMM d, yyyy"),
-        title: a.title,
-        description: a.description || "",
-        category: a.category,
-      })));
-    }
-
-    setLoading(false);
-    if (showRefreshIndicator) setIsRefreshing(false);
-  }, [user]);
-
-  const handleRefresh = () => {
-    fetchDashboardData(true);
-  };
+  // Extract data with defaults
+  const todosStats = data?.todosStats ?? { completed: 0, total: 0 };
+  const studyMinutes = data?.studyMinutes ?? 0;
+  const birthDate = data?.birthDate ?? null;
+  const targetAge = data?.targetAge ?? 60;
+  const studyTrend = data?.studyTrend ?? [];
+  const heatmapData = data?.heatmapData ?? [];
+  const recentActivity = data?.recentActivity ?? [];
+  const recentAchievements = data?.recentAchievements ?? [];
+  const profile = data?.profile ?? null;
 
   // Calculate lifespan data
   const effectiveBirthDate = birthDate || new Date(1991, 0, 1);
@@ -199,7 +64,7 @@ const Dashboard = () => {
     ? Math.round((todosStats.completed / todosStats.total) * 100) 
     : 0;
 
-  if (loading || onboardingLoading) {
+  if (isLoading || onboardingLoading) {
     return <DashboardSkeleton />;
   }
 
@@ -230,7 +95,7 @@ const Dashboard = () => {
           <Button
             variant="outline"
             size="icon"
-            onClick={handleRefresh}
+            onClick={() => refresh()}
             disabled={isRefreshing}
             className="h-9 w-9"
           >

@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { LeftSketchAnimation, RightSketchAnimation, FloatingParticles } from "@/components/auth/LoginAnimations";
 import { motion } from "framer-motion";
 import { Github, Apple, Lock, Loader2 } from "lucide-react";
-import { DomainWarningBanner } from "@/components/auth/DomainCanonicalizer";
+import { DomainAutoRedirect } from "@/components/auth/DomainCanonicalizer";
 import { OAuthErrorBanner } from "@/components/auth/OAuthErrorBanner";
 
 // CHRONYX Logo Component (same as Landing page)
@@ -178,7 +178,7 @@ const Login = () => {
 
   return (
     <>
-      <DomainWarningBanner />
+      <DomainAutoRedirect />
       <motion.main 
         className="min-h-screen vyom-gradient-bg flex items-center justify-center px-4 sm:px-6 relative overflow-hidden"
         initial={{ opacity: 0, y: 10 }}
