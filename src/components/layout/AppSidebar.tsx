@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,13 +15,10 @@ import {
   CheckSquare,
   GraduationCap,
   Wallet,
-  ShieldCheck,
   Hourglass,
   Trophy,
-  Activity,
   LogOut,
   Settings,
-  Menu,
   X,
   Moon,
   Sun,
@@ -43,7 +39,6 @@ import {
   Lock,
   PieChart,
   Heart,
-  Sparkles,
 } from "lucide-react";
 import {
   Dialog,
@@ -54,6 +49,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -61,7 +57,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Modularized navigation sections with unique icons
+// Modularized navigation sections - Reordered: Overview → Productivity → Finance → Life → Security
 const navSections = [
   {
     title: "Overview",
@@ -80,15 +76,6 @@ const navSections = [
     ],
   },
   {
-    title: "Life",
-    items: [
-      { path: "/app/memory", label: "Memory", icon: Images },
-      { path: "/app/documents", label: "Documents", icon: FileText },
-      { path: "/app/social", label: "Social", icon: Users },
-      { path: "/app/lifespan", label: "Lifespan", icon: Hourglass },
-    ],
-  },
-  {
     title: "Finance",
     items: [
       { path: "/app/expenses", label: "Expenses", icon: Receipt },
@@ -96,6 +83,15 @@ const navSections = [
       { path: "/app/reports", label: "Reports & Budget", icon: PieChart },
       { path: "/app/loans", label: "Loans & EMI", icon: Wallet },
       { path: "/app/insurance", label: "Insurance", icon: Heart },
+    ],
+  },
+  {
+    title: "Life",
+    items: [
+      { path: "/app/memory", label: "Memory", icon: Images },
+      { path: "/app/documents", label: "Documents", icon: FileText },
+      { path: "/app/social", label: "Social", icon: Users },
+      { path: "/app/lifespan", label: "Lifespan", icon: Hourglass },
     ],
   },
   {
@@ -192,10 +188,10 @@ const AppSidebar = () => {
     }
   };
 
-  const hashOtp = async (otp: string): Promise<string> => {
+  const hashOtp = async (otpValue: string): Promise<string> => {
     if (!user?.id) return "";
     const encoder = new TextEncoder();
-    const data = encoder.encode(otp + user.id);
+    const data = encoder.encode(otpValue + user.id);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
   };
@@ -438,18 +434,20 @@ const AppSidebar = () => {
                 <Settings className="w-4 h-4" />
                 Settings
               </Link>
-              <button onClick={toggleTheme} className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full">
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
+              >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 {theme === "dark" ? "Light Mode" : "Dark Mode"}
               </button>
-              <button onClick={handleSignOut} className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:text-rose-400 hover:bg-rose-500/10 transition-colors w-full">
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
+              >
                 <LogOut className="w-4 h-4" />
                 Sign Out
               </button>
-              <div className="pt-2 text-center">
-                <div className="text-[10px] text-sidebar-foreground/30">CHRONYX by CROPXON</div>
-                <div className="text-[10px] text-sidebar-foreground/20 font-mono">V1.0.0</div>
-              </div>
             </>
           )}
         </div>
@@ -459,73 +457,66 @@ const AppSidebar = () => {
 
   return (
     <>
-      {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 z-40">
-        <Link to="/app" className="flex items-center gap-2">
-          <ChronyxMiniLogo size="sm" />
-          <span className="text-lg font-light tracking-[0.2em] text-sidebar-foreground">CHRONYX</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <LiveClock compact />
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} className="text-sidebar-foreground">
-            <Menu className="w-5 h-5" />
-          </Button>
-        </div>
-      </header>
-
-      {/* Mobile Overlay */}
-      {mobileOpen && <div className="lg:hidden fixed inset-0 bg-foreground/20 z-40" onClick={() => setMobileOpen(false)} />}
+      {/* Mobile Toggle */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-40 p-2 rounded-md bg-background/80 backdrop-blur border border-border shadow-sm"
+      >
+        <LayoutDashboard className="w-5 h-5" />
+      </button>
 
       {/* Mobile Sidebar */}
-      <aside className={cn(
-        "lg:hidden fixed top-0 left-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col z-50 transform transition-transform duration-300",
-        mobileOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <SidebarContent collapsed={false} />
-      </aside>
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={closeMobile} />
+          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-sidebar border-r border-sidebar-border flex flex-col">
+            <SidebarContent />
+          </aside>
+        </div>
+      )}
 
       {/* Desktop Sidebar */}
-      <aside className={cn(
-        "hidden lg:flex fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border flex-col transition-all duration-300",
-        isCollapsed ? "w-14" : "w-64"
-      )}>
+      <aside
+        className={cn(
+          "hidden lg:flex fixed left-0 top-0 bottom-0 bg-sidebar border-r border-sidebar-border flex-col z-30 transition-all duration-300",
+          isCollapsed ? "w-14" : "w-64"
+        )}
+      >
         <SidebarContent collapsed={isCollapsed} />
       </aside>
 
-      {/* OTP Dialog */}
-      <Dialog open={verifyDialog.open} onOpenChange={(open) => {
-        setVerifyDialog((v) => ({ ...v, open }));
-        if (!open) { setOtp(""); setPendingOtp(null); }
-      }}>
+      {/* OTP Verification Dialog */}
+      <Dialog open={verifyDialog.open} onOpenChange={(open) => setVerifyDialog((prev) => ({ ...prev, open }))}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Verify {verifyDialog.type === "email" ? "Email" : "Phone"}</DialogTitle>
-            <DialogDescription>We'll send a verification code to {verifyDialog.value}</DialogDescription>
+            <DialogDescription>
+              We'll send a verification code to {verifyDialog.value}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {!pendingOtp ? (
               <Button onClick={handleSendOtp} disabled={otpSending} className="w-full">
-                {otpSending ? "Sending..." : `Send OTP via ${verifyDialog.type === "email" ? "Email" : "SMS"}`}
+                {otpSending ? "Sending..." : "Send Verification Code"}
               </Button>
             ) : (
-              <>
+              <div className="space-y-3">
                 <Input
-                  placeholder="Enter 6-digit OTP"
+                  placeholder="Enter OTP"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) => setOtp(e.target.value)}
                   maxLength={6}
-                  className="text-center text-lg tracking-widest"
                 />
-                <p className="text-xs text-muted-foreground text-center">
-                  OTP sent.{" "}
-                  <button type="button" onClick={handleSendOtp} disabled={otpSending} className="text-primary hover:underline">Resend</button>
-                </p>
-              </>
+                <Button onClick={handleVerifyOTP} disabled={isVerifying || otp.length < 4} className="w-full">
+                  {isVerifying ? "Verifying..." : "Verify"}
+                </Button>
+              </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setVerifyDialog({ open: false, type: "email", value: "" }); setOtp(""); setPendingOtp(null); }}>Cancel</Button>
-            {pendingOtp && <Button onClick={handleVerifyOTP} disabled={otp.length !== 6 || isVerifying}>{isVerifying ? "Verifying..." : "Verify"}</Button>}
+            <Button variant="outline" onClick={() => setVerifyDialog({ open: false, type: "email", value: "" })}>
+              Cancel
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
