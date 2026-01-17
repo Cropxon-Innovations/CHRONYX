@@ -28,6 +28,8 @@ interface NetWorthData {
     totalIncome: number;
     totalExpenses: number;
     outstandingLoans: number;
+    totalLoansTaken: number;
+    totalLoansPaid: number;
     insuranceValue: number;
   };
 }
@@ -53,30 +55,51 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
       const [incomeResult, expensesResult, loansResult, insurancesResult] = await Promise.all([
         supabase.from("income_entries").select("amount, income_date").eq("user_id", user.id),
         supabase.from("expenses").select("amount, expense_date").eq("user_id", user.id),
-        supabase.from("loans").select("id, principal_amount, status").eq("user_id", user.id).eq("status", "active"),
+        supabase.from("loans").select("id, principal_amount, status").eq("user_id", user.id),
         supabase.from("insurances").select("sum_assured, status").eq("user_id", user.id).eq("status", "active"),
       ]);
 
       const totalIncome = incomeResult.data?.reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
       const totalExpenses = expensesResult.data?.reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
 
+      // Calculate loans: total principal, outstanding, and paid
+      let totalLoansTaken = 0;
       let outstandingLoans = 0;
+      let totalLoansPaid = 0;
+
       if (loansResult.data && loansResult.data.length > 0) {
+        // Total principal of all loans (active + closed)
+        totalLoansTaken = loansResult.data.reduce((sum, loan) => sum + Number(loan.principal_amount), 0);
+
         const loanIds = loansResult.data.map(l => l.id);
+        
+        // Get all EMI data
         const { data: emiData } = await supabase
           .from("emi_schedule")
-          .select("loan_id, remaining_principal, payment_status")
-          .in("loan_id", loanIds)
-          .eq("payment_status", "Pending")
-          .order("emi_month", { ascending: true });
+          .select("loan_id, principal_component, remaining_principal, payment_status")
+          .in("loan_id", loanIds);
 
-        const loanRemainingMap = new Map<string, number>();
-        emiData?.forEach(emi => {
-          if (!loanRemainingMap.has(emi.loan_id)) {
-            loanRemainingMap.set(emi.loan_id, Number(emi.remaining_principal));
-          }
-        });
-        outstandingLoans = Array.from(loanRemainingMap.values()).reduce((sum, val) => sum + val, 0);
+        if (emiData) {
+          // Calculate outstanding (remaining principal from first pending EMI of each loan)
+          const loanRemainingMap = new Map<string, number>();
+          const sortedEmis = [...emiData].sort((a, b) => {
+            if (a.payment_status === 'Pending' && b.payment_status !== 'Pending') return -1;
+            if (a.payment_status !== 'Pending' && b.payment_status === 'Pending') return 1;
+            return 0;
+          });
+
+          sortedEmis.forEach(emi => {
+            if (emi.payment_status === 'Pending' && !loanRemainingMap.has(emi.loan_id)) {
+              // Remaining = remaining_principal + current principal component (since this EMI is not paid yet)
+              loanRemainingMap.set(emi.loan_id, Number(emi.remaining_principal) + Number(emi.principal_component));
+            }
+          });
+
+          outstandingLoans = Array.from(loanRemainingMap.values()).reduce((sum, val) => sum + val, 0);
+
+          // Calculate paid = Total principal - Outstanding
+          totalLoansPaid = totalLoansTaken - outstandingLoans;
+        }
       }
 
       const insuranceValue = insurancesResult.data?.reduce((sum, ins) => sum + Number(ins.sum_assured), 0) || 0;
@@ -98,7 +121,20 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
       const liabilities = totalExpenses + outstandingLoans;
       const netWorth = assets - liabilities;
 
-      setData({ netWorth, assets, liabilities, monthlyDelta, breakdown: { totalIncome, totalExpenses, outstandingLoans, insuranceValue } });
+      setData({ 
+        netWorth, 
+        assets, 
+        liabilities, 
+        monthlyDelta, 
+        breakdown: { 
+          totalIncome, 
+          totalExpenses, 
+          outstandingLoans,
+          totalLoansTaken,
+          totalLoansPaid,
+          insuranceValue 
+        } 
+      });
     } catch (error) {
       console.error("Error calculating net worth:", error);
     } finally {
@@ -222,7 +258,9 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
             <div className="space-y-1 text-[11px]">
               <div className="flex justify-between"><span className="text-muted-foreground">Income</span><span>{formatCurrency(data.breakdown.totalIncome)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Expenses</span><span>{formatCurrency(data.breakdown.totalExpenses)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Loans</span><span>{formatCurrency(data.breakdown.outstandingLoans)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Loans Taken</span><span>{formatCurrency(data.breakdown.totalLoansTaken)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Loans Paid</span><span className="text-vyom-success">{formatCurrency(data.breakdown.totalLoansPaid)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Loans Outstanding</span><span className="text-destructive">{formatCurrency(data.breakdown.outstandingLoans)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Insurance</span><span>{formatCurrency(data.breakdown.insuranceValue)}</span></div>
             </div>
           </CollapsibleContent>

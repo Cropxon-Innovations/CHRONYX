@@ -41,8 +41,16 @@ export const LoanCard = ({
   onDelete,
 }: LoanCardProps) => {
   const totalEmis = paidCount + pendingCount;
-  const progress = totalEmis > 0 ? (paidCount / totalEmis) * 100 : 0;
-  const paidAmount = Number(loan.principal_amount) - remainingPrincipal;
+  
+  // Calculate paid amount from EMIs already paid (principal portion sum)
+  // paidAmount = Principal - Remaining Principal gives accurate paid principal
+  const paidPrincipal = Number(loan.principal_amount) - remainingPrincipal;
+  
+  // Progress based on principal paid vs total principal
+  const progress = Number(loan.principal_amount) > 0 
+    ? (paidPrincipal / Number(loan.principal_amount)) * 100 
+    : 0;
+  
   const currency = loan.country === "USA" ? "USD" : "INR";
   const bankColor = getBankColor(loan.bank_name);
 
@@ -124,13 +132,13 @@ export const LoanCard = ({
         {/* Progress Bar */}
         <div className="mb-4">
           <div className="flex justify-between text-xs text-muted-foreground mb-2">
-            <span>Paid: {formatCurrency(paidAmount, currency)}</span>
+            <span>Paid: {formatCurrency(paidPrincipal, currency)}</span>
             <span>{progress.toFixed(1)}%</span>
           </div>
           <div className="h-1.5 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${progress}%`, backgroundColor: "hsl(var(--vyom-success))" }}
+              style={{ width: `${Math.min(progress, 100)}%`, backgroundColor: "hsl(var(--vyom-success))" }}
             />
           </div>
         </div>

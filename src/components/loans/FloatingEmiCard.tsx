@@ -128,9 +128,9 @@ const FloatingEmiCard = ({ loans, allEmis, onMarkPaid, isLoading }: FloatingEmiC
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-20 right-4 z-40 w-80 md:w-96"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="fixed top-24 right-4 z-30 w-80 md:w-96 max-h-[calc(100vh-120px)]"
       >
         <Card className="bg-card/95 backdrop-blur-lg border-border shadow-2xl">
           <CardHeader 
