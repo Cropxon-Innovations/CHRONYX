@@ -19,6 +19,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
+const Security = lazy(() => import("./pages/Security"));
 const Refund = lazy(() => import("./pages/Refund"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const About = lazy(() => import("./pages/About"));
@@ -134,6 +135,16 @@ const AnimatedRoutes = () => {
             <motion.div {...pageTransition}>
               <Suspense fallback={<PageLoader />}>
                 <Terms />
+              </Suspense>
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/security" 
+          element={
+            <motion.div {...pageTransition}>
+              <Suspense fallback={<PageLoader />}>
+                <Security />
               </Suspense>
             </motion.div>
           } 
