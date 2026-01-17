@@ -68,6 +68,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_parsing_logs: {
+        Row: {
+          confidence_score: number | null
+          cost_estimate: number | null
+          created_at: string
+          error_message: string | null
+          id: string
+          input_snippet: string | null
+          model_used: string | null
+          output_summary: string | null
+          parse_type: string
+          source: string
+          success: boolean
+          tokens_used: number | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          cost_estimate?: number | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          input_snippet?: string | null
+          model_used?: string | null
+          output_summary?: string | null
+          parse_type: string
+          source?: string
+          success?: boolean
+          tokens_used?: number | null
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          cost_estimate?: number | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          input_snippet?: string | null
+          model_used?: string | null
+          output_summary?: string | null
+          parse_type?: string
+          source?: string
+          success?: boolean
+          tokens_used?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       auto_imported_transactions: {
         Row: {
           amount: number
@@ -82,11 +130,14 @@ export type Database = {
           gmail_thread_id: string | null
           id: string
           is_duplicate: boolean | null
+          is_overridden: boolean | null
           is_processed: boolean | null
           learned_category: string | null
           linked_expense_id: string | null
           merchant_name: string | null
           needs_review: boolean | null
+          overridden_at: string | null
+          override_reason: string | null
           payment_mode: string | null
           raw_extracted_data: Json | null
           review_reason: string | null
@@ -109,11 +160,14 @@ export type Database = {
           gmail_thread_id?: string | null
           id?: string
           is_duplicate?: boolean | null
+          is_overridden?: boolean | null
           is_processed?: boolean | null
           learned_category?: string | null
           linked_expense_id?: string | null
           merchant_name?: string | null
           needs_review?: boolean | null
+          overridden_at?: string | null
+          override_reason?: string | null
           payment_mode?: string | null
           raw_extracted_data?: Json | null
           review_reason?: string | null
@@ -136,11 +190,14 @@ export type Database = {
           gmail_thread_id?: string | null
           id?: string
           is_duplicate?: boolean | null
+          is_overridden?: boolean | null
           is_processed?: boolean | null
           learned_category?: string | null
           linked_expense_id?: string | null
           merchant_name?: string | null
           needs_review?: boolean | null
+          overridden_at?: string | null
+          override_reason?: string | null
           payment_mode?: string | null
           raw_extracted_data?: Json | null
           review_reason?: string | null
@@ -575,6 +632,51 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          created_at: string
+          endpoint: string | null
+          error_code: string | null
+          error_message: string
+          error_type: string
+          id: string
+          request_payload: Json | null
+          resolved: boolean
+          resolved_at: string | null
+          severity: string
+          stack_trace: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          endpoint?: string | null
+          error_code?: string | null
+          error_message: string
+          error_type: string
+          id?: string
+          request_payload?: Json | null
+          resolved?: boolean
+          resolved_at?: string | null
+          severity?: string
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string | null
+          error_code?: string | null
+          error_message?: string
+          error_type?: string
+          id?: string
+          request_payload?: Json | null
+          resolved?: boolean
+          resolved_at?: string | null
+          severity?: string
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       expense_categories: {
         Row: {
           created_at: string
@@ -609,6 +711,7 @@ export type Database = {
           gmail_import_id: string | null
           id: string
           is_auto_generated: boolean | null
+          is_overridden: boolean | null
           merchant_name: string | null
           notes: string | null
           payment_mode: string
@@ -627,6 +730,7 @@ export type Database = {
           gmail_import_id?: string | null
           id?: string
           is_auto_generated?: boolean | null
+          is_overridden?: boolean | null
           merchant_name?: string | null
           notes?: string | null
           payment_mode: string
@@ -645,6 +749,7 @@ export type Database = {
           gmail_import_id?: string | null
           id?: string
           is_auto_generated?: boolean | null
+          is_overridden?: boolean | null
           merchant_name?: string | null
           notes?: string | null
           payment_mode?: string
@@ -777,13 +882,58 @@ export type Database = {
         }
         Relationships: []
       }
+      gmail_import_logs: {
+        Row: {
+          action: string
+          created_at: string
+          email_subject: string | null
+          error_message: string | null
+          gmail_message_id: string | null
+          id: string
+          metadata: Json | null
+          source: string
+          success: boolean
+          transaction_amount: number | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          email_subject?: string | null
+          error_message?: string | null
+          gmail_message_id?: string | null
+          id?: string
+          metadata?: Json | null
+          source?: string
+          success?: boolean
+          transaction_amount?: number | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          email_subject?: string | null
+          error_message?: string | null
+          gmail_message_id?: string | null
+          id?: string
+          metadata?: Json | null
+          source?: string
+          success?: boolean
+          transaction_amount?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       gmail_sync_settings: {
         Row: {
           access_token_encrypted: string | null
           created_at: string
+          daily_import_count: number | null
+          daily_import_date: string | null
           gmail_email: string | null
           id: string
           is_enabled: boolean
+          is_paused: boolean | null
           last_history_id: string | null
           last_sync_at: string | null
           refresh_token_encrypted: string | null
@@ -796,9 +946,12 @@ export type Database = {
         Insert: {
           access_token_encrypted?: string | null
           created_at?: string
+          daily_import_count?: number | null
+          daily_import_date?: string | null
           gmail_email?: string | null
           id?: string
           is_enabled?: boolean
+          is_paused?: boolean | null
           last_history_id?: string | null
           last_sync_at?: string | null
           refresh_token_encrypted?: string | null
@@ -811,9 +964,12 @@ export type Database = {
         Update: {
           access_token_encrypted?: string | null
           created_at?: string
+          daily_import_count?: number | null
+          daily_import_date?: string | null
           gmail_email?: string | null
           id?: string
           is_enabled?: boolean
+          is_paused?: boolean | null
           last_history_id?: string | null
           last_sync_at?: string | null
           refresh_token_encrypted?: string | null
@@ -1208,6 +1364,108 @@ export type Database = {
             columns: ["insured_member_id"]
             isOneToOne: false
             referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          company_address: string | null
+          company_gstin: string | null
+          company_name: string
+          created_at: string
+          currency: string
+          customer_address: string | null
+          customer_email: string
+          customer_name: string | null
+          customer_phone: string | null
+          due_date: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string
+          metadata: Json | null
+          notes: string | null
+          paid_date: string | null
+          payment_history_id: string | null
+          pdf_url: string | null
+          plan_type: string
+          status: string
+          subscription_id: string | null
+          tax_amount: number | null
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          company_address?: string | null
+          company_gstin?: string | null
+          company_name?: string
+          created_at?: string
+          currency?: string
+          customer_address?: string | null
+          customer_email: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          metadata?: Json | null
+          notes?: string | null
+          paid_date?: string | null
+          payment_history_id?: string | null
+          pdf_url?: string | null
+          plan_type: string
+          status?: string
+          subscription_id?: string | null
+          tax_amount?: number | null
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          company_address?: string | null
+          company_gstin?: string | null
+          company_name?: string
+          created_at?: string
+          currency?: string
+          customer_address?: string | null
+          customer_email?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          metadata?: Json | null
+          notes?: string | null
+          paid_date?: string | null
+          payment_history_id?: string | null
+          pdf_url?: string | null
+          plan_type?: string
+          status?: string
+          subscription_id?: string | null
+          tax_amount?: number | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_payment_history_id_fkey"
+            columns: ["payment_history_id"]
+            isOneToOne: false
+            referencedRelation: "payment_history"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -1677,6 +1935,60 @@ export type Database = {
           },
         ]
       }
+      plan_limits: {
+        Row: {
+          ai_parsing_per_month: number
+          created_at: string
+          features: Json | null
+          gmail_imports_per_month: number
+          id: string
+          is_active: boolean
+          ocr_scans_per_month: number
+          plan_type: string
+          price_inr: number
+          price_usd: number
+          storage_gb: number
+          trial_duration_days: number | null
+          updated_at: string
+          yearly_price_inr: number | null
+          yearly_price_usd: number | null
+        }
+        Insert: {
+          ai_parsing_per_month?: number
+          created_at?: string
+          features?: Json | null
+          gmail_imports_per_month?: number
+          id?: string
+          is_active?: boolean
+          ocr_scans_per_month?: number
+          plan_type: string
+          price_inr?: number
+          price_usd?: number
+          storage_gb?: number
+          trial_duration_days?: number | null
+          updated_at?: string
+          yearly_price_inr?: number | null
+          yearly_price_usd?: number | null
+        }
+        Update: {
+          ai_parsing_per_month?: number
+          created_at?: string
+          features?: Json | null
+          gmail_imports_per_month?: number
+          id?: string
+          is_active?: boolean
+          ocr_scans_per_month?: number
+          plan_type?: string
+          price_inr?: number
+          price_usd?: number
+          storage_gb?: number
+          trial_duration_days?: number | null
+          updated_at?: string
+          yearly_price_inr?: number | null
+          yearly_price_usd?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -2010,6 +2322,7 @@ export type Database = {
           currency: string
           expires_at: string | null
           id: string
+          is_trial: boolean | null
           payment_method: string | null
           plan_type: string
           razorpay_order_id: string | null
@@ -2017,6 +2330,8 @@ export type Database = {
           razorpay_signature: string | null
           started_at: string
           status: string
+          trial_ends_at: string | null
+          trial_started_at: string | null
           updated_at: string
           user_id: string
         }
@@ -2027,6 +2342,7 @@ export type Database = {
           currency?: string
           expires_at?: string | null
           id?: string
+          is_trial?: boolean | null
           payment_method?: string | null
           plan_type: string
           razorpay_order_id?: string | null
@@ -2034,6 +2350,8 @@ export type Database = {
           razorpay_signature?: string | null
           started_at?: string
           status?: string
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -2044,6 +2362,7 @@ export type Database = {
           currency?: string
           expires_at?: string | null
           id?: string
+          is_trial?: boolean | null
           payment_method?: string | null
           plan_type?: string
           razorpay_order_id?: string | null
@@ -2051,6 +2370,8 @@ export type Database = {
           razorpay_signature?: string | null
           started_at?: string
           status?: string
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2368,6 +2689,81 @@ export type Database = {
           },
         ]
       }
+      usage_tracking: {
+        Row: {
+          created_at: string
+          id: string
+          last_used_at: string
+          usage_count: number
+          usage_month: string
+          usage_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_used_at?: string
+          usage_count?: number
+          usage_month: string
+          usage_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_used_at?: string
+          usage_count?: number
+          usage_month?: string
+          usage_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_action_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          module: string
+          source: string
+          success: boolean
+          target_id: string | null
+          target_type: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          module: string
+          source?: string
+          success?: boolean
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          module?: string
+          source?: string
+          success?: boolean
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vault_items: {
         Row: {
           category: string | null
@@ -2542,7 +2938,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_usage_limit: {
+        Args: { p_plan_type: string; p_usage_type: string; p_user_id: string }
+        Returns: Json
+      }
+      generate_invoice_number: { Args: never; Returns: string }
+      increment_usage: {
+        Args: { p_count?: number; p_usage_type: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
