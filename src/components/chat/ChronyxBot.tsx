@@ -10,7 +10,6 @@ import chronyxLogo from "@/assets/chronyx-circular-logo.png";
 import {
   X,
   Send,
-  Sparkles,
   User,
   Loader2,
   ChevronDown,
@@ -29,32 +28,33 @@ interface Message {
 const PRESET_QUESTIONS = [
   "What's my productivity like this week?",
   "Summarize my financial status",
-  "What insurance policies do I have?",
   "How many tasks did I complete today?",
-  "What's my current savings progress?",
-  "Show me my study hours this month",
 ];
-
-const WELCOME_MESSAGE: Message = {
-  id: "welcome",
-  role: "assistant",
-  content: `Hello! I'm CHRONYX Bot, your personal life assistant. I can help you understand your:\n\n• 📊 Productivity & Tasks\n• 💰 Finances & Expenses\n• 📚 Study Progress\n• 🛡️ Insurance & Loans\n• 🎯 Goals & Achievements\n\nAsk me anything about your life data!`,
-  timestamp: new Date(),
-};
 
 interface ChronyxBotProps {
   isOpen?: boolean;
   onClose?: () => void;
 }
 
-export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }: ChronyxBotProps = {}) => {
+export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }: ChronyxBotProps) => {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  const welcomeMessage: Message = {
+    id: "welcome",
+    role: "assistant",
+    content: `Hello! I'm your CHRONYX assistant. Ask me about your tasks, finances, or productivity!`,
+    timestamp: new Date(),
+  };
+  
   const handleClose = () => {
-    // Reset chat when closing
-    setMessages([WELCOME_MESSAGE]);
-    setShowPresets(true);
+    setMessages([welcomeMessage]);
     setInput("");
     if (externalOnClose) externalOnClose();
     else setInternalIsOpen(false);
@@ -62,18 +62,9 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
   
   const handleOpen = () => setInternalIsOpen(true);
   
-  const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPresets, setShowPresets] = useState(true);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  
-  // Reset chat when bot opens
   useEffect(() => {
-    if (isOpen) {
-      setMessages([WELCOME_MESSAGE]);
-      setShowPresets(true);
+    if (isOpen && messages.length === 0) {
+      setMessages([welcomeMessage]);
     }
   }, [isOpen]);
   
@@ -82,90 +73,6 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
-  
-  const handleNewChat = () => {
-    setMessages([WELCOME_MESSAGE]);
-    setShowPresets(true);
-    setInput("");
-  };
-  
-  const fetchUserContext = async () => {
-    if (!user) return "";
-    
-    // Fetch various user data for context
-    const [
-      profileRes,
-      todosRes,
-      expensesRes,
-      incomeRes,
-      loansRes,
-      insuranceRes,
-      studyRes,
-      achievementsRes,
-    ] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
-      supabase.from("todos").select("*").order("date", { ascending: false }).limit(50),
-      supabase.from("expenses").select("*").order("expense_date", { ascending: false }).limit(30),
-      supabase.from("income_entries").select("*").order("income_date", { ascending: false }).limit(20),
-      supabase.from("loans").select("*").eq("status", "active"),
-      supabase.from("insurances").select("*").eq("status", "active"),
-      supabase.from("study_logs").select("*").order("date", { ascending: false }).limit(30),
-      supabase.from("achievements").select("*").order("achieved_at", { ascending: false }).limit(10),
-    ]);
-    
-    const profile = profileRes.data;
-    const todos = todosRes.data || [];
-    const expenses = expensesRes.data || [];
-    const income = incomeRes.data || [];
-    const loans = loansRes.data || [];
-    const insurances = insuranceRes.data || [];
-    const studyLogs = studyRes.data || [];
-    const achievements = achievementsRes.data || [];
-    
-    // Build context string
-    let context = `User Profile: ${profile?.display_name || "User"}\n`;
-    context += `Current Date: ${format(new Date(), "MMMM d, yyyy")}\n\n`;
-    
-    // Tasks summary
-    const todayTodos = todos.filter(t => t.date === format(new Date(), "yyyy-MM-dd"));
-    const completedToday = todayTodos.filter(t => t.status === "done").length;
-    context += `Tasks: ${completedToday}/${todayTodos.length} completed today. `;
-    context += `${todos.filter(t => t.status === "pending").length} total pending.\n`;
-    
-    // Expenses summary
-    const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
-    context += `Recent Expenses: ₹${totalExpenses.toLocaleString()} over ${expenses.length} transactions.\n`;
-    
-    // Income summary
-    const totalIncome = income.reduce((sum, i) => sum + Number(i.amount), 0);
-    context += `Recent Income: ₹${totalIncome.toLocaleString()} over ${income.length} entries.\n`;
-    
-    // Loans
-    if (loans.length > 0) {
-      const totalLoanAmount = loans.reduce((sum, l) => sum + Number(l.principal_amount), 0);
-      context += `Active Loans: ${loans.length} loans totaling ₹${totalLoanAmount.toLocaleString()}.\n`;
-    }
-    
-    // Insurance
-    if (insurances.length > 0) {
-      const totalCoverage = insurances.reduce((sum, i) => sum + Number(i.sum_assured), 0);
-      context += `Insurance: ${insurances.length} active policies with ₹${totalCoverage.toLocaleString()} coverage.\n`;
-    }
-    
-    // Study
-    if (studyLogs.length > 0) {
-      const totalStudyMinutes = studyLogs.reduce((sum, s) => sum + Number(s.duration), 0);
-      const totalHours = Math.round(totalStudyMinutes / 60);
-      context += `Study: ${totalHours} hours logged recently across ${studyLogs.length} sessions.\n`;
-    }
-    
-    // Achievements
-    if (achievements.length > 0) {
-      context += `Recent Achievements: ${achievements.map(a => a.title).join(", ")}.\n`;
-    }
-    
-    return context;
-  };
   
   const sendMessage = async (messageText?: string) => {
     const text = messageText || input;
@@ -181,41 +88,27 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
-    setShowPresets(false);
     
     try {
-      const context = await fetchUserContext();
-      
       const response = await supabase.functions.invoke("chronyx-bot", {
-        body: {
-          message: text.trim(),
-          context,
-          history: messages.slice(-10).map(m => ({
-            role: m.role,
-            content: m.content,
-          })),
-        },
+        body: { message: text.trim(), context: "", history: [] },
       });
-      
-      if (response.error) throw response.error;
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: response.data?.response || "I apologize, I couldn't process that request. Please try again.",
+        content: response.data?.response || "I couldn't process that. Please try again.",
         timestamp: new Date(),
       };
       
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Bot error:", error);
-      const errorMessage: Message = {
+    } catch {
+      setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "I'm having trouble connecting right now. Please try again in a moment.",
+        content: "I'm having trouble connecting. Please try again.",
         timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -228,28 +121,19 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.2 }}
           className="fixed bottom-20 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 h-[500px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/10 to-transparent">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-background flex items-center justify-center border border-border">
-                <img src={chronyxLogo} alt="CHRONYX" className="w-8 h-8 object-contain" />
-              </div>
+              <img src={chronyxLogo} alt="CHRONYX" className="w-10 h-10 rounded-full" />
               <div>
                 <h3 className="font-medium text-foreground">CHRONYX Bot</h3>
-                <p className="text-xs text-muted-foreground">Your Personal Assistant</p>
+                <p className="text-xs text-muted-foreground">Your Assistant</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleNewChat}
-                title="New Chat"
-              >
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMessages([welcomeMessage])}>
                 <RotateCcw className="w-4 h-4" />
               </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
@@ -262,136 +146,76 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
           <ScrollArea className="flex-1 p-4" ref={scrollRef}>
             <div className="space-y-4">
               {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex gap-3",
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  )}
-                >
+                <div key={message.id} className={cn("flex gap-3", message.role === "user" ? "justify-end" : "justify-start")}>
                   {message.role === "assistant" && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden bg-background flex items-center justify-center shrink-0 border border-border">
-                      <img src={chronyxLogo} alt="CHRONYX" className="w-6 h-6 object-contain" />
-                    </div>
+                    <img src={chronyxLogo} alt="" className="w-8 h-8 rounded-full shrink-0" />
                   )}
-                  <div
-                    className={cn(
-                      "max-w-[80%] rounded-2xl px-4 py-2.5",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground rounded-br-sm"
-                        : "bg-muted text-foreground rounded-bl-sm"
-                    )}
-                  >
+                  <div className={cn(
+                    "max-w-[80%] rounded-2xl px-4 py-2.5",
+                    message.role === "user" ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-muted text-foreground rounded-bl-sm"
+                  )}>
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    <p className="text-[10px] mt-1 opacity-60">
-                      {format(message.timestamp, "h:mm a")}
-                    </p>
+                    <p className="text-[10px] mt-1 opacity-60">{format(message.timestamp, "h:mm a")}</p>
                   </div>
                   {message.role === "user" && (
                     <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                      <User className="w-4 h-4 text-secondary-foreground" />
+                      <User className="w-4 h-4" />
                     </div>
                   )}
                 </div>
               ))}
-              
               {isLoading && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-background flex items-center justify-center border border-border">
-                    <img src={chronyxLogo} alt="CHRONYX" className="w-6 h-6 object-contain animate-pulse" />
-                  </div>
+                  <img src={chronyxLogo} alt="" className="w-8 h-8 rounded-full animate-pulse" />
                   <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-2.5">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </div>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </div>
+                </div>
+              )}
+              {messages.length <= 1 && (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Lightbulb className="w-3 h-3" />
+                    <span>Quick questions</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {PRESET_QUESTIONS.map((q, i) => (
+                      <button key={i} onClick={() => sendMessage(q)} className="text-xs bg-muted hover:bg-accent px-3 py-1.5 rounded-full">
+                        {q}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
-            
-            {/* Preset Questions */}
-            {showPresets && messages.length <= 1 && (
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Lightbulb className="w-3 h-3" />
-                  <span>Quick questions</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {PRESET_QUESTIONS.map((question, i) => (
-                    <button
-                      key={i}
-                      onClick={() => sendMessage(question)}
-                      className="text-xs bg-muted hover:bg-accent px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {question}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </ScrollArea>
           
           {/* Input */}
-          <div className="p-4 border-t border-border">
-            <div className="flex gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Ask me anything..."
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button 
-                onClick={() => sendMessage()} 
-                disabled={!input.trim() || isLoading}
-                size="icon"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
+          <div className="p-4 border-t border-border flex gap-2">
+            <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} placeholder="Ask me anything..." disabled={isLoading} className="flex-1" />
+            <Button onClick={() => sendMessage()} disabled={!input.trim() || isLoading} size="icon">
+              <Send className="w-4 h-4" />
+            </Button>
           </div>
         </motion.div>
       )}
       
-      {/* Floating Button - only show if not using external control */}
       {externalIsOpen === undefined && (
         <motion.button
           onClick={() => isOpen ? handleClose() : handleOpen()}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className={cn(
-            "fixed bottom-4 right-4 sm:right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-colors overflow-hidden",
-            isOpen 
-              ? "bg-muted text-muted-foreground" 
-              : "bg-gradient-to-br from-primary to-primary/80"
+            "fixed bottom-4 right-4 sm:right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50",
+            isOpen ? "bg-muted" : "bg-gradient-to-br from-primary to-primary/80"
           )}
         >
-          <AnimatePresence mode="wait">
-            {isOpen ? (
-              <motion.div
-                key="close"
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-              >
-                <ChevronDown className="w-6 h-6" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="open"
-                initial={{ rotate: 90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: -90, opacity: 0 }}
-                className="relative"
-              >
-                <img src={chronyxLogo} alt="CHRONYX Bot" className="w-10 h-10 object-contain" />
-                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {isOpen ? <ChevronDown className="w-6 h-6" /> : (
+            <div className="relative">
+              <img src={chronyxLogo} alt="Bot" className="w-10 h-10 rounded-full" />
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
+            </div>
+          )}
         </motion.button>
       )}
     </AnimatePresence>
