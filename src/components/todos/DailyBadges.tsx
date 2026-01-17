@@ -18,7 +18,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import MilestoneCard from "./MilestoneCard";
-import { BADGE_ICONS, BADGE_CATEGORIES, BADGE_DEFINITIONS } from "./badgeDefinitions";
+import { BADGE_ICONS, BADGE_CATEGORIES, BADGE_DEFINITIONS, BadgeDefinition } from "./badgeDefinitions";
 
 interface DailyBadge {
   id: string;
@@ -42,6 +42,99 @@ interface DailyBadgesProps {
   todos: Todo[];
   onBadgeEarned?: () => void;
 }
+
+// Badge checking logic based on badge type
+const checkBadgeEarned = (
+  def: BadgeDefinition,
+  stats: {
+    todayCompleted: number;
+    todayTotal: number;
+    todaySkipped: number;
+    todayTodos: Todo[];
+    totalCompleted: number;
+    weeklyCompleted: number;
+    monthlyCompleted: number;
+    streak: number;
+  }
+): boolean => {
+  const { todayCompleted, todayTotal, todaySkipped, todayTodos, totalCompleted, weeklyCompleted, monthlyCompleted, streak } = stats;
+  
+  switch (def.type) {
+    // Daily badges
+    case "perfect_day":
+      return todayTotal > 0 && todayCompleted === todayTotal && todaySkipped === 0;
+    case "high_achiever":
+      const highPriorityTodos = todayTodos.filter(t => t.priority === "high");
+      return highPriorityTodos.length > 0 && highPriorityTodos.every(t => t.status === "done");
+    case "productivity_pro":
+      return todayCompleted >= 10;
+    case "consistent":
+      return todayTotal > 0 && (todayCompleted / todayTotal) >= 0.8;
+    case "focus_master":
+      return todayCompleted >= 5 && todaySkipped === 0;
+    case "overachiever":
+      return todayCompleted >= 15;
+    case "balanced_day":
+      const hasPriorities = { high: false, medium: false, low: false };
+      todayTodos.filter(t => t.status === "done").forEach(t => {
+        hasPriorities[t.priority] = true;
+      });
+      return hasPriorities.high && hasPriorities.medium && hasPriorities.low;
+    case "early_bird":
+    case "night_owl":
+    case "quick_start":
+      return todayCompleted >= 1;
+    
+    // Weekly badges  
+    case "streak_3":
+      return streak >= 3;
+    case "streak_7":
+      return streak >= 7;
+    case "weekly_champion":
+      return weeklyCompleted >= 50;
+    case "weekend_warrior":
+    case "monday_motivation":
+    case "friday_finisher":
+      return todayTotal > 0 && todayCompleted === todayTotal;
+    case "consistent_week":
+      return streak >= 7;
+    
+    // Monthly badges
+    case "streak_30":
+      return streak >= 30;
+    case "centurion":
+      return monthlyCompleted >= 100;
+    case "task_master":
+      return totalCompleted >= 50;
+    case "dedication":
+      return streak >= 20;
+    case "priority_pro":
+      return monthlyCompleted >= 30;
+    
+    // Quarterly badges
+    case "streak_90":
+      return streak >= 90;
+    case "five_hundred":
+      return totalCompleted >= 500;
+    case "consistent_quarter":
+      return streak >= 75;
+    case "habit_builder":
+      return totalCompleted >= 50;
+    
+    // Yearly badges
+    case "streak_365":
+      return streak >= 365;
+    case "thousand":
+      return totalCompleted >= 1000;
+    case "year_champion":
+      return streak >= 365;
+    case "productivity_legend":
+      return totalCompleted >= 500;
+    
+    default:
+      return false;
+  }
+};
 
 export const DailyBadges = ({ todos, onBadgeEarned }: DailyBadgesProps) => {
   const allTodos = todos;
@@ -126,23 +219,7 @@ export const DailyBadges = ({ todos, onBadgeEarned }: DailyBadgesProps) => {
       const def = BADGE_DEFINITIONS.find(d => d.type === badge.badge_type);
       if (!def) continue;
       
-      let stillEarned = false;
-      
-      if (def.check) {
-        stillEarned = def.check(stats.todayCompleted, stats.todayTotal, stats.todaySkipped);
-      } else if (def.checkStreak) {
-        stillEarned = def.checkStreak(stats.streak);
-      } else if (def.checkPriority) {
-        stillEarned = def.checkPriority(stats.todayTodos);
-      } else if (def.checkBalanced) {
-        stillEarned = def.checkBalanced(stats.todayTodos);
-      } else if (def.checkTotal) {
-        stillEarned = def.checkTotal(stats.totalCompleted);
-      } else if (def.checkWeekly) {
-        stillEarned = def.checkWeekly(stats.weeklyCompleted);
-      } else if (def.checkMonthly) {
-        stillEarned = def.checkMonthly(stats.monthlyCompleted);
-      }
+      const stillEarned = checkBadgeEarned(def, stats);
       
       if (!stillEarned) {
         badgesToRevoke.push(badge.id);
@@ -179,23 +256,7 @@ export const DailyBadges = ({ todos, onBadgeEarned }: DailyBadgesProps) => {
     for (const def of BADGE_DEFINITIONS) {
       if (todayBadges.some(b => b.badge_type === def.type)) continue;
       
-      let earned = false;
-      
-      if (def.check) {
-        earned = def.check(stats.todayCompleted, stats.todayTotal, stats.todaySkipped);
-      } else if (def.checkStreak) {
-        earned = def.checkStreak(stats.streak);
-      } else if (def.checkPriority) {
-        earned = def.checkPriority(stats.todayTodos);
-      } else if (def.checkBalanced) {
-        earned = def.checkBalanced(stats.todayTodos);
-      } else if (def.checkTotal) {
-        earned = def.checkTotal(stats.totalCompleted);
-      } else if (def.checkWeekly) {
-        earned = def.checkWeekly(stats.weeklyCompleted);
-      } else if (def.checkMonthly) {
-        earned = def.checkMonthly(stats.monthlyCompleted);
-      }
+      const earned = checkBadgeEarned(def, stats);
       
       if (earned) {
         newBadges.push({
@@ -218,7 +279,7 @@ export const DailyBadges = ({ todos, onBadgeEarned }: DailyBadgesProps) => {
       
       if (!error && data) {
         setBadges(prev => [...data as DailyBadge[], ...prev]);
-        data.forEach((badge: any) => {
+        data.forEach((badge: DailyBadge) => {
           toast.success(`🏆 ${badge.badge_name}!`, {
             description: `${badge.description} (+${badge.points} pts)`,
           });
@@ -266,7 +327,7 @@ export const DailyBadges = ({ todos, onBadgeEarned }: DailyBadgesProps) => {
               {todayBadgesData.map((badge) => {
                 const IconComponent = BADGE_ICONS[badge.badge_icon] || Award;
                 const def = BADGE_DEFINITIONS.find(d => d.type === badge.badge_type);
-                const categoryInfo = def ? BADGE_CATEGORIES[def.category as keyof typeof BADGE_CATEGORIES] : null;
+                const categoryInfo = def ? BADGE_CATEGORIES[def.category] : null;
                 
                 return (
                   <Tooltip key={badge.id}>
@@ -329,7 +390,7 @@ export const DailyBadges = ({ todos, onBadgeEarned }: DailyBadgesProps) => {
               {recentBadges.map((badge) => {
                 const IconComponent = BADGE_ICONS[badge.badge_icon] || Award;
                 const def = BADGE_DEFINITIONS.find(d => d.type === badge.badge_type);
-                const categoryInfo = def ? BADGE_CATEGORIES[def.category as keyof typeof BADGE_CATEGORIES] : null;
+                const categoryInfo = def ? BADGE_CATEGORIES[def.category] : null;
                 
                 return (
                   <Tooltip key={badge.id}>
