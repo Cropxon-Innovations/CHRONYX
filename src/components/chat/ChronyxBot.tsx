@@ -36,11 +36,19 @@ const PRESET_QUESTIONS = [
 ];
 
 interface ChronyxBotProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export const ChronyxBot = ({ isOpen, onClose }: ChronyxBotProps) => {
+export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }: ChronyxBotProps = {}) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const handleClose = () => {
+    if (externalOnClose) externalOnClose();
+    else setInternalIsOpen(false);
+  };
+  const handleOpen = () => setInternalIsOpen(true);
+  
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -219,7 +227,7 @@ export const ChronyxBot = ({ isOpen, onClose }: ChronyxBotProps) => {
                 <p className="text-xs text-muted-foreground">Your Personal Assistant</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={handleClose}>
               <X className="w-5 h-5" />
             </Button>
           </div>
@@ -321,48 +329,46 @@ export const ChronyxBot = ({ isOpen, onClose }: ChronyxBotProps) => {
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
-  );
-};
-
-// Floating Button Component
-export const ChronyxBotButton = ({ onClick, isOpen }: { onClick: () => void; isOpen: boolean }) => {
-  return (
-    <motion.button
-      onClick={onClick}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className={cn(
-        "fixed bottom-4 right-4 sm:right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-colors",
-        isOpen 
-          ? "bg-muted text-muted-foreground" 
-          : "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"
+      
+      {/* Floating Button - only show if not using external control */}
+      {externalIsOpen === undefined && (
+        <motion.button
+          onClick={() => isOpen ? handleClose() : handleOpen()}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className={cn(
+            "fixed bottom-4 right-4 sm:right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-colors",
+            isOpen 
+              ? "bg-muted text-muted-foreground" 
+              : "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"
+          )}
+        >
+          <AnimatePresence mode="wait">
+            {isOpen ? (
+              <motion.div
+                key="close"
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+              >
+                <ChevronDown className="w-6 h-6" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="open"
+                initial={{ rotate: 90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: -90, opacity: 0 }}
+                className="relative"
+              >
+                <Bot className="w-6 h-6" />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-primary animate-pulse" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.button>
       )}
-    >
-      <AnimatePresence mode="wait">
-        {isOpen ? (
-          <motion.div
-            key="close"
-            initial={{ rotate: -90, opacity: 0 }}
-            animate={{ rotate: 0, opacity: 1 }}
-            exit={{ rotate: 90, opacity: 0 }}
-          >
-            <ChevronDown className="w-6 h-6" />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="open"
-            initial={{ rotate: 90, opacity: 0 }}
-            animate={{ rotate: 0, opacity: 1 }}
-            exit={{ rotate: -90, opacity: 0 }}
-            className="relative"
-          >
-            <Bot className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-primary animate-pulse" />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.button>
+    </AnimatePresence>
   );
 };
 

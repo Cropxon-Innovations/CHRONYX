@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Breadcrumbs from "./Breadcrumbs";
 import PageLoader from "./PageLoader";
 import FloatingQuickAction from "./FloatingQuickAction";
+import ChronyxBot from "@/components/chat/ChronyxBot";
 
 const AppLayout = () => {
   const [isNetWorthCollapsed, setIsNetWorthCollapsed] = useState(false);
@@ -102,6 +103,9 @@ const AppLayout = () => {
 
         {/* Floating Quick Action Button */}
         <FloatingQuickAction />
+        
+        {/* CHRONYX Bot */}
+        <ChronyxBot />
       </div>
     </ProtectedRoute>
   );

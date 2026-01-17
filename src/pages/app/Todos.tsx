@@ -15,6 +15,9 @@ import { useActivityLog } from "@/hooks/useActivityLog";
 import { format, addDays, subDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, parseISO } from "date-fns";
 import ProductivityAnalytics from "@/components/todos/ProductivityAnalytics";
 import TaskTemplates from "@/components/todos/TaskTemplates";
+import ProductivityStats from "@/components/todos/ProductivityStats";
+import DailyBadges from "@/components/todos/DailyBadges";
+import PendingYesterdaySection from "@/components/todos/PendingYesterdaySection";
 
 type ViewMode = "day" | "week" | "month" | "analytics";
 type TodoStatus = "pending" | "done" | "skipped";
@@ -486,6 +489,30 @@ const Todos = () => {
     );
   }
 
+  // Get yesterday's pending tasks
+  const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+  const pendingYesterday = allTodos.filter(t => t.date === yesterday && t.status === "pending");
+
+  const handleYesterdayTaskUpdate = async (id: string, status: "done" | "skipped") => {
+    await updateTodoStatus(id, status);
+  };
+
+  const handleMoveToToday = async (id: string) => {
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+    const { error } = await supabase
+      .from("todos")
+      .update({ date: todayStr })
+      .eq("id", id);
+
+    if (error) {
+      toast({ title: "Error", description: "Failed to move task", variant: "destructive" });
+    } else {
+      setAllTodos(allTodos.map(t => t.id === id ? { ...t, date: todayStr } : t));
+      toast({ title: "Task moved to today" });
+      logActivity("Moved task to today", "Todos");
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -513,6 +540,21 @@ const Todos = () => {
           ))}
         </div>
       </header>
+
+      {/* Pending Yesterday Section */}
+      {pendingYesterday.length > 0 && (
+        <PendingYesterdaySection
+          pendingTasks={pendingYesterday}
+          onTaskUpdate={handleYesterdayTaskUpdate}
+          onMoveToToday={handleMoveToToday}
+        />
+      )}
+
+      {/* Productivity Stats & Badges */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ProductivityStats todos={allTodos} />
+        <DailyBadges todos={allTodos} />
+      </div>
 
       {/* Date Navigation & Controls */}
       <div className="flex flex-col sm:flex-row gap-4">

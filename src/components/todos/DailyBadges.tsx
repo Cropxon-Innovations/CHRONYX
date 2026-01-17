@@ -29,7 +29,7 @@ interface Todo {
 }
 
 interface DailyBadgesProps {
-  allTodos: Todo[];
+  todos: Todo[];
   onBadgeEarned?: () => void;
 }
 
@@ -66,7 +66,8 @@ const BADGE_DEFINITIONS = [
   { type: "centurion", name: "Centurion", icon: "medal", description: "Complete 100 tasks total", checkTotal: (total: number) => total >= 100 },
 ];
 
-export const DailyBadges = ({ allTodos, onBadgeEarned }: DailyBadgesProps) => {
+export const DailyBadges = ({ todos, onBadgeEarned }: DailyBadgesProps) => {
+  const allTodos = todos;
   const { user } = useAuth();
   const [badges, setBadges] = useState<DailyBadge[]>([]);
   const [loading, setLoading] = useState(true);
