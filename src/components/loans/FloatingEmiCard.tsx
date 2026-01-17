@@ -65,9 +65,11 @@ interface FloatingEmiCardProps {
   allEmis: EmiScheduleItem[];
   onMarkPaid: (emiId: string, paidDate: string, paymentMethod: string) => void;
   isLoading: boolean;
+  /** Optional: lets the Loans page place this card without fixed positioning */
+  className?: string;
 }
 
-const FloatingEmiCard = ({ loans, allEmis, onMarkPaid, isLoading }: FloatingEmiCardProps) => {
+const FloatingEmiCard = ({ loans, allEmis, onMarkPaid, isLoading, className }: FloatingEmiCardProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedEmi, setSelectedEmi] = useState<EmiScheduleItem | null>(null);
@@ -130,7 +132,7 @@ const FloatingEmiCard = ({ loans, allEmis, onMarkPaid, isLoading }: FloatingEmiC
       <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="fixed top-24 right-4 z-30 w-80 md:w-96 max-h-[calc(100vh-120px)]"
+        className={`w-full ${className ?? ""}`}
       >
         <Card className="bg-card/95 backdrop-blur-lg border-border shadow-2xl">
           <CardHeader 
