@@ -56,7 +56,7 @@ async function calculateTaxForRegime(
   grossIncome: number,
   userDeductions: Record<string, number>
 ): Promise<RegimeResult> {
-  // Fetch regime details
+  // Fetch regime details (using api schema - supabaseApi will be passed as param)
   const { data: regimeData, error: regimeError } = await supabase
     .from('tax_regimes')
     .select('*')
@@ -68,7 +68,7 @@ async function calculateTaxForRegime(
     throw new Error(`Regime ${regimeCode} not found`);
   }
 
-  // Fetch tax slabs
+  // Fetch tax slabs (using api schema)
   const { data: slabsData, error: slabsError } = await supabase
     .from('tax_slabs')
     .select('*')
@@ -79,7 +79,7 @@ async function calculateTaxForRegime(
     throw new Error('Tax slabs not configured');
   }
 
-  // Fetch deduction limits
+  // Fetch deduction limits (using api schema)
   let deductionLimits: Record<string, number | null> = {};
   if (regimeData.allows_deductions) {
     const { data: deductionsConfig } = await supabase
@@ -228,6 +228,11 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Create client specifically for api schema
+    const supabaseApi = createClient(supabaseUrl, supabaseServiceKey, {
+      db: { schema: 'api' }
+    });
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -249,8 +254,8 @@ serve(async (req) => {
       );
     }
 
-    // Fetch financial year
-    const { data: fyData, error: fyError } = await supabase
+    // Fetch financial year (using api schema)
+    const { data: fyData, error: fyError } = await supabaseApi
       .from('tax_financial_years')
       .select('*')
       .eq('code', financial_year)
@@ -268,8 +273,8 @@ serve(async (req) => {
 
     // Calculate for both regimes
     const [oldRegimeResult, newRegimeResult] = await Promise.all([
-      calculateTaxForRegime(supabase, fyData, 'old', gross_income, deductions),
-      calculateTaxForRegime(supabase, fyData, 'new', gross_income, deductions),
+      calculateTaxForRegime(supabaseApi, fyData, 'old', gross_income, deductions),
+      calculateTaxForRegime(supabaseApi, fyData, 'new', gross_income, deductions),
     ]);
 
     // Determine recommendation

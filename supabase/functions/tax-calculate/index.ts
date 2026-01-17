@@ -60,10 +60,15 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client
+    // Create Supabase client with api schema
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Create client specifically for api schema
+    const supabaseApi = createClient(supabaseUrl, supabaseServiceKey, {
+      db: { schema: 'api' }
+    });
 
     // Verify user
     const token = authHeader.replace('Bearer ', '');
@@ -100,8 +105,8 @@ serve(async (req) => {
       );
     }
 
-    // Fetch financial year from DB
-    const { data: fyData, error: fyError } = await supabase
+    // Fetch financial year from DB (using api schema)
+    const { data: fyData, error: fyError } = await supabaseApi
       .from('tax_financial_years')
       .select('*')
       .eq('code', financial_year)
@@ -118,8 +123,8 @@ serve(async (req) => {
 
     console.log('[tax-calculate] Financial year found:', fyData.display_name);
 
-    // Fetch regime details
-    const { data: regimeData, error: regimeError } = await supabase
+    // Fetch regime details (using api schema)
+    const { data: regimeData, error: regimeError } = await supabaseApi
       .from('tax_regimes')
       .select('*')
       .eq('code', regime)
@@ -136,8 +141,8 @@ serve(async (req) => {
 
     console.log('[tax-calculate] Regime found:', regimeData.display_name);
 
-    // Fetch tax slabs for this regime
-    const { data: slabsData, error: slabsError } = await supabase
+    // Fetch tax slabs for this regime (using api schema)
+    const { data: slabsData, error: slabsError } = await supabaseApi
       .from('tax_slabs')
       .select('*')
       .eq('regime_id', regimeData.id)
@@ -153,10 +158,10 @@ serve(async (req) => {
 
     console.log('[tax-calculate] Found', slabsData.length, 'tax slabs');
 
-    // Fetch deduction limits if old regime
+    // Fetch deduction limits if old regime (using api schema)
     let deductionLimits: Record<string, number | null> = {};
     if (regimeData.allows_deductions) {
-      const { data: deductionsConfig, error: dedError } = await supabase
+      const { data: deductionsConfig, error: dedError } = await supabaseApi
         .from('tax_deductions')
         .select('*')
         .eq('financial_year_id', fyData.id);
@@ -315,10 +320,10 @@ serve(async (req) => {
     };
 
     // ============================================
-    // STEP 10: Save calculation if requested
+    // STEP 10: Save calculation if requested (using api schema)
     // ============================================
     if (save_calculation) {
-      const { error: saveError } = await supabase
+      const { error: saveError } = await supabaseApi
         .from('tax_calculations')
         .insert({
           user_id: user.id,
