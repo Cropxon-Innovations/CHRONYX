@@ -19,6 +19,7 @@ import { LoanHistory } from "@/components/loans/LoanHistory";
 import { BulkEmiPayment } from "@/components/loans/BulkEmiPayment";
 import { LoanComparison } from "@/components/loans/LoanComparison";
 import RefinanceCalculator from "@/components/loans/RefinanceCalculator";
+import FloatingEmiCard from "@/components/loans/FloatingEmiCard";
 
 const Loans = () => {
   const { user } = useAuth();
@@ -503,6 +504,16 @@ const Loans = () => {
         isLoading={editLoanMutation.isPending}
         initialData={editingLoan}
         mode="edit"
+      />
+
+      {/* Floating EMI Card */}
+      <FloatingEmiCard
+        loans={loans}
+        allEmis={allEmis}
+        onMarkPaid={(emiId, paidDate, paymentMethod) => 
+          markPaidMutation.mutate({ emiId, paidDate, paymentMethod })
+        }
+        isLoading={markPaidMutation.isPending}
       />
     </div>
   );

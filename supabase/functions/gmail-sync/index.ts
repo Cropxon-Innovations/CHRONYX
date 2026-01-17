@@ -134,6 +134,25 @@ function extractPaymentModeRuleBased(text: string): { mode: string; confidence: 
   return { mode: 'Other', confidence: 0.3 };
 }
 
+// Normalize payment mode to valid database values
+function normalizePaymentMode(mode: string | null): string {
+  if (!mode) return 'Other';
+  const lowerMode = mode.toLowerCase();
+  
+  if (lowerMode === 'upi' || lowerMode.includes('upi')) return 'UPI';
+  if (lowerMode === 'card' || lowerMode.includes('card')) return 'Card';
+  if (lowerMode === 'bank' || lowerMode.includes('bank') || lowerMode.includes('transfer') || lowerMode.includes('netbanking')) return 'Bank Transfer';
+  if (lowerMode === 'cash') return 'Cash';
+  if (lowerMode === 'wallet') return 'Wallet';
+  
+  // Check for exact match with valid values
+  const validModes = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Wallet', 'Other', 'NetBanking'];
+  const found = validModes.find(v => v.toLowerCase() === lowerMode);
+  if (found) return found;
+  
+  return 'Other';
+}
+
 // ========================================
 // Gemini 1.5 Flash fallback parser
 // ========================================
@@ -773,7 +792,7 @@ serve(async (req) => {
               expense_date: transactionDateStr,
               amount: parsed.amount,
               category: parsed.category,
-              payment_mode: parsed.paymentMode,
+              payment_mode: normalizePaymentMode(parsed.paymentMode),
               merchant_name: parsed.merchant,
               notes: `Auto-imported from Gmail: ${subject.substring(0, 100)}`,
               is_auto_generated: true,
