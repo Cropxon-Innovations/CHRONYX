@@ -44,6 +44,7 @@ const Backup = lazy(() => import("./pages/app/Backup"));
 const Documents = lazy(() => import("./pages/app/Documents"));
 const Social = lazy(() => import("./pages/app/Social"));
 const PaymentAnalytics = lazy(() => import("./pages/app/PaymentAnalytics"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -161,6 +162,16 @@ const AnimatedRoutes = () => {
             <motion.div {...pageTransition}>
               <Suspense fallback={<PageLoader />}>
                 <Contact />
+              </Suspense>
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/auth/callback" 
+          element={
+            <motion.div {...pageTransition}>
+              <Suspense fallback={<PageLoader />}>
+                <AuthCallback />
               </Suspense>
             </motion.div>
           } 

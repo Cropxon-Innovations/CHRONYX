@@ -106,6 +106,9 @@ const Settings = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [otpExpiresAt, setOtpExpiresAt] = useState<Date | null>(null);
   
   // Delete account state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -611,8 +614,10 @@ const Settings = () => {
 
   const sendOtp = async () => {
     if (!user?.id) return;
+    if (resendCooldown > 0) return;
 
     setIsSendingOtp(true);
+    setOtpError("");
     try {
       const endpoint = verifyDialog.type === "email" ? "send-email-otp" : "send-sms-otp";
 
@@ -630,6 +635,9 @@ const Settings = () => {
       if (data?.success && data?.otpHash) {
         setOtpHash(data.otpHash);
         setOtpSent(true);
+        setOtpExpiresAt(data.expiresAt ? new Date(data.expiresAt) : new Date(Date.now() + 5 * 60 * 1000));
+        // Start 60-second cooldown for resend
+        setResendCooldown(60);
         toast({
           title: "OTP Sent",
           description: `Verification code sent to your ${verifyDialog.type}.`,
@@ -639,18 +647,37 @@ const Settings = () => {
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to send OTP";
+      setOtpError(errorMessage);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send OTP",
+        description: errorMessage,
         variant: "destructive",
       });
     }
     setIsSendingOtp(false);
   };
 
+  // Cooldown timer effect
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
   const handleVerifyOTP = async () => {
     setIsVerifying(true);
+    setOtpError("");
     try {
+      // Check if OTP has expired
+      if (otpExpiresAt && new Date() > otpExpiresAt) {
+        setOtpError("OTP has expired. Please request a new code.");
+        setIsVerifying(false);
+        return;
+      }
+
       // Hash the entered OTP and compare with stored hash
       const enteredHash = await hashOtp(otp);
       
@@ -671,21 +698,16 @@ const Settings = () => {
           setOtp("");
           setOtpHash("");
           setOtpSent(false);
+          setOtpError("");
+          setResendCooldown(0);
+          setOtpExpiresAt(null);
           logActivity(`Verified ${verifyDialog.type}`, "Settings");
         }
       } else {
-        toast({
-          title: "Invalid OTP",
-          description: "The code you entered is incorrect. Please try again.",
-          variant: "destructive",
-        });
+        setOtpError("Invalid code. Please check and try again.");
       }
     } catch (error) {
-      toast({
-        title: "Verification failed",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      setOtpError("Verification failed. Please try again.");
     }
     setIsVerifying(false);
   };
@@ -1112,6 +1134,9 @@ const Settings = () => {
             setOtp("");
             setOtpHash("");
             setOtpSent(false);
+            setOtpError("");
+            setResendCooldown(0);
+            setOtpExpiresAt(null);
           }
         }}
       >
@@ -1136,24 +1161,43 @@ const Settings = () => {
               </Button>
             ) : (
               <>
-                <Input
-                  placeholder="Enter 6-digit OTP"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength={6}
-                  className="text-center text-lg tracking-widest"
-                />
-                <p className="text-xs text-muted-foreground text-center">
-                  Didn't receive it?{" "}
-                  <button 
-                    type="button"
-                    onClick={sendOtp} 
-                    disabled={isSendingOtp}
-                    className="text-primary hover:underline"
-                  >
-                    Resend code
-                  </button>
-                </p>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Enter 6-digit OTP"
+                    value={otp}
+                    onChange={(e) => {
+                      setOtp(e.target.value.replace(/\D/g, '').slice(0, 6));
+                      setOtpError("");
+                    }}
+                    maxLength={6}
+                    className={cn(
+                      "text-center text-lg tracking-widest",
+                      otpError && "border-destructive focus-visible:ring-destructive"
+                    )}
+                  />
+                  {otpError && (
+                    <p className="text-xs text-destructive text-center flex items-center justify-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {otpError}
+                    </p>
+                  )}
+                </div>
+                <div className="text-center space-y-1">
+                  {resendCooldown > 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Resend available in <span className="font-medium text-foreground">{resendCooldown}s</span>
+                    </p>
+                  ) : (
+                    <button 
+                      type="button"
+                      onClick={sendOtp} 
+                      disabled={isSendingOtp}
+                      className="text-xs text-primary hover:underline disabled:opacity-50"
+                    >
+                      {isSendingOtp ? "Sending..." : "Resend code"}
+                    </button>
+                  )}
+                </div>
               </>
             )}
           </div>
@@ -1165,6 +1209,9 @@ const Settings = () => {
                 setOtp(""); 
                 setOtpHash("");
                 setOtpSent(false);
+                setOtpError("");
+                setResendCooldown(0);
+                setOtpExpiresAt(null);
               }}
             >
               Cancel

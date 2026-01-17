@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // IMPORTANT: keep OAuth redirect on the SAME origin that started the flow.
   // Otherwise the PKCE verifier/state stored in localStorage won't be found after the redirect.
   // Your hosting (Vercel) should enforce whether you use apex or www.
-  const getRedirectUrl = () => `${window.location.origin}/app`;
+  const getRedirectUrl = () => `${window.location.origin}/auth/callback`;
 
   const signUp = async (email: string, password: string) => {
     const redirectUrl = getRedirectUrl();
