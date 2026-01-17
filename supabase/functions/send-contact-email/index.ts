@@ -208,10 +208,10 @@ const handler = async (req: Request): Promise<Response> => {
     // Use development sender for now
     const sender = "CHRONYX <onboarding@resend.dev>";
 
-    // Send notification email to team
+    // Send notification email to team - Office@getchronyx.com
     const notificationResult = await resend.emails.send({
       from: sender,
-      to: ["contact@getchronyx.com"],
+      to: ["Office@getchronyx.com"],
       subject: `[CHRONYX Contact] ${subjectLabel} from ${name}`,
       html: notificationHtml,
       reply_to: email,
