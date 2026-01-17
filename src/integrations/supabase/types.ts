@@ -2135,6 +2135,311 @@ export type Database = {
         }
         Relationships: []
       }
+      social_drafts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          content_text: string
+          created_at: string
+          id: string
+          media_attachments: Json | null
+          notes: string | null
+          platform_content: Json | null
+          post_type: string
+          preview_data: Json | null
+          preview_generated_at: string | null
+          rejection_reason: string | null
+          requires_approval: boolean | null
+          scheduled_at: string | null
+          status: string
+          tags: string[] | null
+          target_platforms: string[]
+          timezone: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          content_text: string
+          created_at?: string
+          id?: string
+          media_attachments?: Json | null
+          notes?: string | null
+          platform_content?: Json | null
+          post_type?: string
+          preview_data?: Json | null
+          preview_generated_at?: string | null
+          rejection_reason?: string | null
+          requires_approval?: boolean | null
+          scheduled_at?: string | null
+          status?: string
+          tags?: string[] | null
+          target_platforms?: string[]
+          timezone?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          content_text?: string
+          created_at?: string
+          id?: string
+          media_attachments?: Json | null
+          notes?: string | null
+          platform_content?: Json | null
+          post_type?: string
+          preview_data?: Json | null
+          preview_generated_at?: string | null
+          rejection_reason?: string | null
+          requires_approval?: boolean | null
+          scheduled_at?: string | null
+          status?: string
+          tags?: string[] | null
+          target_platforms?: string[]
+          timezone?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_integrations: {
+        Row: {
+          access_token_encrypted: string | null
+          api_key_encrypted: string | null
+          api_secret_encrypted: string | null
+          connection_type: string
+          created_at: string
+          error_message: string | null
+          id: string
+          last_sync_at: string | null
+          platform: string
+          platform_avatar_url: string | null
+          platform_display_name: string | null
+          platform_metadata: Json | null
+          platform_user_id: string | null
+          platform_username: string | null
+          refresh_token_encrypted: string | null
+          scopes: string[] | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          api_key_encrypted?: string | null
+          api_secret_encrypted?: string | null
+          connection_type?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          platform: string
+          platform_avatar_url?: string | null
+          platform_display_name?: string | null
+          platform_metadata?: Json | null
+          platform_user_id?: string | null
+          platform_username?: string | null
+          refresh_token_encrypted?: string | null
+          scopes?: string[] | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          api_key_encrypted?: string | null
+          api_secret_encrypted?: string | null
+          connection_type?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          platform?: string
+          platform_avatar_url?: string | null
+          platform_display_name?: string | null
+          platform_metadata?: Json | null
+          platform_user_id?: string | null
+          platform_username?: string | null
+          refresh_token_encrypted?: string | null
+          scopes?: string[] | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_platform_config: {
+        Row: {
+          api_docs_url: string | null
+          color: string | null
+          created_at: string
+          developer_portal_url: string | null
+          display_name: string
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          max_media_size_mb: number | null
+          max_post_length: number | null
+          notes: string | null
+          oauth_authorize_url: string | null
+          oauth_scopes: string[] | null
+          oauth_token_url: string | null
+          platform: string
+          rate_limit_requests: number | null
+          rate_limit_window_seconds: number | null
+          supports_api_key: boolean | null
+          supports_media_types: string[] | null
+          supports_oauth: boolean | null
+          supports_publish: boolean | null
+          supports_read: boolean | null
+          supports_schedule: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          api_docs_url?: string | null
+          color?: string | null
+          created_at?: string
+          developer_portal_url?: string | null
+          display_name: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_media_size_mb?: number | null
+          max_post_length?: number | null
+          notes?: string | null
+          oauth_authorize_url?: string | null
+          oauth_scopes?: string[] | null
+          oauth_token_url?: string | null
+          platform: string
+          rate_limit_requests?: number | null
+          rate_limit_window_seconds?: number | null
+          supports_api_key?: boolean | null
+          supports_media_types?: string[] | null
+          supports_oauth?: boolean | null
+          supports_publish?: boolean | null
+          supports_read?: boolean | null
+          supports_schedule?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          api_docs_url?: string | null
+          color?: string | null
+          created_at?: string
+          developer_portal_url?: string | null
+          display_name?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_media_size_mb?: number | null
+          max_post_length?: number | null
+          notes?: string | null
+          oauth_authorize_url?: string | null
+          oauth_scopes?: string[] | null
+          oauth_token_url?: string | null
+          platform?: string
+          rate_limit_requests?: number | null
+          rate_limit_window_seconds?: number | null
+          supports_api_key?: boolean | null
+          supports_media_types?: string[] | null
+          supports_oauth?: boolean | null
+          supports_publish?: boolean | null
+          supports_read?: boolean | null
+          supports_schedule?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      social_posts: {
+        Row: {
+          comments_count: number | null
+          content_preview: string | null
+          content_text: string | null
+          engagement_rate: number | null
+          fetched_at: string
+          hashtags: string[] | null
+          id: string
+          integration_id: string | null
+          likes_count: number | null
+          media_urls: Json | null
+          mentions: string[] | null
+          platform: string
+          platform_metadata: Json | null
+          platform_permalink: string | null
+          platform_post_id: string
+          post_type: string
+          posted_at: string
+          shares_count: number | null
+          thumbnails: Json | null
+          updated_at: string
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          comments_count?: number | null
+          content_preview?: string | null
+          content_text?: string | null
+          engagement_rate?: number | null
+          fetched_at?: string
+          hashtags?: string[] | null
+          id?: string
+          integration_id?: string | null
+          likes_count?: number | null
+          media_urls?: Json | null
+          mentions?: string[] | null
+          platform: string
+          platform_metadata?: Json | null
+          platform_permalink?: string | null
+          platform_post_id: string
+          post_type?: string
+          posted_at: string
+          shares_count?: number | null
+          thumbnails?: Json | null
+          updated_at?: string
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          comments_count?: number | null
+          content_preview?: string | null
+          content_text?: string | null
+          engagement_rate?: number | null
+          fetched_at?: string
+          hashtags?: string[] | null
+          id?: string
+          integration_id?: string | null
+          likes_count?: number | null
+          media_urls?: Json | null
+          mentions?: string[] | null
+          platform?: string
+          platform_metadata?: Json | null
+          platform_permalink?: string | null
+          platform_post_id?: string
+          post_type?: string
+          posted_at?: string
+          shares_count?: number | null
+          thumbnails?: Json | null
+          updated_at?: string
+          user_id?: string
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "social_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_profiles: {
         Row: {
           connection_type: string
@@ -2188,6 +2493,160 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      social_publish_queue: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          draft_id: string
+          id: string
+          integration_id: string
+          last_error: string | null
+          max_retries: number | null
+          next_retry_at: string | null
+          platform: string
+          priority: number | null
+          published_id: string | null
+          retry_count: number | null
+          scheduled_at: string
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          draft_id: string
+          id?: string
+          integration_id: string
+          last_error?: string | null
+          max_retries?: number | null
+          next_retry_at?: string | null
+          platform: string
+          priority?: number | null
+          published_id?: string | null
+          retry_count?: number | null
+          scheduled_at?: string
+          started_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          draft_id?: string
+          id?: string
+          integration_id?: string
+          last_error?: string | null
+          max_retries?: number | null
+          next_retry_at?: string | null
+          platform?: string
+          priority?: number | null
+          published_id?: string | null
+          retry_count?: number | null
+          scheduled_at?: string
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_publish_queue_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "social_drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_publish_queue_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "social_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_publish_queue_published_id_fkey"
+            columns: ["published_id"]
+            isOneToOne: false
+            referencedRelation: "social_published"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_published: {
+        Row: {
+          content_snapshot: string | null
+          created_at: string
+          draft_id: string | null
+          error_message: string | null
+          id: string
+          initial_metrics: Json | null
+          integration_id: string | null
+          latest_metrics: Json | null
+          media_snapshot: Json | null
+          metrics_updated_at: string | null
+          platform: string
+          platform_permalink: string | null
+          platform_post_id: string | null
+          published_at: string
+          retry_count: number | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          content_snapshot?: string | null
+          created_at?: string
+          draft_id?: string | null
+          error_message?: string | null
+          id?: string
+          initial_metrics?: Json | null
+          integration_id?: string | null
+          latest_metrics?: Json | null
+          media_snapshot?: Json | null
+          metrics_updated_at?: string | null
+          platform: string
+          platform_permalink?: string | null
+          platform_post_id?: string | null
+          published_at?: string
+          retry_count?: number | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          content_snapshot?: string | null
+          created_at?: string
+          draft_id?: string | null
+          error_message?: string | null
+          id?: string
+          initial_metrics?: Json | null
+          integration_id?: string | null
+          latest_metrics?: Json | null
+          media_snapshot?: Json | null
+          metrics_updated_at?: string | null
+          platform?: string
+          platform_permalink?: string | null
+          platform_post_id?: string | null
+          published_at?: string
+          retry_count?: number | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_published_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "social_drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_published_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "social_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       study_goals: {
         Row: {
