@@ -150,7 +150,7 @@ const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
   </svg>
 );
 
-// Feature cards data for stacked animation
+// Feature cards data for stacked animation - 12 cards with enhanced visuals
 const featureCards = [
   {
     id: "dashboard",
@@ -163,28 +163,28 @@ const featureCards = [
     content: (
       <div className="space-y-3">
         <div className="grid grid-cols-3 gap-2">
-          <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Income</p>
-            <p className="text-lg font-semibold text-green-600">₹12.5L</p>
+          <div className="p-2.5 bg-green-500/10 rounded-lg border border-green-500/20">
+            <p className="text-[8px] text-muted-foreground uppercase tracking-wide">Income</p>
+            <p className="text-base font-semibold text-green-600">₹12.5L</p>
           </div>
-          <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Savings</p>
-            <p className="text-lg font-semibold text-blue-600">₹3.2L</p>
+          <div className="p-2.5 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <p className="text-[8px] text-muted-foreground uppercase tracking-wide">Savings</p>
+            <p className="text-base font-semibold text-blue-600">₹3.2L</p>
           </div>
-          <div className="p-3 bg-violet-500/10 rounded-lg border border-violet-500/20">
-            <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Tasks</p>
-            <p className="text-lg font-semibold text-violet-600">12/15</p>
+          <div className="p-2.5 bg-violet-500/10 rounded-lg border border-violet-500/20">
+            <p className="text-[8px] text-muted-foreground uppercase tracking-wide">Tasks</p>
+            <p className="text-base font-semibold text-violet-600">12/15</p>
           </div>
         </div>
-        <div className="h-16 bg-gradient-to-r from-blue-500/5 to-cyan-500/5 rounded-lg flex items-center justify-center">
-          <div className="flex items-end gap-1 h-10">
+        <div className="h-14 bg-gradient-to-r from-blue-500/5 to-cyan-500/5 rounded-lg flex items-center justify-center">
+          <div className="flex items-end gap-1 h-8">
             {[40, 65, 45, 80, 55, 70, 60].map((h, i) => (
               <motion.div
                 key={i}
-                className="w-3 bg-gradient-to-t from-blue-500 to-cyan-400 rounded-sm"
+                className="w-2.5 bg-gradient-to-t from-blue-500 to-cyan-400 rounded-sm"
                 initial={{ height: 0 }}
                 animate={{ height: `${h}%` }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
+                transition={{ delay: i * 0.08, duration: 0.4 }}
               />
             ))}
           </div>
@@ -194,7 +194,7 @@ const featureCards = [
   },
   {
     id: "tasks",
-    title: "Tasks",
+    title: "Tasks & Todos",
     subtitle: "Stay productive",
     icon: CheckSquare,
     color: "from-emerald-500 to-green-500",
@@ -207,13 +207,13 @@ const featureCards = [
             key={task}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.15 }}
-            className={`flex items-center gap-3 p-2.5 rounded-lg ${i === 0 ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-muted/20"}`}
+            transition={{ delay: i * 0.12 }}
+            className={`flex items-center gap-2 p-2 rounded-lg ${i === 0 ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-muted/20"}`}
           >
-            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${i === 0 ? "bg-emerald-500" : "border-2 border-muted-foreground/30"}`}>
-              {i === 0 && <Check className="w-2.5 h-2.5 text-white" />}
+            <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${i === 0 ? "bg-emerald-500" : "border-2 border-muted-foreground/30"}`}>
+              {i === 0 && <Check className="w-2 h-2 text-white" />}
             </div>
-            <span className={`text-xs ${i === 0 ? "line-through text-muted-foreground" : "text-foreground"}`}>{task}</span>
+            <span className={`text-[11px] ${i === 0 ? "line-through text-muted-foreground" : "text-foreground"}`}>{task}</span>
           </motion.div>
         ))}
       </div>
@@ -221,32 +221,32 @@ const featureCards = [
   },
   {
     id: "finance",
-    title: "Finance",
+    title: "Finance Tracker",
     subtitle: "Track everything",
     icon: Wallet,
     color: "from-amber-500 to-orange-500",
     bgColor: "bg-amber-500/10",
     borderColor: "border-amber-500/30",
     content: (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between p-2.5 bg-muted/20 rounded-lg">
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
           <div className="flex items-center gap-2">
-            <PiggyBank className="w-4 h-4 text-green-500" />
-            <span className="text-xs">Emergency Fund</span>
+            <PiggyBank className="w-3.5 h-3.5 text-green-500" />
+            <span className="text-[11px]">Emergency Fund</span>
           </div>
-          <span className="text-xs font-semibold">₹2.5L</span>
+          <span className="text-[11px] font-semibold">₹2.5L</span>
         </div>
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-[10px]">
+        <div className="space-y-1">
+          <div className="flex justify-between text-[9px]">
             <span className="text-muted-foreground">Monthly Budget</span>
             <span className="text-amber-500 font-medium">68% used</span>
           </div>
-          <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full"
               initial={{ width: "0%" }}
               animate={{ width: "68%" }}
-              transition={{ duration: 1, delay: 0.3 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
             />
           </div>
         </div>
@@ -262,19 +262,19 @@ const featureCards = [
     bgColor: "bg-violet-500/10",
     borderColor: "border-violet-500/30",
     content: (
-      <div className="space-y-3">
-        <div className="p-3 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-lg border border-violet-500/20">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-[9px] text-muted-foreground uppercase tracking-wide">Tax Payable</span>
-            <span className="text-[8px] px-1.5 py-0.5 bg-green-500/20 text-green-600 rounded-full font-medium">New Regime</span>
+      <div className="space-y-2.5">
+        <div className="p-2.5 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-lg border border-violet-500/20">
+          <div className="flex justify-between items-center mb-0.5">
+            <span className="text-[8px] text-muted-foreground uppercase tracking-wide">Tax Payable</span>
+            <span className="text-[7px] px-1.5 py-0.5 bg-green-500/20 text-green-600 rounded-full font-medium">New Regime</span>
           </div>
-          <p className="text-xl font-bold text-violet-600">₹52,000</p>
+          <p className="text-lg font-bold text-violet-600">₹52,000</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           {[{ l: "80C", v: "₹1.5L" }, { l: "80D", v: "₹25K" }, { l: "HRA", v: "₹1.2L" }].map((d) => (
             <div key={d.l} className="flex-1 p-1.5 bg-muted/20 rounded text-center">
-              <p className="text-[8px] text-muted-foreground">{d.l}</p>
-              <p className="text-[10px] font-semibold">{d.v}</p>
+              <p className="text-[7px] text-muted-foreground">{d.l}</p>
+              <p className="text-[9px] font-semibold">{d.v}</p>
             </div>
           ))}
         </div>
@@ -294,18 +294,18 @@ const featureCards = [
         <div className="flex items-center justify-between p-2 bg-rose-500/10 rounded-lg border border-rose-500/20">
           <div className="flex items-center gap-2">
             <Heart className="w-3 h-3 text-rose-500" />
-            <span className="text-xs font-medium">Health Insurance</span>
+            <span className="text-[11px] font-medium">Health Insurance</span>
           </div>
-          <span className="text-[9px] px-1.5 py-0.5 bg-green-500/20 text-green-600 rounded-full">Active</span>
+          <span className="text-[8px] px-1.5 py-0.5 bg-green-500/20 text-green-600 rounded-full">Active</span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="p-2 bg-muted/20 rounded text-center">
-            <p className="text-[8px] text-muted-foreground">Sum Assured</p>
-            <p className="text-xs font-semibold">₹10L</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          <div className="p-1.5 bg-muted/20 rounded text-center">
+            <p className="text-[7px] text-muted-foreground">Sum Assured</p>
+            <p className="text-[10px] font-semibold">₹10L</p>
           </div>
-          <div className="p-2 bg-muted/20 rounded text-center">
-            <p className="text-[8px] text-muted-foreground">Premium</p>
-            <p className="text-xs font-semibold">₹12K/yr</p>
+          <div className="p-1.5 bg-muted/20 rounded text-center">
+            <p className="text-[7px] text-muted-foreground">Premium</p>
+            <p className="text-[10px] font-semibold">₹12K/yr</p>
           </div>
         </div>
       </div>
@@ -328,78 +328,276 @@ const featureCards = [
               className="aspect-square rounded bg-gradient-to-br from-indigo-500/20 to-blue-500/20 border border-indigo-500/10"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.04 }}
             />
           ))}
         </div>
-        <div className="flex justify-between text-[10px] text-muted-foreground">
+        <div className="flex justify-between text-[9px] text-muted-foreground">
           <span>324 memories</span>
           <span className="text-indigo-500">2.4 GB used</span>
         </div>
       </div>
     ),
   },
+  {
+    id: "loans",
+    title: "Loan Manager",
+    subtitle: "EMI tracking",
+    icon: TrendingUp,
+    color: "from-teal-500 to-cyan-500",
+    bgColor: "bg-teal-500/10",
+    borderColor: "border-teal-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="p-2 bg-teal-500/10 rounded-lg border border-teal-500/20">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-medium">Home Loan</span>
+            <span className="text-[8px] px-1.5 py-0.5 bg-blue-500/20 text-blue-600 rounded-full">Active</span>
+          </div>
+          <div className="flex justify-between mt-1.5">
+            <div>
+              <p className="text-[7px] text-muted-foreground">EMI</p>
+              <p className="text-[11px] font-semibold">₹45,000</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[7px] text-muted-foreground">Remaining</p>
+              <p className="text-[11px] font-semibold">156 EMIs</p>
+            </div>
+          </div>
+        </div>
+        <div className="h-1 bg-muted/30 rounded-full overflow-hidden">
+          <motion.div className="h-full bg-gradient-to-r from-teal-500 to-cyan-400" initial={{ width: 0 }} animate={{ width: "35%" }} transition={{ duration: 0.8 }} />
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "study",
+    title: "Study Planner",
+    subtitle: "Track learning",
+    icon: BookOpen,
+    color: "from-sky-500 to-blue-500",
+    bgColor: "bg-sky-500/10",
+    borderColor: "border-sky-500/30",
+    content: (
+      <div className="space-y-2">
+        {["Mathematics - 3h", "Physics - 2h", "Chemistry - 1.5h"].map((sub, i) => (
+          <motion.div key={sub} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="flex items-center justify-between p-1.5 bg-muted/20 rounded">
+            <span className="text-[10px]">{sub.split(" - ")[0]}</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-12 h-1 bg-muted/40 rounded-full overflow-hidden">
+                <motion.div className="h-full bg-sky-500" initial={{ width: 0 }} animate={{ width: `${80 - i * 20}%` }} transition={{ duration: 0.6, delay: i * 0.15 }} />
+              </div>
+              <span className="text-[8px] text-muted-foreground">{sub.split(" - ")[1]}</span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    ),
+  },
+  {
+    id: "lifespan",
+    title: "Lifespan",
+    subtitle: "Time visualization",
+    icon: Clock,
+    color: "from-slate-500 to-gray-500",
+    bgColor: "bg-slate-500/10",
+    borderColor: "border-slate-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="text-center">
+          <p className="text-[8px] text-muted-foreground uppercase tracking-wide">Time Lived</p>
+          <p className="text-xl font-light text-foreground">28 Years</p>
+          <p className="text-[9px] text-muted-foreground">≈ 10,227 days</p>
+        </div>
+        <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+          <motion.div className="h-full bg-gradient-to-r from-slate-500 to-gray-400" initial={{ width: 0 }} animate={{ width: "35%" }} transition={{ duration: 1 }} />
+        </div>
+        <p className="text-[8px] text-center text-muted-foreground">35% of expected lifespan (80 years)</p>
+      </div>
+    ),
+  },
+  {
+    id: "documents",
+    title: "Documents",
+    subtitle: "Secure vault",
+    icon: Shield,
+    color: "from-zinc-500 to-stone-500",
+    bgColor: "bg-zinc-500/10",
+    borderColor: "border-zinc-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-1.5">
+          {["Aadhaar", "PAN Card", "Passport", "License"].map((doc, i) => (
+            <motion.div key={doc} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.08 }} className="p-2 bg-muted/20 rounded-lg flex items-center gap-1.5">
+              <Lock className="w-2.5 h-2.5 text-zinc-500" />
+              <span className="text-[9px]">{doc}</span>
+            </motion.div>
+          ))}
+        </div>
+        <div className="flex justify-between text-[8px] text-muted-foreground">
+          <span>12 documents</span>
+          <span className="text-green-500">All encrypted</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "expenses",
+    title: "Expenses",
+    subtitle: "Track spending",
+    icon: Wallet,
+    color: "from-red-500 to-rose-500",
+    bgColor: "bg-red-500/10",
+    borderColor: "border-red-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] text-muted-foreground">This Month</span>
+          <span className="text-sm font-semibold text-red-500">₹45,230</span>
+        </div>
+        <div className="space-y-1">
+          {[{ cat: "Food", amt: "₹12K", pct: 27 }, { cat: "Transport", amt: "₹8K", pct: 18 }, { cat: "Shopping", amt: "₹15K", pct: 33 }].map((e, i) => (
+            <div key={e.cat} className="flex items-center gap-2">
+              <span className="text-[8px] w-12">{e.cat}</span>
+              <div className="flex-1 h-1 bg-muted/30 rounded-full overflow-hidden">
+                <motion.div className="h-full bg-red-500" initial={{ width: 0 }} animate={{ width: `${e.pct}%` }} transition={{ duration: 0.5, delay: i * 0.1 }} />
+              </div>
+              <span className="text-[8px] text-muted-foreground">{e.amt}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "ai",
+    title: "NOVA AI",
+    subtitle: "Personal assistant",
+    icon: Bot,
+    color: "from-fuchsia-500 to-purple-500",
+    bgColor: "bg-fuchsia-500/10",
+    borderColor: "border-fuchsia-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-500 flex items-center justify-center">
+            <Bot className="w-3 h-3 text-white" />
+          </div>
+          <div className="flex-1 p-2 bg-muted/20 rounded-lg rounded-tl-none">
+            <p className="text-[10px]">"Your savings rate is up 12% this month. Great progress!"</p>
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <div className="p-2 bg-primary/10 rounded-lg rounded-tr-none max-w-[80%]">
+            <p className="text-[10px] text-primary">Show me my tax savings</p>
+          </div>
+        </div>
+        <div className="flex justify-center">
+          <motion.div className="flex items-center gap-1" animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>
+            <span className="w-1.5 h-1.5 bg-fuchsia-500 rounded-full" />
+            <span className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
+            <span className="w-1.5 h-1.5 bg-violet-500 rounded-full" />
+          </motion.div>
+        </div>
+      </div>
+    ),
+  },
 ];
 
-// Animated Live Preview Component - Stacked Cards Style
+// Animated Live Preview Component - Enhanced Stacked Cards with 3D effects
 const AnimatedDashboardPreview = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   
   useEffect(() => {
+    if (isHovered) return;
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % featureCards.length);
-    }, 3000);
+    }, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [isHovered]);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 40, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.6, duration: 1.2, ease: "easeOut" }}
-      className="relative w-full max-w-md mx-auto"
+      transition={{ delay: 0.5, duration: 1, ease: "easeOut" }}
+      className="relative w-full max-w-sm mx-auto"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Ambient glow */}
-      <div className="absolute -inset-10 bg-gradient-to-br from-primary/10 via-transparent to-violet-500/10 rounded-3xl blur-3xl animate-pulse" />
+      {/* Multi-layer ambient glow */}
+      <motion.div 
+        className="absolute -inset-16 bg-gradient-to-br from-primary/15 via-violet-500/10 to-cyan-500/15 rounded-[3rem] blur-3xl"
+        animate={{ 
+          opacity: [0.4, 0.6, 0.4],
+          scale: [1, 1.05, 1],
+        }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div 
+        className="absolute -inset-10 bg-gradient-to-tr from-blue-500/10 via-transparent to-purple-500/10 rounded-3xl blur-2xl"
+        animate={{ 
+          opacity: [0.3, 0.5, 0.3],
+          rotate: [0, 5, 0],
+        }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      />
       
-      {/* Stacked cards container */}
-      <div className="relative h-[420px] w-full perspective-1000">
+      {/* Stacked cards container with 3D perspective */}
+      <div 
+        className="relative h-[360px] w-full"
+        style={{ perspective: "1200px", perspectiveOrigin: "center center" }}
+      >
         {featureCards.map((card, index) => {
           const isActive = index === activeIndex;
-          const isPrev = index === (activeIndex - 1 + featureCards.length) % featureCards.length;
-          const isNext = index === (activeIndex + 1) % featureCards.length;
-          const isNext2 = index === (activeIndex + 2) % featureCards.length;
+          const distance = (index - activeIndex + featureCards.length) % featureCards.length;
+          const reverseDistance = (activeIndex - index + featureCards.length) % featureCards.length;
           
+          // Calculate positions for stacked effect
           let zIndex = 0;
-          let y = 100;
-          let scale = 0.85;
+          let y = 200;
+          let scale = 0.8;
           let opacity = 0;
           let rotateX = 0;
+          let z = -200;
           
-          if (isActive) {
+          if (distance === 0) { // Active card
             zIndex = 50;
             y = 0;
             scale = 1;
             opacity = 1;
             rotateX = 0;
-          } else if (isNext) {
+            z = 0;
+          } else if (distance === 1) { // Next card
             zIndex = 40;
-            y = 30;
-            scale = 0.95;
-            opacity = 0.7;
-            rotateX = 5;
-          } else if (isNext2) {
+            y = 24;
+            scale = 0.94;
+            opacity = 0.8;
+            rotateX = 4;
+            z = -40;
+          } else if (distance === 2) { // 2nd next
             zIndex = 30;
-            y = 55;
-            scale = 0.9;
-            opacity = 0.4;
-            rotateX = 8;
-          } else if (isPrev) {
+            y = 44;
+            scale = 0.88;
+            opacity = 0.5;
+            rotateX = 7;
+            z = -80;
+          } else if (distance === 3) { // 3rd next
             zIndex = 20;
-            y = -50;
+            y = 60;
+            scale = 0.82;
+            opacity = 0.3;
+            rotateX = 9;
+            z = -120;
+          } else if (reverseDistance === 1) { // Previous card (exiting up)
+            zIndex = 15;
+            y = -60;
             scale = 0.9;
             opacity = 0;
-            rotateX = -10;
+            rotateX = -12;
+            z = -100;
           }
           
           const Icon = card.icon;
@@ -407,62 +605,83 @@ const AnimatedDashboardPreview = () => {
           return (
             <motion.div
               key={card.id}
-              className={`absolute inset-0 w-full`}
+              className="absolute inset-x-0 top-0 w-full cursor-pointer"
+              onClick={() => setActiveIndex(index)}
               animate={{
                 zIndex,
                 y,
                 scale,
                 opacity,
                 rotateX,
+                z,
               }}
               transition={{
-                duration: 0.6,
+                duration: 0.5,
                 ease: [0.32, 0.72, 0, 1],
               }}
               style={{
                 transformStyle: "preserve-3d",
                 transformOrigin: "center bottom",
               }}
+              whileHover={isActive ? { scale: 1.02 } : {}}
             >
-              <div className={`w-full h-full bg-card/95 backdrop-blur-xl border ${card.borderColor} rounded-2xl shadow-2xl overflow-hidden`}>
-                {/* Card header */}
-                <div className={`flex items-center gap-3 px-5 py-4 bg-gradient-to-r ${card.color} bg-opacity-10`}>
-                  <div className={`w-10 h-10 rounded-xl ${card.bgColor} flex items-center justify-center`}>
-                    <Icon className="w-5 h-5 text-foreground" />
-                  </div>
-                  <div>
+              <div 
+                className={`w-full bg-card/95 backdrop-blur-xl border ${card.borderColor} rounded-2xl shadow-2xl overflow-hidden`}
+                style={{
+                  boxShadow: isActive 
+                    ? `0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px ${card.borderColor.replace('border-', 'rgba(').replace('/30', ', 0.3)')}`
+                    : '0 10px 30px -10px rgba(0,0,0,0.15)',
+                }}
+              >
+                {/* Card header with gradient */}
+                <div className={`relative flex items-center gap-3 px-4 py-3 overflow-hidden`}>
+                  <div className={`absolute inset-0 bg-gradient-to-r ${card.color} opacity-10`} />
+                  <motion.div 
+                    className={`relative w-9 h-9 rounded-xl ${card.bgColor} flex items-center justify-center`}
+                    animate={isActive ? { rotate: [0, 5, -5, 0] } : {}}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <Icon className="w-4.5 h-4.5 text-foreground" />
+                  </motion.div>
+                  <div className="relative">
                     <h3 className="text-sm font-semibold text-foreground">{card.title}</h3>
-                    <p className="text-[10px] text-muted-foreground">{card.subtitle}</p>
+                    <p className="text-[9px] text-muted-foreground">{card.subtitle}</p>
                   </div>
-                  <div className="ml-auto flex gap-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <div className="ml-auto relative flex items-center gap-1.5">
+                    <motion.div 
+                      className={`w-2 h-2 rounded-full bg-gradient-to-r ${card.color}`}
+                      animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                    <span className="text-[8px] text-muted-foreground font-medium">Live</span>
                   </div>
                 </div>
                 
                 {/* Card content */}
-                <div className="p-5">
+                <div className="px-4 py-3 min-h-[100px]">
                   {card.content}
                 </div>
                 
-                {/* Card footer */}
-                <div className="absolute bottom-0 left-0 right-0 px-5 py-3 bg-muted/20 border-t border-border/20">
+                {/* Card footer with progress indicators */}
+                <div className="px-4 py-2 bg-muted/10 border-t border-border/10">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      {featureCards.map((_, i) => (
+                    <div className="flex items-center gap-1">
+                      {featureCards.slice(0, 6).map((_, i) => (
                         <motion.div
                           key={i}
                           className={`rounded-full transition-all ${
-                            i === activeIndex 
-                              ? `w-4 h-1.5 bg-gradient-to-r ${card.color}` 
-                              : "w-1.5 h-1.5 bg-muted-foreground/30"
+                            i === activeIndex % 6
+                              ? `w-4 h-1 bg-gradient-to-r ${card.color}` 
+                              : "w-1 h-1 bg-muted-foreground/20"
                           }`}
                           animate={{ 
-                            width: i === activeIndex ? 16 : 6,
+                            width: i === activeIndex % 6 ? 16 : 4,
                           }}
                         />
                       ))}
+                      <span className="text-[8px] text-muted-foreground ml-1">+{featureCards.length - 6}</span>
                     </div>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-[9px] text-muted-foreground font-medium">
                       {activeIndex + 1} / {featureCards.length}
                     </span>
                   </div>
@@ -473,22 +692,36 @@ const AnimatedDashboardPreview = () => {
         })}
       </div>
       
-      {/* Navigation dots */}
-      <div className="flex justify-center gap-2 mt-6">
+      {/* Enhanced navigation dots */}
+      <div className="flex justify-center gap-1.5 mt-5">
         {featureCards.map((card, i) => (
           <motion.button
             key={card.id}
             onClick={() => setActiveIndex(i)}
             className={`rounded-full transition-all ${
               i === activeIndex 
-                ? `w-8 h-2 bg-gradient-to-r ${card.color}` 
-                : "w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                ? `w-6 h-1.5 bg-gradient-to-r ${card.color}` 
+                : "w-1.5 h-1.5 bg-muted-foreground/25 hover:bg-muted-foreground/40"
             }`}
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.2 }}
             whileTap={{ scale: 0.9 }}
+            aria-label={`View ${card.title}`}
           />
         ))}
       </div>
+      
+      {/* Card title indicator */}
+      <motion.div 
+        className="text-center mt-3"
+        key={activeIndex}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
+          {featureCards[activeIndex].title}
+        </span>
+      </motion.div>
     </motion.div>
   );
 };
