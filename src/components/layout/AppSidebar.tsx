@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/ThemeProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SidebarQuickAdd } from "./SidebarQuickAdd";

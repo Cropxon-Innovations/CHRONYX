@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/ThemeProvider";
 import {
   Menu,
   X,
