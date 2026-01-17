@@ -68,6 +68,90 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_imported_transactions: {
+        Row: {
+          amount: number
+          confidence_score: number | null
+          created_at: string
+          currency: string | null
+          duplicate_of_id: string | null
+          email_snippet: string | null
+          email_subject: string | null
+          gmail_message_id: string
+          gmail_thread_id: string | null
+          id: string
+          is_duplicate: boolean | null
+          is_processed: boolean | null
+          linked_expense_id: string | null
+          merchant_name: string | null
+          payment_mode: string | null
+          raw_extracted_data: Json | null
+          source_platform: string | null
+          transaction_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          confidence_score?: number | null
+          created_at?: string
+          currency?: string | null
+          duplicate_of_id?: string | null
+          email_snippet?: string | null
+          email_subject?: string | null
+          gmail_message_id: string
+          gmail_thread_id?: string | null
+          id?: string
+          is_duplicate?: boolean | null
+          is_processed?: boolean | null
+          linked_expense_id?: string | null
+          merchant_name?: string | null
+          payment_mode?: string | null
+          raw_extracted_data?: Json | null
+          source_platform?: string | null
+          transaction_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          confidence_score?: number | null
+          created_at?: string
+          currency?: string | null
+          duplicate_of_id?: string | null
+          email_snippet?: string | null
+          email_subject?: string | null
+          gmail_message_id?: string
+          gmail_thread_id?: string | null
+          id?: string
+          is_duplicate?: boolean | null
+          is_processed?: boolean | null
+          linked_expense_id?: string | null
+          merchant_name?: string | null
+          payment_mode?: string | null
+          raw_extracted_data?: Json | null
+          source_platform?: string | null
+          transaction_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_imported_transactions_duplicate_of_id_fkey"
+            columns: ["duplicate_of_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_imported_transactions_linked_expense_id_fkey"
+            columns: ["linked_expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_limits: {
         Row: {
           category: string
@@ -504,10 +588,13 @@ export type Database = {
         Row: {
           amount: number
           category: string
+          confidence_score: number | null
           created_at: string
           expense_date: string
+          gmail_import_id: string | null
           id: string
           is_auto_generated: boolean | null
+          merchant_name: string | null
           notes: string | null
           payment_mode: string
           source_id: string | null
@@ -519,10 +606,13 @@ export type Database = {
         Insert: {
           amount: number
           category: string
+          confidence_score?: number | null
           created_at?: string
           expense_date?: string
+          gmail_import_id?: string | null
           id?: string
           is_auto_generated?: boolean | null
+          merchant_name?: string | null
           notes?: string | null
           payment_mode: string
           source_id?: string | null
@@ -534,10 +624,13 @@ export type Database = {
         Update: {
           amount?: number
           category?: string
+          confidence_score?: number | null
           created_at?: string
           expense_date?: string
+          gmail_import_id?: string | null
           id?: string
           is_auto_generated?: boolean | null
+          merchant_name?: string | null
           notes?: string | null
           payment_mode?: string
           source_id?: string | null
@@ -546,7 +639,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_gmail_import_id_fkey"
+            columns: ["gmail_import_id"]
+            isOneToOne: false
+            referencedRelation: "auto_imported_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       family_members: {
         Row: {
@@ -576,6 +677,54 @@ export type Database = {
           id?: string
           notes?: string | null
           relation?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gmail_sync_settings: {
+        Row: {
+          access_token_encrypted: string | null
+          created_at: string
+          gmail_email: string | null
+          id: string
+          is_enabled: boolean
+          last_history_id: string | null
+          last_sync_at: string | null
+          refresh_token_encrypted: string | null
+          sync_status: string | null
+          token_expires_at: string | null
+          total_synced_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          created_at?: string
+          gmail_email?: string | null
+          id?: string
+          is_enabled?: boolean
+          last_history_id?: string | null
+          last_sync_at?: string | null
+          refresh_token_encrypted?: string | null
+          sync_status?: string | null
+          token_expires_at?: string | null
+          total_synced_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          created_at?: string
+          gmail_email?: string | null
+          id?: string
+          is_enabled?: boolean
+          last_history_id?: string | null
+          last_sync_at?: string | null
+          refresh_token_encrypted?: string | null
+          sync_status?: string | null
+          token_expires_at?: string | null
+          total_synced_count?: number | null
           updated_at?: string
           user_id?: string
         }
