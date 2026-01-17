@@ -1,7 +1,9 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // CHRONYX Logo Component
 const ChronxyxLogo = ({ className = "w-16 h-16" }: { className?: string }) => (
@@ -47,37 +49,192 @@ const ChronxyxLogo = ({ className = "w-16 h-16" }: { className?: string }) => (
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [error, setError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
 
-  useEffect(() => {
-    const handleAuthCallback = async () => {
-      try {
-        // Exchange the auth code for a session
-        const { data, error } = await supabase.auth.getSession();
+  const processAuth = async () => {
+    try {
+      setError(null);
+      const hash = window.location.hash;
+      
+      console.log('[AuthCallback] Processing authentication...');
+      console.log('[AuthCallback] Hash present:', !!hash);
+      console.log('[AuthCallback] Search params:', location.search);
+
+      // Check for OAuth errors in hash
+      if (hash) {
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const oauthError = hashParams.get('error');
+        const errorDescription = hashParams.get('error_description');
         
-        if (error) {
-          console.error("Auth callback error:", error);
-          navigate("/login?error=auth_failed");
+        if (oauthError) {
+          console.error('[AuthCallback] OAuth error:', oauthError, errorDescription);
+          setError(errorDescription || oauthError);
           return;
         }
 
-        if (data.session) {
-          // Successfully authenticated - redirect to dashboard
-          setTimeout(() => {
+        // Check for access token in hash (implicit flow)
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        
+        if (accessToken) {
+          console.log('[AuthCallback] Found access token in hash, processing...');
+          
+          // Try to get existing session first
+          const { data: existingSession } = await supabase.auth.getSession();
+          
+          if (existingSession?.session) {
+            console.log('[AuthCallback] Session already exists, redirecting...');
+            window.history.replaceState({}, '', '/auth/callback');
             navigate("/app", { replace: true });
-          }, 1500); // Brief delay for smooth UX
-        } else {
-          // No session found, redirect to login
-          navigate("/login");
+            return;
+          }
+
+          // Set session from hash tokens
+          if (refreshToken) {
+            const { data, error: setSessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (setSessionError) {
+              console.error('[AuthCallback] Failed to set session:', setSessionError);
+              setError(setSessionError.message);
+              return;
+            }
+
+            if (data.session) {
+              console.log('[AuthCallback] Session established for:', data.session.user.email);
+              window.history.replaceState({}, '', '/auth/callback');
+              setTimeout(() => {
+                navigate("/app", { replace: true });
+              }, 1000);
+              return;
+            }
+          }
         }
-      } catch (err) {
-        console.error("Auth callback exception:", err);
-        navigate("/login?error=callback_failed");
       }
-    };
 
-    handleAuthCallback();
-  }, [navigate]);
+      // Check for PKCE flow (code in query params)
+      const searchParams = new URLSearchParams(location.search);
+      const code = searchParams.get('code');
+      
+      if (code) {
+        console.log('[AuthCallback] Found code in query params (PKCE flow)');
+        // Supabase client handles code exchange automatically
+      }
 
+      // Standard session check (for both flows)
+      const { data, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('[AuthCallback] Session error:', sessionError);
+        setError(sessionError.message);
+        return;
+      }
+
+      if (data.session) {
+        console.log('[AuthCallback] Session found, redirecting to app...');
+        // Clean URL and redirect
+        window.history.replaceState({}, '', '/auth/callback');
+        setTimeout(() => {
+          navigate("/app", { replace: true });
+        }, 1500);
+      } else {
+        console.log('[AuthCallback] No session found, waiting for auth state change...');
+        // Wait a bit for auth state to propagate
+        setTimeout(async () => {
+          const { data: retryData } = await supabase.auth.getSession();
+          if (retryData.session) {
+            navigate("/app", { replace: true });
+          } else {
+            setError('Unable to complete authentication. Please try again.');
+          }
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('[AuthCallback] Unexpected error:', err);
+      setError(err instanceof Error ? err.message : 'Authentication failed');
+    }
+  };
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    await processAuth();
+    setIsRetrying(false);
+  };
+
+  useEffect(() => {
+    processAuth();
+  }, [navigate, location]);
+
+  // Error state
+  if (error) {
+    return (
+      <motion.main 
+        className="min-h-screen bg-background flex flex-col items-center justify-center px-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex flex-col items-center gap-6 max-w-md text-center">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center"
+          >
+            <AlertCircle className="w-8 h-8 text-destructive" />
+          </motion.div>
+
+          <div className="space-y-2">
+            <h1 className="text-xl font-medium text-foreground">
+              Authentication Failed
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {error}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 w-full">
+            <Button 
+              onClick={handleRetry}
+              disabled={isRetrying}
+              className="w-full"
+            >
+              {isRetrying ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Retrying...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </>
+              )}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/login', { replace: true })}
+              className="w-full"
+            >
+              Back to Login
+            </Button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            If this problem persists, please contact{' '}
+            <a href="mailto:support@getchronyx.com" className="text-primary hover:underline">
+              support@getchronyx.com
+            </a>
+          </p>
+        </div>
+      </motion.main>
+    );
+  }
+
+  // Loading state
   return (
     <motion.main 
       className="min-h-screen bg-background flex flex-col items-center justify-center px-4"

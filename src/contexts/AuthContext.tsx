@@ -39,10 +39,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // IMPORTANT: keep OAuth redirect on the SAME origin that started the flow.
-  // Otherwise the PKCE verifier/state stored in localStorage won't be found after the redirect.
-  // Your hosting (Vercel) should enforce whether you use apex or www.
-  const getRedirectUrl = () => `${window.location.origin}/auth/callback`;
+  // IMPORTANT: Use getchronyx.com domain for OAuth redirects
+  // This ensures the CHRONYX branding appears on Google consent screen
+  // and tokens redirect to the correct domain
+  const getRedirectUrl = () => {
+    const origin = window.location.origin;
+    
+    // In production, always use www.getchronyx.com for OAuth
+    // This matches the Google OAuth client configuration
+    if (origin.includes('getchronyx.com') || origin.includes('chronyx.app')) {
+      return 'https://www.getchronyx.com/auth/callback';
+    }
+    
+    // For local development and preview environments
+    return `${origin}/auth/callback`;
+  };
 
   const signUp = async (email: string, password: string) => {
     const redirectUrl = getRedirectUrl();
