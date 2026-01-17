@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
-import { motion, AnimatePresence, useScroll, useTransform, useInView } from "framer-motion";
+import { useEffect, useState, useRef, memo } from "react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { 
   CheckSquare, 
   BookOpen, 
@@ -61,59 +61,35 @@ const scaleIn = {
   },
 };
 
-// Apple-style gradient orbs background
-const GradientOrbs = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {/* Primary orb */}
-    <motion.div
-      className="absolute w-[800px] h-[800px] -top-[400px] -right-[200px] rounded-full"
+// Apple-style gradient orbs background - CSS-only for performance
+const GradientOrbs = memo(() => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ contain: "layout paint" }}>
+    {/* Primary orb - CSS animation instead of JS */}
+    <div
+      className="absolute w-[800px] h-[800px] -top-[400px] -right-[200px] rounded-full animate-float-slow"
       style={{
         background: "radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)",
-      }}
-      animate={{
-        x: [0, 50, 0],
-        y: [0, 30, 0],
-      }}
-      transition={{
-        duration: 20,
-        repeat: Infinity,
-        ease: "easeInOut",
+        willChange: "transform",
       }}
     />
     {/* Secondary orb */}
-    <motion.div
-      className="absolute w-[600px] h-[600px] top-[60%] -left-[200px] rounded-full"
+    <div
+      className="absolute w-[600px] h-[600px] top-[60%] -left-[200px] rounded-full animate-float-slower"
       style={{
         background: "radial-gradient(circle, hsl(280 60% 60% / 0.06) 0%, transparent 70%)",
-      }}
-      animate={{
-        x: [0, -30, 0],
-        y: [0, 50, 0],
-      }}
-      transition={{
-        duration: 25,
-        repeat: Infinity,
-        ease: "easeInOut",
+        willChange: "transform",
       }}
     />
     {/* Accent orb */}
-    <motion.div
-      className="absolute w-[500px] h-[500px] top-[30%] right-[10%] rounded-full"
+    <div
+      className="absolute w-[500px] h-[500px] top-[30%] right-[10%] rounded-full animate-float-medium"
       style={{
         background: "radial-gradient(circle, hsl(220 70% 50% / 0.04) 0%, transparent 70%)",
-      }}
-      animate={{
-        x: [0, 40, 0],
-        y: [0, -40, 0],
-      }}
-      transition={{
-        duration: 18,
-        repeat: Infinity,
-        ease: "easeInOut",
+        willChange: "transform",
       }}
     />
   </div>
-);
+));
 
 // Animated noise texture overlay
 const NoiseOverlay = () => (
@@ -505,8 +481,8 @@ const featureCards = [
   },
 ];
 
-// Animated Live Preview Component - Enhanced Stacked Cards with 3D effects
-const AnimatedDashboardPreview = () => {
+// Animated Live Preview Component - Optimized for performance
+const AnimatedDashboardPreview = memo(() => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   
@@ -519,30 +495,19 @@ const AnimatedDashboardPreview = () => {
   }, [isHovered]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.5, duration: 1, ease: "easeOut" }}
+    <div
       className="relative w-full max-w-sm mx-auto"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{ contain: "layout" }}
     >
-      {/* Multi-layer ambient glow */}
-      <motion.div 
-        className="absolute -inset-16 bg-gradient-to-br from-primary/15 via-violet-500/10 to-cyan-500/15 rounded-[3rem] blur-3xl"
-        animate={{ 
-          opacity: [0.4, 0.6, 0.4],
-          scale: [1, 1.05, 1],
-        }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      {/* Static ambient glow - CSS only for performance */}
+      <div 
+        className="absolute -inset-16 bg-gradient-to-br from-primary/15 via-violet-500/10 to-cyan-500/15 rounded-[3rem] blur-3xl opacity-50 animate-pulse"
+        style={{ animationDuration: "4s" }}
       />
-      <motion.div 
-        className="absolute -inset-10 bg-gradient-to-tr from-blue-500/10 via-transparent to-purple-500/10 rounded-3xl blur-2xl"
-        animate={{ 
-          opacity: [0.3, 0.5, 0.3],
-          rotate: [0, 5, 0],
-        }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      <div 
+        className="absolute -inset-10 bg-gradient-to-tr from-blue-500/10 via-transparent to-purple-500/10 rounded-3xl blur-2xl opacity-40"
       />
       
       {/* Stacked cards container with 3D perspective */}
@@ -722,50 +687,25 @@ const AnimatedDashboardPreview = () => {
           {featureCards[activeIndex].title}
         </span>
       </motion.div>
-    </motion.div>
+    </div>
   );
-};
+});
 
-// Section wrapper with scroll-based reveal and parallax
-const RevealSection = ({ children, className = "", parallax = false }: { children: React.ReactNode; className?: string; parallax?: boolean }) => {
+// Simple section wrapper with CSS-based reveal - no scroll listeners for performance
+const RevealSection = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
-  });
-  
-  const y = useTransform(scrollYProgress, [0, 1], parallax ? [50, -50] : [0, 0]);
-  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0.8, 1, 1, 0.8]);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
     <motion.section
       ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      style={parallax ? { y } : {}}
-      className={`will-change-transform ${className}`}
+      initial={{ opacity: 0, y: 30 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className={className}
     >
       {children}
     </motion.section>
-  );
-};
-
-// Parallax wrapper for individual elements
-const ParallaxElement = ({ children, speed = 0.5, className = "" }: { children: React.ReactNode; speed?: number; className?: string }) => {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
-  });
-  
-  const y = useTransform(scrollYProgress, [0, 1], [100 * speed, -100 * speed]);
-
-  return (
-    <motion.div ref={ref} style={{ y }} className={`will-change-transform ${className}`}>
-      {children}
-    </motion.div>
   );
 };
 
@@ -773,22 +713,9 @@ const Landing = () => {
   const [mounted, setMounted] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
   const [showDesktopDialog, setShowDesktopDialog] = useState(false);
-  const containerRef = useRef(null);
-  const { scrollYProgress } = useScroll();
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
 
   useEffect(() => {
     setMounted(true);
-    // Enable smooth scrolling
-    document.documentElement.style.scrollBehavior = 'smooth';
-    // Ensure no scroll jank
-    document.body.style.overflowX = 'hidden';
-    
-    return () => {
-      document.documentElement.style.scrollBehavior = 'auto';
-      document.body.style.overflowX = '';
-    };
   }, []);
 
   const features = [
