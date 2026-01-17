@@ -387,70 +387,7 @@ const AppSidebar = () => {
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className={cn("border-t border-sidebar-border space-y-1", collapsed ? "p-2" : "p-3")}>
-          {collapsed ? (
-            <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link to="/app/profile" className="flex items-center justify-center p-2.5 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full">
-                    <User className="w-4 h-4" />
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right"><p>Profile</p></TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link to="/app/settings" className="flex items-center justify-center p-2.5 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full">
-                    <Settings className="w-4 h-4" />
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right"><p>Settings</p></TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={toggleTheme} className="flex items-center justify-center p-2.5 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full">
-                    {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right"><p>{theme === "dark" ? "Light Mode" : "Dark Mode"}</p></TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={handleSignOut} className="flex items-center justify-center p-2.5 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full">
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right"><p>Sign Out</p></TooltipContent>
-              </Tooltip>
-            </>
-          ) : (
-            <>
-              <Link to="/app/profile" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full">
-                <User className="w-4 h-4" />
-                Profile & Plan
-              </Link>
-              <Link to="/app/settings" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full">
-                <Settings className="w-4 h-4" />
-                Settings
-              </Link>
-              <button
-                onClick={toggleTheme}
-                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
-              >
-                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                {theme === "dark" ? "Light Mode" : "Dark Mode"}
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
-            </>
-          )}
-        </div>
+        {/* Footer - Removed: Profile, Settings, Theme, Sign Out - now in TopHeader */}
       </>
     </TooltipProvider>
   );

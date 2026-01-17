@@ -23,7 +23,10 @@ import {
   ChevronDown,
   Sparkles,
   Zap,
+  Moon,
+  Sun,
 } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 import { motion } from "framer-motion";
 
 interface UserProfile {
@@ -35,9 +38,12 @@ export const TopHeader = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { getCurrentPlan, loading: planLoading } = useSubscription();
+  const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   
   const plan = getCurrentPlan();
+  
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
   
   useEffect(() => {
     const fetchProfile = async () => {
@@ -106,8 +112,22 @@ export const TopHeader = () => {
       {/* Left - Clock */}
       <LiveClock />
       
-      {/* Right - Plan, Settings, User Menu */}
-      <div className="flex items-center gap-3">
+      {/* Right - Theme Toggle, Plan, Settings, User Menu */}
+      <div className="flex items-center gap-2">
+        {/* Theme Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="h-9 w-9"
+        >
+          {theme === "dark" ? (
+            <Sun className="w-4 h-4" />
+          ) : (
+            <Moon className="w-4 h-4" />
+          )}
+        </Button>
+        
         {/* Plan Badge with animation */}
         {!planLoading && (
           <Link to="/app/profile">
