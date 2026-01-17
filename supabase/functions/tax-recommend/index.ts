@@ -40,9 +40,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const supabaseApi = createClient(supabaseUrl, supabaseServiceKey, {
-      db: { schema: 'api' }
-    });
 
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -57,12 +54,12 @@ serve(async (req) => {
     const body = await req.json();
     const { 
       financial_year, 
-      gross_income, 
-      regime,
-      old_regime_tax,
-      new_regime_tax,
-      deductions,
-      incomes 
+      gross_income = 0, 
+      regime = 'new',
+      old_regime_tax = 0,
+      new_regime_tax = 0,
+      deductions = {},
+      incomes = []
     } = body;
 
     const recommendations: Recommendation[] = [];
@@ -152,7 +149,7 @@ serve(async (req) => {
         title: 'Get Health Insurance',
         description: 'No health insurance premium detected for 80D deduction',
         reason: 'Health insurance provides both tax benefits and financial protection',
-        impact_amount: 7500, // Approximate savings on 25k premium at 30%
+        impact_amount: 7500,
         impact_description: 'Up to ₹7,500 tax savings + health coverage',
         confidence: 'high',
         action_required: true,
