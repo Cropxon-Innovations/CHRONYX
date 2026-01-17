@@ -58,6 +58,8 @@ import {
 const navItems = [
   { path: "/app", label: "Dashboard", icon: LayoutDashboard },
   { path: "/app/todos", label: "Todos", icon: CheckSquare },
+  { path: "/app/notes", label: "Notes", icon: BookOpen },
+  { path: "/app/vault", label: "Vault", icon: Shield },
   { path: "/app/study", label: "Study", icon: BookOpen },
   { path: "/app/memory", label: "Memory", icon: ImageIcon },
   { path: "/app/documents", label: "Documents", icon: FileText },
