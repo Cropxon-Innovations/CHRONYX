@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Plus, 
   Edit2, 
@@ -33,9 +34,25 @@ import {
   AlertCircle,
   Loader2,
   Link2,
-  Link2Off
+  Link2Off,
+  Plug,
+  FileText,
+  Clock,
+  Zap,
+  Settings2,
+  BarChart3
 } from "lucide-react";
 import { format } from "date-fns";
+
+// Import new Social Hub components
+import { IntegrationCard } from "@/components/social/IntegrationCard";
+import { ConnectPlatformDialog } from "@/components/social/ConnectPlatformDialog";
+import { PostComposer, type ComposerData } from "@/components/social/PostComposer";
+import { PostPreviewDialog } from "@/components/social/PostPreviewDialog";
+import { FetchedPostsFeed } from "@/components/social/FetchedPostsFeed";
+import { ApprovalQueue } from "@/components/social/ApprovalQueue";
+import { PublishQueueDisplay } from "@/components/social/PublishQueueDisplay";
+import type { SocialIntegration, PlatformConfig, SocialPost, SocialDraft, PublishQueueItem } from "@/components/social/SocialHubTypes";
 
 const PLATFORMS = [
   { id: "linkedin", name: "LinkedIn", icon: Linkedin, color: "#0A66C2" },
