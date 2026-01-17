@@ -1044,6 +1044,35 @@ export type Database = {
           },
         ]
       }
+      insurance_provider_categories: {
+        Row: {
+          created_at: string
+          id: string
+          policy_type: string
+          provider_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          policy_type: string
+          provider_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          policy_type?: string
+          provider_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_provider_categories_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       insurance_providers: {
         Row: {
           created_at: string
@@ -1112,6 +1141,7 @@ export type Database = {
       insurances: {
         Row: {
           created_at: string
+          document_url: string | null
           id: string
           insured_member_id: string | null
           insured_type: string
@@ -1132,6 +1162,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          document_url?: string | null
           id?: string
           insured_member_id?: string | null
           insured_type?: string
@@ -1152,6 +1183,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          document_url?: string | null
           id?: string
           insured_member_id?: string | null
           insured_type?: string
