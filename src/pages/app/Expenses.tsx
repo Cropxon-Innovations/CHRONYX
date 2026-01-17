@@ -7,9 +7,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "react-router-dom";
 import ExpensesList from "@/components/expenses/ExpensesList";
 import AddExpenseForm from "@/components/expenses/AddExpenseForm";
 import ExpenseCharts from "@/components/expenses/ExpenseCharts";
+import FinanceFlowSettings from "@/components/finance/FinanceFlowSettings";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +31,7 @@ const Expenses = () => {
   const { user } = useAuth();
   const { logActivity } = useActivityLog();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [stats, setStats] = useState<ExpenseStats>({
     todayTotal: 0,
     monthTotal: 0,
@@ -37,6 +40,30 @@ const Expenses = () => {
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Handle Gmail OAuth callback messages
+  useEffect(() => {
+    const gmailConnected = searchParams.get("gmail_connected");
+    const gmailError = searchParams.get("gmail_error");
+    
+    if (gmailConnected) {
+      toast({
+        title: "Gmail Connected!",
+        description: "FinanceFlow is now connected. Click 'Sync Now' to import transactions.",
+      });
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    
+    if (gmailError) {
+      toast({
+        title: "Gmail Connection Failed",
+        description: `Error: ${gmailError}. Please try again.`,
+        variant: "destructive",
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [searchParams, toast]);
 
   useEffect(() => {
     if (user) {
@@ -182,6 +209,15 @@ const Expenses = () => {
       <section>
         <h2 className="text-lg font-light text-foreground mb-4">Analytics</h2>
         <ExpenseCharts key={`charts-${refreshKey}`} />
+      </section>
+
+      {/* FinanceFlow AI Section */}
+      <section>
+        <h2 className="text-lg font-light text-foreground mb-4 flex items-center gap-2">
+          Auto Finance
+          <span className="text-[10px] bg-red-500/10 text-red-500 px-1.5 py-0.5 rounded">BETA</span>
+        </h2>
+        <FinanceFlowSettings />
       </section>
 
       {/* Expenses List */}

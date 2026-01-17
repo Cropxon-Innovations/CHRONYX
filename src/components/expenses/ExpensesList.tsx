@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import AddExpenseForm from "./AddExpenseForm";
+import ImportedExpenseBadge from "./ImportedExpenseBadge";
 
 interface Expense {
   id: string;
@@ -35,6 +36,9 @@ interface Expense {
   payment_mode: string;
   notes: string | null;
   is_auto_generated: boolean;
+  source_type: string | null;
+  confidence_score: number | null;
+  merchant_name: string | null;
 }
 
 interface ExpensesListProps {
@@ -178,9 +182,11 @@ const ExpensesList = ({ onUpdate }: ExpensesListProps) => {
                             )}
                           </p>
                           {expense.is_auto_generated && (
-                            <Badge variant="outline" className="text-xs">
-                              Auto
-                            </Badge>
+                            <ImportedExpenseBadge 
+                              sourceType={expense.source_type}
+                              confidenceScore={expense.confidence_score || 0.7}
+                              merchantName={expense.merchant_name}
+                            />
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
