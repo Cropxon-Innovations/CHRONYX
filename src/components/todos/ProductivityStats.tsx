@@ -15,14 +15,15 @@ interface Todo {
 }
 
 interface ProductivityStatsProps {
-  allTodos: Todo[];
-  todayTodos: Todo[];
-  yesterdayPending: Todo[];
+  todos: Todo[];
 }
 
-export const ProductivityStats = ({ allTodos, todayTodos, yesterdayPending }: ProductivityStatsProps) => {
+export const ProductivityStats = ({ todos }: ProductivityStatsProps) => {
+  const allTodos = todos;
   const today = format(new Date(), "yyyy-MM-dd");
   const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+  const todayTodos = allTodos.filter(t => t.date === today);
+  const yesterdayPending = allTodos.filter(t => t.date === yesterday && t.status === "pending");
   
   const stats = useMemo(() => {
     // Today's stats
