@@ -1,37 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   
-  <!-- Homepage - Main Landing -->
+  <!-- ========================================= -->
+  <!-- CHRONYX Sitemap - Personal Life Management -->
+  <!-- Personal System of Record | Private Vault -->
+  <!-- ========================================= -->
+  
+  <!-- Homepage - Primary Landing -->
   <url>
     <loc>https://chronyx.lovable.app/</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://chronyx.lovable.app/og-image.png</image:loc>
+      <image:title>CHRONYX - Personal System of Record</image:title>
+      <image:caption>A private personal space for tasks, finances, documents, and memories</image:caption>
+    </image:image>
   </url>
   
-  <!-- Authentication -->
+  <!-- ========================================= -->
+  <!-- LEGAL & TRUST PAGES (Critical for SEO) -->
+  <!-- ========================================= -->
+  
+  <!-- Privacy Policy -->
   <url>
-    <loc>https://chronyx.lovable.app/login</loc>
-    <lastmod>2026-01-16</lastmod>
+    <loc>https://chronyx.lovable.app/privacy</loc>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
   
-  <!-- Forgot Password -->
+  <!-- Terms of Service -->
   <url>
-    <loc>https://chronyx.lovable.app/forgot-password</loc>
-    <lastmod>2026-01-16</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
+    <loc>https://chronyx.lovable.app/terms</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
+  
+  <!-- Security & Data Control -->
+  <url>
+    <loc>https://chronyx.lovable.app/security</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Refund Policy -->
+  <url>
+    <loc>https://chronyx.lovable.app/refund</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- ========================================= -->
+  <!-- MARKETING PAGES -->
+  <!-- ========================================= -->
   
   <!-- Pricing Page -->
   <url>
     <loc>https://chronyx.lovable.app/pricing</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -39,7 +74,7 @@
   <!-- About Page -->
   <url>
     <loc>https://chronyx.lovable.app/about</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -47,95 +82,143 @@
   <!-- Contact Page -->
   <url>
     <loc>https://chronyx.lovable.app/contact</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
-  <!-- App Dashboard -->
+  <!-- ========================================= -->
+  <!-- AUTHENTICATION PAGES -->
+  <!-- ========================================= -->
+  
+  <!-- Login -->
+  <url>
+    <loc>https://chronyx.lovable.app/login</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Forgot Password -->
+  <url>
+    <loc>https://chronyx.lovable.app/forgot-password</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <!-- ========================================= -->
+  <!-- CORE APP FEATURES (For SEO Discovery) -->
+  <!-- ========================================= -->
+  
+  <!-- Dashboard - Personal Overview -->
   <url>
     <loc>https://chronyx.lovable.app/app/dashboard</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
-  <!-- Todos - Task Management -->
+  <!-- Todos - Private Task Management -->
   <url>
     <loc>https://chronyx.lovable.app/app/todos</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   
-  <!-- Memory Vault -->
+  <!-- Memory Vault - Private Photo Storage -->
   <url>
     <loc>https://chronyx.lovable.app/app/memory</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   
-  <!-- Documents -->
+  <!-- Notes - Secure Personal Notes -->
+  <url>
+    <loc>https://chronyx.lovable.app/app/notes</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Documents - Personal Document Storage -->
   <url>
     <loc>https://chronyx.lovable.app/app/documents</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
-  <!-- Expenses Tracker -->
+  <!-- Expenses - Personal Finance Tracking -->
   <url>
     <loc>https://chronyx.lovable.app/app/expenses</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   
-  <!-- Income Tracker -->
+  <!-- Income - Income Tracking -->
   <url>
     <loc>https://chronyx.lovable.app/app/income</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
-  <!-- Study Planner -->
+  <!-- Study Planner - Personal Study Records -->
   <url>
     <loc>https://chronyx.lovable.app/app/study</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   
-  <!-- Loans -->
+  <!-- Loans - Loan Management -->
   <url>
     <loc>https://chronyx.lovable.app/app/loans</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   
-  <!-- Insurance -->
+  <!-- Insurance - Policy Management -->
   <url>
     <loc>https://chronyx.lovable.app/app/insurance</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   
-  <!-- Lifespan Tracker -->
+  <!-- Lifespan - Life Visualization -->
   <url>
     <loc>https://chronyx.lovable.app/app/lifespan</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+  </url>
+  
+  <!-- Vault - Encrypted Storage -->
+  <url>
+    <loc>https://chronyx.lovable.app/app/vault</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Reports - Financial Reports -->
+  <url>
+    <loc>https://chronyx.lovable.app/app/reports</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
   </url>
   
   <!-- Settings -->
   <url>
     <loc>https://chronyx.lovable.app/app/settings</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -143,28 +226,17 @@
   <!-- Profile -->
   <url>
     <loc>https://chronyx.lovable.app/app/profile</loc>
-    <lastmod>2026-01-16</lastmod>
+    <lastmod>2026-01-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
-  <!-- Legal Pages -->
+  <!-- Backup & Data Export -->
   <url>
-    <loc>https://chronyx.lovable.app/terms</loc>
-    <lastmod>2026-01-16</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
+    <loc>https://chronyx.lovable.app/app/backup</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
-  <url>
-    <loc>https://chronyx.lovable.app/privacy</loc>
-    <lastmod>2026-01-16</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://chronyx.lovable.app/refund</loc>
-    <lastmod>2026-01-16</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
+
 </urlset>

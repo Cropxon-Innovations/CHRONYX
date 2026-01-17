@@ -120,6 +120,8 @@ const Landing = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
+      role="main"
+      aria-label="CHRONYX - Personal System of Record"
     >
       {/* Paper-like texture overlay */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.015]" 
@@ -242,7 +244,7 @@ const Landing = () => {
                   <ChronxyxLogo className="w-16 h-16 md:w-20 md:h-20" />
                 </motion.div>
 
-                {/* Primary Title with animated underline */}
+                {/* Primary Title with animated underline - Single H1 for SEO */}
                 <motion.h1 
                   className={`relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extralight tracking-[0.12em] sm:tracking-[0.15em] text-chronyx-landing-title transition-all duration-[800ms] ease-out ${
                     mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
@@ -252,6 +254,7 @@ const Landing = () => {
                   transition={{ delay: 0.2, duration: 0.8 }}
                 >
                   CHRONYX
+                  <span className="sr-only"> – Your Personal System of Record</span>
                   <SketchUnderline delay={0.8} />
                 </motion.h1>
 
@@ -261,18 +264,19 @@ const Landing = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.6 }}
+                  role="doc-subtitle"
                 >
                   A quiet space for your life.
                 </motion.p>
 
-                {/* Subdescription */}
+                {/* Subdescription - SEO keyword rich */}
                 <p 
                   className={`mt-2 text-xs sm:text-sm font-light text-muted-foreground/60 max-w-sm lg:max-w-none transition-all duration-[600ms] ease-out ${
                     mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
                   style={{ transitionDelay: '300ms' }}
                 >
-                  A private system to hold your life with continuity.
+                  A private personal system of record for continuity.
                 </p>
 
                 {/* Feature pills - tighter */}
@@ -392,11 +396,11 @@ const Landing = () => {
         {/* Section Connector */}
         <SectionConnector className="hidden md:block" />
 
-        {/* What is CHRONYX Section */}
+        {/* What is CHRONYX Section - Semantic article with proper heading */}
         <ScrollReveal direction="up" delay={0.1}>
-          <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/20">
-            <div className="max-w-2xl mx-auto text-center">
-              <h2 className="text-xl sm:text-2xl font-light text-foreground mb-4">
+          <section className="px-4 sm:px-6 py-12 sm:py-16 border-t border-border/20" aria-labelledby="what-is-chronyx">
+            <article className="max-w-2xl mx-auto text-center">
+              <h2 id="what-is-chronyx" className="text-xl sm:text-2xl font-light text-foreground mb-4">
                 What is CHRONYX?
               </h2>
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -406,7 +410,7 @@ const Landing = () => {
               <p className="text-muted-foreground/60 mt-2 text-xs sm:text-sm">
                 Not a productivity tool. Just a place for continuity.
               </p>
-            </div>
+            </article>
           </section>
         </ScrollReveal>
 

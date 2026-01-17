@@ -1,7 +1,10 @@
-# CHRONYX by CROPXON INNOVATIONS PVT. LTD.
+# =========================================
+# CHRONYX - Personal System of Record
 # https://chronyx.lovable.app
+# by CROPXON INNOVATIONS PVT. LTD.
+# =========================================
 
-# Allow all search engines
+# Allow all major search engines
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 1
@@ -22,6 +25,7 @@ Allow: /
 User-agent: YandexBot
 Allow: /
 
+# Social Media Crawlers
 User-agent: Twitterbot
 Allow: /
 
@@ -56,14 +60,35 @@ Allow: /
 User-agent: Applebot
 Allow: /
 
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Googlebot-Extended
+Allow: /
+
+# Default rules
 User-agent: *
 Allow: /
+
+# Block internal/sensitive paths
 Disallow: /api/
+Disallow: /auth/callback
 Disallow: /app/*/private/
 Disallow: /*.json$
+
+# Important public pages (for clarity)
+Allow: /
+Allow: /login
+Allow: /pricing
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+Allow: /security
+Allow: /refund
 
 # Sitemap location
 Sitemap: https://chronyx.lovable.app/sitemap.xml
 
-# Host
+# Host directive
 Host: https://chronyx.lovable.app
