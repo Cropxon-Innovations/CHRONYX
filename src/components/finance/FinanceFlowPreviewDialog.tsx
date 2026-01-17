@@ -25,7 +25,8 @@ import {
   Sparkles,
   Import,
   ListFilter,
-  LayoutGrid
+  LayoutGrid,
+  Eye
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +37,7 @@ import TransactionParsingAnimation from "./TransactionParsingAnimation";
 import CategoryPreviewCard from "./CategoryPreviewCard";
 import FinanceFlowErrorAlert, { parseFinanceFlowError, type FinanceFlowErrorCode } from "./FinanceFlowErrorAlert";
 import { useSmartDuplicateDetection } from "@/hooks/useSmartDuplicateDetection";
+import TransactionDetailDialog from "./TransactionDetailDialog";
 
 interface PendingTransaction {
   id: string;
@@ -47,10 +49,13 @@ interface PendingTransaction {
   payment_mode: string | null;
   source_platform: string | null;
   email_subject: string | null;
+  email_snippet?: string | null;
   confidence_score: number;
   is_processed: boolean;
   is_duplicate: boolean;
   learned_category?: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  raw_extracted_data?: any;
 }
 
 interface FinanceFlowPreviewDialogProps {

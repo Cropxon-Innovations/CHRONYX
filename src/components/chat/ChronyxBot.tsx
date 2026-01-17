@@ -39,7 +39,7 @@ const PRESET_QUESTIONS = [
 const AGENT_NAME = "NOVA";
 const AGENT_TAGLINE = "Personal Assistant";
 
-// Premium NOVA Logo - CHRONYX Design Language
+// Premium NOVA Logo - CHRONYX Design Language with Dark Mode Support
 const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: { 
   size?: "xs" | "sm" | "md" | "lg" | "xl"; 
   isActive?: boolean;
@@ -67,31 +67,52 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
         className="overflow-visible"
       >
         <defs>
-          {/* Deep tint gradient - CHRONYX brand colors */}
-          <linearGradient id="novaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          {/* Deep tint gradient - Light Mode */}
+          <linearGradient id="novaGradientLight" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="hsl(230 30% 35%)" />
             <stop offset="50%" stopColor="hsl(230 25% 45%)" />
             <stop offset="100%" stopColor="hsl(230 20% 55%)" />
           </linearGradient>
           
-          {/* Core glow gradient */}
-          <radialGradient id="novaCoreGlow" cx="50%" cy="50%" r="50%">
+          {/* Deep tint gradient - Dark Mode */}
+          <linearGradient id="novaGradientDark" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="hsl(230 25% 55%)" />
+            <stop offset="50%" stopColor="hsl(230 20% 65%)" />
+            <stop offset="100%" stopColor="hsl(230 15% 75%)" />
+          </linearGradient>
+          
+          {/* Core glow gradient - Light */}
+          <radialGradient id="novaCoreGlowLight" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="hsl(230 25% 55%)" stopOpacity="0.9" />
             <stop offset="60%" stopColor="hsl(230 30% 40%)" stopOpacity="0.6" />
             <stop offset="100%" stopColor="hsl(230 35% 30%)" stopOpacity="0.3" />
           </radialGradient>
           
-          {/* Speaking pulse glow */}
-          <radialGradient id="novaSpeakGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="hsl(230 25% 60%)" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="hsl(230 30% 45%)" stopOpacity="0" />
+          {/* Core glow gradient - Dark */}
+          <radialGradient id="novaCoreGlowDark" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="hsl(230 20% 70%)" stopOpacity="0.95" />
+            <stop offset="60%" stopColor="hsl(230 25% 55%)" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="hsl(230 30% 40%)" stopOpacity="0.4" />
           </radialGradient>
           
-          {/* Outer ring gradient */}
-          <linearGradient id="novaRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          {/* Speaking pulse glow */}
+          <radialGradient id="novaSpeakGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" className="[stop-color:hsl(230_25%_60%)] dark:[stop-color:hsl(230_20%_75%)]" stopOpacity="0.8" />
+            <stop offset="100%" className="[stop-color:hsl(230_30%_45%)] dark:[stop-color:hsl(230_25%_55%)]" stopOpacity="0" />
+          </radialGradient>
+          
+          {/* Outer ring gradient - Light */}
+          <linearGradient id="novaRingGradientLight" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="hsl(230 25% 50%)" stopOpacity="0.8" />
             <stop offset="50%" stopColor="hsl(230 20% 60%)" stopOpacity="0.4" />
             <stop offset="100%" stopColor="hsl(230 25% 50%)" stopOpacity="0.8" />
+          </linearGradient>
+          
+          {/* Outer ring gradient - Dark */}
+          <linearGradient id="novaRingGradientDark" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="hsl(230 20% 70%)" stopOpacity="0.9" />
+            <stop offset="50%" stopColor="hsl(230 15% 80%)" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="hsl(230 20% 70%)" stopOpacity="0.9" />
           </linearGradient>
         </defs>
         
@@ -101,7 +122,8 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
             cx="24"
             cy="24"
             r="22"
-            fill="url(#novaSpeakGlow)"
+            className="fill-[hsl(230_25%_60%)] dark:fill-[hsl(230_20%_70%)]"
+            fillOpacity={0.3}
             initial={{ scale: 1, opacity: 0.5 }}
             animate={{ 
               scale: [1, 1.3, 1],
@@ -126,7 +148,7 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
             cy="24"
             r="21"
             fill="none"
-            stroke="url(#novaRingGradient)"
+            className="stroke-[hsl(230_25%_50%)] dark:stroke-[hsl(230_20%_70%)]"
             strokeWidth="1.5"
             strokeDasharray="8 4"
             opacity={isActive ? 0.8 : 0.4}
@@ -144,7 +166,7 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
             cy="24"
             r="17"
             fill="none"
-            stroke="hsl(230 20% 50%)"
+            className="stroke-[hsl(230_20%_50%)] dark:stroke-[hsl(230_15%_65%)]"
             strokeWidth="0.75"
             strokeDasharray="3 6"
             opacity={isActive ? 0.6 : 0.3}
@@ -158,7 +180,7 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
             cx={24 + 19 * Math.cos((angle - 90) * Math.PI / 180)}
             cy={24 + 19 * Math.sin((angle - 90) * Math.PI / 180)}
             r="1.5"
-            fill="hsl(230 25% 55%)"
+            className="fill-[hsl(230_25%_55%)] dark:fill-[hsl(230_20%_75%)]"
             initial={{ opacity: 0.4 }}
             animate={isActive ? { 
               opacity: [0.4, 0.9, 0.4],
@@ -178,7 +200,7 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
           cx="24"
           cy="24"
           r="13"
-          fill="url(#novaCoreGlow)"
+          className="fill-[hsl(230_25%_45%)] dark:fill-[hsl(230_20%_60%)]"
           animate={isActive ? {
             scale: [1, 1.02, 1],
           } : {}}
@@ -196,7 +218,7 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
           cy="24"
           r="13"
           fill="none"
-          stroke="hsl(230 20% 65%)"
+          className="stroke-[hsl(230_20%_65%)] dark:stroke-[hsl(230_15%_80%)]"
           strokeWidth="0.5"
           opacity="0.5"
         />
@@ -206,7 +228,7 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
           cx="24"
           cy="24"
           r="3"
-          fill="hsl(230 15% 85%)"
+          className="fill-[hsl(230_15%_85%)] dark:fill-[hsl(230_10%_95%)]"
           animate={isSpeaking ? {
             scale: [1, 1.3, 1],
             opacity: [0.9, 1, 0.9]
@@ -230,7 +252,7 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
                 y1="21"
                 x2={24 + offset}
                 y2="27"
-                stroke="hsl(230 15% 90%)"
+                className="stroke-[hsl(230_15%_90%)] dark:stroke-[hsl(230_10%_95%)]"
                 strokeWidth="1"
                 strokeLinecap="round"
                 initial={{ scaleY: 0.5 }}
@@ -251,8 +273,7 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
       {/* Online indicator */}
       {isActive && !isSpeaking && (
         <motion.span 
-          className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background"
-          style={{ backgroundColor: "hsl(150 40% 50%)" }}
+          className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background bg-emerald-500 dark:bg-emerald-400"
           animate={{ scale: [1, 1.15, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         />
@@ -261,12 +282,11 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
   );
 };
 
-// Animated NOVA name badge with elegant styling
+// Animated NOVA name badge with dark mode support
 const NovaNameBadge = ({ isTyping = false }: { isTyping?: boolean }) => (
   <div className="flex items-center gap-2">
     <motion.span 
-      className="font-semibold tracking-widest text-sm"
-      style={{ color: "hsl(230 25% 35%)" }}
+      className="font-semibold tracking-widest text-sm text-[hsl(230_25%_35%)] dark:text-[hsl(230_15%_85%)]"
       animate={isTyping ? { opacity: [1, 0.6, 1] } : {}}
       transition={{ duration: 1.5, repeat: Infinity }}
     >
@@ -277,8 +297,7 @@ const NovaNameBadge = ({ isTyping = false }: { isTyping?: boolean }) => (
         {[0, 1, 2].map((i) => (
           <motion.span
             key={i}
-            className="w-1 h-1 rounded-full"
-            style={{ backgroundColor: "hsl(230 25% 50%)" }}
+            className="w-1 h-1 rounded-full bg-[hsl(230_25%_50%)] dark:bg-[hsl(230_20%_70%)]"
             animate={{ 
               opacity: [0.3, 1, 0.3],
               y: [0, -2, 0]
@@ -566,13 +585,8 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className="fixed bottom-20 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 h-[520px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50"
         >
-          {/* Premium Header with NOVA branding */}
-          <div 
-            className="flex items-center justify-between p-4 border-b border-border"
-            style={{ 
-              background: "linear-gradient(135deg, hsl(230 20% 95%) 0%, hsl(230 15% 98%) 100%)"
-            }}
-          >
+          {/* Premium Header with NOVA branding - Dark Mode Support */}
+          <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-br from-[hsl(230_20%_95%)] via-[hsl(230_15%_97%)] to-[hsl(230_10%_99%)] dark:from-[hsl(230_15%_15%)] dark:via-[hsl(230_12%_18%)] dark:to-[hsl(230_10%_20%)]">
             <div className="flex items-center gap-3">
               <NovaLogo size="md" isActive={true} isSpeaking={isSpeaking} />
               <div className="flex flex-col">
@@ -590,8 +604,7 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                   ) : (
                     <motion.span
                       key="name"
-                      className="font-semibold tracking-widest text-sm"
-                      style={{ color: "hsl(230 25% 35%)" }}
+                      className="font-semibold tracking-widest text-sm text-[hsl(230_25%_35%)] dark:text-[hsl(230_15%_85%)]"
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 5 }}
@@ -602,8 +615,7 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                   )}
                 </AnimatePresence>
                 <motion.span 
-                  className="text-[10px] tracking-wide"
-                  style={{ color: "hsl(230 15% 55%)" }}
+                  className="text-[10px] tracking-wide text-[hsl(230_15%_55%)] dark:text-[hsl(230_15%_65%)]"
                   animate={{ opacity: [0.6, 0.9, 0.6] }}
                   transition={{ duration: 4, repeat: Infinity }}
                 >
@@ -615,12 +627,12 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 hover:bg-white/50" 
+                className="h-8 w-8 hover:bg-white/50 dark:hover:bg-white/10" 
                 onClick={() => setVoiceEnabled(!voiceEnabled)}
                 title={voiceEnabled ? "Disable voice" : "Enable voice"}
               >
                 {voiceEnabled ? (
-                  <Volume2 className="w-4 h-4" style={{ color: "hsl(230 25% 45%)" }} />
+                  <Volume2 className="w-4 h-4 text-[hsl(230_25%_45%)] dark:text-[hsl(230_20%_75%)]" />
                 ) : (
                   <VolumeX className="w-4 h-4 text-muted-foreground" />
                 )}
@@ -628,7 +640,7 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 hover:bg-white/50" 
+                className="h-8 w-8 hover:bg-white/50 dark:hover:bg-white/10" 
                 onClick={() => setMessages([welcomeMessage])}
               >
                 <RotateCcw className="w-4 h-4 text-muted-foreground" />
@@ -636,7 +648,7 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 hover:bg-white/50" 
+                className="h-8 w-8 hover:bg-white/50 dark:hover:bg-white/10" 
                 onClick={handleClose}
               >
                 <X className="w-5 h-5 text-muted-foreground" />
@@ -663,25 +675,15 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                   <div className={cn(
                     "max-w-[80%] rounded-2xl px-4 py-2.5",
                     message.role === "user" 
-                      ? "rounded-br-sm text-primary-foreground"
-                      : "rounded-bl-sm text-foreground border"
-                  )}
-                  style={message.role === "user" ? {
-                    background: "linear-gradient(135deg, hsl(230 30% 35%) 0%, hsl(230 25% 45%) 100%)"
-                  } : {
-                    background: "hsl(230 15% 97%)",
-                    borderColor: "hsl(230 20% 90%)"
-                  }}
-                  >
+                      ? "rounded-br-sm text-white bg-gradient-to-br from-[hsl(230_30%_35%)] to-[hsl(230_25%_45%)] dark:from-[hsl(230_25%_50%)] dark:to-[hsl(230_20%_60%)]"
+                      : "rounded-bl-sm text-foreground bg-[hsl(230_15%_97%)] dark:bg-[hsl(230_15%_20%)] border border-[hsl(230_20%_90%)] dark:border-[hsl(230_15%_30%)]"
+                  )}>
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     <p className="text-[10px] mt-1 opacity-60">{format(message.timestamp, "h:mm a")}</p>
                   </div>
                   {message.role === "user" && (
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: "hsl(230 20% 90%)" }}
-                    >
-                      <User className="w-4 h-4" style={{ color: "hsl(230 25% 45%)" }} />
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-[hsl(230_20%_90%)] dark:bg-[hsl(230_20%_30%)]">
+                      <User className="w-4 h-4 text-[hsl(230_25%_45%)] dark:text-[hsl(230_15%_75%)]" />
                     </div>
                   )}
                 </motion.div>
@@ -695,26 +697,19 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                   <div className="shrink-0">
                     <NovaLogo size="sm" isActive={true} />
                   </div>
-                  <div 
-                    className="rounded-2xl rounded-bl-sm px-4 py-2.5 border"
-                    style={{ 
-                      background: "hsl(230 15% 97%)",
-                      borderColor: "hsl(230 20% 90%)"
-                    }}
-                  >
+                  <div className="rounded-2xl rounded-bl-sm px-4 py-2.5 bg-[hsl(230_15%_97%)] dark:bg-[hsl(230_15%_20%)] border border-[hsl(230_20%_90%)] dark:border-[hsl(230_15%_30%)]">
                     <div className="flex items-center gap-2">
                       <motion.div className="flex gap-1">
                         {[0, 1, 2].map(i => (
                           <motion.span
                             key={i}
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ backgroundColor: "hsl(230 25% 50%)" }}
+                            className="w-1.5 h-1.5 rounded-full bg-[hsl(230_25%_50%)] dark:bg-[hsl(230_20%_70%)]"
                             animate={{ y: [0, -4, 0] }}
                             transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
                           />
                         ))}
                       </motion.div>
-                      <span className="text-xs" style={{ color: "hsl(230 15% 55%)" }}>
+                      <span className="text-xs text-[hsl(230_15%_55%)] dark:text-[hsl(230_15%_65%)]">
                         NOVA is thinking...
                       </span>
                     </div>
@@ -741,7 +736,7 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <div className="flex items-center gap-2 text-xs" style={{ color: "hsl(230 15% 55%)" }}>
+                  <div className="flex items-center gap-2 text-xs text-[hsl(230_15%_55%)] dark:text-[hsl(230_15%_65%)]">
                     <Lightbulb className="w-3 h-3" />
                     <span>Try asking me</span>
                   </div>
@@ -750,16 +745,10 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                       <motion.button 
                         key={i} 
                         onClick={() => sendMessage(q)} 
-                        className="text-xs px-3 py-1.5 rounded-full border transition-all hover:scale-[1.02] active:scale-[0.98]"
-                        style={{ 
-                          background: "hsl(230 15% 97%)",
-                          borderColor: "hsl(230 20% 88%)",
-                          color: "hsl(230 20% 40%)"
-                        }}
+                        className="text-xs px-3 py-1.5 rounded-full border transition-all hover:scale-[1.02] active:scale-[0.98] bg-[hsl(230_15%_97%)] dark:bg-[hsl(230_15%_20%)] border-[hsl(230_20%_88%)] dark:border-[hsl(230_15%_30%)] text-[hsl(230_20%_40%)] dark:text-[hsl(230_15%_75%)] hover:bg-[hsl(230_18%_94%)] dark:hover:bg-[hsl(230_15%_25%)]"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.6 + i * 0.1 }}
-                        whileHover={{ backgroundColor: "hsl(230 18% 94%)" }}
                       >
                         {q}
                       </motion.button>
@@ -770,11 +759,8 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
             </div>
           </ScrollArea>
           
-          {/* Input */}
-          <div 
-            className="p-4 border-t border-border"
-            style={{ background: "hsl(230 15% 97%)" }}
-          >
+          {/* Input - Dark Mode Support */}
+          <div className="p-4 border-t border-border bg-[hsl(230_15%_97%)] dark:bg-[hsl(230_15%_15%)]">
             <div className="flex gap-2">
               <Button 
                 variant={isListening ? "destructive" : "outline"} 
@@ -797,35 +783,33 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                 onClick={() => sendMessage()} 
                 disabled={!input.trim() || isLoading} 
                 size="icon" 
-                className="shrink-0"
-                style={{ 
-                  background: "linear-gradient(135deg, hsl(230 30% 35%) 0%, hsl(230 25% 45%) 100%)"
-                }}
+                className="shrink-0 bg-gradient-to-br from-[hsl(230_30%_35%)] to-[hsl(230_25%_45%)] dark:from-[hsl(230_25%_50%)] dark:to-[hsl(230_20%_60%)] hover:opacity-90"
               >
                 <Send className="w-4 h-4" />
               </Button>
             </div>
-            <p className="text-[10px] text-center mt-2" style={{ color: "hsl(230 15% 55%)" }}>
+            <p className="text-[10px] text-center mt-2 text-[hsl(230_15%_55%)] dark:text-[hsl(230_15%_60%)]">
               {detectedLanguage !== "en-IN" ? `Language: ${detectedLanguage.split("-")[0].toUpperCase()}` : "NOVA uses your actual CHRONYX data"}
             </p>
           </div>
         </motion.div>
       )}
       
-      {/* Premium Floating Button */}
+      {/* Premium Floating Button - Dark Mode Support */}
       {externalIsOpen === undefined && (
         <motion.button
           onClick={() => isOpen ? handleClose() : handleOpen()}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="fixed bottom-6 right-6 rounded-full shadow-2xl flex items-center justify-center z-50 overflow-visible"
+          className={cn(
+            "fixed bottom-6 right-6 rounded-full shadow-2xl flex items-center justify-center z-50 overflow-visible",
+            isOpen 
+              ? "bg-[hsl(230_15%_95%)] dark:bg-[hsl(230_15%_20%)] border-2 border-[hsl(230_20%_88%)] dark:border-[hsl(230_15%_35%)]"
+              : "bg-gradient-to-br from-[hsl(230_25%_25%)] via-[hsl(230_30%_35%)] to-[hsl(230_25%_40%)] dark:from-[hsl(230_20%_40%)] dark:via-[hsl(230_25%_50%)] dark:to-[hsl(230_20%_55%)] border-2 border-[hsl(230_25%_50%)/0.3] dark:border-[hsl(230_20%_65%)/0.4]"
+          )}
           style={{ 
             width: 64,
             height: 64,
-            background: isOpen 
-              ? "hsl(230 15% 95%)"
-              : "linear-gradient(145deg, hsl(230 25% 25%) 0%, hsl(230 30% 35%) 50%, hsl(230 25% 40%) 100%)",
-            border: isOpen ? "2px solid hsl(230 20% 88%)" : "2px solid hsl(230 25% 50% / 0.3)",
             boxShadow: isOpen 
               ? "0 4px 20px hsl(230 20% 50% / 0.15)"
               : "0 8px 32px hsl(230 30% 20% / 0.4), inset 0 1px 0 hsl(230 20% 55% / 0.2)"
@@ -840,7 +824,7 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                 exit={{ rotate: 90, opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <X className="w-6 h-6" style={{ color: "hsl(230 25% 45%)" }} />
+                <X className="w-6 h-6 text-[hsl(230_25%_45%)] dark:text-[hsl(230_15%_75%)]" />
               </motion.div>
             ) : (
               <motion.div
@@ -853,12 +837,10 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
               >
                 <NovaLogo size="lg" isActive={true} isSpeaking={isSpeaking} />
                 
-                {/* Animated "NOVA" text badge */}
+                {/* Animated "NOVA" text badge - Dark Mode Support */}
                 <motion.div
-                  className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full whitespace-nowrap"
+                  className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full whitespace-nowrap bg-gradient-to-br from-[hsl(230_20%_95%)] to-[hsl(230_15%_98%)] dark:from-[hsl(230_15%_25%)] dark:to-[hsl(230_12%_30%)] border border-[hsl(230_25%_85%)] dark:border-[hsl(230_20%_45%)]"
                   style={{ 
-                    background: "linear-gradient(135deg, hsl(230 20% 95%) 0%, hsl(230 15% 98%) 100%)",
-                    border: "1px solid hsl(230 25% 85%)",
                     boxShadow: "0 2px 8px hsl(230 30% 20% / 0.15)"
                   }}
                   initial={{ opacity: 0, y: 4 }}
@@ -873,10 +855,7 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                     ease: "easeInOut"
                   }}
                 >
-                  <span 
-                    className="text-[9px] font-bold tracking-widest"
-                    style={{ color: "hsl(230 30% 35%)" }}
-                  >
+                  <span className="text-[9px] font-bold tracking-widest text-[hsl(230_30%_35%)] dark:text-[hsl(230_15%_85%)]">
                     NOVA
                   </span>
                 </motion.div>
