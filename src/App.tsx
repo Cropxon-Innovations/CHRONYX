@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AnimatePresence, motion } from "framer-motion";
@@ -11,6 +11,7 @@ import { PWAUpdater } from "@/components/pwa/PWAUpdater";
 import { useState, useEffect, lazy, Suspense } from "react";
 import SplashScreen from "@/components/layout/SplashScreen";
 import PageLoader from "@/components/layout/PageLoader";
+import { supabase } from "@/integrations/supabase/client";
 
 // Lazy load pages for better performance
 const Landing = lazy(() => import("./pages/Landing"));
@@ -64,10 +65,38 @@ const pageTransition = {
   }
 };
 
+/**
+ * Global OAuth hash handler - detects tokens in URL hash and redirects to auth callback
+ */
+const GlobalOAuthHandler = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    
+    // Check if hash contains OAuth tokens (from implicit flow)
+    if (hash && hash.includes('access_token')) {
+      console.log('[GlobalOAuth] Detected OAuth tokens in hash, redirecting to auth callback...');
+      
+      // If we're not already on auth/callback, redirect there with the hash
+      if (location.pathname !== '/auth/callback') {
+        // Preserve the hash and redirect to auth callback
+        navigate('/auth/callback' + hash, { replace: true });
+      }
+    }
+  }, [location.pathname, navigate]);
+
+  return null;
+};
+
 const AnimatedRoutes = () => {
   const location = useLocation();
 
   return (
+    <>
+      {/* Global OAuth handler to catch tokens on any page */}
+      <GlobalOAuthHandler />
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route 
@@ -245,6 +274,7 @@ const AnimatedRoutes = () => {
         />
       </Routes>
     </AnimatePresence>
+    </>
   );
 };
 
