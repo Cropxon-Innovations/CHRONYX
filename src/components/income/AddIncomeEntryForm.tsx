@@ -148,9 +148,9 @@ const AddIncomeEntryForm = ({ onSuccess, editEntry }: AddIncomeEntryFormProps) =
           </SelectTrigger>
           <SelectContent>
             {sources.length === 0 ? (
-              <SelectItem value="" disabled>
+              <div className="px-2 py-1.5 text-sm text-muted-foreground">
                 No sources - add one first
-              </SelectItem>
+              </div>
             ) : (
               sources.map((source) => (
                 <SelectItem key={source.id} value={source.id}>

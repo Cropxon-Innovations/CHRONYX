@@ -446,10 +446,10 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className={cn(
-            "fixed bottom-4 right-4 sm:right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 border-2",
+            "fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 border-2",
             isOpen 
               ? "bg-muted border-border" 
-              : "bg-gradient-to-br from-card to-muted border-primary/20"
+              : "bg-gradient-to-br from-primary/90 to-primary border-primary/30"
           )}
         >
           {isOpen ? <ChevronDown className="w-6 h-6" /> : (
