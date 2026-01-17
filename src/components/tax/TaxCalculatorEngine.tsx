@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,19 +78,12 @@ export function TaxCalculatorEngine() {
   const [result, setResult] = useState<TaxResult | null>(null);
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
 
-  // Fetch financial years from DB
-  const { data: financialYears } = useQuery({
-    queryKey: ["tax-financial-years"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tax_financial_years" as any)
-        .select("*")
-        .eq("is_active", true)
-        .order("start_date", { ascending: false });
-      if (error) throw error;
-      return data as any[];
-    },
-  });
+  // Financial years list (actual data fetched from api schema in edge function)
+  const financialYears = [
+    { code: 'FY2024_25', display_name: 'FY 2024-25', is_current: false },
+    { code: 'FY2025_26', display_name: 'FY 2025-26', is_current: true },
+    { code: 'FY2026_27', display_name: 'FY 2026-27', is_current: false },
+  ];
 
   // Calculate tax mutation
   const calculateMutation = useMutation({

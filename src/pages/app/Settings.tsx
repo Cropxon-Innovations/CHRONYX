@@ -10,7 +10,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { EnhancedCalendar } from "@/components/ui/date-picker-enhanced";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, differenceInYears, differenceInMonths, differenceInDays } from "date-fns";
-import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive, Camera, User, Upload, RotateCcw, Sparkles, Crop, Trash2, AlertTriangle, Download, ShieldCheck } from "lucide-react";
+import { CalendarIcon, Save, Mail, Phone, CheckCircle2, AlertCircle, Shield, Database, HardDrive, Camera, User, Upload, RotateCcw, Sparkles, Crop, Trash2, AlertTriangle, Download, ShieldCheck, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { ProfileCompletionIndicator } from "@/components/profile/ProfileCompletionIndicator";
 import { ImageCropper } from "@/components/profile/ImageCropper";
+import { AccountResetDialog } from "@/components/settings/AccountResetDialog";
 
 interface Profile {
   id: string;
@@ -123,6 +124,7 @@ const Settings = () => {
   const [sendingDeleteOtp, setSendingDeleteOtp] = useState(false);
   const [verifyingDeleteOtp, setVerifyingDeleteOtp] = useState(false);
   const [isDownloadingData, setIsDownloadingData] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   const DELETE_REASONS = [
     { value: "not_useful", label: "Not useful for my needs" },
@@ -1086,6 +1088,27 @@ const Settings = () => {
             </Button>
           </div>
 
+          {/* Account Reset Option */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-amber-500/20 rounded-lg bg-background">
+            <div className="space-y-1">
+              <p className="font-medium text-foreground flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-amber-500" />
+                Reset Account Data
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Start fresh by removing selected data categories. Your account and email remain intact.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowResetDialog(true)}
+              className="w-full sm:w-auto border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Reset Data
+            </Button>
+          </div>
+
           {/* Delete Account Option */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-destructive/20 rounded-lg bg-background">
             <div className="space-y-1">
@@ -1553,6 +1576,12 @@ const Settings = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Account Reset Dialog */}
+      <AccountResetDialog
+        open={showResetDialog}
+        onOpenChange={setShowResetDialog}
+      />
     </div>
   );
 };
