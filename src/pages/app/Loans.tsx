@@ -275,6 +275,17 @@ const Loans = () => {
   const selectedLoan = loans.find(l => l.id === selectedLoanId);
   const selectedLoanDetails = selectedLoanId ? getLoanDetails(selectedLoanId) : null;
 
+  const floatingEmiCard = (
+    <FloatingEmiCard
+      loans={loans}
+      allEmis={allEmis}
+      onMarkPaid={(emiId, paidDate, paymentMethod) =>
+        markPaidMutation.mutate({ emiId, paidDate, paymentMethod })
+      }
+      isLoading={markPaidMutation.isPending}
+    />
+  );
+
   return (
     <div className="space-y-8 animate-fade-in max-w-5xl">
       {/* Header */}
@@ -361,132 +372,147 @@ const Loans = () => {
         totalEmiThisMonth={summary.totalEmiThisMonth}
         currency="INR"
       />
+      {/* EMI Card (inline on small screens) */}
+      <div className="xl:hidden">
+        {floatingEmiCard}
+      </div>
 
-      {/* Main Content */}
-      {selectedLoan ? (
-        <div className="space-y-6">
-          {/* Back button and loan header */}
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => setSelectedLoanId(null)} className="text-muted-foreground">
-              ← Back to Loans
-            </Button>
-          </div>
+      <div className="grid gap-6 xl:grid-cols-[1fr_24rem]">
+        <div className="min-w-0">
+          {/* Main Content */}
+          {selectedLoan ? (
+            <div className="space-y-6">
+              {/* Back button and loan header */}
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" onClick={() => setSelectedLoanId(null)} className="text-muted-foreground">
+                  ← Back to Loans
+                </Button>
+              </div>
 
-          <div className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg">
-            <div 
-              className="w-12 h-12 rounded-lg flex items-center justify-center text-sm font-medium text-white"
-              style={{ backgroundColor: getBankColor(selectedLoan.bank_name) }}
-            >
-              {getBankInitials(selectedLoan.bank_name)}
-            </div>
-            <div>
-              <h2 className="text-lg font-medium">{selectedLoan.bank_name} - {selectedLoan.loan_type} Loan</h2>
-              <p className="text-sm text-muted-foreground">
-                A/C: {selectedLoan.loan_account_number} • {selectedLoan.interest_rate}% p.a.
-              </p>
-            </div>
-          </div>
+              <div className="flex items-center gap-4 p-4 bg-card border border-border rounded-lg">
+                <div
+                  className="w-12 h-12 rounded-lg flex items-center justify-center text-sm font-medium text-white"
+                  style={{ backgroundColor: getBankColor(selectedLoan.bank_name) }}
+                >
+                  {getBankInitials(selectedLoan.bank_name)}
+                </div>
+                <div>
+                  <h2 className="text-lg font-medium">{selectedLoan.bank_name} - {selectedLoan.loan_type} Loan</h2>
+                  <p className="text-sm text-muted-foreground">
+                    A/C: {selectedLoan.loan_account_number} • {selectedLoan.interest_rate}% p.a.
+                  </p>
+                </div>
+              </div>
 
-          <Tabs defaultValue="schedule" className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <TabsList className="bg-muted/50 border border-border flex-wrap h-auto gap-1 p-1">
-                <TabsTrigger value="schedule" className="data-[state=active]:bg-card">
-                  <Calendar className="w-4 h-4 mr-1.5" />
-                  EMI Schedule
-                </TabsTrigger>
-                <TabsTrigger value="documents" className="data-[state=active]:bg-card">
-                  <FileText className="w-4 h-4 mr-1.5" />
-                  Documents
-                </TabsTrigger>
-                <TabsTrigger value="history" className="data-[state=active]:bg-card">
-                  <History className="w-4 h-4 mr-1.5" />
-                  History
-                </TabsTrigger>
-                <TabsTrigger value="actions" className="data-[state=active]:bg-card">
-                  <Settings className="w-4 h-4 mr-1.5" />
-                  Actions
-                </TabsTrigger>
-              </TabsList>
-              <AmortizationPDF loan={selectedLoan} schedule={selectedLoanDetails?.schedule || []} />
-            </div>
+              <Tabs defaultValue="schedule" className="space-y-6">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <TabsList className="bg-muted/50 border border-border flex-wrap h-auto gap-1 p-1">
+                    <TabsTrigger value="schedule" className="data-[state=active]:bg-card">
+                      <Calendar className="w-4 h-4 mr-1.5" />
+                      EMI Schedule
+                    </TabsTrigger>
+                    <TabsTrigger value="documents" className="data-[state=active]:bg-card">
+                      <FileText className="w-4 h-4 mr-1.5" />
+                      Documents
+                    </TabsTrigger>
+                    <TabsTrigger value="history" className="data-[state=active]:bg-card">
+                      <History className="w-4 h-4 mr-1.5" />
+                      History
+                    </TabsTrigger>
+                    <TabsTrigger value="actions" className="data-[state=active]:bg-card">
+                      <Settings className="w-4 h-4 mr-1.5" />
+                      Actions
+                    </TabsTrigger>
+                  </TabsList>
+                  <AmortizationPDF loan={selectedLoan} schedule={selectedLoanDetails?.schedule || []} />
+                </div>
 
-            <TabsContent value="schedule">
-              <EmiScheduleTable
-                schedule={selectedLoanDetails?.schedule || []}
-                currency={selectedLoan.country === "USA" ? "USD" : "INR"}
-                onMarkPaid={(emiId, paidDate, paymentMethod) => 
-                  markPaidMutation.mutate({ emiId, paidDate, paymentMethod })
-                }
-                isLoading={markPaidMutation.isPending}
-              />
-            </TabsContent>
+                <TabsContent value="schedule">
+                  <EmiScheduleTable
+                    schedule={selectedLoanDetails?.schedule || []}
+                    currency={selectedLoan.country === "USA" ? "USD" : "INR"}
+                    onMarkPaid={(emiId, paidDate, paymentMethod) =>
+                      markPaidMutation.mutate({ emiId, paidDate, paymentMethod })
+                    }
+                    isLoading={markPaidMutation.isPending}
+                  />
+                </TabsContent>
 
-            <TabsContent value="documents">
-              <LoanDocuments loanId={selectedLoan.id} />
-            </TabsContent>
+                <TabsContent value="documents">
+                  <LoanDocuments loanId={selectedLoan.id} />
+                </TabsContent>
 
-            <TabsContent value="history">
-              <LoanHistory 
-                loanId={selectedLoan.id} 
-                currency={selectedLoan.country === "USA" ? "USD" : "INR"} 
-              />
-            </TabsContent>
+                <TabsContent value="history">
+                  <LoanHistory
+                    loanId={selectedLoan.id}
+                    currency={selectedLoan.country === "USA" ? "USD" : "INR"}
+                  />
+                </TabsContent>
 
-            <TabsContent value="actions">
-              <LoanActions
-                loanId={selectedLoan.id}
-                currency={selectedLoan.country === "USA" ? "USD" : "INR"}
-                outstandingPrincipal={selectedLoanDetails?.remainingPrincipal || 0}
-                onPartPayment={(amount, date, reductionType, method) =>
-                  partPaymentMutation.mutate({ loanId: selectedLoan.id, amount, date, reductionType, method })
-                }
-                onForeclosure={(date, method) =>
-                  foreclosureMutation.mutate({ loanId: selectedLoan.id, date, method })
-                }
-                isLoading={partPaymentMutation.isPending || foreclosureMutation.isPending}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
-      ) : (
-        <section className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Your Loans</h2>
-          {loansLoading ? (
-            <div className="p-12 text-center text-muted-foreground">Loading...</div>
-          ) : loans.length === 0 ? (
-            <div className="p-12 text-center bg-card border border-border rounded-lg">
-              <p className="text-muted-foreground mb-4">No loans added yet</p>
-              <Button onClick={() => setShowAddLoan(true)} variant="outline" className="border-border">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Loan
-              </Button>
+                <TabsContent value="actions">
+                  <LoanActions
+                    loanId={selectedLoan.id}
+                    currency={selectedLoan.country === "USA" ? "USD" : "INR"}
+                    outstandingPrincipal={selectedLoanDetails?.remainingPrincipal || 0}
+                    onPartPayment={(amount, date, reductionType, method) =>
+                      partPaymentMutation.mutate({ loanId: selectedLoan.id, amount, date, reductionType, method })
+                    }
+                    onForeclosure={(date, method) =>
+                      foreclosureMutation.mutate({ loanId: selectedLoan.id, date, method })
+                    }
+                    isLoading={partPaymentMutation.isPending || foreclosureMutation.isPending}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
           ) : (
-            <div className="grid gap-4">
-              {loans.map((loan) => {
-                const details = getLoanDetails(loan.id);
-                return (
-                  <LoanCard
-                    key={loan.id}
-                    loan={loan}
-                    remainingPrincipal={details.remainingPrincipal}
-                    paidCount={details.paidCount}
-                    pendingCount={details.pendingCount}
-                    nextEmiDate={details.nextEmiDate}
-                    onClick={() => setSelectedLoanId(loan.id)}
-                    onEdit={() => setEditingLoan(loan)}
-                    onDelete={() => {
-                      if (confirm("Delete this loan and all EMI data?")) {
-                        deleteLoanMutation.mutate(loan.id);
-                      }
-                    }}
-                  />
-                );
-              })}
-            </div>
+            <section className="space-y-4">
+              <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Your Loans</h2>
+              {loansLoading ? (
+                <div className="p-12 text-center text-muted-foreground">Loading...</div>
+              ) : loans.length === 0 ? (
+                <div className="p-12 text-center bg-card border border-border rounded-lg">
+                  <p className="text-muted-foreground mb-4">No loans added yet</p>
+                  <Button onClick={() => setShowAddLoan(true)} variant="outline" className="border-border">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Your First Loan
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {loans.map((loan) => {
+                    const details = getLoanDetails(loan.id);
+                    return (
+                      <LoanCard
+                        key={loan.id}
+                        loan={loan}
+                        remainingPrincipal={details.remainingPrincipal}
+                        paidCount={details.paidCount}
+                        pendingCount={details.pendingCount}
+                        nextEmiDate={details.nextEmiDate}
+                        onClick={() => setSelectedLoanId(loan.id)}
+                        onEdit={() => setEditingLoan(loan)}
+                        onDelete={() => {
+                          if (confirm("Delete this loan and all EMI data?")) {
+                            deleteLoanMutation.mutate(loan.id);
+                          }
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </section>
           )}
-        </section>
-      )}
+        </div>
+
+        {/* EMI Card (right column on desktop) */}
+        <aside className="hidden xl:block">
+          <div className="sticky top-20">
+            {floatingEmiCard}
+          </div>
+        </aside>
+      </div>
 
       {/* Add Loan Dialog */}
       <AddLoanForm
@@ -504,16 +530,6 @@ const Loans = () => {
         isLoading={editLoanMutation.isPending}
         initialData={editingLoan}
         mode="edit"
-      />
-
-      {/* Floating EMI Card */}
-      <FloatingEmiCard
-        loans={loans}
-        allEmis={allEmis}
-        onMarkPaid={(emiId, paidDate, paymentMethod) => 
-          markPaidMutation.mutate({ emiId, paidDate, paymentMethod })
-        }
-        isLoading={markPaidMutation.isPending}
       />
     </div>
   );
