@@ -290,9 +290,10 @@ export function TaxWizard() {
   };
 
   const updateDeduction = (section: string, amount: number) => {
+    const validAmount = Math.max(0, amount);
     setState((prev) => ({
       ...prev,
-      deductions: { ...prev.deductions, [section]: amount },
+      deductions: { ...prev.deductions, [section]: validAmount },
     }));
   };
 
@@ -509,9 +510,13 @@ export function TaxWizard() {
                       <Label>Gross Annual Income</Label>
                       <Input
                         type="number"
+                        min="0"
                         placeholder="e.g., 1200000"
                         value={manualIncome || ""}
-                        onChange={(e) => setManualIncome(Number(e.target.value))}
+                        onChange={(e) => {
+                          const value = Math.max(0, Number(e.target.value));
+                          setManualIncome(value);
+                        }}
                       />
                     </div>
                   </div>
@@ -551,6 +556,7 @@ export function TaxWizard() {
                     </div>
                     <Input
                       type="number"
+                      min="0"
                       value={state.deductions["80C"] || ""}
                       onChange={(e) => updateDeduction("80C", Number(e.target.value))}
                       placeholder="Max ₹1,50,000"
@@ -568,6 +574,7 @@ export function TaxWizard() {
                     </div>
                     <Input
                       type="number"
+                      min="0"
                       value={state.deductions["80D"] || ""}
                       onChange={(e) => updateDeduction("80D", Number(e.target.value))}
                       placeholder="Max ₹75,000"
@@ -585,6 +592,7 @@ export function TaxWizard() {
                     </div>
                     <Input
                       type="number"
+                      min="0"
                       value={state.deductions["80CCD1B"] || ""}
                       onChange={(e) => updateDeduction("80CCD1B", Number(e.target.value))}
                       placeholder="Max ₹50,000"
@@ -600,6 +608,7 @@ export function TaxWizard() {
                     </div>
                     <Input
                       type="number"
+                      min="0"
                       value={state.deductions["24B"] || ""}
                       onChange={(e) => updateDeduction("24B", Number(e.target.value))}
                       placeholder="Max ₹2,00,000"
@@ -615,6 +624,7 @@ export function TaxWizard() {
                     </div>
                     <Input
                       type="number"
+                      min="0"
                       value={state.deductions["80E"] || ""}
                       onChange={(e) => updateDeduction("80E", Number(e.target.value))}
                       placeholder="No limit"
@@ -630,6 +640,7 @@ export function TaxWizard() {
                     </div>
                     <Input
                       type="number"
+                      min="0"
                       value={state.deductions["HRA"] || ""}
                       onChange={(e) => updateDeduction("HRA", Number(e.target.value))}
                       placeholder="As per rules"

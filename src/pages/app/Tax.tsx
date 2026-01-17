@@ -30,7 +30,12 @@ const Tax = () => {
             {fyLabel} • Indian Income Tax Calculator
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        
+        {/* Right side - TAXYN Bot button + FY Badge */}
+        <div className="flex items-center gap-3">
+          {/* TAXYN Bot inline button - will open as draggable popup */}
+          <FloatingTaxynBot />
+          
           <Badge variant="secondary" className="gap-1">
             <Calendar className="w-3 h-3" />
             {fyLabel}
@@ -43,9 +48,6 @@ const Tax = () => {
 
       {/* Legal Disclaimer */}
       <TaxLegalDisclaimer />
-
-      {/* Floating TAXYN Bot - Available for all users with freemium limits */}
-      <FloatingTaxynBot />
     </div>
   );
 };
