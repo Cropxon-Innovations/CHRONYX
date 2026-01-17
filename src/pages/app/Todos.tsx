@@ -551,7 +551,7 @@ const Todos = () => {
       )}
 
       {/* Productivity Stats & Badges */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ProductivityStats todos={allTodos} />
         <DailyBadges todos={allTodos} />
       </div>

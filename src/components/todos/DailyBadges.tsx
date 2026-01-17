@@ -52,7 +52,7 @@ const BADGE_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
 
 const BADGE_DEFINITIONS = [
   { type: "perfect_day", name: "Perfect Day", icon: "crown", description: "Complete 100% of tasks", check: (completed: number, total: number) => total > 0 && completed === total },
-  { type: "early_bird", name: "Early Bird", icon: "coffee", description: "Complete 3+ tasks before noon", check: () => false }, // Needs time tracking
+  { type: "early_bird", name: "Early Bird", icon: "coffee", description: "Complete 3+ tasks before noon", check: () => false },
   { type: "streak_3", name: "On Fire", icon: "flame", description: "3-day completion streak", checkStreak: (streak: number) => streak >= 3 },
   { type: "streak_7", name: "Week Warrior", icon: "trophy", description: "7-day completion streak", checkStreak: (streak: number) => streak >= 7 },
   { type: "streak_30", name: "Monthly Master", icon: "crown", description: "30-day completion streak", checkStreak: (streak: number) => streak >= 30 },
@@ -79,10 +79,8 @@ export const DailyBadges = ({ todos, onBadgeEarned }: DailyBadgesProps) => {
     const todayCompleted = todayTodos.filter(t => t.status === "done").length;
     const todayTotal = todayTodos.length;
     
-    // Total completed ever
     const totalCompleted = allTodos.filter(t => t.status === "done").length;
     
-    // Calculate streak
     let streak = 0;
     for (let i = 0; i < 365; i++) {
       const checkDate = format(subDays(new Date(), i), "yyyy-MM-dd");
@@ -184,39 +182,50 @@ export const DailyBadges = ({ todos, onBadgeEarned }: DailyBadgesProps) => {
     }
   };
   
-  const todayBadges = badges.filter(b => b.badge_date === today);
-  const recentBadges = badges.slice(0, 10);
+  const todayBadgesData = badges.filter(b => b.badge_date === today);
+  const recentBadges = badges.slice(0, 8);
   const totalPoints = badges.reduce((sum, b) => sum + (b.points || 10), 0);
-  
-  if (loading) return null;
-  
+
   return (
-    <div className="space-y-4">
-      {/* Today's Badges */}
-      {todayBadges.length > 0 && (
-        <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Trophy className="w-5 h-5 text-amber-500" />
-            <span className="font-medium text-foreground">Today's Achievements</span>
-            <Badge variant="outline" className="ml-auto text-amber-500 border-amber-500/30">
-              +{todayBadges.reduce((sum, b) => sum + (b.points || 10), 0)} pts
-            </Badge>
+    <div className="bg-card border border-border rounded-xl p-4 sm:p-5 h-full">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+            <Trophy className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="flex flex-wrap gap-2">
-            {todayBadges.map((badge) => {
+          <div>
+            <h3 className="font-semibold text-foreground text-sm">Badges</h3>
+            <p className="text-xs text-muted-foreground">Your achievements</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+            {badges.length}
+          </Badge>
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 text-amber-500 border-amber-500/30">
+            {totalPoints} pts
+          </Badge>
+        </div>
+      </div>
+      
+      {/* Today's Badges */}
+      {todayBadgesData.length > 0 && (
+        <div className="mb-4 p-3 rounded-lg bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-orange-500/10 border border-amber-500/20">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">Today's Achievements</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {todayBadgesData.map((badge) => {
               const IconComponent = BADGE_ICONS[badge.badge_icon] || Award;
               return (
                 <div
                   key={badge.id}
-                  className="flex items-center gap-2 bg-card/50 border border-border rounded-lg px-3 py-2 animate-pulse-subtle"
+                  className="flex items-center gap-1.5 bg-background/60 rounded-md px-2 py-1"
+                  title={badge.description}
                 >
-                  <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
-                    <IconComponent className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{badge.badge_name}</p>
-                    <p className="text-xs text-muted-foreground">{badge.description}</p>
-                  </div>
+                  <IconComponent className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-xs font-medium text-foreground">{badge.badge_name}</span>
                 </div>
               );
             })}
@@ -224,44 +233,38 @@ export const DailyBadges = ({ todos, onBadgeEarned }: DailyBadgesProps) => {
         </div>
       )}
       
-      {/* All-time Badges Summary */}
-      <div className="bg-card border border-border rounded-xl p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Medal className="w-5 h-5 text-muted-foreground" />
-            <span className="font-medium text-foreground">Badge Collection</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-xs">
-              {badges.length} badges
-            </Badge>
-            <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/30">
-              {totalPoints} total pts
-            </Badge>
-          </div>
-        </div>
+      {/* Badge Collection */}
+      <div className="space-y-3">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Collection</span>
         
-        {badges.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            Complete tasks to earn your first badge! 🎯
-          </p>
+        {loading ? (
+          <div className="flex gap-1.5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+            ))}
+          </div>
+        ) : badges.length === 0 ? (
+          <div className="text-center py-4">
+            <Medal className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground">Complete tasks to earn badges!</p>
+          </div>
         ) : (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {recentBadges.map((badge) => {
               const IconComponent = BADGE_ICONS[badge.badge_icon] || Award;
               return (
                 <div
                   key={badge.id}
-                  className="w-8 h-8 rounded-full bg-muted flex items-center justify-center group relative cursor-pointer hover:bg-primary/20 transition-colors"
+                  className="w-8 h-8 rounded-full bg-muted hover:bg-primary/10 flex items-center justify-center cursor-pointer transition-colors group"
                   title={`${badge.badge_name} - ${badge.description}`}
                 >
-                  <IconComponent className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
+                  <IconComponent className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               );
             })}
-            {badges.length > 10 && (
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                +{badges.length - 10}
+            {badges.length > 8 && (
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                <span className="text-[10px] text-muted-foreground font-medium">+{badges.length - 8}</span>
               </div>
             )}
           </div>
