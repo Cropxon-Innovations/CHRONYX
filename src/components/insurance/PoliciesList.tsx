@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Shield, Plus, Pencil, Trash2, Calendar, ChevronRight } from "lucide-react";
+import { Shield, Plus, Pencil, Trash2, Calendar, ChevronRight, Heart, Users, FileText, Car, Bike, Home, Plane } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,6 +54,25 @@ const getDaysUntilRenewal = (dateStr: string) => {
   return Math.ceil((renewal.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 };
 
+// Policy type icons and colors mapping
+const getPolicyTypeConfig = (type: string) => {
+  const typeConfigs: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
+    'Health': { icon: Heart, color: 'text-rose-500', bgColor: 'bg-rose-500/10' },
+    'Term Life': { icon: FileText, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+    'Life': { icon: FileText, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+    'Term': { icon: FileText, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+    'Vehicle': { icon: Car, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+    'Car': { icon: Car, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+    'Bike': { icon: Bike, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+    'Two Wheeler': { icon: Bike, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+    'Home': { icon: Home, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
+    'Property': { icon: Home, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
+    'Travel': { icon: Plane, color: 'text-cyan-500', bgColor: 'bg-cyan-500/10' },
+    'Family': { icon: Users, color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
+  };
+  return typeConfigs[type] || { icon: Shield, color: 'text-primary', bgColor: 'bg-primary/10' };
+};
+
 const PoliciesList = () => {
   const { user } = useAuth();
   const { logActivity } = useActivityLog();
@@ -106,13 +125,21 @@ const PoliciesList = () => {
     return <div className="flex items-center justify-center h-32"><div className="text-muted-foreground">Loading...</div></div>;
   }
 
+  // Group policies by type for the summary
+  const activePolicies = policies.filter(p => p.status === 'active');
+  const policyTypeGroups: Record<string, number> = {};
+  activePolicies.forEach(p => {
+    const type = p.policy_type || 'Other';
+    policyTypeGroups[type] = (policyTypeGroups[type] || 0) + 1;
+  });
+
   return (
     <div className="space-y-6">
-      {/* Summary */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-card border border-border rounded-lg p-6">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">Active Policies</p>
-          <p className="text-3xl font-semibold text-foreground mt-2">{policies.filter(p => p.status === 'active').length}</p>
+          <p className="text-3xl font-semibold text-foreground mt-2">{activePolicies.length}</p>
         </div>
         <div className="bg-card border border-border rounded-lg p-6">
           <p className="text-xs text-muted-foreground uppercase tracking-wider">Annual Premium</p>
@@ -120,9 +147,41 @@ const PoliciesList = () => {
         </div>
       </div>
 
+      {/* Policy Types Grid with Icons */}
+      {Object.keys(policyTypeGroups).length > 0 && (
+        <div className="bg-card border border-border rounded-lg p-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Policy Types</p>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+            {Object.entries(policyTypeGroups).map(([type, count]) => {
+              const config = getPolicyTypeConfig(type);
+              const Icon = config.icon;
+              return (
+                <div
+                  key={type}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl ${config.bgColor} hover:scale-105 transition-transform cursor-pointer`}
+                  onClick={() => {
+                    // Scroll to first policy of this type
+                    const el = document.querySelector(`[data-policy-type="${type}"]`);
+                    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                >
+                  <div className={`w-10 h-10 rounded-full ${config.bgColor} flex items-center justify-center`}>
+                    <Icon className={`w-5 h-5 ${config.color}`} />
+                  </div>
+                  <span className="text-xl font-bold text-foreground">{count}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider text-center">
+                    {type}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Policies</h2>
+        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">All Policies</h2>
         <Button onClick={() => { setSelectedPolicy(null); setFormOpen(true); }}>
           <Plus className="w-4 h-4 mr-2" />
           Add Policy
@@ -142,20 +201,29 @@ const PoliciesList = () => {
             const daysUntil = getDaysUntilRenewal(policy.renewal_date);
             const isExpiringSoon = daysUntil <= 30 && daysUntil > 0;
 
+            const policyConfig = getPolicyTypeConfig(policy.policy_type);
+            const PolicyIcon = policyConfig.icon;
+
             return (
               <div 
-                key={policy.id} 
+                key={policy.id}
+                data-policy-type={policy.policy_type}
                 className="bg-card border border-border rounded-lg p-6 hover:bg-accent/30 transition-colors cursor-pointer group"
                 onClick={() => { setSelectedPolicy(policy); setDetailOpen(true); }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-primary" />
+                    <div className={`w-10 h-10 rounded-lg ${policyConfig.bgColor} flex items-center justify-center`}>
+                      <PolicyIcon className={`w-5 h-5 ${policyConfig.color}`} />
                     </div>
                     <div>
                       <h3 className="text-base font-medium text-foreground">{policy.policy_name}</h3>
-                      <p className="text-xs text-muted-foreground">{policy.provider} • {policy.policy_type}</p>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${policyConfig.bgColor} ${policyConfig.color}`}>
+                          {policy.policy_type}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{policy.provider}</span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
