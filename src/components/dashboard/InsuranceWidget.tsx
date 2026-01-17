@@ -3,10 +3,12 @@ import { Shield, Heart, Users, FileText, Car, Bike, Home, Plane, ChevronRight } 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PolicyByType {
   type: string;
   count: number;
+  totalCoverage?: number;
 }
 
 interface InsuranceSummary {
@@ -61,13 +63,19 @@ const InsuranceWidget = () => {
 
   const fetchInsuranceSummary = async () => {
     try {
-      // Fetch insurances
-      const { data: insurances } = await supabase
+      // Fetch insurances for the current user
+      const { data: insurances, error } = await supabase
         .from("insurances")
-        .select("id, insured_type, status, policy_type")
+        .select("id, insured_type, status, policy_type, sum_assured")
+        .eq("user_id", user?.id)
         .eq("status", "active");
 
-      // Fetch claims
+      if (error) {
+        console.error("Error fetching insurances:", error);
+        return;
+      }
+
+      // Fetch claims for the current user's policies
       const { data: claims } = await supabase
         .from("insurance_claims")
         .select("status, claimed_amount, settled_amount");
@@ -76,13 +84,21 @@ const InsuranceWidget = () => {
       const selfPolicies = insurances?.filter(i => i.insured_type === 'self').length || 0;
       const familyPolicies = totalPolicies - selfPolicies;
 
-      // Group by policy type
-      const typeGroups: Record<string, number> = {};
+      // Group by policy type with sum_assured
+      const typeGroups: Record<string, { count: number; totalCoverage: number }> = {};
       insurances?.forEach(ins => {
         const type = ins.policy_type || 'Other';
-        typeGroups[type] = (typeGroups[type] || 0) + 1;
+        if (!typeGroups[type]) {
+          typeGroups[type] = { count: 0, totalCoverage: 0 };
+        }
+        typeGroups[type].count += 1;
+        typeGroups[type].totalCoverage += Number(ins.sum_assured || 0);
       });
-      const policyByType: PolicyByType[] = Object.entries(typeGroups).map(([type, count]) => ({ type, count }));
+      const policyByType: PolicyByType[] = Object.entries(typeGroups).map(([type, data]) => ({ 
+        type, 
+        count: data.count,
+        totalCoverage: data.totalCoverage
+      }));
 
       const claimsFiled = claims?.length || 0;
       const claimsSettled = claims?.filter(c => c.status === 'Settled').length || 0;
@@ -166,27 +182,45 @@ const InsuranceWidget = () => {
 
       {/* Policy Types with Icons */}
       {summary.policyByType.length > 0 && (
-        <div className="grid grid-cols-3 gap-2">
-          {summary.policyByType.map((item) => {
-            const config = getPolicyTypeConfig(item.type);
-            const Icon = config.icon;
-            return (
-              <button
-                key={item.type}
-                onClick={handleNavigateToInsurance}
-                className={`flex flex-col items-center gap-1.5 p-3 rounded-xl ${config.bgColor} hover:scale-105 transition-transform cursor-pointer`}
-              >
-                <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center`}>
-                  <Icon className={`w-4 h-4 ${config.color}`} />
-                </div>
-                <span className="text-lg font-semibold text-foreground">{item.count}</span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider truncate w-full text-center">
-                  {item.type}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <TooltipProvider>
+          <div className="grid grid-cols-3 gap-2">
+            {summary.policyByType.map((item) => {
+              const config = getPolicyTypeConfig(item.type);
+              const Icon = config.icon;
+              return (
+                <Tooltip key={item.type}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleNavigateToInsurance}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl ${config.bgColor} hover:scale-105 transition-transform cursor-pointer`}
+                    >
+                      <div className={`w-8 h-8 rounded-full ${config.bgColor} flex items-center justify-center`}>
+                        <Icon className={`w-4 h-4 ${config.color}`} />
+                      </div>
+                      <span className="text-lg font-semibold text-foreground">{item.count}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider truncate w-full text-center">
+                        {item.type}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-popover border border-border">
+                    <div className="text-xs space-y-1">
+                      <p className="font-medium">{item.type} Insurance</p>
+                      <p className="text-muted-foreground">
+                        {item.count} {item.count === 1 ? 'policy' : 'policies'}
+                      </p>
+                      {item.totalCoverage && item.totalCoverage > 0 && (
+                        <p className="text-emerald-500">
+                          Coverage: {formatCurrency(item.totalCoverage)}
+                        </p>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
       )}
 
       {/* Self/Family breakdown */}
