@@ -39,21 +39,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // IMPORTANT: Use getchronyx.com domain for OAuth redirects
-  // This ensures the CHRONYX branding appears on Google consent screen
-  // and tokens redirect to the correct domain
-  const getRedirectUrl = () => {
-    const origin = window.location.origin;
-    
-    // In production, always use www.getchronyx.com for OAuth
-    // This matches the Google OAuth client configuration
-    if (origin.includes('getchronyx.com') || origin.includes('chronyx.app')) {
-      return 'https://www.getchronyx.com/auth/callback';
-    }
-    
-    // For local development and preview environments
-    return `${origin}/auth/callback`;
-  };
+  // The redirectTo URL is where Supabase redirects AFTER processing the OAuth callback.
+  // Google Cloud Console should have the Supabase callback URL:
+  // https://ewevnteuyfpinnlhvoty.supabase.co/auth/v1/callback
+  // 
+  // Flow: App → Google → Supabase callback → App's redirectTo URL
+  const getRedirectUrl = () => `${window.location.origin}/auth/callback`;
 
   const signUp = async (email: string, password: string) => {
     const redirectUrl = getRedirectUrl();
