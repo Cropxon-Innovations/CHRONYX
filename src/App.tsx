@@ -44,7 +44,7 @@ const MemoryTimeline = lazy(() => import("./pages/app/MemoryTimeline"));
 const Search = lazy(() => import("./pages/app/Search"));
 const Backup = lazy(() => import("./pages/app/Backup"));
 const Documents = lazy(() => import("./pages/app/Documents"));
-const Social = lazy(() => import("./pages/app/Social"));
+const Social = lazy(() => import("./pages/app/SocialHub"));
 const PaymentAnalytics = lazy(() => import("./pages/app/PaymentAnalytics"));
 const Notes = lazy(() => import("./pages/app/Notes"));
 const Vault = lazy(() => import("./pages/app/Vault"));
