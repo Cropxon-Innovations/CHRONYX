@@ -81,7 +81,7 @@ export async function logAIParsing(params: {
   errorMessage?: string;
 }) {
   try {
-    await supabase.from('ai_parsing_logs').insert({
+    await supabase.from('ai_parsing_logs').insert([{
       user_id: params.userId,
       parse_type: params.parseType,
       input_snippet: params.inputSnippet?.substring(0, 200),
@@ -93,7 +93,7 @@ export async function logAIParsing(params: {
       success: params.success ?? true,
       error_message: params.errorMessage,
       source: 'ai',
-    });
+    }]);
   } catch (error) {
     console.error('Failed to log AI parsing:', error);
   }
