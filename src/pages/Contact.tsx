@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Mail, Phone, MapPin, Send, MessageSquare, Clock, CheckCircle, Sparkles, CreditCard, LifeBuoy, User } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Send, MessageSquare, Clock, CheckCircle, Sparkles, CreditCard, LifeBuoy, User, Building2, Globe, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,40 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
+
+// Typography animation variants
+const letterAnimation = {
+  hidden: { opacity: 0, y: 50 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.03,
+      duration: 0.5,
+      ease: "easeOut" as const,
+    },
+  }),
+};
+
+const AnimatedText = ({ text, className = "" }: { text: string; className?: string }) => {
+  return (
+    <motion.span className={`inline-block ${className}`}>
+      {text.split("").map((char, i) => (
+        <motion.span
+          key={i}
+          custom={i}
+          variants={letterAnimation}
+          initial="hidden"
+          animate="visible"
+          className="inline-block"
+          style={{ whiteSpace: char === " " ? "pre" : "normal" }}
+        >
+          {char}
+        </motion.span>
+      ))}
+    </motion.span>
+  );
+};
 
 const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,10 +80,10 @@ const Contact = () => {
   const contactInfo = [
     {
       icon: Mail,
-      title: "Email Us",
-      primary: "contact@getchronyx.com",
-      secondary: "For general inquiries",
-      href: "mailto:contact@getchronyx.com"
+      title: "Office Email",
+      primary: "Office@getchronyx.com",
+      secondary: "For official inquiries",
+      href: "mailto:Office@getchronyx.com"
     },
     {
       icon: MessageSquare,
@@ -59,16 +93,39 @@ const Contact = () => {
       href: "mailto:support@getchronyx.com"
     },
     {
+      icon: Phone,
+      title: "Phone",
+      primary: "+91 98765 43210",
+      secondary: "Mon-Fri, 10AM-6PM IST",
+      href: "tel:+919876543210"
+    },
+    {
       icon: Clock,
       title: "Response Time",
       primary: "Within 24 hours",
-      secondary: "Monday - Friday",
+      secondary: "We reply fast",
       href: null
     }
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background animations */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <motion.div
+          className="absolute w-[600px] h-[600px] -top-[200px] -right-[100px] rounded-full"
+          style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)" }}
+          animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute w-[400px] h-[400px] top-[60%] -left-[100px] rounded-full"
+          style={{ background: "radial-gradient(circle, hsl(280 60% 60% / 0.04) 0%, transparent 70%)" }}
+          animate={{ x: [0, -20, 0], y: [0, 30, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+
       {/* Header */}
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -77,27 +134,49 @@ const Contact = () => {
             <span className="text-sm">Back to Home</span>
           </Link>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold tracking-tight">CHRONYX</span>
+            <motion.div 
+              className="flex items-center gap-2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <span className="text-xl font-extralight tracking-[0.2em]">CHRONYX</span>
               <span className="text-xs text-muted-foreground">by CROPXON</span>
-            </div>
+            </motion.div>
             <ThemeToggle />
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 max-w-6xl">
-        {/* Hero Section */}
+      <main className="container mx-auto px-4 py-12 max-w-6xl relative z-10">
+        {/* Hero Section with Animated Typography */}
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Get in Touch</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/20 mb-6"
+          >
+            <Mail className="w-4 h-4 text-primary" />
+            <span className="text-sm text-primary font-medium">We'd love to hear from you</span>
+          </motion.div>
+          
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extralight mb-6 tracking-tight">
+            <AnimatedText text="Get in Touch" />
+          </h1>
+          
+          <motion.p 
+            className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
             Have a question, suggestion, or need support? We'd love to hear from you. 
             Fill out the form below and we'll get back to you as soon as possible.
-          </p>
+          </motion.p>
         </motion.section>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -145,30 +224,74 @@ const Contact = () => {
               </motion.div>
             ))}
 
-            {/* Additional Info */}
+            {/* Company Info */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Card className="border-border/50 bg-gradient-to-br from-primary/5 to-primary/10">
-                <CardContent className="p-6">
+              <Card className="border-border/50 bg-gradient-to-br from-primary/5 to-primary/10 overflow-hidden">
+                <CardContent className="p-6 relative">
+                  <motion.div
+                    className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-primary/5"
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.3, 0.5] }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                  />
                   <div className="flex items-center gap-3 mb-4">
-                    <MapPin className="w-5 h-5 text-primary" />
+                    <Building2 className="w-5 h-5 text-primary" />
                     <h3 className="font-semibold">Our Office</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    CROPXON INNOVATIONS PVT. LTD.<br />
-                    India
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                    <strong className="text-foreground">CROPXON INNOVATIONS PVT. LTD.</strong><br />
+                    Bangalore, Karnataka<br />
+                    India - 560001
                   </p>
-                  <div className="mt-4 pt-4 border-t border-border/50">
+                  <div className="space-y-2 mt-4 pt-4 border-t border-border/50">
+                    <a 
+                      href="mailto:Office@getchronyx.com"
+                      className="flex items-center gap-2 text-sm text-foreground hover:text-primary transition-colors"
+                    >
+                      <Mail className="w-4 h-4" />
+                      Office@getchronyx.com
+                    </a>
                     <a 
                       href="https://www.cropxon.com" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
+                      className="flex items-center gap-2 text-sm text-primary hover:underline"
                     >
-                      www.cropxon.com →
+                      <Globe className="w-4 h-4" />
+                      www.cropxon.com
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Quick Actions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <Card className="border-border/50">
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground mb-3 uppercase tracking-wide font-medium">Quick Contact</p>
+                  <div className="space-y-2">
+                    <a 
+                      href="mailto:Office@getchronyx.com"
+                      className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-foreground text-background rounded-lg text-sm font-medium hover:bg-foreground/90 transition-colors"
+                    >
+                      <Mail className="w-4 h-4" />
+                      Email Office
+                    </a>
+                    <a 
+                      href="tel:+919876543210"
+                      className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-primary/10 text-primary rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors"
+                    >
+                      <Phone className="w-4 h-4" />
+                      Call Now
                     </a>
                   </div>
                 </CardContent>
