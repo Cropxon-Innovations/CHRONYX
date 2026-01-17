@@ -177,11 +177,11 @@ const Lifespan = () => {
   ].filter(m => m.age <= targetAge);
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in">
       {/* Header */}
       <header>
-        <h1 className="text-2xl font-light text-foreground tracking-wide">Lifespan</h1>
-        <p className="text-sm text-muted-foreground mt-1">Perspective on time</p>
+        <h1 className="text-xl sm:text-2xl font-light text-foreground tracking-wide">Lifespan</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1">Perspective on time</p>
       </header>
 
       {/* Configure Prompt */}
@@ -200,32 +200,32 @@ const Lifespan = () => {
       )}
 
       {/* Current Date/Time Display */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-vyom-accent" />
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">
               Current Time
             </h3>
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Globe className="w-3 h-3" />
-            <span>{lifespan.timezone}</span>
+            <span className="truncate max-w-[150px] sm:max-w-none">{lifespan.timezone}</span>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center md:text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          <div className="text-center sm:text-left">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Date</p>
-            <p className="text-lg font-medium text-foreground">{lifespan.currentDate}</p>
+            <p className="text-sm sm:text-lg font-medium text-foreground">{lifespan.currentDate}</p>
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Time</p>
-            <p className="text-3xl font-mono font-bold text-vyom-accent tabular-nums">{lifespan.currentTime}</p>
+            <p className="text-2xl sm:text-3xl font-mono font-bold text-vyom-accent tabular-nums">{lifespan.currentTime}</p>
           </div>
-          <div className="text-center md:text-right">
+          <div className="text-center sm:text-right">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Year</p>
-            <p className="text-lg font-medium text-foreground">{lifespan.currentYear}</p>
+            <p className="text-sm sm:text-lg font-medium text-foreground">{lifespan.currentYear}</p>
           </div>
         </div>
       </div>
@@ -233,93 +233,94 @@ const Lifespan = () => {
       {/* Main Visualization */}
       <LifespanBar daysLived={lifespan.daysLived} daysRemaining={lifespan.daysRemaining} />
 
-      {/* Live Counter - Matching Reference Design */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <div className="flex items-center gap-2 mb-6">
+      {/* Live Counter - Responsive Grid */}
+      <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
           <Clock className="w-4 h-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+          <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider">
             Live Counter
           </h3>
         </div>
         
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-muted/30 rounded-xl p-6 text-center">
-            <p className="text-3xl sm:text-4xl lg:text-5xl font-light text-foreground tabular-nums tracking-tight">
+        {/* Time Lived - Responsive 4-column grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-muted/30 rounded-xl p-3 sm:p-4 md:p-6 text-center min-w-0">
+            <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light text-foreground tabular-nums tracking-tight truncate">
               {lifespan.secondsLived.toLocaleString()}
             </p>
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-3">Seconds Lived</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest mt-1 sm:mt-2">Seconds</p>
           </div>
-          <div className="bg-muted/30 rounded-xl p-6 text-center">
-            <p className="text-3xl sm:text-4xl lg:text-5xl font-light text-foreground tabular-nums tracking-tight">
+          <div className="bg-muted/30 rounded-xl p-3 sm:p-4 md:p-6 text-center min-w-0">
+            <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light text-foreground tabular-nums tracking-tight truncate">
               {lifespan.minutesLived.toLocaleString()}
             </p>
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-3">Minutes Lived</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest mt-1 sm:mt-2">Minutes</p>
           </div>
-          <div className="bg-muted/30 rounded-xl p-6 text-center">
-            <p className="text-3xl sm:text-4xl lg:text-5xl font-light text-foreground tabular-nums tracking-tight">
+          <div className="bg-muted/30 rounded-xl p-3 sm:p-4 md:p-6 text-center min-w-0">
+            <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light text-foreground tabular-nums tracking-tight truncate">
               {lifespan.hoursLived.toLocaleString()}
             </p>
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-3">Hours Lived</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest mt-1 sm:mt-2">Hours</p>
           </div>
-          <div className="bg-muted/30 rounded-xl p-6 text-center">
-            <p className="text-3xl sm:text-4xl lg:text-5xl font-light text-foreground tabular-nums tracking-tight">
+          <div className="bg-muted/30 rounded-xl p-3 sm:p-4 md:p-6 text-center min-w-0">
+            <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-light text-foreground tabular-nums tracking-tight truncate">
               {lifespan.daysLived.toLocaleString()}
             </p>
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-3">Days Lived</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest mt-1 sm:mt-2">Days</p>
           </div>
         </div>
 
         {/* Remaining Time */}
-        <div className="mt-8 pt-6 border-t border-border">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Time Remaining (Target: {targetAge} years)</p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-muted/20 rounded-xl">
-              <p className="text-2xl sm:text-3xl font-light text-foreground">{lifespan.yearsRemaining}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-2">Years</p>
+        <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3 sm:mb-4">Time Remaining (Target: {targetAge} years)</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="text-center p-3 sm:p-4 bg-muted/20 rounded-xl min-w-0">
+              <p className="text-lg sm:text-xl md:text-2xl font-light text-foreground truncate">{lifespan.yearsRemaining}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest mt-1">Years</p>
             </div>
-            <div className="text-center p-4 bg-muted/20 rounded-xl">
-              <p className="text-2xl sm:text-3xl font-light text-foreground">{lifespan.daysRemaining.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-2">Days</p>
+            <div className="text-center p-3 sm:p-4 bg-muted/20 rounded-xl min-w-0">
+              <p className="text-lg sm:text-xl md:text-2xl font-light text-foreground truncate">{lifespan.daysRemaining.toLocaleString()}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest mt-1">Days</p>
             </div>
-            <div className="text-center p-4 bg-muted/20 rounded-xl">
-              <p className="text-2xl sm:text-3xl font-light text-foreground">{lifespan.hoursRemaining.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-2">Hours</p>
+            <div className="text-center p-3 sm:p-4 bg-muted/20 rounded-xl min-w-0">
+              <p className="text-lg sm:text-xl md:text-2xl font-light text-foreground truncate">{lifespan.hoursRemaining.toLocaleString()}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest mt-1">Hours</p>
             </div>
-            <div className="text-center p-4 bg-muted/20 rounded-xl">
-              <p className="text-2xl sm:text-3xl font-light text-foreground">{lifespan.secondsRemaining.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mt-2">Seconds</p>
+            <div className="text-center p-3 sm:p-4 bg-muted/20 rounded-xl min-w-0">
+              <p className="text-lg sm:text-xl md:text-2xl font-light text-foreground truncate">{lifespan.secondsRemaining.toLocaleString()}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest mt-1">Seconds</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Time Lived Detail */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-6">
+      <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
+        <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6">
           Time Lived Summary
         </h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          <div>
-            <p className="text-2xl sm:text-3xl font-semibold text-foreground">{lifespan.yearsLived}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Years</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-foreground">{lifespan.yearsLived}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mt-1">Years</p>
           </div>
-          <div>
-            <p className="text-2xl sm:text-3xl font-semibold text-foreground">{lifespan.monthsLived}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Months</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-foreground">{lifespan.monthsLived}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mt-1">Months</p>
           </div>
-          <div>
-            <p className="text-2xl sm:text-3xl font-semibold text-foreground">{lifespan.weeksLived.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Weeks</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-foreground truncate">{lifespan.weeksLived.toLocaleString()}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mt-1">Weeks</p>
           </div>
-          <div>
-            <p className="text-2xl sm:text-3xl font-semibold text-foreground">{lifespan.daysLived.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Days</p>
+          <div className="min-w-0">
+            <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-foreground truncate">{lifespan.daysLived.toLocaleString()}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mt-1">Days</p>
           </div>
         </div>
         
         {/* Progress Bar */}
-        <div className="mt-6 pt-6 border-t border-border">
-          <div className="flex justify-between text-sm mb-2">
+        <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
+          <div className="flex justify-between text-xs sm:text-sm mb-2">
             <span className="text-muted-foreground">Life Progress</span>
             <span className="font-semibold text-vyom-accent">{lifespan.percentComplete.toFixed(2)}%</span>
           </div>
@@ -333,29 +334,29 @@ const Lifespan = () => {
       </div>
 
       {/* Milestones */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-6">
+      <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
+        <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6">
           Life Milestones
         </h3>
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {milestones.map(({ age, label }) => {
             const status = lifespan.yearsLived >= age ? "passed" : "upcoming";
             const yearsAway = age - lifespan.yearsLived;
             return (
-              <div key={age} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full ${
+              <div key={age} className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shrink-0 ${
                     status === "passed" ? "bg-vyom-success" : "bg-muted"
                   }`} />
-                  <div>
-                    <span className="text-sm font-medium text-foreground">Age {age}</span>
-                    <span className="text-xs text-muted-foreground ml-2">— {label}</span>
+                  <div className="min-w-0">
+                    <span className="text-xs sm:text-sm font-medium text-foreground">Age {age}</span>
+                    <span className="text-xs text-muted-foreground ml-1 sm:ml-2 hidden sm:inline">— {label}</span>
                   </div>
                 </div>
-                <span className={`text-xs font-medium ${
+                <span className={`text-[10px] sm:text-xs font-medium shrink-0 ${
                   status === "passed" ? "text-vyom-success" : "text-muted-foreground"
                 }`}>
-                  {status === "passed" ? "✓ Reached" : `${yearsAway} years away`}
+                  {status === "passed" ? "✓ Reached" : `${yearsAway}y away`}
                 </span>
               </div>
             );
@@ -364,17 +365,17 @@ const Lifespan = () => {
       </div>
 
       {/* Reflection */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+      <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
+        <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3 sm:mb-4">
           Reflection
         </h3>
         <Textarea
           value={reflection}
           onChange={(e) => setReflection(e.target.value)}
           placeholder="What matters most to you right now?"
-          className="min-h-[120px] bg-background resize-none"
+          className="min-h-[100px] sm:min-h-[120px] bg-background resize-none text-sm"
         />
-        <Button variant="vyom" size="sm" className="mt-4">
+        <Button variant="vyom" size="sm" className="mt-3 sm:mt-4">
           Save Reflection
         </Button>
       </div>
