@@ -44,12 +44,12 @@ interface PlanConfig {
 
 const PLAN_CONFIG: PlanConfig = {
   pro: {
-    amount: 299, // INR per month
+    amount: 199, // INR per month (matching DB)
     description: "CHRONYX Pro - Monthly Subscription",
   },
   premium: {
-    amount: 1999, // INR one-time
-    description: "CHRONYX Premium - Lifetime Access",
+    amount: 499, // INR per month (matching DB)
+    description: "CHRONYX Premium - Monthly Subscription",
   },
 };
 

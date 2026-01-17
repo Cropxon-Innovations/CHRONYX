@@ -57,8 +57,21 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// Nav item type
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
 // Modularized navigation sections - Reordered: Overview → Productivity → Finance → Life → Security
-const navSections = [
+const navSections: NavSection[] = [
   {
     title: "Overview",
     items: [
@@ -83,6 +96,7 @@ const navSections = [
       { path: "/app/reports", label: "Reports & Budget", icon: PieChart },
       { path: "/app/loans", label: "Loans & EMI", icon: Wallet },
       { path: "/app/insurance", label: "Insurance", icon: Heart },
+      { path: "/app/tax", label: "Tax & FY", icon: FileText, badge: "NEW" },
     ],
   },
   {
@@ -340,7 +354,7 @@ const AppSidebar = () => {
                 </p>
               )}
               <div className="space-y-0.5">
-                {section.items.map(({ path, label, icon: Icon }) => {
+                {section.items.map(({ path, label, icon: Icon, badge }) => {
                   const isActive = location.pathname === path || (path === "/app" && location.pathname === "/app/dashboard");
                   
                   if (collapsed) {
@@ -351,16 +365,24 @@ const AppSidebar = () => {
                             to={path}
                             onClick={closeMobile}
                             className={cn(
-                              "flex items-center justify-center p-2.5 rounded-md transition-colors",
+                              "flex items-center justify-center p-2.5 rounded-md transition-colors relative",
                               isActive
                                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                                 : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
                             )}
                           >
                             <Icon className="w-4 h-4" />
+                            {badge && (
+                              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
+                            )}
                           </Link>
                         </TooltipTrigger>
-                        <TooltipContent side="right"><p>{label}</p></TooltipContent>
+                        <TooltipContent side="right">
+                          <p className="flex items-center gap-1">
+                            {label}
+                            {badge && <span className="text-[9px] text-red-500 font-medium">{badge}</span>}
+                          </p>
+                        </TooltipContent>
                       </Tooltip>
                     );
                   }
@@ -378,7 +400,12 @@ const AppSidebar = () => {
                       )}
                     >
                       <Icon className="w-4 h-4" />
-                      {label}
+                      <span className="flex-1">{label}</span>
+                      {badge && (
+                        <span className="px-1.5 py-0.5 text-[9px] font-medium rounded bg-red-500/10 text-red-500 border border-red-500/20">
+                          {badge}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}
@@ -387,7 +414,24 @@ const AppSidebar = () => {
           ))}
         </nav>
 
-        {/* Footer - Removed: Profile, Settings, Theme, Sign Out - now in TopHeader */}
+        {/* Version Footer */}
+        <div className={cn(
+          "border-t border-sidebar-border p-3 mt-auto",
+          collapsed ? "text-center" : ""
+        )}>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[9px] text-sidebar-foreground/40 cursor-default">v1</span>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Version 1.0.0</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <p className="text-[10px] text-sidebar-foreground/40">Version 1.0.0</p>
+          )}
+        </div>
       </>
     </TooltipProvider>
   );
