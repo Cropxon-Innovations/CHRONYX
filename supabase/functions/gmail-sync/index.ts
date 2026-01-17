@@ -6,7 +6,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Keywords to filter transactional emails
+// ========================================
+// CHRONYX Auto Finance - Hybrid Parser
+// Rule-based first, Gemini 1.5 Flash fallback
+// ========================================
+
+// Strict Gmail query for receipts/invoices only
+const GMAIL_QUERY_PARTS = [
+  'subject:(receipt OR invoice OR payment OR "order confirmation" OR "payment successful")',
+  'from:(razorpay OR stripe OR amazon OR flipkart OR swiggy OR zomato OR uber OR ola OR netflix OR spotify OR airtel OR jio OR google OR apple OR phonepe OR paytm OR gpay OR bigbasket OR blinkit OR myntra OR ajio)',
+];
+
+// Transaction keywords for filtering
 const TRANSACTION_KEYWORDS = [
   'invoice', 'receipt', 'order confirmation', 'payment successful',
   'payment received', 'transaction', 'purchase', 'bill', 'razorpay',
@@ -15,7 +26,7 @@ const TRANSACTION_KEYWORDS = [
   'bank statement', 'payment confirmation', 'order placed'
 ];
 
-// Merchant patterns for extraction
+// Merchant patterns for rule-based extraction
 const MERCHANT_PATTERNS = [
   { regex: /amazon/i, name: 'Amazon', category: 'Shopping' },
   { regex: /flipkart/i, name: 'Flipkart', category: 'Shopping' },
@@ -23,26 +34,43 @@ const MERCHANT_PATTERNS = [
   { regex: /zomato/i, name: 'Zomato', category: 'Food' },
   { regex: /uber/i, name: 'Uber', category: 'Transport' },
   { regex: /ola/i, name: 'Ola', category: 'Transport' },
+  { regex: /rapido/i, name: 'Rapido', category: 'Transport' },
   { regex: /netflix/i, name: 'Netflix', category: 'Entertainment' },
   { regex: /spotify/i, name: 'Spotify', category: 'Entertainment' },
+  { regex: /hotstar/i, name: 'Disney+ Hotstar', category: 'Entertainment' },
+  { regex: /prime\s*video/i, name: 'Prime Video', category: 'Entertainment' },
+  { regex: /youtube\s*premium/i, name: 'YouTube Premium', category: 'Entertainment' },
   { regex: /airtel/i, name: 'Airtel', category: 'Utilities' },
   { regex: /jio/i, name: 'Jio', category: 'Utilities' },
   { regex: /vodafone|vi\s/i, name: 'Vi', category: 'Utilities' },
-  { regex: /electricity|bescom|power/i, name: 'Electricity', category: 'Utilities' },
+  { regex: /bsnl/i, name: 'BSNL', category: 'Utilities' },
+  { regex: /electricity|bescom|power|tata\s*power/i, name: 'Electricity', category: 'Utilities' },
+  { regex: /gas\s*bill|indane|bharat\s*gas/i, name: 'Gas', category: 'Utilities' },
   { regex: /razorpay/i, name: 'Razorpay Payment', category: 'Other' },
   { regex: /stripe/i, name: 'Stripe Payment', category: 'Other' },
-  { regex: /google\s?(play|one|cloud)/i, name: 'Google', category: 'Entertainment' },
+  { regex: /google\s*(play|one|cloud)/i, name: 'Google', category: 'Entertainment' },
   { regex: /apple/i, name: 'Apple', category: 'Shopping' },
   { regex: /myntra/i, name: 'Myntra', category: 'Shopping' },
   { regex: /ajio/i, name: 'AJIO', category: 'Shopping' },
+  { regex: /meesho/i, name: 'Meesho', category: 'Shopping' },
+  { regex: /nykaa/i, name: 'Nykaa', category: 'Shopping' },
   { regex: /bigbasket/i, name: 'BigBasket', category: 'Food' },
   { regex: /grofers|blinkit/i, name: 'Blinkit', category: 'Food' },
+  { regex: /zepto/i, name: 'Zepto', category: 'Food' },
+  { regex: /dunzo/i, name: 'Dunzo', category: 'Food' },
+  { regex: /irctc/i, name: 'IRCTC', category: 'Transport' },
+  { regex: /makemytrip/i, name: 'MakeMyTrip', category: 'Transport' },
+  { regex: /goibibo/i, name: 'Goibibo', category: 'Transport' },
+  { regex: /lic|life\s*insurance/i, name: 'LIC', category: 'Insurance' },
+  { regex: /acko/i, name: 'Acko', category: 'Insurance' },
+  { regex: /hdfc\s*ergo/i, name: 'HDFC Ergo', category: 'Insurance' },
+  { regex: /icici\s*lombard/i, name: 'ICICI Lombard', category: 'Insurance' },
 ];
 
-// Amount extraction patterns
+// Amount extraction patterns (INR focused)
 const AMOUNT_PATTERNS = [
   /(?:₹|Rs\.?|INR)\s*([\d,]+(?:\.\d{2})?)/gi,
-  /(?:amount|total|paid|charged)\s*:?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{2})?)/gi,
+  /(?:amount|total|paid|charged|debited)\s*:?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{2})?)/gi,
   /([\d,]+(?:\.\d{2})?)\s*(?:₹|Rs\.?|INR)/gi,
 ];
 
@@ -53,50 +81,323 @@ const DATE_PATTERNS = [
   /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{2,4})/gi,
 ];
 
-function extractAmount(text: string): number | null {
+// CONFIDENCE THRESHOLD - below this triggers Gemini fallback
+const CONFIDENCE_THRESHOLD = 0.7;
+
+// ========================================
+// Rule-based extraction functions
+// ========================================
+
+function extractAmountRuleBased(text: string): { amount: number | null; confidence: number } {
   for (const pattern of AMOUNT_PATTERNS) {
     const matches = text.matchAll(pattern);
     for (const match of matches) {
       const amountStr = match[1].replace(/,/g, '');
       const amount = parseFloat(amountStr);
-      if (amount > 0 && amount < 10000000) { // Sanity check
-        return amount;
+      if (amount > 0 && amount < 10000000) {
+        return { amount, confidence: 0.85 };
       }
     }
   }
-  return null;
+  return { amount: null, confidence: 0 };
 }
 
-function extractMerchant(text: string): { name: string; category: string } | null {
+function extractMerchantRuleBased(text: string): { name: string; category: string; confidence: number } | null {
   for (const pattern of MERCHANT_PATTERNS) {
     if (pattern.regex.test(text)) {
-      return { name: pattern.name, category: pattern.category };
+      return { name: pattern.name, category: pattern.category, confidence: 0.9 };
     }
   }
   return null;
 }
 
-function extractDate(text: string, fallbackDate: Date): Date {
+function extractDateRuleBased(text: string, fallbackDate: Date): { date: Date; confidence: number } {
   for (const pattern of DATE_PATTERNS) {
     const match = text.match(pattern);
     if (match) {
       const parsed = new Date(match[1]);
       if (!isNaN(parsed.getTime())) {
-        return parsed;
+        return { date: parsed, confidence: 0.85 };
       }
     }
   }
-  return fallbackDate;
+  return { date: fallbackDate, confidence: 0.5 };
 }
 
-function extractPaymentMode(text: string): string {
-  if (/upi|gpay|phonepe|paytm|google\s*pay|bhim/i.test(text)) return 'UPI';
-  if (/credit\s*card|visa|mastercard|amex/i.test(text)) return 'Card';
-  if (/debit\s*card/i.test(text)) return 'Card';
-  if (/netbanking|net\s*banking|bank\s*transfer|neft|imps|rtgs/i.test(text)) return 'Bank Transfer';
-  if (/cash\s*on\s*delivery|cod/i.test(text)) return 'Cash';
-  return 'Other';
+function extractPaymentModeRuleBased(text: string): { mode: string; confidence: number } {
+  if (/upi|gpay|phonepe|paytm|google\s*pay|bhim/i.test(text)) return { mode: 'UPI', confidence: 0.9 };
+  if (/credit\s*card|visa|mastercard|amex/i.test(text)) return { mode: 'Card', confidence: 0.85 };
+  if (/debit\s*card/i.test(text)) return { mode: 'Card', confidence: 0.85 };
+  if (/netbanking|net\s*banking|bank\s*transfer|neft|imps|rtgs/i.test(text)) return { mode: 'Bank Transfer', confidence: 0.85 };
+  if (/cash\s*on\s*delivery|cod/i.test(text)) return { mode: 'Cash', confidence: 0.8 };
+  if (/wallet/i.test(text)) return { mode: 'Wallet', confidence: 0.75 };
+  return { mode: 'Other', confidence: 0.3 };
 }
+
+// ========================================
+// Gemini 1.5 Flash fallback parser
+// ========================================
+
+interface GeminiExtraction {
+  merchant: string | null;
+  amount: number | null;
+  currency: string | null;
+  date: string | null;
+  payment_method: string | null;
+  invoice_id: string | null;
+  confidence: number;
+  category: string | null;
+}
+
+async function parseWithGemini(emailContent: string): Promise<GeminiExtraction | null> {
+  const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+  
+  if (!GEMINI_API_KEY) {
+    console.log('[Gmail Sync] GEMINI_API_KEY not configured, skipping LLM fallback');
+    return null;
+  }
+
+  const prompt = `You are a financial transaction extractor for CHRONYX Auto Finance.
+
+Input:
+Raw Gmail email content (text)
+
+Task:
+Extract ONLY factual information from this email.
+
+Output JSON schema:
+{
+  "merchant": string | null,
+  "amount": number | null,
+  "currency": string | null,
+  "date": "YYYY-MM-DD" | null,
+  "payment_method": "card" | "upi" | "bank" | "wallet" | "cash" | null,
+  "invoice_id": string | null,
+  "confidence": number (0 to 1),
+  "category": "Shopping" | "Food" | "Transport" | "Entertainment" | "Utilities" | "Insurance" | "Healthcare" | "Education" | "Other" | null
+}
+
+Rules:
+- Do NOT guess missing values
+- Do NOT infer if unclear
+- Return null if not explicitly present
+- Confidence < 0.7 means user review required
+- Amount must be a number, not a string
+- Date must be ISO format YYYY-MM-DD
+
+Email content:
+${emailContent.substring(0, 3000)}
+
+Respond with ONLY valid JSON, no markdown or explanation.`;
+
+  try {
+    console.log('[Gmail Sync] Calling Gemini 1.5 Flash for parsing...');
+    
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": GEMINI_API_KEY,
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 500,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Gmail Sync] Gemini API error:', response.status, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!text) {
+      console.error('[Gmail Sync] No text in Gemini response');
+      return null;
+    }
+
+    // Clean the response - remove markdown code blocks if present
+    let cleanJson = text.trim();
+    if (cleanJson.startsWith('```json')) {
+      cleanJson = cleanJson.slice(7);
+    } else if (cleanJson.startsWith('```')) {
+      cleanJson = cleanJson.slice(3);
+    }
+    if (cleanJson.endsWith('```')) {
+      cleanJson = cleanJson.slice(0, -3);
+    }
+    cleanJson = cleanJson.trim();
+
+    const parsed: GeminiExtraction = JSON.parse(cleanJson);
+    console.log('[Gmail Sync] Gemini extraction:', parsed);
+    
+    return parsed;
+  } catch (error) {
+    console.error('[Gmail Sync] Gemini parsing error:', error);
+    return null;
+  }
+}
+
+// ========================================
+// Hybrid parsing pipeline
+// ========================================
+
+interface TransactionData {
+  merchant: string;
+  amount: number;
+  category: string;
+  transactionDate: Date;
+  paymentMode: string;
+  confidenceScore: number;
+  needsReview: boolean;
+  reviewReason: string | null;
+  invoiceId: string | null;
+}
+
+async function hybridParseEmail(
+  emailContent: string, 
+  subject: string, 
+  from: string, 
+  msgDate: Date
+): Promise<TransactionData | null> {
+  const fullText = `${subject} ${emailContent} ${from}`;
+  
+  // Step 1: Rule-based extraction
+  console.log('[Gmail Sync] Starting rule-based extraction...');
+  
+  const amountResult = extractAmountRuleBased(fullText);
+  const merchantResult = extractMerchantRuleBased(fullText);
+  const dateResult = extractDateRuleBased(fullText, msgDate);
+  const paymentResult = extractPaymentModeRuleBased(fullText);
+  
+  // Calculate overall rule-based confidence
+  let ruleConfidence = 0;
+  let ruleConfidenceFactors = 0;
+  
+  if (amountResult.amount) {
+    ruleConfidence += amountResult.confidence;
+    ruleConfidenceFactors++;
+  }
+  if (merchantResult) {
+    ruleConfidence += merchantResult.confidence;
+    ruleConfidenceFactors++;
+  }
+  ruleConfidence += dateResult.confidence;
+  ruleConfidenceFactors++;
+  ruleConfidence += paymentResult.confidence;
+  ruleConfidenceFactors++;
+  
+  const avgRuleConfidence = ruleConfidenceFactors > 0 ? ruleConfidence / ruleConfidenceFactors : 0;
+  
+  console.log('[Gmail Sync] Rule-based result:', {
+    amount: amountResult.amount,
+    merchant: merchantResult?.name,
+    avgConfidence: avgRuleConfidence
+  });
+  
+  // Step 2: Check if we need Gemini fallback
+  const needsGeminiFallback = 
+    !amountResult.amount || 
+    !merchantResult || 
+    avgRuleConfidence < CONFIDENCE_THRESHOLD;
+  
+  let finalResult: TransactionData | null = null;
+  let needsReview = false;
+  let reviewReason: string | null = null;
+  
+  if (needsGeminiFallback) {
+    console.log('[Gmail Sync] Low confidence, trying Gemini fallback...');
+    
+    const geminiResult = await parseWithGemini(fullText);
+    
+    if (geminiResult && geminiResult.amount && geminiResult.amount > 0) {
+      // Use Gemini result
+      const geminiDate = geminiResult.date ? new Date(geminiResult.date) : dateResult.date;
+      
+      needsReview = geminiResult.confidence < CONFIDENCE_THRESHOLD;
+      reviewReason = needsReview ? 'AI extraction confidence below threshold' : null;
+      
+      finalResult = {
+        merchant: geminiResult.merchant || 'Unknown Merchant',
+        amount: geminiResult.amount,
+        category: geminiResult.category || 'Other',
+        transactionDate: isNaN(geminiDate.getTime()) ? dateResult.date : geminiDate,
+        paymentMode: geminiResult.payment_method || paymentResult.mode,
+        confidenceScore: geminiResult.confidence,
+        needsReview,
+        reviewReason,
+        invoiceId: geminiResult.invoice_id,
+      };
+    } else if (amountResult.amount) {
+      // Fallback to rule-based even with low confidence
+      needsReview = true;
+      reviewReason = 'Low extraction confidence - please verify';
+      
+      finalResult = {
+        merchant: merchantResult?.name || 'Unknown Merchant',
+        amount: amountResult.amount,
+        category: merchantResult?.category || 'Other',
+        transactionDate: dateResult.date,
+        paymentMode: paymentResult.mode,
+        confidenceScore: avgRuleConfidence,
+        needsReview,
+        reviewReason,
+        invoiceId: null,
+      };
+    }
+  } else {
+    // Use rule-based result
+    finalResult = {
+      merchant: merchantResult!.name,
+      amount: amountResult.amount!,
+      category: merchantResult!.category,
+      transactionDate: dateResult.date,
+      paymentMode: paymentResult.mode,
+      confidenceScore: avgRuleConfidence,
+      needsReview: false,
+      reviewReason: null,
+      invoiceId: null,
+    };
+  }
+  
+  return finalResult;
+}
+
+// ========================================
+// Deduplication hash generator
+// ========================================
+
+async function generateDedupeHash(
+  amount: number, 
+  date: string, 
+  merchant: string, 
+  invoiceId: string | null
+): Promise<string> {
+  const input = `${amount.toFixed(2)}|${date}|${merchant.toLowerCase().trim()}|${invoiceId || ''}`;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ========================================
+// Token refresh
+// ========================================
 
 async function refreshAccessToken(refreshToken: string): Promise<{ access_token: string; expires_in: number } | null> {
   const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
@@ -124,6 +425,10 @@ async function refreshAccessToken(refreshToken: string): Promise<{ access_token:
     return null;
   }
 }
+
+// ========================================
+// Main handler
+// ========================================
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -166,7 +471,7 @@ serve(async (req) => {
     }
     
     const userId = user.id;
-    console.log('[Gmail Sync] Starting sync for user:', userId);
+    console.log('[Gmail Sync] Starting hybrid sync for user:', userId);
     
     // Get user's Gmail settings
     const { data: settings, error: settingsError } = await supabase
@@ -223,20 +528,17 @@ serve(async (req) => {
       .update({ sync_status: 'syncing' })
       .eq('user_id', userId);
     
-    // Build Gmail search query
-    const keywordsQuery = TRANSACTION_KEYWORDS.slice(0, 10).join(' OR ');
-    let query = `(${keywordsQuery})`;
-    
-    // Only fetch emails from last 30 days if first sync, otherwise from last sync
+    // Build strict Gmail query
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const afterDate = settings.last_sync_at 
       ? new Date(settings.last_sync_at) 
       : thirtyDaysAgo;
     
-    query += ` after:${Math.floor(afterDate.getTime() / 1000)}`;
+    // Use strict query for receipts only
+    const query = `(${GMAIL_QUERY_PARTS[0]} OR ${GMAIL_QUERY_PARTS[1]}) after:${Math.floor(afterDate.getTime() / 1000)}`;
     
-    console.log('[Gmail Sync] Search query:', query);
+    console.log('[Gmail Sync] Strict query:', query);
     
     // Fetch messages from Gmail
     let messagesResponse;
@@ -271,7 +573,6 @@ serve(async (req) => {
         .update({ sync_status: 'error' })
         .eq('user_id', userId);
       
-      // Parse Gmail API errors
       const gmailError = messagesData.error;
       let errorCode = 'UNKNOWN';
       let errorMessage = 'An error occurred while syncing Gmail.';
@@ -308,18 +609,12 @@ serve(async (req) => {
     let processedCount = 0;
     let duplicatesFound = 0;
     let importedCount = 0;
+    let needsReviewCount = 0;
     
-    for (const msg of messages.slice(0, 30)) { // Limit to 30 per sync
+    // Process max 30 per sync to stay in free tier
+    for (const msg of messages.slice(0, 30)) {
       try {
-        // Get full message
-        const msgResponse = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        
-        const msgData = await msgResponse.json();
-        
-        // Check if already processed
+        // Check if already processed by gmail_message_id
         const { data: existing } = await supabase
           .from('auto_imported_transactions')
           .select('id')
@@ -328,9 +623,17 @@ serve(async (req) => {
           .single();
         
         if (existing) {
-          console.log('[Gmail Sync] Skipping already processed message:', msg.id);
+          console.log('[Gmail Sync] Skipping already processed:', msg.id);
           continue;
         }
+        
+        // Get full message
+        const msgResponse = await fetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        
+        const msgData = await msgResponse.json();
         
         // Extract headers
         const headers = msgData.payload?.headers || [];
@@ -351,31 +654,49 @@ serve(async (req) => {
           }
         }
         
-        const fullText = `${subject} ${body} ${from}`;
+        const msgDate = dateHeader ? new Date(dateHeader) : new Date();
         
-        // Extract transaction data
-        const amount = extractAmount(fullText);
-        if (!amount || amount < 1) {
-          console.log('[Gmail Sync] No valid amount found in message:', msg.id);
+        // Hybrid parsing
+        const parsed = await hybridParseEmail(body, subject, from, msgDate);
+        
+        if (!parsed || parsed.amount < 1) {
+          console.log('[Gmail Sync] No valid transaction in message:', msg.id);
           continue;
         }
         
-        const merchant = extractMerchant(fullText);
-        const msgDate = dateHeader ? new Date(dateHeader) : new Date();
-        const transactionDate = extractDate(fullText, msgDate);
-        const paymentMode = extractPaymentMode(fullText);
+        const transactionDateStr = parsed.transactionDate.toISOString().split('T')[0];
         
-        console.log('[Gmail Sync] Extracted:', { amount, merchant, transactionDate: transactionDate.toISOString(), paymentMode });
+        // Generate dedupe hash
+        const dedupeHash = await generateDedupeHash(
+          parsed.amount, 
+          transactionDateStr, 
+          parsed.merchant,
+          parsed.invoiceId
+        );
         
-        // Check for duplicates in expenses
-        const dateTolerance = new Date(transactionDate);
+        // Check for duplicate by hash
+        const { data: hashDupe } = await supabase
+          .from('auto_imported_transactions')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('dedupe_hash', dedupeHash)
+          .single();
+        
+        if (hashDupe) {
+          console.log('[Gmail Sync] Duplicate by hash:', dedupeHash);
+          duplicatesFound++;
+          continue;
+        }
+        
+        // Check for duplicates in expenses (amount + date tolerance)
+        const dateTolerance = new Date(parsed.transactionDate);
         dateTolerance.setDate(dateTolerance.getDate() - 1);
-        const dateAfter = new Date(transactionDate);
+        const dateAfter = new Date(parsed.transactionDate);
         dateAfter.setDate(dateAfter.getDate() + 1);
         
-        const amountTolerance = 0.02; // 2% tolerance
-        const minAmount = amount * (1 - amountTolerance);
-        const maxAmount = amount * (1 + amountTolerance);
+        const amountTolerance = 0.02;
+        const minAmount = parsed.amount * (1 - amountTolerance);
+        const maxAmount = parsed.amount * (1 + amountTolerance);
         
         const { data: duplicateExpenses } = await supabase
           .from('expenses')
@@ -407,20 +728,24 @@ serve(async (req) => {
             user_id: userId,
             gmail_message_id: msg.id,
             gmail_thread_id: msgData.threadId,
-            merchant_name: merchant?.name || 'Unknown Merchant',
-            amount,
-            transaction_date: transactionDate.toISOString().split('T')[0],
-            payment_mode: paymentMode,
-            source_platform: merchant?.name || from.match(/@([a-z]+)\./i)?.[1] || 'Email',
+            merchant_name: parsed.merchant,
+            amount: parsed.amount,
+            transaction_date: transactionDateStr,
+            payment_mode: parsed.paymentMode,
+            source_platform: parsed.merchant || from.match(/@([a-z]+)\./i)?.[1] || 'Email',
             email_subject: subject.substring(0, 500),
             email_snippet: msgData.snippet?.substring(0, 500),
-            confidence_score: merchant ? 0.85 : 0.6,
+            confidence_score: parsed.confidenceScore,
             is_duplicate: isDuplicate,
             duplicate_of_id: duplicateOfId,
+            dedupe_hash: dedupeHash,
+            needs_review: parsed.needsReview,
+            review_reason: parsed.reviewReason,
             raw_extracted_data: { 
               from, 
-              category: merchant?.category || 'Other',
-              full_amount: amount,
+              category: parsed.category,
+              full_amount: parsed.amount,
+              invoice_id: parsed.invoiceId,
             },
           });
         
@@ -430,9 +755,10 @@ serve(async (req) => {
         }
         
         processedCount++;
+        if (parsed.needsReview) needsReviewCount++;
         
-        // If not duplicate, create expense entry
-        if (!isDuplicate) {
+        // If not duplicate and not needs review, auto-create expense
+        if (!isDuplicate && !parsed.needsReview) {
           const { data: importedTx } = await supabase
             .from('auto_imported_transactions')
             .select('id')
@@ -444,16 +770,16 @@ serve(async (req) => {
             .from('expenses')
             .insert({
               user_id: userId,
-              expense_date: transactionDate.toISOString().split('T')[0],
-              amount,
-              category: merchant?.category || 'Other',
-              payment_mode: paymentMode,
-              merchant_name: merchant?.name || 'Unknown',
+              expense_date: transactionDateStr,
+              amount: parsed.amount,
+              category: parsed.category,
+              payment_mode: parsed.paymentMode,
+              merchant_name: parsed.merchant,
               notes: `Auto-imported from Gmail: ${subject.substring(0, 100)}`,
               is_auto_generated: true,
               source_type: 'gmail',
               gmail_import_id: importedTx?.id,
-              confidence_score: merchant ? 0.85 : 0.6,
+              confidence_score: parsed.confidenceScore,
             });
           
           if (!expenseError) {
@@ -491,13 +817,14 @@ serve(async (req) => {
       })
       .eq('user_id', userId);
     
-    console.log('[Gmail Sync] Sync complete:', { processedCount, duplicatesFound, importedCount });
+    console.log('[Gmail Sync] Hybrid sync complete:', { processedCount, duplicatesFound, importedCount, needsReviewCount });
     
     return new Response(JSON.stringify({
       success: true,
       processed: processedCount,
       duplicates: duplicatesFound,
       imported: importedCount,
+      needsReview: needsReviewCount,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -505,7 +832,6 @@ serve(async (req) => {
   } catch (error) {
     console.error('[Gmail Sync] Unexpected error:', error);
     
-    // Determine error type
     let errorCode = 'UNKNOWN';
     let errorMessage = 'An unexpected error occurred. Please try again.';
     

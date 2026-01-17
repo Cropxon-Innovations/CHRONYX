@@ -55,6 +55,9 @@ interface TransactionDetailDialogProps {
     is_processed: boolean;
     is_duplicate: boolean;
     learned_category?: string | null;
+    needs_review?: boolean;
+    review_reason?: string | null;
+    dedupe_hash?: string | null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     raw_extracted_data?: any;
   } | null;
@@ -73,6 +76,7 @@ const CATEGORIES = [
   "Utilities",
   "Healthcare",
   "Education",
+  "Insurance",
   "Subscriptions",
   "Others",
 ];
@@ -150,11 +154,34 @@ const TransactionDetailDialog = ({
                 <span className="text-sm text-muted-foreground ml-1">{transaction.currency}</span>
               )}
             </div>
-            <Badge className={`${confidenceInfo.bg} ${confidenceInfo.color} border-0 px-3 py-1`}>
-              <Sparkles className="w-3 h-3 mr-1" />
-              {Math.round(transaction.confidence_score * 100)}% {confidenceInfo.label}
-            </Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge className={`${confidenceInfo.bg} ${confidenceInfo.color} border-0 px-3 py-1`}>
+                <Sparkles className="w-3 h-3 mr-1" />
+                {Math.round(transaction.confidence_score * 100)}% {confidenceInfo.label}
+              </Badge>
+              {transaction.needs_review && (
+                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30">
+                  <AlertCircle className="w-2.5 h-2.5 mr-1" />
+                  Needs Review
+                </Badge>
+              )}
+            </div>
           </motion.div>
+
+          {/* Review reason alert */}
+          {transaction.review_reason && (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-3 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20"
+            >
+              <p className="text-xs text-amber-600 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                {transaction.review_reason}
+              </p>
+            </motion.div>
+          )}
         </div>
 
         <Separator />
