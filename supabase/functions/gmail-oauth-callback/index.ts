@@ -19,13 +19,22 @@ serve(async (req) => {
     
     console.log('[Gmail OAuth] Callback received', { hasCode: !!code, state, error });
     
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://chronyx.app';
+    
     if (error) {
       console.error('[Gmail OAuth] Error from Google:', error);
+      // Map Google errors to our error codes
+      let errorCode = 'UNKNOWN';
+      if (error === 'access_denied') {
+        errorCode = 'PERMISSION_DENIED';
+      } else if (error === 'invalid_grant') {
+        errorCode = 'INVALID_TOKEN';
+      }
       return new Response(null, {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': `${Deno.env.get('SITE_URL') || 'https://chronyx.app'}/app/expenses?gmail_error=${error}`,
+          'Location': `${siteUrl}/app/expenses?gmail_error=${errorCode}`,
         },
       });
     }
@@ -81,11 +90,17 @@ serve(async (req) => {
     
     if (tokenData.error) {
       console.error('[Gmail OAuth] Token exchange error:', tokenData);
+      let errorCode = 'UNKNOWN';
+      if (tokenData.error === 'invalid_grant') {
+        errorCode = 'INVALID_TOKEN';
+      } else if (tokenData.error === 'invalid_client') {
+        errorCode = 'CONFIG_ERROR';
+      }
       return new Response(null, {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': `${Deno.env.get('SITE_URL') || 'https://chronyx.app'}/app/expenses?gmail_error=${tokenData.error}`,
+          'Location': `${siteUrl}/app/expenses?gmail_error=${errorCode}`,
         },
       });
     }
@@ -124,19 +139,20 @@ serve(async (req) => {
         status: 302,
         headers: {
           ...corsHeaders,
-          'Location': `${Deno.env.get('SITE_URL') || 'https://chronyx.app'}/app/expenses?gmail_error=database_error`,
+          'Location': `${siteUrl}/app/expenses?gmail_error=DATABASE_ERROR`,
         },
       });
     }
     
     console.log('[Gmail OAuth] Settings saved successfully');
     
-    // Redirect back to app with success
+    // Redirect back to app with success and email
+    const encodedEmail = encodeURIComponent(gmailEmail || '');
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': `${Deno.env.get('SITE_URL') || 'https://chronyx.app'}/app/expenses?gmail_connected=true`,
+        'Location': `${siteUrl}/app/expenses?gmail_connected=true&gmail_email=${encodedEmail}`,
       },
     });
     
