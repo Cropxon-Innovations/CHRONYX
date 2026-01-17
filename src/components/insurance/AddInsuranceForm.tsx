@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +35,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import { toast } from "sonner";
 import PolicyDocumentScanner from "./PolicyDocumentScanner";
-import { Check, ChevronsUpDown, Plus, Heart, FileText, Car, Bike, Home, Plane, Shield, Umbrella, Baby, Stethoscope, Building2 } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, Heart, FileText, Car, Bike, Home, Plane, Shield, Umbrella, Baby, Stethoscope, Building2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -50,6 +50,11 @@ interface InsuranceProvider {
   short_name: string | null;
   logo_url: string | null;
   is_default: boolean;
+}
+
+interface ProviderCategory {
+  provider_id: string;
+  policy_type: string;
 }
 
 interface Insurance {
@@ -67,6 +72,7 @@ interface Insurance {
   vehicle_registration: string | null;
   notes: string | null;
   status: string;
+  document_url?: string | null;
 }
 
 interface AddInsuranceFormProps {
@@ -100,10 +106,12 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
   const [loading, setLoading] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
   const [providers, setProviders] = useState<InsuranceProvider[]>([]);
+  const [providerCategories, setProviderCategories] = useState<ProviderCategory[]>([]);
   const [providerOpen, setProviderOpen] = useState(false);
   const [showAddProvider, setShowAddProvider] = useState(false);
   const [newProviderName, setNewProviderName] = useState("");
   const [addingProvider, setAddingProvider] = useState(false);
+  const [premiumError, setPremiumError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     policy_name: "",
@@ -118,12 +126,14 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
     insured_member_id: "",
     vehicle_registration: "",
     notes: "",
+    document_url: "",
   });
 
   useEffect(() => {
     if (open && user) {
       fetchFamilyMembers();
       fetchProviders();
+      fetchProviderCategories();
     }
   }, [open, user]);
 
@@ -142,11 +152,29 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
         insured_member_id: insurance.insured_member_id || "",
         vehicle_registration: insurance.vehicle_registration || "",
         notes: insurance.notes || "",
+        document_url: insurance.document_url || "",
       });
     } else {
       resetForm();
     }
   }, [insurance]);
+
+  // Filter providers based on selected policy type
+  const filteredProviders = useMemo(() => {
+    if (!formData.policy_type) {
+      return providers;
+    }
+    
+    const relevantProviderIds = providerCategories
+      .filter(pc => pc.policy_type === formData.policy_type)
+      .map(pc => pc.provider_id);
+    
+    if (relevantProviderIds.length === 0) {
+      return providers;
+    }
+    
+    return providers.filter(p => relevantProviderIds.includes(p.id));
+  }, [providers, providerCategories, formData.policy_type]);
 
   const fetchFamilyMembers = async () => {
     try {
@@ -176,6 +204,19 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
     }
   };
 
+  const fetchProviderCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("insurance_provider_categories")
+        .select("provider_id, policy_type");
+
+      if (error) throw error;
+      setProviderCategories(data || []);
+    } catch (error) {
+      console.error("Error fetching provider categories:", error);
+    }
+  };
+
   const addCustomProvider = async () => {
     if (!newProviderName.trim()) {
       toast.error("Please enter a provider name");
@@ -197,12 +238,23 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
 
       if (error) throw error;
 
+      // Add provider to all categories so it shows up in all filters
+      if (data && formData.policy_type) {
+        await supabase.from("insurance_provider_categories").insert({
+          provider_id: data.id,
+          policy_type: formData.policy_type,
+        });
+      }
+
       setProviders(prev => [...prev, data]);
       setFormData(prev => ({ ...prev, provider: data.name }));
       setNewProviderName("");
       setShowAddProvider(false);
       setProviderOpen(false);
       toast.success("Provider added successfully");
+      
+      // Refresh categories
+      fetchProviderCategories();
     } catch (error) {
       console.error("Error adding provider:", error);
       toast.error("Failed to add provider");
@@ -225,7 +277,28 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
       insured_member_id: "",
       vehicle_registration: "",
       notes: "",
+      document_url: "",
     });
+    setPremiumError(null);
+  };
+
+  const validatePremium = (value: string): boolean => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 0) {
+      setPremiumError("Premium amount must be a positive number");
+      return false;
+    }
+    setPremiumError(null);
+    return true;
+  };
+
+  const handlePremiumChange = (value: string) => {
+    // Only allow positive numbers
+    const numValue = parseFloat(value);
+    if (value === "" || (!isNaN(numValue) && numValue >= 0)) {
+      setFormData({ ...formData, premium_amount: value });
+      if (value) validatePremium(value);
+    }
   };
 
   const handleSubmit = async () => {
@@ -239,6 +312,12 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
       return;
     }
 
+    const premiumValue = parseFloat(formData.premium_amount) || 0;
+    if (premiumValue < 0) {
+      toast.error("Premium amount cannot be negative");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -247,8 +326,8 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
         provider: formData.provider,
         policy_number: formData.policy_number,
         policy_type: formData.policy_type,
-        premium_amount: parseFloat(formData.premium_amount) || 0,
-        sum_assured: parseFloat(formData.sum_assured) || 0,
+        premium_amount: Math.abs(premiumValue),
+        sum_assured: Math.abs(parseFloat(formData.sum_assured) || 0),
         start_date: formData.start_date,
         renewal_date: formData.renewal_date,
         insured_type: formData.insured_type,
@@ -286,7 +365,17 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
     }
   };
 
-  const handleOcrData = (data: any) => {
+  const handleOcrData = (data: { 
+    policy_name?: string;
+    provider?: string;
+    policy_number?: string;
+    policy_type?: string;
+    premium_amount?: string;
+    sum_assured?: string;
+    start_date?: string;
+    renewal_date?: string;
+    document_url?: string;
+  }) => {
     setFormData(prev => ({
       ...prev,
       policy_name: data.policy_name || prev.policy_name,
@@ -297,6 +386,7 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
       sum_assured: data.sum_assured || prev.sum_assured,
       start_date: data.start_date || prev.start_date,
       renewal_date: data.renewal_date || prev.renewal_date,
+      document_url: data.document_url || prev.document_url,
     }));
   };
 
@@ -319,6 +409,41 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
               <PolicyDocumentScanner onDataExtracted={handleOcrData} />
             </div>
           )}
+
+          {/* Policy Type Selection FIRST - to filter providers */}
+          <div className="space-y-2">
+            <Label>Policy Type *</Label>
+            <Select 
+              value={formData.policy_type} 
+              onValueChange={(v) => {
+                setFormData({ ...formData, policy_type: v, provider: "" });
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select type">
+                  {selectedPolicyType && (
+                    <div className="flex items-center gap-2">
+                      <selectedPolicyType.icon className="h-4 w-4" />
+                      <span>{selectedPolicyType.label}</span>
+                    </div>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {POLICY_TYPES.map((type) => {
+                  const Icon = type.icon;
+                  return (
+                    <SelectItem key={type.value} value={type.value}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4" />
+                        <span>{type.label}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
           
           <div className="space-y-2">
             <Label>Policy Name *</Label>
@@ -329,9 +454,14 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
             />
           </div>
 
-          {/* Provider Selection with Search and Add Custom */}
+          {/* Provider Selection with Search and Add Custom - filtered by policy type */}
           <div className="space-y-2">
             <Label>Insurance Provider *</Label>
+            {formData.policy_type && filteredProviders.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Showing {filteredProviders.length} providers for {formData.policy_type} insurance
+              </p>
+            )}
             <Popover open={providerOpen} onOpenChange={setProviderOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -406,7 +536,7 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
                       )}
                     </CommandEmpty>
                     <CommandGroup>
-                      {providers.map((provider) => (
+                      {filteredProviders.map((provider) => (
                         <CommandItem
                           key={provider.id}
                           value={provider.name}
@@ -460,52 +590,40 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
             />
           </div>
 
-          {/* Policy Type with Icons */}
-          <div className="space-y-2">
-            <Label>Policy Type *</Label>
-            <Select value={formData.policy_type} onValueChange={(v) => setFormData({ ...formData, policy_type: v })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type">
-                  {selectedPolicyType && (
-                    <div className="flex items-center gap-2">
-                      <selectedPolicyType.icon className="h-4 w-4" />
-                      <span>{selectedPolicyType.label}</span>
-                    </div>
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {POLICY_TYPES.map((type) => {
-                  const Icon = type.icon;
-                  return (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4" />
-                        <span>{type.label}</span>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Premium Amount</Label>
-              <Input
-                type="number"
-                value={formData.premium_amount}
-                onChange={(e) => setFormData({ ...formData, premium_amount: e.target.value })}
-                placeholder="₹"
-              />
+              <Label>Premium Amount *</Label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.premium_amount}
+                  onChange={(e) => handlePremiumChange(e.target.value)}
+                  onBlur={() => formData.premium_amount && validatePremium(formData.premium_amount)}
+                  placeholder="₹"
+                  className={cn(premiumError && "border-destructive")}
+                />
+                {premiumError && (
+                  <div className="flex items-center gap-1 text-xs text-destructive mt-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {premiumError}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Sum Assured</Label>
               <Input
                 type="number"
+                min="0"
                 value={formData.sum_assured}
-                onChange={(e) => setFormData({ ...formData, sum_assured: e.target.value })}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  if (e.target.value === "" || (!isNaN(val) && val >= 0)) {
+                    setFormData({ ...formData, sum_assured: e.target.value });
+                  }
+                }}
                 placeholder="₹"
               />
             </div>
@@ -583,11 +701,26 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
             />
           </div>
 
+          {formData.document_url && (
+            <div className="p-3 bg-muted/50 rounded-lg flex items-center gap-2">
+              <FileText className="w-4 h-4 text-primary" />
+              <span className="text-sm flex-1">Policy document attached</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => window.open(formData.document_url, '_blank')}
+              >
+                View
+              </Button>
+            </div>
+          )}
+
           <div className="flex gap-2 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={loading}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="flex-1" disabled={loading}>
+            <Button onClick={handleSubmit} className="flex-1" disabled={loading || !!premiumError}>
               {loading ? "Saving..." : insurance ? "Update" : "Add"} Policy
             </Button>
           </div>

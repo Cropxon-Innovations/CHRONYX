@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,9 +9,23 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Scan, Loader2, Upload, Check, X } from "lucide-react";
+import { 
+  Scan, 
+  Loader2, 
+  Upload, 
+  Check, 
+  X, 
+  Camera, 
+  FileText,
+  Eye,
+  Download,
+  CheckCircle2,
+  Circle
+} from "lucide-react";
 import { toast } from "sonner";
 import Tesseract from "tesseract.js";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ExtractedPolicyData {
   policy_name?: string;
@@ -25,16 +39,40 @@ interface ExtractedPolicyData {
 }
 
 interface PolicyDocumentScannerProps {
-  onDataExtracted: (data: ExtractedPolicyData) => void;
+  onDataExtracted: (data: ExtractedPolicyData & { document_url?: string }) => void;
 }
 
+type ProcessStep = 'idle' | 'uploading' | 'scanning' | 'extracting' | 'review' | 'complete';
+
+const PROCESS_STEPS = [
+  { id: 'uploading', label: 'Uploading Document' },
+  { id: 'scanning', label: 'Scanning Document' },
+  { id: 'extracting', label: 'Extracting Details' },
+  { id: 'review', label: 'Review & Confirm' },
+];
+
 const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) => {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [scanning, setScanning] = useState(false);
+  const [currentStep, setCurrentStep] = useState<ProcessStep>('idle');
   const [progress, setProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState<string | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractedPolicyData | null>(null);
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const checkDevice = () => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isTablet = /(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(navigator.userAgent);
+      setIsMobileOrTablet(isMobile || isTablet);
+    };
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
 
   const extractPolicyDetails = (text: string): ExtractedPolicyData => {
     const data: ExtractedPolicyData = {};
@@ -57,7 +95,7 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     // Provider/Company name patterns
     const providerPatterns = [
       /(?:insurer|company|provider)[:\s]*([A-Za-z\s]+(?:Insurance|Assurance|Life))/i,
-      /(ICICI|HDFC|SBI|LIC|Bajaj|Tata|Max|Star|Reliance|New India|Oriental|United India)[\s\w]*(?:Insurance|Life|General)?/i,
+      /(ICICI|HDFC|SBI|LIC|Bajaj|Tata|Max|Star|Reliance|New India|Oriental|United India|Care|Niva Bupa|Acko|Digit)[\s\w]*(?:Insurance|Life|General|Health)?/i,
     ];
     for (const pattern of providerPatterns) {
       const match = text.match(pattern);
@@ -120,12 +158,18 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     }
 
     // Policy Type detection
-    const typeKeywords = {
+    const typeKeywords: Record<string, RegExp> = {
       'Health': /health|medical|mediclaim|hospitalization/i,
       'Term Life': /term\s*(?:life|insurance|plan)|life\s*cover/i,
-      'Vehicle': /motor|vehicle|car|two\s*wheeler|bike|auto/i,
-      'Home': /home|house|property|dwelling/i,
-      'Travel': /travel|overseas|international/i,
+      'Life': /life\s*insurance|endowment|whole\s*life/i,
+      'Car': /motor\s*car|car\s*insurance|private\s*car/i,
+      'Bike': /two\s*wheeler|bike|motorcycle|scooter/i,
+      'Home': /home|house|dwelling|household/i,
+      'Travel': /travel|overseas|international|trip/i,
+      'Critical Illness': /critical\s*illness|cancer|heart/i,
+      'Personal Accident': /personal\s*accident|pa\s*cover/i,
+      'Property': /property|commercial|shop|office/i,
+      'Child Plan': /child|education\s*plan|children/i,
     };
     for (const [type, pattern] of Object.entries(typeKeywords)) {
       if (pattern.test(text)) {
@@ -167,6 +211,30 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     return '';
   };
 
+  const uploadDocument = async (file: File): Promise<string | null> => {
+    if (!user) return null;
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('insurance-documents')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: publicUrlData } = supabase.storage
+        .from('insurance-documents')
+        .getPublicUrl(data.path);
+
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error("Upload error:", error);
+      return null;
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -179,11 +247,22 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     // Create preview
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
-    setScanning(true);
-    setProgress(0);
     setExtractedData(null);
+    setUploadedDocumentUrl(null);
 
     try {
+      // Step 1: Uploading
+      setCurrentStep('uploading');
+      setProgress(0);
+      
+      const docUrl = await uploadDocument(file);
+      setUploadedDocumentUrl(docUrl);
+      setProgress(100);
+
+      // Step 2: Scanning
+      setCurrentStep('scanning');
+      setProgress(0);
+      
       const result = await Tesseract.recognize(file, 'eng', {
         logger: (m) => {
           if (m.status === 'recognizing text') {
@@ -192,11 +271,19 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
         },
       });
 
+      // Step 3: Extracting
+      setCurrentStep('extracting');
+      setProgress(50);
+      
       const extractedText = result.data.text;
       console.log("OCR Text:", extractedText);
 
       const data = extractPolicyDetails(extractedText);
       setExtractedData(data);
+      setProgress(100);
+
+      // Step 4: Review
+      setCurrentStep('review');
 
       if (Object.keys(data).length === 0) {
         toast.warning("Could not extract details. Please enter manually.");
@@ -204,54 +291,161 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
         toast.success("Details extracted! Review and confirm.");
       }
     } catch (error) {
-      console.error("OCR error:", error);
-      toast.error("Failed to scan document");
+      console.error("Processing error:", error);
+      toast.error("Failed to process document");
+      setCurrentStep('idle');
     } finally {
-      setScanning(false);
       e.target.value = "";
     }
   };
 
   const handleConfirm = () => {
     if (extractedData) {
-      onDataExtracted(extractedData);
-      setOpen(false);
-      setExtractedData(null);
-      setPreviewUrl(null);
-      toast.success("Data applied to form");
+      onDataExtracted({
+        ...extractedData,
+        document_url: uploadedDocumentUrl || undefined,
+      });
+      setCurrentStep('complete');
+      setTimeout(() => {
+        setOpen(false);
+        resetState();
+        toast.success("Data applied to form");
+      }, 500);
     }
   };
 
   const handleCancel = () => {
+    resetState();
+  };
+
+  const resetState = () => {
     setExtractedData(null);
     setPreviewUrl(null);
+    setUploadedDocumentUrl(null);
+    setCurrentStep('idle');
+    setProgress(0);
+  };
+
+  const getStepStatus = (stepId: string): 'pending' | 'active' | 'complete' => {
+    const stepIndex = PROCESS_STEPS.findIndex(s => s.id === stepId);
+    const currentIndex = PROCESS_STEPS.findIndex(s => s.id === currentStep);
+    
+    if (currentStep === 'complete') return 'complete';
+    if (stepIndex < currentIndex) return 'complete';
+    if (stepIndex === currentIndex) return 'active';
+    return 'pending';
   };
 
   return (
     <>
-      <Button 
-        type="button" 
-        variant="outline" 
-        size="sm" 
-        onClick={() => setOpen(true)}
-        className="gap-2"
-      >
-        <Scan className="w-4 h-4" />
-        Scan Document
-      </Button>
+      <div className="flex gap-2">
+        <Button 
+          type="button" 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setOpen(true)}
+          className="gap-2"
+        >
+          <Upload className="w-4 h-4" />
+          Upload Document
+        </Button>
+        {isMobileOrTablet && (
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            onClick={() => cameraInputRef.current?.click()}
+            className="gap-2"
+          >
+            <Camera className="w-4 h-4" />
+            Scan
+          </Button>
+        )}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(isOpen) => {
+        if (!isOpen) resetState();
+        setOpen(isOpen);
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Scan Policy Document</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Upload Policy Document
+            </DialogTitle>
             <DialogDescription>
-              Upload a policy document image to auto-extract details using OCR
+              Upload a policy document to auto-extract details using OCR
             </DialogDescription>
           </DialogHeader>
 
+          {/* Progress Steps */}
+          {currentStep !== 'idle' && (
+            <div className="border rounded-lg p-4 bg-muted/30">
+              <div className="flex items-center justify-between">
+                {PROCESS_STEPS.map((step, index) => {
+                  const status = getStepStatus(step.id);
+                  return (
+                    <div key={step.id} className="flex items-center flex-1">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                          status === 'complete' ? 'bg-green-500 text-white' :
+                          status === 'active' ? 'bg-primary text-primary-foreground animate-pulse' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {status === 'complete' ? (
+                            <CheckCircle2 className="w-5 h-5" />
+                          ) : status === 'active' ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Circle className="w-4 h-4" />
+                          )}
+                        </div>
+                        <span className={`text-xs mt-1 text-center ${
+                          status === 'active' ? 'text-primary font-medium' : 'text-muted-foreground'
+                        }`}>
+                          {step.label}
+                        </span>
+                      </div>
+                      {index < PROCESS_STEPS.length - 1 && (
+                        <div className={`flex-1 h-0.5 mx-2 ${
+                          getStepStatus(PROCESS_STEPS[index + 1].id) !== 'pending' 
+                            ? 'bg-green-500' 
+                            : 'bg-muted'
+                        }`} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {(currentStep === 'uploading' || currentStep === 'scanning' || currentStep === 'extracting') && (
+                <div className="mt-4 space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{currentStep === 'uploading' ? 'Uploading...' : currentStep === 'scanning' ? 'Scanning...' : 'Extracting...'}</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary transition-all" 
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-4">
-            {!previewUrl && (
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+            {currentStep === 'idle' && (
+              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center space-y-4">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -259,134 +453,141 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  Upload Policy Document
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2">
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload Policy Document
+                  </Button>
+                  {isMobileOrTablet && (
+                    <Button
+                      variant="outline"
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="gap-2"
+                    >
+                      <Camera className="w-4 h-4" />
+                      Scan with Camera
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
                   Supports JPG, PNG, PDF (max 10MB)
                 </p>
               </div>
             )}
 
-            {scanning && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">Scanning document... {progress}%</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary transition-all" 
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {previewUrl && !scanning && (
+            {previewUrl && currentStep === 'review' && (
               <div className="space-y-4">
-                <div className="max-h-48 overflow-hidden rounded-lg border border-border">
+                <div className="max-h-48 overflow-hidden rounded-lg border border-border relative group">
                   <img 
                     src={previewUrl} 
                     alt="Document preview" 
                     className="w-full h-auto object-contain"
                   />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <Button size="sm" variant="secondary" className="gap-1">
+                      <Eye className="w-3 h-3" />
+                      Preview
+                    </Button>
+                    {uploadedDocumentUrl && (
+                      <Button 
+                        size="sm" 
+                        variant="secondary" 
+                        className="gap-1"
+                        onClick={() => window.open(uploadedDocumentUrl, '_blank')}
+                      >
+                        <Download className="w-3 h-3" />
+                        Download
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {extractedData && Object.keys(extractedData).length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="text-sm font-medium">Extracted Details (Editable)</h4>
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      Extracted Details (Editable)
+                    </h4>
                     <div className="grid grid-cols-2 gap-3">
-                      {extractedData.policy_name && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">Policy Name</Label>
-                          <Input 
-                            value={extractedData.policy_name} 
-                            onChange={(e) => setExtractedData({...extractedData, policy_name: e.target.value})}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                      )}
-                      {extractedData.provider && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">Provider</Label>
-                          <Input 
-                            value={extractedData.provider} 
-                            onChange={(e) => setExtractedData({...extractedData, provider: e.target.value})}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                      )}
-                      {extractedData.policy_number && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">Policy Number</Label>
-                          <Input 
-                            value={extractedData.policy_number} 
-                            onChange={(e) => setExtractedData({...extractedData, policy_number: e.target.value})}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                      )}
-                      {extractedData.policy_type && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">Policy Type</Label>
-                          <Input 
-                            value={extractedData.policy_type} 
-                            onChange={(e) => setExtractedData({...extractedData, policy_type: e.target.value})}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                      )}
-                      {extractedData.sum_assured && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">Sum Assured</Label>
-                          <Input 
-                            value={extractedData.sum_assured} 
-                            onChange={(e) => setExtractedData({...extractedData, sum_assured: e.target.value})}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                      )}
-                      {extractedData.premium_amount && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">Premium Amount</Label>
-                          <Input 
-                            value={extractedData.premium_amount} 
-                            onChange={(e) => setExtractedData({...extractedData, premium_amount: e.target.value})}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                      )}
-                      {extractedData.start_date && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">Start Date</Label>
-                          <Input 
-                            type="date"
-                            value={extractedData.start_date} 
-                            onChange={(e) => setExtractedData({...extractedData, start_date: e.target.value})}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                      )}
-                      {extractedData.renewal_date && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">Renewal Date</Label>
-                          <Input 
-                            type="date"
-                            value={extractedData.renewal_date} 
-                            onChange={(e) => setExtractedData({...extractedData, renewal_date: e.target.value})}
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                      )}
+                      <div className="space-y-1">
+                        <Label className="text-xs">Policy Name</Label>
+                        <Input 
+                          value={extractedData.policy_name || ''} 
+                          onChange={(e) => setExtractedData({...extractedData, policy_name: e.target.value})}
+                          className="h-8 text-sm"
+                          placeholder="Enter policy name"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Provider</Label>
+                        <Input 
+                          value={extractedData.provider || ''} 
+                          onChange={(e) => setExtractedData({...extractedData, provider: e.target.value})}
+                          className="h-8 text-sm"
+                          placeholder="Enter provider"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Policy Number</Label>
+                        <Input 
+                          value={extractedData.policy_number || ''} 
+                          onChange={(e) => setExtractedData({...extractedData, policy_number: e.target.value})}
+                          className="h-8 text-sm"
+                          placeholder="Enter policy number"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Policy Type</Label>
+                        <Input 
+                          value={extractedData.policy_type || ''} 
+                          onChange={(e) => setExtractedData({...extractedData, policy_type: e.target.value})}
+                          className="h-8 text-sm"
+                          placeholder="Enter policy type"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Sum Assured (₹)</Label>
+                        <Input 
+                          value={extractedData.sum_assured || ''} 
+                          onChange={(e) => setExtractedData({...extractedData, sum_assured: e.target.value})}
+                          className="h-8 text-sm"
+                          placeholder="Enter sum assured"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Premium Amount (₹)</Label>
+                        <Input 
+                          value={extractedData.premium_amount || ''} 
+                          onChange={(e) => setExtractedData({...extractedData, premium_amount: e.target.value})}
+                          className="h-8 text-sm"
+                          placeholder="Enter premium"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Start Date</Label>
+                        <Input 
+                          type="date"
+                          value={extractedData.start_date || ''} 
+                          onChange={(e) => setExtractedData({...extractedData, start_date: e.target.value})}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Renewal Date</Label>
+                        <Input 
+                          type="date"
+                          value={extractedData.renewal_date || ''} 
+                          onChange={(e) => setExtractedData({...extractedData, renewal_date: e.target.value})}
+                          className="h-8 text-sm"
+                        />
+                      </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 pt-2">
                       <Button onClick={handleConfirm} className="flex-1 gap-2">
                         <Check className="w-4 h-4" />
                         Apply to Form
