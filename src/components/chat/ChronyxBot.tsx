@@ -10,8 +10,6 @@ import {
   X,
   Send,
   User,
-  Loader2,
-  ChevronDown,
   Lightbulb,
   RotateCcw,
   Mic,
@@ -39,75 +37,223 @@ const PRESET_QUESTIONS = [
 
 // NOVA - Neural Orchestrated Voice Agent
 const AGENT_NAME = "NOVA";
-const AGENT_TAGLINE = "Your Personal Assistant";
+const AGENT_TAGLINE = "Personal Assistant";
 
-// Animated NOVA Logo Component
+// Premium NOVA Logo - CHRONYX Design Language
 const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: { 
-  size?: "sm" | "md" | "lg"; 
+  size?: "xs" | "sm" | "md" | "lg" | "xl"; 
   isActive?: boolean;
   isSpeaking?: boolean;
 }) => {
   const dimensions = {
-    sm: { container: "w-8 h-8", inner: "w-6 h-6", ring: 32 },
-    md: { container: "w-10 h-10", inner: "w-8 h-8", ring: 40 },
-    lg: { container: "w-14 h-14", inner: "w-12 h-12", ring: 56 },
+    xs: { container: 24, viewBox: 48 },
+    sm: { container: 32, viewBox: 48 },
+    md: { container: 40, viewBox: 48 },
+    lg: { container: 56, viewBox: 48 },
+    xl: { container: 72, viewBox: 48 },
   };
   
   const d = dimensions[size];
   
   return (
-    <div className={cn("relative flex items-center justify-center", d.container)}>
-      {/* Outer rotating ring */}
-      <motion.div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background: "conic-gradient(from 0deg, hsl(var(--primary)), hsl(var(--primary) / 0.3), hsl(var(--primary)))",
-          opacity: isActive ? 0.8 : 0.4,
-        }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-      />
-      
-      {/* Inner glow ring when speaking */}
-      {isSpeaking && (
-        <motion.div
-          className="absolute inset-0.5 rounded-full bg-primary/30"
-          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-        />
-      )}
-      
-      {/* Main circle background */}
-      <div className={cn(
-        "absolute rounded-full bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-primary/30",
-        d.inner
-      )} />
-      
-      {/* NOVA text with animation */}
-      <motion.div
-        className="relative z-10 flex items-center justify-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+    <div 
+      className="relative flex items-center justify-center"
+      style={{ width: d.container, height: d.container }}
+    >
+      <svg
+        width={d.container}
+        height={d.container}
+        viewBox={`0 0 ${d.viewBox} ${d.viewBox}`}
+        className="overflow-visible"
       >
-        <motion.span
-          className={cn(
-            "font-bold tracking-wider bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent",
-            size === "sm" ? "text-[8px]" : size === "md" ? "text-[10px]" : "text-xs"
-          )}
-          animate={isActive ? {
-            opacity: [1, 0.7, 1],
-          } : {}}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        <defs>
+          {/* Deep tint gradient - CHRONYX brand colors */}
+          <linearGradient id="novaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="hsl(230 30% 35%)" />
+            <stop offset="50%" stopColor="hsl(230 25% 45%)" />
+            <stop offset="100%" stopColor="hsl(230 20% 55%)" />
+          </linearGradient>
+          
+          {/* Core glow gradient */}
+          <radialGradient id="novaCoreGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="hsl(230 25% 55%)" stopOpacity="0.9" />
+            <stop offset="60%" stopColor="hsl(230 30% 40%)" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="hsl(230 35% 30%)" stopOpacity="0.3" />
+          </radialGradient>
+          
+          {/* Speaking pulse glow */}
+          <radialGradient id="novaSpeakGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="hsl(230 25% 60%)" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="hsl(230 30% 45%)" stopOpacity="0" />
+          </radialGradient>
+          
+          {/* Outer ring gradient */}
+          <linearGradient id="novaRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="hsl(230 25% 50%)" stopOpacity="0.8" />
+            <stop offset="50%" stopColor="hsl(230 20% 60%)" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="hsl(230 25% 50%)" stopOpacity="0.8" />
+          </linearGradient>
+        </defs>
+        
+        {/* Speaking pulse ring */}
+        {isSpeaking && (
+          <motion.circle
+            cx="24"
+            cy="24"
+            r="22"
+            fill="url(#novaSpeakGlow)"
+            initial={{ scale: 1, opacity: 0.5 }}
+            animate={{ 
+              scale: [1, 1.3, 1],
+              opacity: [0.5, 0.2, 0.5]
+            }}
+            transition={{ 
+              duration: 1.5, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+          />
+        )}
+        
+        {/* Outer rotating ring */}
+        <motion.g
+          animate={{ rotate: 360 }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          style={{ transformOrigin: "24px 24px" }}
         >
-          N
-        </motion.span>
-      </motion.div>
+          <circle
+            cx="24"
+            cy="24"
+            r="21"
+            fill="none"
+            stroke="url(#novaRingGradient)"
+            strokeWidth="1.5"
+            strokeDasharray="8 4"
+            opacity={isActive ? 0.8 : 0.4}
+          />
+        </motion.g>
+        
+        {/* Inner counter-rotating dashed ring */}
+        <motion.g
+          animate={{ rotate: -360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          style={{ transformOrigin: "24px 24px" }}
+        >
+          <circle
+            cx="24"
+            cy="24"
+            r="17"
+            fill="none"
+            stroke="hsl(230 20% 50%)"
+            strokeWidth="0.75"
+            strokeDasharray="3 6"
+            opacity={isActive ? 0.6 : 0.3}
+          />
+        </motion.g>
+        
+        {/* Time markers (4 positions like CHRONYX) */}
+        {[0, 90, 180, 270].map((angle, i) => (
+          <motion.circle
+            key={i}
+            cx={24 + 19 * Math.cos((angle - 90) * Math.PI / 180)}
+            cy={24 + 19 * Math.sin((angle - 90) * Math.PI / 180)}
+            r="1.5"
+            fill="hsl(230 25% 55%)"
+            initial={{ opacity: 0.4 }}
+            animate={isActive ? { 
+              opacity: [0.4, 0.9, 0.4],
+              scale: [1, 1.2, 1]
+            } : {}}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity, 
+              delay: i * 0.5,
+              ease: "easeInOut"
+            }}
+          />
+        ))}
+        
+        {/* Core circle with gradient */}
+        <motion.circle
+          cx="24"
+          cy="24"
+          r="13"
+          fill="url(#novaCoreGlow)"
+          animate={isActive ? {
+            scale: [1, 1.02, 1],
+          } : {}}
+          transition={{ 
+            duration: 3, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+          style={{ transformOrigin: "24px 24px" }}
+        />
+        
+        {/* Inner ring accent */}
+        <circle
+          cx="24"
+          cy="24"
+          r="13"
+          fill="none"
+          stroke="hsl(230 20% 65%)"
+          strokeWidth="0.5"
+          opacity="0.5"
+        />
+        
+        {/* Center dot */}
+        <motion.circle
+          cx="24"
+          cy="24"
+          r="3"
+          fill="hsl(230 15% 85%)"
+          animate={isSpeaking ? {
+            scale: [1, 1.3, 1],
+            opacity: [0.9, 1, 0.9]
+          } : isActive ? {
+            opacity: [0.7, 1, 0.7]
+          } : {}}
+          transition={{ 
+            duration: isSpeaking ? 0.5 : 2, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
+        />
+        
+        {/* Speaking audio wave indicator */}
+        {isSpeaking && (
+          <g>
+            {[-4, 0, 4].map((offset, i) => (
+              <motion.line
+                key={i}
+                x1={24 + offset}
+                y1="21"
+                x2={24 + offset}
+                y2="27"
+                stroke="hsl(230 15% 90%)"
+                strokeWidth="1"
+                strokeLinecap="round"
+                initial={{ scaleY: 0.5 }}
+                animate={{ scaleY: [0.5, 1.2, 0.5] }}
+                transition={{ 
+                  duration: 0.4, 
+                  repeat: Infinity, 
+                  delay: i * 0.1,
+                  ease: "easeInOut"
+                }}
+                style={{ transformOrigin: `${24 + offset}px 24px` }}
+              />
+            ))}
+          </g>
+        )}
+      </svg>
       
       {/* Online indicator */}
-      {isActive && (
+      {isActive && !isSpeaking && (
         <motion.span 
-          className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-background"
-          animate={{ scale: [1, 1.2, 1] }}
+          className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-background"
+          style={{ backgroundColor: "hsl(150 40% 50%)" }}
+          animate={{ scale: [1, 1.15, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         />
       )}
@@ -115,41 +261,38 @@ const NovaLogo = ({ size = "md", isActive = false, isSpeaking = false }: {
   );
 };
 
-// Animated NOVA name badge
+// Animated NOVA name badge with elegant styling
 const NovaNameBadge = ({ isTyping = false }: { isTyping?: boolean }) => (
-  <div className="flex items-center gap-1.5">
+  <div className="flex items-center gap-2">
     <motion.span 
-      className="font-semibold text-foreground tracking-wide"
+      className="font-semibold tracking-widest text-sm"
+      style={{ color: "hsl(230 25% 35%)" }}
       animate={isTyping ? { opacity: [1, 0.6, 1] } : {}}
       transition={{ duration: 1.5, repeat: Infinity }}
     >
       NOVA
     </motion.span>
-    <motion.div
-      className="flex gap-0.5"
-      initial={{ opacity: 0, x: -5 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.3 }}
-    >
-      {['●', '●', '●'].map((dot, i) => (
-        <motion.span
-          key={i}
-          className="text-[6px] text-primary"
-          animate={{ 
-            opacity: [0.3, 1, 0.3],
-            y: [0, -2, 0]
-          }}
-          transition={{ 
-            duration: 1.5, 
-            repeat: Infinity, 
-            delay: i * 0.2,
-            ease: "easeInOut"
-          }}
-        >
-          {dot}
-        </motion.span>
-      ))}
-    </motion.div>
+    {isTyping && (
+      <motion.div className="flex gap-0.5">
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            className="w-1 h-1 rounded-full"
+            style={{ backgroundColor: "hsl(230 25% 50%)" }}
+            animate={{ 
+              opacity: [0.3, 1, 0.3],
+              y: [0, -2, 0]
+            }}
+            transition={{ 
+              duration: 1, 
+              repeat: Infinity, 
+              delay: i * 0.15,
+              ease: "easeInOut"
+            }}
+          />
+        ))}
+      </motion.div>
+    )}
   </div>
 );
 
@@ -170,18 +313,18 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [detectedLanguage, setDetectedLanguage] = useState<string>("en-IN");
-  const [showName, setShowName] = useState(true);
+  const [showNameBadge, setShowNameBadge] = useState(true);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
   
-  // Animate NOVA name appearing/disappearing
+  // Animate NOVA name badge appearing/disappearing
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
-      setShowName(prev => !prev);
-    }, 4000);
+      setShowNameBadge(prev => !prev);
+    }, 5000);
     return () => clearInterval(interval);
   }, [isOpen]);
   
@@ -423,59 +566,80 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className="fixed bottom-20 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 h-[520px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden z-50"
         >
-          {/* Header with animated NOVA branding */}
-          <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/5 via-primary/10 to-transparent">
+          {/* Premium Header with NOVA branding */}
+          <div 
+            className="flex items-center justify-between p-4 border-b border-border"
+            style={{ 
+              background: "linear-gradient(135deg, hsl(230 20% 95%) 0%, hsl(230 15% 98%) 100%)"
+            }}
+          >
             <div className="flex items-center gap-3">
               <NovaLogo size="md" isActive={true} isSpeaking={isSpeaking} />
-              <div>
+              <div className="flex flex-col">
                 <AnimatePresence mode="wait">
-                  {showName ? (
+                  {showNameBadge ? (
                     <motion.div
-                      key="name"
-                      initial={{ opacity: 0, y: -10 }}
+                      key="badge"
+                      initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
+                      exit={{ opacity: 0, y: 5 }}
                       transition={{ duration: 0.3 }}
                     >
                       <NovaNameBadge isTyping={isLoading} />
                     </motion.div>
                   ) : (
-                    <motion.div
-                      key="tagline"
-                      initial={{ opacity: 0, y: -10 }}
+                    <motion.span
+                      key="name"
+                      className="font-semibold tracking-widest text-sm"
+                      style={{ color: "hsl(230 25% 35%)" }}
+                      initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
+                      exit={{ opacity: 0, y: 5 }}
                       transition={{ duration: 0.3 }}
-                      className="font-semibold text-foreground"
                     >
                       {AGENT_NAME}
-                    </motion.div>
+                    </motion.span>
                   )}
                 </AnimatePresence>
-                <motion.p 
-                  className="text-[11px] text-muted-foreground"
-                  animate={{ opacity: [0.6, 1, 0.6] }}
-                  transition={{ duration: 3, repeat: Infinity }}
+                <motion.span 
+                  className="text-[10px] tracking-wide"
+                  style={{ color: "hsl(230 15% 55%)" }}
+                  animate={{ opacity: [0.6, 0.9, 0.6] }}
+                  transition={{ duration: 4, repeat: Infinity }}
                 >
                   {AGENT_TAGLINE}
-                </motion.p>
+                </motion.span>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8" 
+                className="h-8 w-8 hover:bg-white/50" 
                 onClick={() => setVoiceEnabled(!voiceEnabled)}
                 title={voiceEnabled ? "Disable voice" : "Enable voice"}
               >
-                {voiceEnabled ? <Volume2 className="w-4 h-4 text-primary" /> : <VolumeX className="w-4 h-4" />}
+                {voiceEnabled ? (
+                  <Volume2 className="w-4 h-4" style={{ color: "hsl(230 25% 45%)" }} />
+                ) : (
+                  <VolumeX className="w-4 h-4 text-muted-foreground" />
+                )}
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setMessages([welcomeMessage])}>
-                <RotateCcw className="w-4 h-4" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 hover:bg-white/50" 
+                onClick={() => setMessages([welcomeMessage])}
+              >
+                <RotateCcw className="w-4 h-4 text-muted-foreground" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
-                <X className="w-5 h-5" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 hover:bg-white/50" 
+                onClick={handleClose}
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
               </Button>
             </div>
           </div>
@@ -492,20 +656,32 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                   transition={{ duration: 0.3 }}
                 >
                   {message.role === "assistant" && (
-                    <NovaLogo size="sm" isActive={false} />
+                    <div className="shrink-0">
+                      <NovaLogo size="sm" isActive={false} />
+                    </div>
                   )}
                   <div className={cn(
                     "max-w-[80%] rounded-2xl px-4 py-2.5",
                     message.role === "user" 
-                      ? "bg-primary text-primary-foreground rounded-br-sm" 
-                      : "bg-muted/50 text-foreground rounded-bl-sm border border-border/50"
-                  )}>
+                      ? "rounded-br-sm text-primary-foreground"
+                      : "rounded-bl-sm text-foreground border"
+                  )}
+                  style={message.role === "user" ? {
+                    background: "linear-gradient(135deg, hsl(230 30% 35%) 0%, hsl(230 25% 45%) 100%)"
+                  } : {
+                    background: "hsl(230 15% 97%)",
+                    borderColor: "hsl(230 20% 90%)"
+                  }}
+                  >
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     <p className="text-[10px] mt-1 opacity-60">{format(message.timestamp, "h:mm a")}</p>
                   </div>
                   {message.role === "user" && (
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                      <User className="w-4 h-4" />
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: "hsl(230 20% 90%)" }}
+                    >
+                      <User className="w-4 h-4" style={{ color: "hsl(230 25% 45%)" }} />
                     </div>
                   )}
                 </motion.div>
@@ -516,31 +692,43 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  <NovaLogo size="sm" isActive={true} />
-                  <div className="bg-muted/50 rounded-2xl rounded-bl-sm px-4 py-2.5 border border-border/50">
+                  <div className="shrink-0">
+                    <NovaLogo size="sm" isActive={true} />
+                  </div>
+                  <div 
+                    className="rounded-2xl rounded-bl-sm px-4 py-2.5 border"
+                    style={{ 
+                      background: "hsl(230 15% 97%)",
+                      borderColor: "hsl(230 20% 90%)"
+                    }}
+                  >
                     <div className="flex items-center gap-2">
-                      <motion.div
-                        className="flex gap-1"
-                        animate={{ opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                      >
+                      <motion.div className="flex gap-1">
                         {[0, 1, 2].map(i => (
                           <motion.span
                             key={i}
-                            className="w-1.5 h-1.5 bg-primary rounded-full"
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ backgroundColor: "hsl(230 25% 50%)" }}
                             animate={{ y: [0, -4, 0] }}
                             transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
                           />
                         ))}
                       </motion.div>
-                      <span className="text-xs text-muted-foreground">NOVA is thinking...</span>
+                      <span className="text-xs" style={{ color: "hsl(230 15% 55%)" }}>
+                        NOVA is thinking...
+                      </span>
                     </div>
                   </div>
                 </motion.div>
               )}
               {isSpeaking && (
                 <div className="flex justify-center">
-                  <Button variant="outline" size="sm" onClick={stopSpeaking} className="text-xs gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={stopSpeaking} 
+                    className="text-xs gap-2 border-border"
+                  >
                     <VolumeX className="w-3 h-3" />
                     Stop speaking
                   </Button>
@@ -553,7 +741,7 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 text-xs" style={{ color: "hsl(230 15% 55%)" }}>
                     <Lightbulb className="w-3 h-3" />
                     <span>Try asking me</span>
                   </div>
@@ -562,12 +750,16 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                       <motion.button 
                         key={i} 
                         onClick={() => sendMessage(q)} 
-                        className="text-xs bg-muted/50 hover:bg-accent px-3 py-1.5 rounded-full border border-border/50 transition-colors"
+                        className="text-xs px-3 py-1.5 rounded-full border transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        style={{ 
+                          background: "hsl(230 15% 97%)",
+                          borderColor: "hsl(230 20% 88%)",
+                          color: "hsl(230 20% 40%)"
+                        }}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.6 + i * 0.1 }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ backgroundColor: "hsl(230 18% 94%)" }}
                       >
                         {q}
                       </motion.button>
@@ -579,7 +771,10 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
           </ScrollArea>
           
           {/* Input */}
-          <div className="p-4 border-t border-border bg-muted/30">
+          <div 
+            className="p-4 border-t border-border"
+            style={{ background: "hsl(230 15% 97%)" }}
+          >
             <div className="flex gap-2">
               <Button 
                 variant={isListening ? "destructive" : "outline"} 
@@ -596,54 +791,98 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()} 
                 placeholder={isListening ? "Listening..." : "Ask NOVA anything..."}
                 disabled={isLoading} 
-                className="flex-1 bg-background" 
+                className="flex-1 bg-background border-border" 
               />
-              <Button onClick={() => sendMessage()} disabled={!input.trim() || isLoading} size="icon" className="shrink-0">
+              <Button 
+                onClick={() => sendMessage()} 
+                disabled={!input.trim() || isLoading} 
+                size="icon" 
+                className="shrink-0"
+                style={{ 
+                  background: "linear-gradient(135deg, hsl(230 30% 35%) 0%, hsl(230 25% 45%) 100%)"
+                }}
+              >
                 <Send className="w-4 h-4" />
               </Button>
             </div>
-            <p className="text-[10px] text-muted-foreground text-center mt-2">
+            <p className="text-[10px] text-center mt-2" style={{ color: "hsl(230 15% 55%)" }}>
               {detectedLanguage !== "en-IN" ? `Language: ${detectedLanguage.split("-")[0].toUpperCase()}` : "NOVA uses your actual CHRONYX data"}
             </p>
           </div>
         </motion.div>
       )}
       
-      {/* Floating button with animated NOVA logo */}
+      {/* Premium Floating Button */}
       {externalIsOpen === undefined && (
         <motion.button
           onClick={() => isOpen ? handleClose() : handleOpen()}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={cn(
-            "fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center z-50 border-2 overflow-hidden",
-            isOpen 
-              ? "bg-muted border-border" 
-              : "bg-gradient-to-br from-primary/90 to-primary border-primary/30"
-          )}
+          className="fixed bottom-6 right-6 rounded-full shadow-2xl flex items-center justify-center z-50 overflow-visible"
+          style={{ 
+            width: 64,
+            height: 64,
+            background: isOpen 
+              ? "hsl(230 15% 95%)"
+              : "linear-gradient(145deg, hsl(230 25% 25%) 0%, hsl(230 30% 35%) 50%, hsl(230 25% 40%) 100%)",
+            border: isOpen ? "2px solid hsl(230 20% 88%)" : "2px solid hsl(230 25% 50% / 0.3)",
+            boxShadow: isOpen 
+              ? "0 4px 20px hsl(230 20% 50% / 0.15)"
+              : "0 8px 32px hsl(230 30% 20% / 0.4), inset 0 1px 0 hsl(230 20% 55% / 0.2)"
+          }}
         >
-          {isOpen ? (
-            <ChevronDown className="w-6 h-6" />
-          ) : (
-            <div className="relative">
-              <NovaLogo size="lg" isActive={true} />
-              {/* Animated "NOVA" text that appears and disappears */}
-              <AnimatePresence>
+          <AnimatePresence mode="wait">
+            {isOpen ? (
+              <motion.div
+                key="close"
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X className="w-6 h-6" style={{ color: "hsl(230 25% 45%)" }} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="logo"
+                className="relative"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <NovaLogo size="lg" isActive={true} isSpeaking={isSpeaking} />
+                
+                {/* Animated "NOVA" text badge */}
                 <motion.div
-                  className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-background/90 px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider text-primary whitespace-nowrap border border-primary/20"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: [0, 1, 1, 0], y: [5, 0, 0, -5] }}
+                  className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full whitespace-nowrap"
+                  style={{ 
+                    background: "linear-gradient(135deg, hsl(230 20% 95%) 0%, hsl(230 15% 98%) 100%)",
+                    border: "1px solid hsl(230 25% 85%)",
+                    boxShadow: "0 2px 8px hsl(230 30% 20% / 0.15)"
+                  }}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ 
+                    opacity: [0, 1, 1, 0], 
+                    y: [4, 0, 0, -2] 
+                  }}
                   transition={{ 
-                    duration: 4, 
+                    duration: 5, 
                     repeat: Infinity,
-                    times: [0, 0.1, 0.9, 1]
+                    times: [0, 0.1, 0.85, 1],
+                    ease: "easeInOut"
                   }}
                 >
-                  NOVA
+                  <span 
+                    className="text-[9px] font-bold tracking-widest"
+                    style={{ color: "hsl(230 30% 35%)" }}
+                  >
+                    NOVA
+                  </span>
                 </motion.div>
-              </AnimatePresence>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.button>
       )}
     </AnimatePresence>
