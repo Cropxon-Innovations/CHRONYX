@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/ThemeProvider";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
