@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/components/ThemeProvider";
 import {
@@ -133,13 +133,14 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setMounted(true);
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -149,6 +150,11 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
       element.scrollIntoView({ behavior: "smooth" });
     }
     setIsOpen(false);
+  };
+
+  const handleContactClick = () => {
+    setIsOpen(false);
+    navigate("/contact");
   };
 
   const toggleTheme = () => {
@@ -261,14 +267,14 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                 About
               </Link>
 
-              {/* Contact */}
-              <button
-                onClick={() => scrollToSection("footer")}
+              {/* Contact - Navigate to /contact page */}
+              <Link
+                to="/contact"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/30"
               >
                 <Mail className="w-4 h-4" />
                 Contact
-              </button>
+              </Link>
 
               {/* Download Dropdown */}
               <DropdownMenu>
@@ -496,14 +502,15 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                   <span className="text-sm font-medium">About</span>
                 </Link>
 
-                {/* Contact */}
-                <button
-                  onClick={() => scrollToSection("footer")}
+                {/* Contact - Navigate to /contact page */}
+                <Link
+                  to="/contact"
+                  onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 w-full p-4 rounded-xl hover:bg-muted/30 transition-colors"
                 >
                   <Mail className="w-5 h-5 text-muted-foreground" />
                   <span className="text-sm font-medium">Contact</span>
-                </button>
+                </Link>
 
                 {/* Download Collapsible */}
                 <Collapsible open={downloadOpen} onOpenChange={setDownloadOpen}>

@@ -726,21 +726,46 @@ const AnimatedDashboardPreview = () => {
   );
 };
 
-// Section wrapper with scroll-based reveal
-const RevealSection = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
+// Section wrapper with scroll-based reveal and parallax
+const RevealSection = ({ children, className = "", parallax = false }: { children: React.ReactNode; className?: string; parallax?: boolean }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
+  
+  const y = useTransform(scrollYProgress, [0, 1], parallax ? [50, -50] : [0, 0]);
+  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0.8, 1, 1, 0.8]);
 
   return (
     <motion.section
       ref={ref}
-      initial={{ opacity: 0, y: 60 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
-      transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] }}
-      className={className}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      style={parallax ? { y } : {}}
+      className={`will-change-transform ${className}`}
     >
       {children}
     </motion.section>
+  );
+};
+
+// Parallax wrapper for individual elements
+const ParallaxElement = ({ children, speed = 0.5, className = "" }: { children: React.ReactNode; speed?: number; className?: string }) => {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
+  
+  const y = useTransform(scrollYProgress, [0, 1], [100 * speed, -100 * speed]);
+
+  return (
+    <motion.div ref={ref} style={{ y }} className={`will-change-transform ${className}`}>
+      {children}
+    </motion.div>
   );
 };
 
@@ -748,14 +773,21 @@ const Landing = () => {
   const [mounted, setMounted] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
   const [showDesktopDialog, setShowDesktopDialog] = useState(false);
+  const containerRef = useRef(null);
   const { scrollYProgress } = useScroll();
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
 
   useEffect(() => {
     setMounted(true);
+    // Enable smooth scrolling
     document.documentElement.style.scrollBehavior = 'smooth';
+    // Ensure no scroll jank
+    document.body.style.overflowX = 'hidden';
+    
     return () => {
       document.documentElement.style.scrollBehavior = 'auto';
+      document.body.style.overflowX = '';
     };
   }, []);
 
@@ -1372,6 +1404,8 @@ const Landing = () => {
               <div>
                 <h4 className="text-sm font-medium mb-4 tracking-wide">Contact</h4>
                 <ul className="space-y-3 text-sm text-muted-foreground">
+                  <li><Link to="/contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
+                  <li><a href="mailto:Office@getchronyx.com" className="hover:text-foreground transition-colors">Office@getchronyx.com</a></li>
                   <li><a href="mailto:support@getchronyx.com" className="hover:text-foreground transition-colors">support@getchronyx.com</a></li>
                   <li><a href="https://www.cropxon.com" target="_blank" rel="noopener" className="hover:text-foreground transition-colors">cropxon.com</a></li>
                 </ul>
