@@ -77,26 +77,37 @@ const FinanceFlowSettings = () => {
   const handleConnectGmail = async () => {
     if (!user) return;
     
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    
-    if (!clientId) {
+    try {
+      // Get client ID from edge function
+      const { data, error } = await supabase.functions.invoke("get-google-client-id");
+      
+      if (error || !data?.client_id) {
+        toast({
+          title: "Configuration Error",
+          description: "Google OAuth is not configured. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const clientId = data.client_id;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const redirectUri = `${supabaseUrl}/functions/v1/gmail-oauth-callback`;
+      const state = btoa(JSON.stringify({ user_id: user.id }));
+      
+      const scope = encodeURIComponent("https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email");
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&state=${state}`;
+      
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error("OAuth error:", error);
       toast({
-        title: "Configuration Error",
-        description: "Google OAuth is not configured. Please contact support.",
+        title: "Error",
+        description: "Failed to initiate Gmail connection.",
         variant: "destructive",
       });
-      return;
     }
-    
-    const redirectUri = `${supabaseUrl}/functions/v1/gmail-oauth-callback`;
-    const state = btoa(JSON.stringify({ user_id: user.id }));
-    
-    const scope = encodeURIComponent("https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email");
-    
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${scope}&access_type=offline&prompt=consent&state=${state}`;
-    
-    window.location.href = authUrl;
   };
 
   const handleSync = async () => {

@@ -12,6 +12,7 @@ import ExpensesList from "@/components/expenses/ExpensesList";
 import AddExpenseForm from "@/components/expenses/AddExpenseForm";
 import ExpenseCharts from "@/components/expenses/ExpenseCharts";
 import FinanceFlowSettings from "@/components/finance/FinanceFlowSettings";
+import FinanceFlowButton from "@/components/finance/FinanceFlowButton";
 import {
   Dialog,
   DialogContent,
@@ -125,25 +126,28 @@ const Expenses = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-light text-foreground tracking-wide">Expenses</h1>
           <p className="text-sm text-muted-foreground mt-1">Track your daily spending</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="vyom">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Expense
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add Expense</DialogTitle>
-            </DialogHeader>
-            <AddExpenseForm onSuccess={handleExpenseAdded} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <FinanceFlowButton onImportComplete={() => setRefreshKey((k) => k + 1)} />
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="vyom">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Expense
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add Expense</DialogTitle>
+              </DialogHeader>
+              <AddExpenseForm onSuccess={handleExpenseAdded} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </header>
 
       {/* Stats Cards */}
