@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,33 +12,200 @@ serve(async (req) => {
   }
 
   try {
-    const { message, context, history } = await req.json();
+    const { message, context, history, language } = await req.json();
     
+    // Get auth token from request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", response: "I need you to be logged in to access your personal data." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get user from auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", response: "I couldn't verify your identity. Please try logging in again." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Fetch user's actual data for context
+    const today = new Date().toISOString().split('T')[0];
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+    const startOfWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    // Parallel data fetching for efficiency
+    const [
+      profileResult,
+      todosToday,
+      todosWeek,
+      expensesMonth,
+      incomeMonth,
+      loansActive,
+      insurancesActive,
+      studyLogsWeek,
+      memoriesCount,
+      notesCount
+    ] = await Promise.all([
+      supabase.from("profiles").select("display_name, birth_date, target_age").eq("id", user.id).single(),
+      supabase.from("todos").select("id, text, status, priority").eq("date", today),
+      supabase.from("todos").select("id, status").gte("date", startOfWeek),
+      supabase.from("expenses").select("amount, category, expense_date").gte("expense_date", startOfMonth),
+      supabase.from("income_entries").select("amount, income_date").gte("income_date", startOfMonth),
+      supabase.from("loans").select("id, bank_name, principal_amount, emi_amount, status").eq("status", "active"),
+      supabase.from("insurances").select("id, policy_name, premium_amount, renewal_date, status").eq("status", "active"),
+      supabase.from("study_logs").select("id, subject, duration, date").gte("date", startOfWeek),
+      supabase.from("memories").select("id", { count: "exact", head: true }),
+      supabase.from("notes").select("id", { count: "exact", head: true })
+    ]);
+
+    // Calculate user statistics
+    const profile = profileResult.data;
+    const displayName = profile?.display_name || "there";
+    
+    // Tasks analysis
+    const todaysTasks = todosToday.data || [];
+    const weekTasks = todosWeek.data || [];
+    const completedToday = todaysTasks.filter(t => t.status === "completed").length;
+    const pendingToday = todaysTasks.filter(t => t.status === "pending").length;
+    const completedWeek = weekTasks.filter(t => t.status === "completed").length;
+    const totalWeek = weekTasks.length;
+    const completionRate = totalWeek > 0 ? Math.round((completedWeek / totalWeek) * 100) : 0;
+
+    // Finance analysis
+    const expenses = expensesMonth.data || [];
+    const income = incomeMonth.data || [];
+    const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const totalIncome = income.reduce((sum, i) => sum + (i.amount || 0), 0);
+    const savings = totalIncome - totalExpenses;
+    
+    // Expense by category
+    const expensesByCategory: Record<string, number> = {};
+    expenses.forEach(e => {
+      expensesByCategory[e.category] = (expensesByCategory[e.category] || 0) + e.amount;
+    });
+    const topCategories = Object.entries(expensesByCategory)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([cat, amt]) => `${cat}: ₹${amt.toLocaleString('en-IN')}`);
+
+    // Loans & Insurance
+    const loans = loansActive.data || [];
+    const insurances = insurancesActive.data || [];
+    const totalLoanOutstanding = loans.reduce((sum, l) => sum + (l.principal_amount || 0), 0);
+    const monthlyEMI = loans.reduce((sum, l) => sum + (l.emi_amount || 0), 0);
+    const totalCoverage = insurances.reduce((sum, i) => sum + 0, 0); // Sum assured not in select
+
+    // Study analysis
+    const studyLogs = studyLogsWeek.data || [];
+    const totalStudyMinutes = studyLogs.reduce((sum, s) => sum + (s.duration || 0), 0);
+    const studyHours = Math.round(totalStudyMinutes / 60 * 10) / 10;
+    const subjectsStudied = [...new Set(studyLogs.map(s => s.subject))];
+
+    // Lifespan (if birth date available)
+    let lifeProgress = "";
+    if (profile?.birth_date && profile?.target_age) {
+      const birthDate = new Date(profile.birth_date);
+      const ageInYears = (Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+      const progress = Math.round((ageInYears / profile.target_age) * 100);
+      lifeProgress = `Life progress: ${progress}% (${Math.floor(ageInYears)} years of ${profile.target_age} target)`;
+    }
+
+    // Build comprehensive context
+    const userContext = `
+USER PROFILE:
+- Name: ${displayName}
+- User ID: ${user.id}
+${lifeProgress ? `- ${lifeProgress}` : ""}
+
+TODAY'S TASKS (${today}):
+- Completed: ${completedToday}
+- Pending: ${pendingToday}
+- Total: ${todaysTasks.length}
+${pendingToday > 0 ? `- Pending tasks: ${todaysTasks.filter(t => t.status === "pending").map(t => t.text).slice(0, 3).join(", ")}${pendingToday > 3 ? "..." : ""}` : ""}
+
+THIS WEEK'S PRODUCTIVITY:
+- Tasks completed: ${completedWeek}/${totalWeek}
+- Completion rate: ${completionRate}%
+
+FINANCES THIS MONTH:
+- Total Income: ₹${totalIncome.toLocaleString('en-IN')}
+- Total Expenses: ₹${totalExpenses.toLocaleString('en-IN')}
+- Savings: ₹${savings.toLocaleString('en-IN')} (${totalIncome > 0 ? Math.round((savings / totalIncome) * 100) : 0}% savings rate)
+${topCategories.length > 0 ? `- Top spending: ${topCategories.join(", ")}` : ""}
+
+LOANS & LIABILITIES:
+- Active loans: ${loans.length}
+- Total outstanding: ₹${totalLoanOutstanding.toLocaleString('en-IN')}
+- Monthly EMI commitment: ₹${monthlyEMI.toLocaleString('en-IN')}
+${loans.length > 0 ? `- Banks: ${loans.map(l => l.bank_name).join(", ")}` : ""}
+
+INSURANCE:
+- Active policies: ${insurances.length}
+${insurances.length > 0 ? `- Policies: ${insurances.map(i => i.policy_name).slice(0, 3).join(", ")}` : ""}
+
+STUDY THIS WEEK:
+- Total hours: ${studyHours} hours
+- Subjects: ${subjectsStudied.length > 0 ? subjectsStudied.join(", ") : "None logged"}
+- Sessions: ${studyLogs.length}
+
+VAULT:
+- Memories saved: ${memoriesCount.count || 0}
+- Notes created: ${notesCount.count || 0}
+
+IMPORTANT RULES:
+1. ONLY use the data above. NEVER make up numbers or information.
+2. If data shows 0 or empty, say "I don't see any [X] recorded yet" - don't invent.
+3. Be specific with actual numbers from the data above.
+4. If asked about something not in the data, politely say you don't have that information.
+`;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are CHRONYX Bot, a friendly and helpful personal life assistant for the CHRONYX app. You help users understand their life data including:
+    // NOVA - Female PA persona with professional yet friendly tone
+    const systemPrompt = `You are NOVA (Neural Orchestrated Voice Agent), a professional female personal assistant for CHRONYX - a personal system of record app.
 
-- Tasks & Productivity (todos, completion rates, streaks)
-- Finances (expenses, income, savings)
-- Study Progress (hours logged, subjects studied)
-- Insurance & Loans (policies, EMIs, coverage)
-- Goals & Achievements
-- Memory & Documents
+PERSONALITY & VOICE:
+- You are a calm, composed, and professional female assistant
+- Speak in a warm, measured tone - never rushed or anxious
+- Be genuinely helpful like a trusted personal secretary
+- Show empathy and understanding while remaining professional
+- Use "I" statements: "I see that...", "I notice...", "Let me help you with..."
+- Be encouraging but honest - never falsely positive
 
-Guidelines:
-- Be concise but helpful (2-4 sentences typically)
-- Use emojis sparingly to add personality
-- Reference specific data from the user's context when available
-- If asked about something not in context, acknowledge it kindly
-- Provide actionable insights when possible
-- Format numbers nicely (₹ for currency, proper date formats)
-- Be encouraging about progress and gentle about areas needing improvement
+COMMUNICATION STYLE:
+- Keep responses concise (2-4 sentences typically)
+- Use proper formatting with line breaks for readability
+- Reference SPECIFIC numbers from the user's data
+- Format currency as ₹X,XX,XXX (Indian format)
+- Use dates in a friendly format (e.g., "this week", "today")
 
-Current User Context:
-${context}`;
+STRICT DATA RULES:
+1. ONLY reference data from the USER CONTEXT provided below
+2. NEVER invent, guess, or approximate numbers
+3. If data is 0 or empty, say "I don't see any records for that yet"
+4. If asked about something not in context, say "I don't have access to that information"
+5. Never mention "context" or "data provided" - speak naturally as if you know the user
+
+RESPONSE PATTERNS:
+- For productivity: Reference actual completion rates and pending tasks
+- For finances: Use exact numbers, mention savings rate, top spending
+- For study: Reference actual hours and subjects
+- For life advice: Be supportive but grounded in their actual situation
+
+${userContext}`;
 
     const messages = [
       { role: "system", content: systemPrompt },
@@ -52,23 +220,23 @@ ${context}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages,
-        max_tokens: 500,
-        temperature: 0.7,
+        max_tokens: 600,
+        temperature: 0.6, // Slightly lower for more consistent, professional responses
       }),
     });
 
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later.", response: null }),
+          JSON.stringify({ error: "Rate limit exceeded", response: "I'm a bit overwhelmed right now. Could you try again in a moment?" }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "AI credits depleted. Please add credits to continue.", response: null }),
+          JSON.stringify({ error: "Credits depleted", response: "I'm temporarily unavailable. Please check back later." }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -78,7 +246,7 @@ ${context}`;
     }
 
     const data = await response.json();
-    const assistantResponse = data.choices?.[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
+    const assistantResponse = data.choices?.[0]?.message?.content || "I apologize, I'm having trouble formulating a response right now.";
 
     return new Response(
       JSON.stringify({ response: assistantResponse }),
@@ -89,7 +257,7 @@ ${context}`;
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : "Unknown error",
-        response: "I'm having trouble right now. Please try again in a moment."
+        response: "I apologize, I'm experiencing some difficulties. Please try again in a moment."
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
