@@ -209,7 +209,16 @@ const Tax = () => {
         },
       });
 
-      if (response.error) throw response.error;
+      if (response.error) {
+        console.error("Tax calculate error:", response.error);
+        throw new Error(response.error.message || "Failed to calculate tax");
+      }
+      
+      // Check if data has an error field
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+      
       return response.data as TaxResult;
     },
     onSuccess: (data) => {
@@ -218,6 +227,7 @@ const Tax = () => {
       toast.success("Tax calculated successfully!");
     },
     onError: (error: any) => {
+      console.error("Tax calculation error:", error);
       toast.error(error.message || "Failed to calculate tax");
     },
   });
@@ -236,7 +246,16 @@ const Tax = () => {
         },
       });
 
-      if (response.error) throw response.error;
+      if (response.error) {
+        console.error("Tax compare error:", response.error);
+        throw new Error(response.error.message || "Failed to compare regimes");
+      }
+      
+      // Check if data has an error field
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+      
       return response.data as ComparisonResult;
     },
     onSuccess: (data) => {
@@ -244,6 +263,7 @@ const Tax = () => {
       toast.success("Comparison complete!");
     },
     onError: (error: any) => {
+      console.error("Tax comparison error:", error);
       toast.error(error.message || "Failed to compare regimes");
     },
   });

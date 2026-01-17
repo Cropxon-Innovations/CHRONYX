@@ -24,26 +24,30 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    // Use service role to verify the token and fetch data
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user from auth
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Verify user with the provided token
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
+      console.error("[chronyx-bot] Auth error:", authError);
       return new Response(
         JSON.stringify({ error: "Unauthorized", response: "I couldn't verify your identity. Please try logging in again." }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    
+    console.log("[chronyx-bot] User authenticated:", user.id);
 
     // Fetch user's actual data for context
     const today = new Date().toISOString().split('T')[0];
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
     const startOfWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    // Parallel data fetching for efficiency
+    // Parallel data fetching for efficiency - filter by user.id for all tables
     const [
       profileResult,
       todosToday,
@@ -57,15 +61,15 @@ serve(async (req) => {
       notesCount
     ] = await Promise.all([
       supabase.from("profiles").select("display_name, birth_date, target_age").eq("id", user.id).single(),
-      supabase.from("todos").select("id, text, status, priority").eq("date", today),
-      supabase.from("todos").select("id, status").gte("date", startOfWeek),
-      supabase.from("expenses").select("amount, category, expense_date").gte("expense_date", startOfMonth),
-      supabase.from("income_entries").select("amount, income_date").gte("income_date", startOfMonth),
-      supabase.from("loans").select("id, bank_name, principal_amount, emi_amount, status").eq("status", "active"),
-      supabase.from("insurances").select("id, policy_name, premium_amount, renewal_date, status").eq("status", "active"),
-      supabase.from("study_logs").select("id, subject, duration, date").gte("date", startOfWeek),
-      supabase.from("memories").select("id", { count: "exact", head: true }),
-      supabase.from("notes").select("id", { count: "exact", head: true })
+      supabase.from("todos").select("id, text, status, priority").eq("user_id", user.id).eq("date", today),
+      supabase.from("todos").select("id, status").eq("user_id", user.id).gte("date", startOfWeek),
+      supabase.from("expenses").select("amount, category, expense_date").eq("user_id", user.id).gte("expense_date", startOfMonth),
+      supabase.from("income_entries").select("amount, income_date").eq("user_id", user.id).gte("income_date", startOfMonth),
+      supabase.from("loans").select("id, bank_name, principal_amount, emi_amount, status").eq("user_id", user.id).eq("status", "active"),
+      supabase.from("insurances").select("id, policy_name, premium_amount, renewal_date, status").eq("user_id", user.id).eq("status", "active"),
+      supabase.from("study_logs").select("id, subject, duration, date").eq("user_id", user.id).gte("date", startOfWeek),
+      supabase.from("memories").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("notes").select("id", { count: "exact", head: true }).eq("user_id", user.id)
     ]);
 
     // Calculate user statistics
