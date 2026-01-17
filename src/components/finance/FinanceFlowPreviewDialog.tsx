@@ -54,6 +54,9 @@ interface PendingTransaction {
   is_processed: boolean;
   is_duplicate: boolean;
   learned_category?: string | null;
+  needs_review?: boolean;
+  review_reason?: string | null;
+  dedupe_hash?: string | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw_extracted_data?: any;
 }
@@ -154,6 +157,7 @@ const FinanceFlowPreviewDialog = ({
       .eq("user_id", user.id)
       .eq("is_processed", false)
       .eq("is_duplicate", false)
+      .order("needs_review", { ascending: false }) // Show needs_review first
       .order("transaction_date", { ascending: false });
 
     if (error) {
@@ -220,9 +224,13 @@ const FinanceFlowPreviewDialog = ({
 
       setSyncPhase("complete");
       
+      const reviewMsg = result.needsReview > 0 
+        ? ` (${result.needsReview} need review)` 
+        : '';
+      
       toast({
         title: "Sync Complete",
-        description: `Found ${result.processed} transactions.`,
+        description: `Found ${result.processed} transactions${reviewMsg}.`,
       });
 
       fetchPendingTransactions();
@@ -643,13 +651,19 @@ const FinanceFlowPreviewDialog = ({
                           onClick={(e) => e.stopPropagation()}
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-sm font-medium text-foreground truncate">
                               {transaction.merchant_name || "Unknown Merchant"}
                             </p>
                             <Badge variant="outline" className="text-[10px] bg-primary/10">
                               {getCategoryFromMerchant(transaction.merchant_name, transaction.id)}
                             </Badge>
+                            {transaction.needs_review && (
+                              <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/30">
+                                <AlertTriangle className="w-2.5 h-2.5 mr-1" />
+                                Review
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
@@ -663,7 +677,12 @@ const FinanceFlowPreviewDialog = ({
                               </span>
                             )}
                           </div>
-                          {transaction.email_subject && (
+                          {transaction.review_reason && (
+                            <p className="text-[10px] text-amber-600 mt-1">
+                              ⚠️ {transaction.review_reason}
+                            </p>
+                          )}
+                          {transaction.email_subject && !transaction.review_reason && (
                             <p className="text-[10px] text-muted-foreground mt-1 truncate max-w-[280px]">
                               {transaction.email_subject}
                             </p>

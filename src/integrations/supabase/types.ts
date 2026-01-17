@@ -74,6 +74,7 @@ export type Database = {
           confidence_score: number | null
           created_at: string
           currency: string | null
+          dedupe_hash: string | null
           duplicate_of_id: string | null
           email_snippet: string | null
           email_subject: string | null
@@ -85,8 +86,10 @@ export type Database = {
           learned_category: string | null
           linked_expense_id: string | null
           merchant_name: string | null
+          needs_review: boolean | null
           payment_mode: string | null
           raw_extracted_data: Json | null
+          review_reason: string | null
           source_platform: string | null
           transaction_date: string
           updated_at: string
@@ -98,6 +101,7 @@ export type Database = {
           confidence_score?: number | null
           created_at?: string
           currency?: string | null
+          dedupe_hash?: string | null
           duplicate_of_id?: string | null
           email_snippet?: string | null
           email_subject?: string | null
@@ -109,8 +113,10 @@ export type Database = {
           learned_category?: string | null
           linked_expense_id?: string | null
           merchant_name?: string | null
+          needs_review?: boolean | null
           payment_mode?: string | null
           raw_extracted_data?: Json | null
+          review_reason?: string | null
           source_platform?: string | null
           transaction_date: string
           updated_at?: string
@@ -122,6 +128,7 @@ export type Database = {
           confidence_score?: number | null
           created_at?: string
           currency?: string | null
+          dedupe_hash?: string | null
           duplicate_of_id?: string | null
           email_snippet?: string | null
           email_subject?: string | null
@@ -133,8 +140,10 @@ export type Database = {
           learned_category?: string | null
           linked_expense_id?: string | null
           merchant_name?: string | null
+          needs_review?: boolean | null
           payment_mode?: string | null
           raw_extracted_data?: Json | null
+          review_reason?: string | null
           source_platform?: string | null
           transaction_date?: string
           updated_at?: string
