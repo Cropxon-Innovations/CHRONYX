@@ -23,6 +23,7 @@ import {
   Download,
   ExternalLink,
   Laptop,
+  Calculator,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -87,6 +88,7 @@ const features = [
   { icon: CheckSquare, label: "Tasks", desc: "Daily todos & planning" },
   { icon: BookOpen, label: "Study", desc: "Syllabus & learning" },
   { icon: Wallet, label: "Finance", desc: "Budget & expenses" },
+  { icon: Calculator, label: "Tax", desc: "Smart tax calculator" },
   { icon: Heart, label: "Insurance", desc: "Policy management" },
   { icon: Image, label: "Memory", desc: "Private photo vault" },
   { icon: Clock, label: "Lifespan", desc: "Time visualization" },

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Check, Sparkles, Crown, Zap, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Sparkles, Crown, Zap, Loader2, Calculator, Bot } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useRazorpay } from "@/hooks/useRazorpay";
@@ -9,6 +9,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Pricing = () => {
   const { initiatePayment, isLoading } = useRazorpay();
@@ -110,9 +111,10 @@ const Pricing = () => {
         "Expense & income tracking",
         "Loan EMI management",
         "Insurance policy tracking",
+        "Basic tax calculator",
+        "3 TAXYN messages/day",
         "2GB memory storage",
         "Basic reports & insights",
-        "Data export (JSON/PDF)",
         "Email support",
       ],
       cta: "Get Started Free",
@@ -131,11 +133,12 @@ const Pricing = () => {
         "Everything in Free, plus:",
         "10GB memory storage",
         "Advanced financial analytics",
-        "Tax savings calculator",
-        "CA-free tax insights",
+        "Unlimited tax calculations",
+        "Unlimited TAXYN AI assistant",
+        "Regime comparison & optimization",
+        "Tax PDF reports",
         "FinanceFlow AI (Gmail import)",
         "Priority reminders",
-        "Advanced reports",
         "Priority email support",
       ],
       cta: currentPlan === "pro" ? "Current Plan" : "Upgrade to Pro",
@@ -153,9 +156,10 @@ const Pricing = () => {
         "Everything in Pro, plus:",
         "100GB memory storage",
         "Advanced AI insights",
+        "Multi-year tax history",
+        "CA consultation credits",
         "Family profiles",
         "Export all data formats",
-        "Advanced forecasts",
         "Early access to all features",
         "Private Discord access",
         "Direct founder support",
@@ -163,6 +167,22 @@ const Pricing = () => {
       cta: currentPlan === "premium" ? "Current Plan" : "Get Premium",
     },
   ];
+
+  // Tax-only addon pricing section
+  const taxAddon = {
+    name: "Tax Pro",
+    price: "₹49",
+    period: "/month",
+    description: "Just need tax features? Get unlimited tax calculations and TAXYN AI.",
+    icon: Calculator,
+    features: [
+      "Unlimited tax calculations",
+      "Unlimited TAXYN AI assistant", 
+      "Old vs New regime comparison",
+      "Deduction optimizer",
+      "Tax PDF reports",
+    ],
+  };
 
   return (
     <motion.main
@@ -278,6 +298,43 @@ const Pricing = () => {
             );
           })}
         </div>
+
+        {/* Tax-Only Addon Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-12"
+        >
+          <Card className="border-violet-500/30 bg-gradient-to-r from-violet-500/5 to-purple-500/5">
+            <CardHeader className="text-center pb-2">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+              </div>
+              <CardTitle className="text-lg font-medium">Just need Tax features?</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Get unlimited access to tax calculations and TAXYN AI for just ₹49/month
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap justify-center gap-3 mb-4">
+                {taxAddon.features.map((feature, i) => (
+                  <Badge key={i} variant="secondary" className="gap-1 py-1">
+                    <Check className="w-3 h-3 text-violet-500" />
+                    {feature}
+                  </Badge>
+                ))}
+              </div>
+              <div className="text-center">
+                <span className="text-2xl font-bold text-foreground">₹49</span>
+                <span className="text-muted-foreground">/month</span>
+                <p className="text-xs text-muted-foreground mt-1">Coming soon • Be the first to know</p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         <div className="mt-16 text-center">
           <h3 className="text-lg font-medium text-foreground mb-3">Frequently Asked Questions</h3>

@@ -22,7 +22,8 @@ import {
   Monitor,
   Apple,
   WifiOff,
-  RefreshCw
+  RefreshCw,
+  Calculator
 } from "lucide-react";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import chronyxPhilosophy from "@/assets/chronyx-philosophy.png";
@@ -108,6 +109,7 @@ const Landing = () => {
     { icon: CheckSquare, label: "Tasks", desc: "Record daily todos", sketch: "M" },
     { icon: BookOpen, label: "Study", desc: "Hold your syllabus", sketch: "◇" },
     { icon: Wallet, label: "Finance", desc: "Budget & loans", sketch: "△" },
+    { icon: Calculator, label: "Tax", desc: "Smart tax calculator", sketch: "⬡" },
     { icon: Heart, label: "Insurance", desc: "Policy records", sketch: "○" },
     { icon: Image, label: "Memory", desc: "Private photo vault", sketch: "□" },
     { icon: Clock, label: "Time", desc: "Lifespan view", sketch: "◎" },
@@ -610,6 +612,8 @@ const Landing = () => {
                     <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
                       <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />Unlimited tasks & todos</li>
                       <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />Financial tracking</li>
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />Basic tax calculator</li>
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />3 TAXYN messages/day</li>
                       <li className="flex items-center gap-1.5"><Check className="w-3 h-3" />2GB memory storage</li>
                     </ul>
                   </div>
@@ -621,11 +625,12 @@ const Landing = () => {
                     <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-primary text-primary-foreground text-[10px] rounded-full">Popular</div>
                     <Sparkles className="w-6 h-6 text-primary mb-2" />
                     <h3 className="text-lg font-medium text-foreground">Pro</h3>
-                    <p className="text-2xl font-light text-foreground mt-1">₹99<span className="text-sm text-muted-foreground">/month</span></p>
+                    <p className="text-2xl font-light text-foreground mt-1">₹199<span className="text-sm text-muted-foreground">/month</span></p>
                     <p className="text-xs text-muted-foreground mt-2">Enhanced features</p>
                     <ul className="mt-4 space-y-1.5 text-xs text-muted-foreground">
                       <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />10GB storage</li>
-                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />Tax savings insights</li>
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />Unlimited TAXYN AI</li>
+                      <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />Tax comparison & PDFs</li>
                       <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-primary" />Advanced reports</li>
                     </ul>
                   </div>

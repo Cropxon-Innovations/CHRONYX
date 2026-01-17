@@ -1,5 +1,6 @@
 import { TaxWizard } from "@/components/tax/TaxWizard";
 import { TaxLegalDisclaimer } from "@/components/tax/TaxLegalDisclaimer";
+import { FloatingTaxynBot } from "@/components/tax/FloatingTaxynBot";
 import { Badge } from "@/components/ui/badge";
 import { FlaskConical, Calendar } from "lucide-react";
 
@@ -42,6 +43,9 @@ const Tax = () => {
 
       {/* Legal Disclaimer */}
       <TaxLegalDisclaimer />
+
+      {/* Floating TAXYN Bot - Available for all users with freemium limits */}
+      <FloatingTaxynBot />
     </div>
   );
 };
