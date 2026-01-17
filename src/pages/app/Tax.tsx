@@ -1,6 +1,7 @@
 import { TaxWizard } from "@/components/tax/TaxWizard";
 import { TaxLegalDisclaimer } from "@/components/tax/TaxLegalDisclaimer";
 import { FloatingTaxynBot } from "@/components/tax/FloatingTaxynBot";
+import { TaxEducationDialog } from "@/components/tax/TaxEducationDialog";
 import { Badge } from "@/components/ui/badge";
 import { FlaskConical, Calendar } from "lucide-react";
 
@@ -31,12 +32,15 @@ const Tax = () => {
           </p>
         </div>
         
-        {/* Right side - TAXYN Bot button + FY Badge */}
-        <div className="flex items-center gap-3">
-          {/* TAXYN Bot inline button - will open as draggable popup */}
+        {/* Right side - Actions */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          {/* Tax Education Button */}
+          <TaxEducationDialog />
+          
+          {/* TAXYN Bot inline button */}
           <FloatingTaxynBot />
           
-          <Badge variant="secondary" className="gap-1">
+          <Badge variant="secondary" className="gap-1 hidden sm:flex">
             <Calendar className="w-3 h-3" />
             {fyLabel}
           </Badge>
