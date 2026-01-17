@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import MetricCard from "@/components/dashboard/MetricCard";
 import LifespanBar from "@/components/dashboard/LifespanBar";
 import TrendChart from "@/components/dashboard/TrendChart";
@@ -27,11 +28,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/ThemeProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { showOnboarding, isLoading: onboardingLoading, completeOnboarding } = useOnboarding();
+  
+  // State for EMI and Insurance metrics
+  const [emiDueAmount, setEmiDueAmount] = useState<number | null>(null);
+  const [activePoliciesCount, setActivePoliciesCount] = useState<number | null>(null);
   
   // Use React Query with stale-while-revalidate pattern
   const { 
@@ -40,6 +47,55 @@ const Dashboard = () => {
     isRefreshing, 
     refresh 
   } = useDashboardData();
+
+  // Fetch EMI Due and Active Policies for metric cards
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      if (!user?.id) return;
+
+      try {
+        // Fetch active loans and their EMI schedules for this month
+        const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd');
+        const monthEnd = format(endOfMonth(new Date()), 'yyyy-MM-dd');
+
+        const { data: loans } = await supabase
+          .from("loans")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("status", "active");
+
+        if (loans && loans.length > 0) {
+          const loanIds = loans.map(l => l.id);
+          const { data: emis } = await supabase
+            .from("emi_schedule")
+            .select("emi_amount, payment_status")
+            .in("loan_id", loanIds)
+            .gte("emi_date", monthStart)
+            .lte("emi_date", monthEnd);
+
+          const emiDue = emis
+            ?.filter(e => e.payment_status !== 'Paid')
+            .reduce((sum, e) => sum + Number(e.emi_amount), 0) || 0;
+          setEmiDueAmount(emiDue);
+        } else {
+          setEmiDueAmount(0);
+        }
+
+        // Fetch active insurance policies count
+        const { data: policies, count } = await supabase
+          .from("insurances")
+          .select("id", { count: 'exact' })
+          .eq("user_id", user.id)
+          .eq("status", "active");
+
+        setActivePoliciesCount(count || 0);
+      } catch (error) {
+        console.error("Error fetching dashboard metrics:", error);
+      }
+    };
+
+    fetchMetrics();
+  }, [user?.id]);
 
   // Extract data with defaults
   const todosStats = data?.todosStats ?? { completed: 0, total: 0 };
@@ -168,8 +224,14 @@ const Dashboard = () => {
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard value={completionRate} suffix="%" label="Todo Completion" />
         <MetricCard value={studyMinutes} suffix="min" label="Study Today" />
-        <MetricCard value="—" label="EMI Due" />
-        <MetricCard value="—" label="Active Policies" />
+        <MetricCard 
+          value={emiDueAmount !== null ? `₹${(emiDueAmount / 1000).toFixed(0)}K` : "—"} 
+          label="EMI Due" 
+        />
+        <MetricCard 
+          value={activePoliciesCount !== null ? activePoliciesCount : "—"} 
+          label="Active Policies" 
+        />
       </section>
 
       {/* Days Remaining Highlight */}
