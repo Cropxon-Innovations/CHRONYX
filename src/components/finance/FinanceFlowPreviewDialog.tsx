@@ -324,7 +324,7 @@ const FinanceFlowPreviewDialog = ({
         notes: `Auto-imported: ${transaction.email_subject || transaction.merchant_name || "Gmail transaction"}`,
         is_auto_generated: true,
         source_type: "gmail",
-        source_id: transaction.gmail_message_id,
+        // source_id is UUID type - don't pass gmail_message_id (string), use gmail_import_id instead
         gmail_import_id: transaction.id,
         confidence_score: transaction.confidence_score,
         merchant_name: transaction.merchant_name,
@@ -412,7 +412,7 @@ const FinanceFlowPreviewDialog = ({
         notes: `Auto-imported: ${t.email_subject || t.merchant_name || "Gmail transaction"}`,
         is_auto_generated: true,
         source_type: "gmail",
-        source_id: t.gmail_message_id,
+        // source_id is UUID type - don't pass gmail_message_id (string), use gmail_import_id instead
         gmail_import_id: t.id,
         confidence_score: t.confidence_score,
         merchant_name: t.merchant_name,
