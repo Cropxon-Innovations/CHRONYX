@@ -150,15 +150,205 @@ const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
   </svg>
 );
 
-// Animated Live Preview Component - Apple style
+// Feature cards data for stacked animation
+const featureCards = [
+  {
+    id: "dashboard",
+    title: "Dashboard",
+    subtitle: "Your life at a glance",
+    icon: TrendingUp,
+    color: "from-blue-500 to-cyan-500",
+    bgColor: "bg-blue-500/10",
+    borderColor: "border-blue-500/30",
+    content: (
+      <div className="space-y-3">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Income</p>
+            <p className="text-lg font-semibold text-green-600">₹12.5L</p>
+          </div>
+          <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Savings</p>
+            <p className="text-lg font-semibold text-blue-600">₹3.2L</p>
+          </div>
+          <div className="p-3 bg-violet-500/10 rounded-lg border border-violet-500/20">
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Tasks</p>
+            <p className="text-lg font-semibold text-violet-600">12/15</p>
+          </div>
+        </div>
+        <div className="h-16 bg-gradient-to-r from-blue-500/5 to-cyan-500/5 rounded-lg flex items-center justify-center">
+          <div className="flex items-end gap-1 h-10">
+            {[40, 65, 45, 80, 55, 70, 60].map((h, i) => (
+              <motion.div
+                key={i}
+                className="w-3 bg-gradient-to-t from-blue-500 to-cyan-400 rounded-sm"
+                initial={{ height: 0 }}
+                animate={{ height: `${h}%` }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "tasks",
+    title: "Tasks",
+    subtitle: "Stay productive",
+    icon: CheckSquare,
+    color: "from-emerald-500 to-green-500",
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-500/30",
+    content: (
+      <div className="space-y-2">
+        {["Complete tax filing ✓", "Review insurance policy", "Update monthly budget"].map((task, i) => (
+          <motion.div
+            key={task}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.15 }}
+            className={`flex items-center gap-3 p-2.5 rounded-lg ${i === 0 ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-muted/20"}`}
+          >
+            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${i === 0 ? "bg-emerald-500" : "border-2 border-muted-foreground/30"}`}>
+              {i === 0 && <Check className="w-2.5 h-2.5 text-white" />}
+            </div>
+            <span className={`text-xs ${i === 0 ? "line-through text-muted-foreground" : "text-foreground"}`}>{task}</span>
+          </motion.div>
+        ))}
+      </div>
+    ),
+  },
+  {
+    id: "finance",
+    title: "Finance",
+    subtitle: "Track everything",
+    icon: Wallet,
+    color: "from-amber-500 to-orange-500",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/30",
+    content: (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-2.5 bg-muted/20 rounded-lg">
+          <div className="flex items-center gap-2">
+            <PiggyBank className="w-4 h-4 text-green-500" />
+            <span className="text-xs">Emergency Fund</span>
+          </div>
+          <span className="text-xs font-semibold">₹2.5L</span>
+        </div>
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-[10px]">
+            <span className="text-muted-foreground">Monthly Budget</span>
+            <span className="text-amber-500 font-medium">68% used</span>
+          </div>
+          <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full"
+              initial={{ width: "0%" }}
+              animate={{ width: "68%" }}
+              transition={{ duration: 1, delay: 0.3 }}
+            />
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "tax",
+    title: "Tax Calculator",
+    subtitle: "Smart tax planning",
+    icon: Calculator,
+    color: "from-violet-500 to-purple-500",
+    bgColor: "bg-violet-500/10",
+    borderColor: "border-violet-500/30",
+    content: (
+      <div className="space-y-3">
+        <div className="p-3 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-lg border border-violet-500/20">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wide">Tax Payable</span>
+            <span className="text-[8px] px-1.5 py-0.5 bg-green-500/20 text-green-600 rounded-full font-medium">New Regime</span>
+          </div>
+          <p className="text-xl font-bold text-violet-600">₹52,000</p>
+        </div>
+        <div className="flex gap-2">
+          {[{ l: "80C", v: "₹1.5L" }, { l: "80D", v: "₹25K" }, { l: "HRA", v: "₹1.2L" }].map((d) => (
+            <div key={d.l} className="flex-1 p-1.5 bg-muted/20 rounded text-center">
+              <p className="text-[8px] text-muted-foreground">{d.l}</p>
+              <p className="text-[10px] font-semibold">{d.v}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "insurance",
+    title: "Insurance",
+    subtitle: "Policy tracker",
+    icon: Heart,
+    color: "from-rose-500 to-pink-500",
+    bgColor: "bg-rose-500/10",
+    borderColor: "border-rose-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between p-2 bg-rose-500/10 rounded-lg border border-rose-500/20">
+          <div className="flex items-center gap-2">
+            <Heart className="w-3 h-3 text-rose-500" />
+            <span className="text-xs font-medium">Health Insurance</span>
+          </div>
+          <span className="text-[9px] px-1.5 py-0.5 bg-green-500/20 text-green-600 rounded-full">Active</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="p-2 bg-muted/20 rounded text-center">
+            <p className="text-[8px] text-muted-foreground">Sum Assured</p>
+            <p className="text-xs font-semibold">₹10L</p>
+          </div>
+          <div className="p-2 bg-muted/20 rounded text-center">
+            <p className="text-[8px] text-muted-foreground">Premium</p>
+            <p className="text-xs font-semibold">₹12K/yr</p>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "memory",
+    title: "Memory Vault",
+    subtitle: "Private storage",
+    icon: Image,
+    color: "from-indigo-500 to-blue-500",
+    bgColor: "bg-indigo-500/10",
+    borderColor: "border-indigo-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="grid grid-cols-4 gap-1">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <motion.div
+              key={i}
+              className="aspect-square rounded bg-gradient-to-br from-indigo-500/20 to-blue-500/20 border border-indigo-500/10"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.05 }}
+            />
+          ))}
+        </div>
+        <div className="flex justify-between text-[10px] text-muted-foreground">
+          <span>324 memories</span>
+          <span className="text-indigo-500">2.4 GB used</span>
+        </div>
+      </div>
+    ),
+  },
+];
+
+// Animated Live Preview Component - Stacked Cards Style
 const AnimatedDashboardPreview = () => {
-  const [activeTab, setActiveTab] = useState(0);
-  const tabs = ["Dashboard", "Tasks", "Finance", "Tax"];
+  const [activeIndex, setActiveIndex] = useState(0);
   
   useEffect(() => {
     const interval = setInterval(() => {
-      setActiveTab((prev) => (prev + 1) % tabs.length);
-    }, 3500);
+      setActiveIndex((prev) => (prev + 1) % featureCards.length);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -166,166 +356,138 @@ const AnimatedDashboardPreview = () => {
     <motion.div
       initial={{ opacity: 0, y: 40, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: 0.6, duration: 1.2, ease: [0.25, 0.4, 0.25, 1] }}
-      className="relative"
+      transition={{ delay: 0.6, duration: 1.2, ease: "easeOut" }}
+      className="relative w-full max-w-md mx-auto"
     >
-      {/* Glow effect - Apple style */}
-      <div className="absolute -inset-8 bg-gradient-to-br from-primary/5 via-transparent to-violet-500/5 rounded-3xl blur-3xl" />
-      <div className="absolute -inset-1 bg-gradient-to-b from-primary/10 to-transparent rounded-2xl blur-xl opacity-60" />
+      {/* Ambient glow */}
+      <div className="absolute -inset-10 bg-gradient-to-br from-primary/10 via-transparent to-violet-500/10 rounded-3xl blur-3xl animate-pulse" />
       
-      {/* Browser frame */}
-      <div className="relative bg-card/80 backdrop-blur-xl border border-border/40 rounded-2xl shadow-2xl overflow-hidden">
-        {/* Browser header */}
-        <div className="flex items-center gap-2 px-4 py-3 bg-muted/30 border-b border-border/20">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-400/80" />
-            <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
-            <div className="w-3 h-3 rounded-full bg-green-400/80" />
-          </div>
-          <div className="flex-1 mx-4">
-            <div className="flex items-center gap-2 px-4 py-1.5 bg-background/60 rounded-lg text-xs text-muted-foreground">
-              <Lock className="w-3 h-3 text-green-500" />
-              <span className="font-light tracking-wide">chronyx.app/dashboard</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* App content */}
-        <div className="p-5 min-h-[300px] bg-background/70">
-          {/* Tab navigation */}
-          <div className="flex gap-1 mb-5 bg-muted/20 p-1 rounded-xl w-fit">
-            {tabs.map((tab, i) => (
-              <motion.button
-                key={tab}
-                className={`px-4 py-2 text-xs font-medium rounded-lg transition-all ${
-                  activeTab === i
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                animate={{ scale: activeTab === i ? 1 : 0.98 }}
-              >
-                {tab}
-              </motion.button>
-            ))}
-          </div>
+      {/* Stacked cards container */}
+      <div className="relative h-[420px] w-full perspective-1000">
+        {featureCards.map((card, index) => {
+          const isActive = index === activeIndex;
+          const isPrev = index === (activeIndex - 1 + featureCards.length) % featureCards.length;
+          const isNext = index === (activeIndex + 1) % featureCards.length;
+          const isNext2 = index === (activeIndex + 2) % featureCards.length;
           
-          {/* Animated content */}
-          <AnimatePresence mode="wait">
+          let zIndex = 0;
+          let y = 100;
+          let scale = 0.85;
+          let opacity = 0;
+          let rotateX = 0;
+          
+          if (isActive) {
+            zIndex = 50;
+            y = 0;
+            scale = 1;
+            opacity = 1;
+            rotateX = 0;
+          } else if (isNext) {
+            zIndex = 40;
+            y = 30;
+            scale = 0.95;
+            opacity = 0.7;
+            rotateX = 5;
+          } else if (isNext2) {
+            zIndex = 30;
+            y = 55;
+            scale = 0.9;
+            opacity = 0.4;
+            rotateX = 8;
+          } else if (isPrev) {
+            zIndex = 20;
+            y = -50;
+            scale = 0.9;
+            opacity = 0;
+            rotateX = -10;
+          }
+          
+          const Icon = card.icon;
+          
+          return (
             <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.4, ease: [0.25, 0.4, 0.25, 1] }}
-              className="space-y-4"
+              key={card.id}
+              className={`absolute inset-0 w-full`}
+              animate={{
+                zIndex,
+                y,
+                scale,
+                opacity,
+                rotateX,
+              }}
+              transition={{
+                duration: 0.6,
+                ease: [0.32, 0.72, 0, 1],
+              }}
+              style={{
+                transformStyle: "preserve-3d",
+                transformOrigin: "center bottom",
+              }}
             >
-              {activeTab === 0 && (
-                <>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/20">
-                      <p className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">Income</p>
-                      <p className="text-2xl font-light text-green-600 mt-1">₹12.5L</p>
-                    </div>
-                    <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                      <p className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">Savings</p>
-                      <p className="text-2xl font-light text-blue-600 mt-1">₹3.2L</p>
-                    </div>
-                    <div className="p-4 bg-violet-500/10 rounded-xl border border-violet-500/20">
-                      <p className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">Tasks</p>
-                      <p className="text-2xl font-light text-violet-600 mt-1">12/15</p>
-                    </div>
+              <div className={`w-full h-full bg-card/95 backdrop-blur-xl border ${card.borderColor} rounded-2xl shadow-2xl overflow-hidden`}>
+                {/* Card header */}
+                <div className={`flex items-center gap-3 px-5 py-4 bg-gradient-to-r ${card.color} bg-opacity-10`}>
+                  <div className={`w-10 h-10 rounded-xl ${card.bgColor} flex items-center justify-center`}>
+                    <Icon className="w-5 h-5 text-foreground" />
                   </div>
-                  <div className="h-28 bg-gradient-to-r from-primary/5 to-violet-500/5 rounded-xl border border-border/20 flex items-center justify-center">
-                    <TrendingUp className="w-10 h-10 text-primary/20" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">{card.title}</h3>
+                    <p className="text-[10px] text-muted-foreground">{card.subtitle}</p>
                   </div>
-                </>
-              )}
-              
-              {activeTab === 1 && (
-                <div className="space-y-3">
-                  {["Complete tax filing", "Review insurance", "Update budget"].map((task, i) => (
-                    <motion.div
-                      key={task}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className="flex items-center gap-4 p-4 bg-muted/20 rounded-xl border border-border/10"
-                    >
-                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${i === 0 ? "bg-primary border-primary" : "border-muted-foreground/30"}`}>
-                        {i === 0 && <Check className="w-3 h-3 text-white" />}
-                      </div>
-                      <span className={`text-sm font-light ${i === 0 ? "line-through text-muted-foreground" : ""}`}>{task}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-              
-              {activeTab === 2 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <PiggyBank className="w-5 h-5 text-green-500" />
-                      <span className="text-sm font-light">Emergency Fund</span>
-                    </div>
-                    <span className="text-sm font-medium">₹2.5L</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-muted/20 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <Wallet className="w-5 h-5 text-blue-500" />
-                      <span className="text-sm font-light">Monthly Budget</span>
-                    </div>
-                    <span className="text-sm font-medium">₹45K</span>
-                  </div>
-                  <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-green-500 to-emerald-400 rounded-full"
-                      initial={{ width: "0%" }}
-                      animate={{ width: "68%" }}
-                      transition={{ duration: 1.2, delay: 0.3 }}
-                    />
+                  <div className="ml-auto flex gap-1">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                   </div>
                 </div>
-              )}
-              
-              {activeTab === 3 && (
-                <div className="space-y-4">
-                  <div className="p-5 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-xl border border-violet-500/20">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-xs text-muted-foreground font-medium tracking-wide uppercase">Tax Payable (New Regime)</span>
-                      <span className="text-[10px] px-2 py-1 bg-green-500/20 text-green-600 rounded-full font-medium">Optimal</span>
+                
+                {/* Card content */}
+                <div className="p-5">
+                  {card.content}
+                </div>
+                
+                {/* Card footer */}
+                <div className="absolute bottom-0 left-0 right-0 px-5 py-3 bg-muted/20 border-t border-border/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      {featureCards.map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className={`rounded-full transition-all ${
+                            i === activeIndex 
+                              ? `w-4 h-1.5 bg-gradient-to-r ${card.color}` 
+                              : "w-1.5 h-1.5 bg-muted-foreground/30"
+                          }`}
+                          animate={{ 
+                            width: i === activeIndex ? 16 : 6,
+                          }}
+                        />
+                      ))}
                     </div>
-                    <p className="text-3xl font-light text-violet-600">₹52,000</p>
-                  </div>
-                  <div className="flex gap-3">
-                    {[
-                      { label: "80C", value: "₹1.5L" },
-                      { label: "80D", value: "₹25K" },
-                      { label: "NPS", value: "₹50K" },
-                    ].map((item) => (
-                      <div key={item.label} className="flex-1 p-3 bg-muted/20 rounded-lg text-center">
-                        <p className="text-[9px] text-muted-foreground font-medium tracking-wide uppercase">{item.label}</p>
-                        <p className="text-sm font-medium mt-1">{item.value}</p>
-                      </div>
-                    ))}
+                    <span className="text-[10px] text-muted-foreground">
+                      {activeIndex + 1} / {featureCards.length}
+                    </span>
                   </div>
                 </div>
-              )}
+              </div>
             </motion.div>
-          </AnimatePresence>
-        </div>
-        
-        {/* Tab indicator */}
-        <div className="flex justify-center gap-2 py-4 bg-muted/10 border-t border-border/10">
-          {tabs.map((_, i) => (
-            <motion.div
-              key={i}
-              className={`h-1.5 rounded-full transition-all ${
-                activeTab === i ? "bg-primary w-6" : "bg-muted-foreground/20 w-1.5"
-              }`}
-              animate={{ width: activeTab === i ? 24 : 6 }}
-            />
-          ))}
-        </div>
+          );
+        })}
+      </div>
+      
+      {/* Navigation dots */}
+      <div className="flex justify-center gap-2 mt-6">
+        {featureCards.map((card, i) => (
+          <motion.button
+            key={card.id}
+            onClick={() => setActiveIndex(i)}
+            className={`rounded-full transition-all ${
+              i === activeIndex 
+                ? `w-8 h-2 bg-gradient-to-r ${card.color}` 
+                : "w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+            }`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          />
+        ))}
       </div>
     </motion.div>
   );
