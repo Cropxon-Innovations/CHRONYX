@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { downloadTaxPDF } from "./TaxPDFGenerator";
 import {
   Calendar,
   ArrowRight,
@@ -36,6 +37,7 @@ import {
   GraduationCap,
   PiggyBank,
   Target,
+  RefreshCw,
 } from "lucide-react";
 
 interface DiscoveredIncome {
@@ -886,135 +888,380 @@ export function TaxWizard() {
 
           {/* Step 6: Final Preview */}
           {state.step === 6 && state.calculation && (
-            <Card>
-              <CardHeader className="bg-gradient-to-r from-primary/10 to-purple-500/10">
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  Tax Preview Dossier
-                </CardTitle>
-                <CardDescription>
-                  Complete tax summary for {state.financialYear.replace("_", " ").replace("FY", "FY ")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6 pt-6">
-                {/* Summary Cards */}
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-center">
-                    <p className="text-sm text-muted-foreground">Gross Income</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(state.calculation.gross_total_income)}
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30 text-center">
-                    <p className="text-sm text-muted-foreground">Total Deductions</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {formatCurrency(state.calculation.total_deductions)}
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30 text-center">
-                    <p className="text-sm text-muted-foreground">Tax Payable</p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {formatCurrency(state.calculation.total_tax_liability)}
-                    </p>
-                  </div>
-                </div>
+            <div className="space-y-4">
+              {/* Regime Comparison Card */}
+              <Card className="border-2 border-primary/20">
+                <CardHeader className="bg-gradient-to-r from-violet-500/10 to-purple-500/10">
+                  <CardTitle className="flex items-center gap-2">
+                    <Scale className="w-5 h-5 text-primary" />
+                    Regime Comparison
+                  </CardTitle>
+                  <CardDescription>
+                    Side-by-side comparison to help you choose the optimal regime
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {/* Current Regime */}
+                    <div
+                      className={`p-4 rounded-xl border-2 transition-all ${
+                        state.calculation.is_optimal
+                          ? "border-green-500 bg-green-500/5 ring-2 ring-green-500/20"
+                          : "border-border"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <Badge className={state.calculation.is_optimal ? "bg-green-500" : "bg-muted"}>
+                          {state.regime === "new" ? "New Regime" : "Old Regime"}
+                        </Badge>
+                        {state.calculation.is_optimal && (
+                          <Badge variant="outline" className="text-green-600 border-green-500 gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Recommended
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Tax Payable</p>
+                          <p className="text-2xl font-bold">{formatCurrency(state.calculation.total_tax_liability)}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Standard Deduction</p>
+                            <p className="font-medium">{state.regime === "new" ? "₹75,000" : "₹50,000"}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Effective Rate</p>
+                            <p className="font-medium">{state.calculation.effective_rate}%</p>
+                          </div>
+                        </div>
+                        <div className="pt-2 border-t">
+                          <p className="text-xs text-muted-foreground mb-1">Key Features:</p>
+                          <ul className="text-xs space-y-1">
+                            {state.regime === "new" ? (
+                              <>
+                                <li>• Lower base tax rates</li>
+                                <li>• Simplified - no deduction tracking</li>
+                                <li>• ₹12L income = Zero tax (with rebate)</li>
+                              </>
+                            ) : (
+                              <>
+                                <li>• All deductions available (80C, 80D, etc.)</li>
+                                <li>• HRA exemption allowed</li>
+                                <li>• Home loan interest u/s 24(b)</li>
+                              </>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
 
-                {/* Slab Breakdown */}
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-muted/50 p-3 border-b">
-                    <p className="font-medium">Tax Slab Breakdown</p>
+                    {/* Alternate Regime */}
+                    <div
+                      className={`p-4 rounded-xl border-2 transition-all ${
+                        !state.calculation.is_optimal
+                          ? "border-green-500 bg-green-500/5 ring-2 ring-green-500/20"
+                          : "border-border"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <Badge className={!state.calculation.is_optimal ? "bg-green-500" : "bg-muted"}>
+                          {state.regime === "new" ? "Old Regime" : "New Regime"}
+                        </Badge>
+                        {!state.calculation.is_optimal && (
+                          <Badge variant="outline" className="text-green-600 border-green-500 gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Recommended
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Tax Payable</p>
+                          <p className="text-2xl font-bold">{formatCurrency(state.calculation.alternate_regime_tax)}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Standard Deduction</p>
+                            <p className="font-medium">{state.regime !== "new" ? "₹75,000" : "₹50,000"}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Potential Savings</p>
+                            <p className="font-medium text-green-600">
+                              {!state.calculation.is_optimal ? formatCurrency(Math.abs(state.calculation.savings_vs_alternate)) : "-"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="pt-2 border-t">
+                          <p className="text-xs text-muted-foreground mb-1">Key Features:</p>
+                          <ul className="text-xs space-y-1">
+                            {state.regime !== "new" ? (
+                              <>
+                                <li>• Lower base tax rates</li>
+                                <li>• Simplified - no deduction tracking</li>
+                                <li>• ₹12L income = Zero tax (with rebate)</li>
+                              </>
+                            ) : (
+                              <>
+                                <li>• All deductions available (80C, 80D, etc.)</li>
+                                <li>• HRA exemption allowed</li>
+                                <li>• Home loan interest u/s 24(b)</li>
+                              </>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-3">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-muted-foreground">
-                          <th className="text-left py-2">Slab</th>
-                          <th className="text-right py-2">Rate</th>
-                          <th className="text-right py-2">Taxable</th>
-                          <th className="text-right py-2">Tax</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {state.calculation.slab_breakdown.map((slab: any, i: number) => (
-                          <tr key={i} className="border-t">
-                            <td className="py-2">
-                              {formatCurrency(slab.min_amount)} -{" "}
-                              {slab.max_amount ? formatCurrency(slab.max_amount) : "Above"}
-                            </td>
-                            <td className="text-right">{slab.rate_percentage}%</td>
-                            <td className="text-right">{formatCurrency(slab.taxable_in_slab)}</td>
-                            <td className="text-right font-medium">{formatCurrency(slab.tax_in_slab)}</td>
+
+                  {/* Savings Highlight */}
+                  {Math.abs(state.calculation.savings_vs_alternate) > 0 && (
+                    <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                          <TrendingUp className="w-6 h-6 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            You save by choosing{" "}
+                            <span className="font-semibold text-foreground">
+                              {state.calculation.is_optimal
+                                ? (state.regime === "new" ? "New" : "Old")
+                                : (state.regime === "new" ? "Old" : "New")}{" "}
+                              Regime
+                            </span>
+                          </p>
+                          <p className="text-2xl font-bold text-green-600">
+                            {formatCurrency(Math.abs(state.calculation.savings_vs_alternate))}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Tax Summary Card */}
+              <Card>
+                <CardHeader className="bg-gradient-to-r from-primary/10 to-purple-500/10">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" />
+                    Tax Computation Summary
+                  </CardTitle>
+                  <CardDescription>
+                    Complete tax calculation for {state.financialYear.replace("_", " ").replace("FY", "FY ")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6 pt-6">
+                  {/* Summary Cards */}
+                  <div className="grid gap-4 sm:grid-cols-4">
+                    <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-center">
+                      <p className="text-xs text-muted-foreground">Gross Income</p>
+                      <p className="text-xl font-bold text-green-600">
+                        {formatCurrency(state.calculation.gross_total_income)}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30 text-center">
+                      <p className="text-xs text-muted-foreground">Deductions</p>
+                      <p className="text-xl font-bold text-blue-600">
+                        {formatCurrency(state.calculation.total_deductions)}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-center">
+                      <p className="text-xs text-muted-foreground">Taxable Income</p>
+                      <p className="text-xl font-bold text-amber-600">
+                        {formatCurrency(state.calculation.taxable_income)}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/30 text-center">
+                      <p className="text-xs text-muted-foreground">Tax Payable</p>
+                      <p className="text-xl font-bold text-purple-600">
+                        {formatCurrency(state.calculation.total_tax_liability)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Slab Breakdown */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="bg-muted/50 p-3 border-b">
+                      <p className="font-medium">Tax Slab Breakdown ({state.regime === "new" ? "New" : "Old"} Regime)</p>
+                    </div>
+                    <div className="p-3">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-muted-foreground">
+                            <th className="text-left py-2">Income Slab</th>
+                            <th className="text-right py-2">Rate</th>
+                            <th className="text-right py-2">Taxable</th>
+                            <th className="text-right py-2">Tax</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Tax Computation */}
-                <div className="border rounded-lg p-4 space-y-2">
-                  <div className="flex justify-between">
-                    <span>Tax on Income</span>
-                    <span>{formatCurrency(state.calculation.tax_on_income)}</span>
-                  </div>
-                  {state.calculation.rebate_87a > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Less: Rebate u/s 87A</span>
-                      <span>- {formatCurrency(state.calculation.rebate_87a)}</span>
+                        </thead>
+                        <tbody>
+                          {state.calculation.slab_breakdown.map((slab: any, i: number) => (
+                            <tr key={i} className="border-t">
+                              <td className="py-2">
+                                {formatCurrency(slab.min_amount)} -{" "}
+                                {slab.max_amount ? formatCurrency(slab.max_amount) : "Above"}
+                              </td>
+                              <td className="text-right">{slab.rate_percentage}%</td>
+                              <td className="text-right">{formatCurrency(slab.taxable_in_slab)}</td>
+                              <td className="text-right font-medium">{formatCurrency(slab.tax_in_slab)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span>Tax after Rebate</span>
-                    <span>{formatCurrency(state.calculation.tax_after_rebate)}</span>
                   </div>
-                  {state.calculation.surcharge > 0 && (
+
+                  {/* Tax Computation */}
+                  <div className="border rounded-lg p-4 space-y-2">
                     <div className="flex justify-between">
-                      <span>Add: Surcharge ({state.calculation.surcharge_rate}%)</span>
-                      <span>{formatCurrency(state.calculation.surcharge)}</span>
+                      <span>Gross Total Income</span>
+                      <span className="font-medium">{formatCurrency(state.calculation.gross_total_income)}</span>
+                    </div>
+                    <div className="flex justify-between text-blue-600">
+                      <span>Less: Total Deductions</span>
+                      <span>- {formatCurrency(state.calculation.total_deductions)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between">
+                      <span>Taxable Income</span>
+                      <span className="font-medium">{formatCurrency(state.calculation.taxable_income)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tax on Total Income</span>
+                      <span>{formatCurrency(state.calculation.tax_on_income)}</span>
+                    </div>
+                    {state.calculation.rebate_87a > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Less: Rebate u/s 87A</span>
+                        <span>- {formatCurrency(state.calculation.rebate_87a)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Tax after Rebate</span>
+                      <span>{formatCurrency(state.calculation.tax_after_rebate)}</span>
+                    </div>
+                    {state.calculation.surcharge > 0 && (
+                      <div className="flex justify-between">
+                        <span>Add: Surcharge ({state.calculation.surcharge_rate}%)</span>
+                        <span>{formatCurrency(state.calculation.surcharge)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Add: Health & Education Cess (4%)</span>
+                      <span>{formatCurrency(state.calculation.cess)}</span>
+                    </div>
+                    <Separator className="my-2" />
+                    <div className="flex justify-between font-bold text-lg pt-2">
+                      <span>Total Tax Liability</span>
+                      <span className="text-primary">
+                        {formatCurrency(state.calculation.total_tax_liability)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Effective Tax Rate</span>
+                      <span>{state.calculation.effective_rate}%</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Monthly Tax Equivalent</span>
+                      <span>{formatCurrency(Math.round(state.calculation.total_tax_liability / 12))}</span>
+                    </div>
+                  </div>
+
+                  {/* Audit Score Summary */}
+                  {state.auditScore > 0 && (
+                    <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 border">
+                      <div className="relative w-16 h-16">
+                        <svg className="w-full h-full -rotate-90">
+                          <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" strokeWidth="6" className="text-muted" />
+                          <circle
+                            cx="32" cy="32" r="28" fill="none" stroke="currentColor" strokeWidth="6"
+                            strokeDasharray={`${state.auditScore * 1.76} 176`}
+                            className={state.auditScore >= 80 ? "text-green-500" : state.auditScore >= 60 ? "text-amber-500" : "text-red-500"}
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">
+                          {state.auditScore}%
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium">Audit Readiness Score</p>
+                        <p className="text-sm text-muted-foreground">
+                          {state.auditScore >= 80 ? "Excellent compliance" : state.auditScore >= 60 ? "Good, minor issues" : "Needs attention"}
+                        </p>
+                        {state.auditFlags.filter(f => f.resolution_required).length > 0 && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            {state.auditFlags.filter(f => f.resolution_required).length} issue(s) need resolution
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span>Add: Health & Edu Cess (4%)</span>
-                    <span>{formatCurrency(state.calculation.cess)}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total Tax Liability</span>
-                    <span className="text-primary">
-                      {formatCurrency(state.calculation.total_tax_liability)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Effective Tax Rate</span>
-                    <span>{state.calculation.effective_rate}%</span>
-                  </div>
-                </div>
 
-                {/* Disclaimer */}
-                <Alert>
-                  <Info className="w-4 h-4" />
-                  <AlertTitle>Important Disclaimer</AlertTitle>
-                  <AlertDescription className="text-xs">
-                    CHRONYX provides algorithmic tax computation and guidance. Final responsibility lies with the user. This is not a substitute for licensed tax professionals.
-                  </AlertDescription>
-                </Alert>
+                  {/* Disclaimer */}
+                  <Alert className="border-amber-500/30 bg-amber-500/5">
+                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+                    <AlertTitle>Important Disclaimer</AlertTitle>
+                    <AlertDescription className="text-xs">
+                      This is a computer-generated tax estimate for informational purposes only. It does not constitute tax advice. 
+                      Please consult a qualified Chartered Accountant or tax professional for accurate tax filing. 
+                      CHRONYX and Cropxon Innovations Pvt. Ltd. are not responsible for any discrepancies.
+                    </AlertDescription>
+                  </Alert>
 
-                {/* Footer */}
-                <div className="text-center pt-4 border-t text-xs text-muted-foreground">
-                  <p className="font-medium">Prepared by CHRONYX</p>
-                  <p>A product of CropXon Innovations Pvt. Ltd.</p>
-                  <p className="mt-2">Digitally generated • Signed electronically</p>
-                  <p className="font-medium mt-1">Abhishek Panda</p>
-                  <p>CEO & Director</p>
-                </div>
-              </CardContent>
-              <CardFooter className="flex gap-2">
-                <Button variant="outline" className="flex-1">
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF
-                </Button>
-              </CardFooter>
-            </Card>
+                  {/* Footer */}
+                  <div className="text-center pt-4 border-t text-xs text-muted-foreground">
+                    <p className="font-semibold text-foreground">Prepared by CHRONYX</p>
+                    <p>A product of Cropxon Innovations Pvt. Ltd.</p>
+                    <p className="mt-2">Digitally generated • Signed electronically</p>
+                    <p className="font-medium mt-1">Abhishek Panda</p>
+                    <p>CEO & Director</p>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex gap-2 bg-muted/30 border-t">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 gap-2"
+                    onClick={() => calculateMutation.mutate()}
+                    disabled={calculateMutation.isPending}
+                  >
+                    {calculateMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                    Recalculate
+                  </Button>
+                  <Button 
+                    className="flex-1 gap-2 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+                    onClick={async () => {
+                      try {
+                        toast.loading("Generating PDF...", { id: "pdf-gen" });
+                        await downloadTaxPDF({
+                          calculation: state.calculation,
+                          incomes: state.incomes.length > 0 ? state.incomes : [{ income_type: "salary", gross_amount: manualIncome, description: "Total Income" }],
+                          deductions: state.deductions,
+                          auditScore: state.auditScore,
+                          auditFlags: state.auditFlags,
+                          recommendations: state.recommendations,
+                          userName: user?.email?.split("@")[0] || "User",
+                          userEmail: user?.email || "",
+                        });
+                        toast.success("PDF downloaded successfully!", { id: "pdf-gen" });
+                      } catch (error) {
+                        console.error("PDF generation error:", error);
+                        toast.error("Failed to generate PDF", { id: "pdf-gen" });
+                      }
+                    }}
+                  >
+                    <Download className="w-4 h-4" />
+                    Download PDF
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
           )}
         </motion.div>
       </AnimatePresence>
