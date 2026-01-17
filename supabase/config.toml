@@ -68,3 +68,12 @@ verify_jwt = false
 
 [functions.gmail-disconnect]
 verify_jwt = false
+
+[functions.tax-calculate]
+verify_jwt = false
+
+[functions.tax-compare]
+verify_jwt = false
+
+[functions.tax-generate-pdf]
+verify_jwt = false
