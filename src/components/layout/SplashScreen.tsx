@@ -53,23 +53,54 @@ const ChronxyxLogo = ({ className = "w-24 h-24" }: { className?: string }) => (
   </svg>
 );
 
+// Animated letter component for character-by-character reveal
+const AnimatedLetter = ({ 
+  letter, 
+  index, 
+  baseDelay = 0,
+  className = ""
+}: { 
+  letter: string; 
+  index: number; 
+  baseDelay?: number;
+  className?: string;
+}) => (
+  <motion.span
+    initial={{ opacity: 0, y: 20, rotateX: -90 }}
+    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+    transition={{
+      duration: 0.5,
+      delay: baseDelay + index * 0.08,
+      ease: [0.22, 1, 0.36, 1],
+    }}
+    className={`inline-block ${className}`}
+    style={{ transformOrigin: "bottom" }}
+  >
+    {letter === " " ? "\u00A0" : letter}
+  </motion.span>
+);
+
 const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenProps) => {
-  const [showTagline, setShowTagline] = useState(false);
+  const [stage, setStage] = useState(0); // 0: logo, 1: CHRONYX, 2: BY, 3: CROPXON
 
   useEffect(() => {
     if (isVisible && !minimal) {
-      const taglineTimer = setTimeout(() => setShowTagline(true), 800);
-      const completeTimer = setTimeout(() => onComplete?.(), 2200);
+      const timers = [
+        setTimeout(() => setStage(1), 400),   // Show CHRONYX
+        setTimeout(() => setStage(2), 1200),  // Show BY
+        setTimeout(() => setStage(3), 1600),  // Show CROPXON
+        setTimeout(() => onComplete?.(), 3000), // Complete
+      ];
       
-      return () => {
-        clearTimeout(taglineTimer);
-        clearTimeout(completeTimer);
-      };
+      return () => timers.forEach(clearTimeout);
     } else if (isVisible && minimal) {
       const timer = setTimeout(() => onComplete?.(), 800);
       return () => clearTimeout(timer);
     }
   }, [isVisible, minimal, onComplete]);
+
+  const chronyx = "CHRONYX";
+  const cropxon = "CROPXON INNOVATIONS PVT LTD";
 
   return (
     <AnimatePresence>
@@ -101,102 +132,155 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
               transition={{ duration: 2.5, repeat: Infinity, repeatType: "reverse", delay: 0.5 }}
               className="absolute bottom-1/4 right-1/4 h-48 w-48 rounded-full bg-primary/5 blur-3xl"
             />
+            {/* Additional glow for premium feel */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.08 }}
+              transition={{ duration: 1.5, delay: 0.5 }}
+              className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(var(--primary)/0.15)_0%,_transparent_70%)]"
+            />
           </div>
 
           {/* Main content */}
-          <div className="relative flex flex-col items-center gap-6">
-            {/* Spinning CHRONYX Logo - Same as Landing Page */}
+          <div className="relative flex flex-col items-center gap-8">
+            {/* Spinning CHRONYX Logo */}
             <motion.div
-              className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32"
-              animate={{ rotate: 360 }}
+              className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
               transition={{
-                duration: 8,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            >
-              <ChronxyxLogo className="w-full h-full" />
-            </motion.div>
-
-            {/* Logo text */}
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ 
-                duration: 0.6, 
+                duration: 0.8,
                 ease: [0.22, 1, 0.36, 1],
-                delay: 0.4 
               }}
-              className="relative"
             >
-              <motion.h1
-                className="text-3xl font-light tracking-[0.3em] text-foreground sm:text-4xl md:text-5xl"
-                initial={{ letterSpacing: "0.6em", opacity: 0 }}
-                animate={{ letterSpacing: "0.3em", opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-              >
-                CHRONYX
-              </motion.h1>
-
-              {/* Animated underline */}
               <motion.div
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
-                className="mt-2 h-px w-full origin-center bg-gradient-to-r from-transparent via-primary/60 to-transparent"
-              />
+                animate={{ rotate: 360 }}
+                transition={{
+                  duration: 8,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              >
+                <ChronxyxLogo className="w-full h-full" />
+              </motion.div>
             </motion.div>
 
-            {/* Tagline */}
-            {!minimal && (
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: showTagline ? 0.7 : 0, y: showTagline ? 0 : 10 }}
-                transition={{ duration: 0.5 }}
-                className="text-center text-xs tracking-[0.15em] text-muted-foreground sm:text-sm"
-              >
-                A Quiet Space for Your Life
-              </motion.p>
-            )}
+            {/* CHRONYX - Main brand name with character animation */}
+            <div className="relative flex flex-col items-center gap-4">
+              {stage >= 1 && (
+                <motion.div className="relative">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight tracking-[0.35em] text-foreground">
+                    {chronyx.split("").map((letter, i) => (
+                      <AnimatedLetter 
+                        key={i} 
+                        letter={letter} 
+                        index={i}
+                        baseDelay={0}
+                      />
+                    ))}
+                  </h1>
+                  
+                  {/* Animated underline */}
+                  <motion.div
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    animate={{ scaleX: 1, opacity: 1 }}
+                    transition={{ duration: 0.8, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    className="mt-3 h-[1px] w-full origin-left bg-gradient-to-r from-primary/80 via-primary/40 to-transparent"
+                  />
+                </motion.div>
+              )}
+
+              {/* BY - Elegant centered connector */}
+              {stage >= 2 && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex items-center gap-4 py-2"
+                >
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: 32 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                    className="h-[1px] bg-gradient-to-r from-transparent to-muted-foreground/30"
+                  />
+                  <motion.span 
+                    initial={{ opacity: 0, letterSpacing: "0.5em" }}
+                    animate={{ opacity: 0.6, letterSpacing: "0.3em" }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="text-xs sm:text-sm font-light text-muted-foreground tracking-[0.3em]"
+                  >
+                    BY
+                  </motion.span>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: 32 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                    className="h-[1px] bg-gradient-to-l from-transparent to-muted-foreground/30"
+                  />
+                </motion.div>
+              )}
+
+              {/* CROPXON INNOVATIONS PVT LTD - Company name with staggered reveal */}
+              {stage >= 3 && (
+                <motion.div className="flex flex-col items-center gap-1">
+                  <div className="text-lg sm:text-xl md:text-2xl font-light tracking-[0.2em] text-foreground/90">
+                    {cropxon.split("").map((letter, i) => (
+                      <AnimatedLetter 
+                        key={i} 
+                        letter={letter} 
+                        index={i}
+                        baseDelay={0}
+                        className="text-foreground/80"
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Subtle decorative line */}
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.6, delay: 0.8 }}
+                    className="mt-2 h-[1px] w-24 origin-center bg-gradient-to-r from-transparent via-primary/30 to-transparent"
+                  />
+                </motion.div>
+              )}
+            </div>
 
             {/* Loading indicator */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
-              className="mt-4"
+              className="mt-6"
             >
-              <div className="relative h-0.5 w-32 overflow-hidden rounded-full bg-muted sm:w-48">
+              <div className="relative h-0.5 w-40 overflow-hidden rounded-full bg-muted/50 sm:w-56">
                 <motion.div
                   initial={{ x: "-100%" }}
                   animate={{ x: "200%" }}
                   transition={{
-                    duration: 1.2,
+                    duration: 1.5,
                     repeat: Infinity,
                     ease: "easeInOut",
                   }}
-                  className="absolute h-full w-1/2 bg-gradient-to-r from-transparent via-primary/60 to-transparent"
+                  className="absolute h-full w-1/3 bg-gradient-to-r from-transparent via-primary/70 to-transparent"
                 />
               </div>
             </motion.div>
           </div>
 
-          {/* Footer branding */}
+          {/* Footer with website */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
-            transition={{ delay: 1, duration: 0.5 }}
-            className="absolute bottom-4 flex flex-col items-center gap-1 sm:bottom-6 md:bottom-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 0.5, y: 0 }}
+            transition={{ delay: 2, duration: 0.5 }}
+            className="absolute bottom-6 flex flex-col items-center gap-2 sm:bottom-8 md:bottom-10"
           >
-            <p className="text-[9px] tracking-[0.15em] text-muted-foreground sm:text-[10px] md:text-xs text-center leading-relaxed">
-              CHRONYX BY CROPXON<br />
-              INNOVATIONS PVT. LTD.
-            </p>
             <a 
               href="https://www.cropxon.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-[8px] tracking-[0.1em] text-muted-foreground/60 hover:text-muted-foreground transition-colors sm:text-[9px]"
+              className="text-[10px] tracking-[0.15em] text-muted-foreground/60 hover:text-muted-foreground transition-colors sm:text-xs"
             >
               www.cropxon.com
             </a>
