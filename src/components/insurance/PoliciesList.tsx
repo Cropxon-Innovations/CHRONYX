@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Shield, Plus, Pencil, Trash2, Calendar, ChevronRight, Heart, Users, FileText, Car, Bike, Home, Plane } from "lucide-react";
+import { Shield, Plus, Pencil, Trash2, Calendar, ChevronRight, Heart, Users, FileText, Car, Bike, Home, Plane, Umbrella, Baby, Stethoscope, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import AddInsuranceForm from "./AddInsuranceForm";
 import PolicyDetailDialog from "./PolicyDetailDialog";
 import PremiumPaymentButton from "./PremiumPaymentButton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+interface InsuranceProvider {
+  id: string;
+  name: string;
+  short_name: string | null;
+  logo_url: string | null;
+}
 
 interface Insurance {
   id: string;
@@ -54,21 +62,24 @@ const getDaysUntilRenewal = (dateStr: string) => {
   return Math.ceil((renewal.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 };
 
-// Policy type icons and colors mapping
+// Policy type icons and colors mapping - extended
 const getPolicyTypeConfig = (type: string) => {
   const typeConfigs: Record<string, { icon: React.ElementType; color: string; bgColor: string }> = {
     'Health': { icon: Heart, color: 'text-rose-500', bgColor: 'bg-rose-500/10' },
     'Term Life': { icon: FileText, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
-    'Life': { icon: FileText, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+    'Life': { icon: Shield, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
     'Term': { icon: FileText, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
     'Vehicle': { icon: Car, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
     'Car': { icon: Car, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
     'Bike': { icon: Bike, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
     'Two Wheeler': { icon: Bike, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
     'Home': { icon: Home, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
-    'Property': { icon: Home, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
+    'Property': { icon: Building2, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
     'Travel': { icon: Plane, color: 'text-cyan-500', bgColor: 'bg-cyan-500/10' },
     'Family': { icon: Users, color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
+    'Critical Illness': { icon: Stethoscope, color: 'text-red-500', bgColor: 'bg-red-500/10' },
+    'Child Plan': { icon: Baby, color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
+    'Personal Accident': { icon: Umbrella, color: 'text-indigo-500', bgColor: 'bg-indigo-500/10' },
   };
   return typeConfigs[type] || { icon: Shield, color: 'text-primary', bgColor: 'bg-primary/10' };
 };
@@ -77,6 +88,7 @@ const PoliciesList = () => {
   const { user } = useAuth();
   const { logActivity } = useActivityLog();
   const [policies, setPolicies] = useState<Insurance[]>([]);
+  const [providers, setProviders] = useState<InsuranceProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -84,8 +96,34 @@ const PoliciesList = () => {
   const [selectedPolicy, setSelectedPolicy] = useState<Insurance | null>(null);
 
   useEffect(() => {
-    if (user) fetchPolicies();
+    if (user) {
+      fetchPolicies();
+      fetchProviders();
+    }
   }, [user]);
+
+  const fetchProviders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("insurance_providers")
+        .select("id, name, short_name, logo_url");
+
+      if (error) throw error;
+      setProviders(data || []);
+    } catch (error) {
+      console.error("Error fetching providers:", error);
+    }
+  };
+
+  const getProviderLogo = (providerName: string) => {
+    const provider = providers.find(p => p.name.toLowerCase() === providerName.toLowerCase());
+    return provider?.logo_url || null;
+  };
+
+  const getProviderShortName = (providerName: string) => {
+    const provider = providers.find(p => p.name.toLowerCase() === providerName.toLowerCase());
+    return provider?.short_name || providerName.slice(0, 2);
+  };
 
   const fetchPolicies = async () => {
     try {
@@ -222,7 +260,15 @@ const PoliciesList = () => {
                         <span className={`text-xs px-2 py-0.5 rounded-full ${policyConfig.bgColor} ${policyConfig.color}`}>
                           {policy.policy_type}
                         </span>
-                        <span className="text-xs text-muted-foreground">{policy.provider}</span>
+                        <div className="flex items-center gap-1.5">
+                          <Avatar className="h-4 w-4">
+                            <AvatarImage src={getProviderLogo(policy.provider) || undefined} alt={policy.provider} />
+                            <AvatarFallback className="text-[6px] bg-muted">
+                              {getProviderShortName(policy.provider)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs text-muted-foreground">{policy.provider}</span>
+                        </div>
                       </div>
                     </div>
                   </div>

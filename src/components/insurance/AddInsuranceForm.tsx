@@ -17,15 +17,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import { toast } from "sonner";
 import PolicyDocumentScanner from "./PolicyDocumentScanner";
+import { Check, ChevronsUpDown, Plus, Heart, FileText, Car, Bike, Home, Plane, Shield, Umbrella, Baby, Stethoscope, Building2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface FamilyMember {
   id: string;
   full_name: string;
+}
+
+interface InsuranceProvider {
+  id: string;
+  name: string;
+  short_name: string | null;
+  logo_url: string | null;
+  is_default: boolean;
 }
 
 interface Insurance {
@@ -52,7 +76,22 @@ interface AddInsuranceFormProps {
   onSuccess: () => void;
 }
 
-const POLICY_TYPES = ["Term Life", "Health", "Vehicle", "Home", "Travel", "Other"];
+// Extended policy types with icons
+const POLICY_TYPES = [
+  { value: "Health", label: "Health Insurance", icon: Heart },
+  { value: "Term Life", label: "Term Life Insurance", icon: FileText },
+  { value: "Life", label: "Life Insurance", icon: Shield },
+  { value: "Car", label: "Car Insurance", icon: Car },
+  { value: "Bike", label: "Bike/Two Wheeler", icon: Bike },
+  { value: "Home", label: "Home Insurance", icon: Home },
+  { value: "Travel", label: "Travel Insurance", icon: Plane },
+  { value: "Critical Illness", label: "Critical Illness", icon: Stethoscope },
+  { value: "Child Plan", label: "Child Plan", icon: Baby },
+  { value: "Personal Accident", label: "Personal Accident", icon: Umbrella },
+  { value: "Property", label: "Property Insurance", icon: Building2 },
+  { value: "Other", label: "Other", icon: Shield },
+];
+
 const INSURED_TYPES = ["self", "family", "vehicle"];
 
 const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsuranceFormProps) => {
@@ -60,6 +99,12 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
   const { logActivity } = useActivityLog();
   const [loading, setLoading] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [providers, setProviders] = useState<InsuranceProvider[]>([]);
+  const [providerOpen, setProviderOpen] = useState(false);
+  const [showAddProvider, setShowAddProvider] = useState(false);
+  const [newProviderName, setNewProviderName] = useState("");
+  const [addingProvider, setAddingProvider] = useState(false);
+  
   const [formData, setFormData] = useState({
     policy_name: "",
     provider: "",
@@ -78,6 +123,7 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
   useEffect(() => {
     if (open && user) {
       fetchFamilyMembers();
+      fetchProviders();
     }
   }, [open, user]);
 
@@ -112,6 +158,56 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
       setFamilyMembers(data || []);
     } catch (error) {
       console.error("Error fetching family members:", error);
+    }
+  };
+
+  const fetchProviders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("insurance_providers")
+        .select("id, name, short_name, logo_url, is_default")
+        .order("is_default", { ascending: false })
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      setProviders(data || []);
+    } catch (error) {
+      console.error("Error fetching providers:", error);
+    }
+  };
+
+  const addCustomProvider = async () => {
+    if (!newProviderName.trim()) {
+      toast.error("Please enter a provider name");
+      return;
+    }
+
+    setAddingProvider(true);
+    try {
+      const { data, error } = await supabase
+        .from("insurance_providers")
+        .insert({
+          name: newProviderName.trim(),
+          short_name: newProviderName.trim(),
+          user_id: user?.id,
+          is_default: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProviders(prev => [...prev, data]);
+      setFormData(prev => ({ ...prev, provider: data.name }));
+      setNewProviderName("");
+      setShowAddProvider(false);
+      setProviderOpen(false);
+      toast.success("Provider added successfully");
+    } catch (error) {
+      console.error("Error adding provider:", error);
+      toast.error("Failed to add provider");
+    } finally {
+      setAddingProvider(false);
     }
   };
 
@@ -204,6 +300,9 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
     }));
   };
 
+  const selectedProvider = providers.find(p => p.name === formData.provider);
+  const selectedPolicyType = POLICY_TYPES.find(t => t.value === formData.policy_type);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -220,6 +319,7 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
               <PolicyDocumentScanner onDataExtracted={handleOcrData} />
             </div>
           )}
+          
           <div className="space-y-2">
             <Label>Policy Name *</Label>
             <Input
@@ -229,13 +329,126 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
             />
           </div>
 
+          {/* Provider Selection with Search and Add Custom */}
           <div className="space-y-2">
-            <Label>Provider *</Label>
-            <Input
-              value={formData.provider}
-              onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
-              placeholder="e.g., ICICI Lombard"
-            />
+            <Label>Insurance Provider *</Label>
+            <Popover open={providerOpen} onOpenChange={setProviderOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={providerOpen}
+                  className="w-full justify-between"
+                >
+                  {selectedProvider ? (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={selectedProvider.logo_url || undefined} alt={selectedProvider.name} />
+                        <AvatarFallback className="text-[8px] bg-primary/10">
+                          {selectedProvider.short_name?.slice(0, 2) || selectedProvider.name.slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="truncate">{selectedProvider.name}</span>
+                    </div>
+                  ) : formData.provider ? (
+                    <span>{formData.provider}</span>
+                  ) : (
+                    <span className="text-muted-foreground">Select provider...</span>
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search providers..." />
+                  <CommandList>
+                    <CommandEmpty>
+                      {showAddProvider ? (
+                        <div className="p-2 space-y-2">
+                          <Input
+                            value={newProviderName}
+                            onChange={(e) => setNewProviderName(e.target.value)}
+                            placeholder="Enter provider name"
+                            onKeyDown={(e) => e.key === 'Enter' && addCustomProvider()}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setShowAddProvider(false)}
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={addCustomProvider}
+                              disabled={addingProvider}
+                              className="flex-1"
+                            >
+                              {addingProvider ? "Adding..." : "Add"}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-2">
+                          <p className="text-sm text-muted-foreground mb-2">No provider found.</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowAddProvider(true)}
+                            className="w-full"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Custom Provider
+                          </Button>
+                        </div>
+                      )}
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {providers.map((provider) => (
+                        <CommandItem
+                          key={provider.id}
+                          value={provider.name}
+                          onSelect={() => {
+                            setFormData({ ...formData, provider: provider.name });
+                            setProviderOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-2 flex-1">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={provider.logo_url || undefined} alt={provider.name} />
+                              <AvatarFallback className="text-[8px] bg-primary/10">
+                                {provider.short_name?.slice(0, 2) || provider.name.slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="truncate">{provider.name}</span>
+                            {!provider.is_default && (
+                              <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded">Custom</span>
+                            )}
+                          </div>
+                          <Check
+                            className={cn(
+                              "ml-auto h-4 w-4",
+                              formData.provider === provider.name ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    <CommandGroup>
+                      <CommandItem
+                        onSelect={() => setShowAddProvider(true)}
+                        className="text-primary"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Custom Provider
+                      </CommandItem>
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
@@ -247,16 +460,32 @@ const AddInsuranceForm = ({ open, onOpenChange, insurance, onSuccess }: AddInsur
             />
           </div>
 
+          {/* Policy Type with Icons */}
           <div className="space-y-2">
             <Label>Policy Type *</Label>
             <Select value={formData.policy_type} onValueChange={(v) => setFormData({ ...formData, policy_type: v })}>
               <SelectTrigger>
-                <SelectValue placeholder="Select type" />
+                <SelectValue placeholder="Select type">
+                  {selectedPolicyType && (
+                    <div className="flex items-center gap-2">
+                      <selectedPolicyType.icon className="h-4 w-4" />
+                      <span>{selectedPolicyType.label}</span>
+                    </div>
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {POLICY_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
+                {POLICY_TYPES.map((type) => {
+                  const Icon = type.icon;
+                  return (
+                    <SelectItem key={type.value} value={type.value}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4" />
+                        <span>{type.label}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

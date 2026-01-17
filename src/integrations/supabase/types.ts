@@ -1044,6 +1044,39 @@ export type Database = {
           },
         ]
       }
+      insurance_providers: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          logo_url: string | null
+          name: string
+          short_name: string | null
+          user_id: string | null
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          logo_url?: string | null
+          name: string
+          short_name?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          logo_url?: string | null
+          name?: string
+          short_name?: string | null
+          user_id?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       insurance_reminders: {
         Row: {
           email_sent_to: string
