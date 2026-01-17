@@ -112,16 +112,20 @@ const TransactionDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 gap-0">
-        {/* Header with gradient */}
-        <div className="p-6 pb-4 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent dark:from-primary/10 dark:via-primary/5">
+      <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        {/* Header with gradient - enhanced for dark mode */}
+        <div className="p-6 pb-4 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent dark:from-[hsl(230_30%_25%)]/30 dark:via-[hsl(230_25%_35%)]/20 dark:to-transparent border-b border-border/50">
           <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Store className="w-5 h-5 text-primary" />
-              </div>
+            <div className="flex items-center gap-3">
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 dark:from-[hsl(230_30%_40%)]/40 dark:to-[hsl(230_25%_30%)]/30 flex items-center justify-center shadow-lg"
+              >
+                <Store className="w-6 h-6 text-primary dark:text-[hsl(230_50%_70%)]" />
+              </motion.div>
               <div className="flex-1">
-                <DialogTitle className="text-lg">
+                <DialogTitle className="text-lg font-semibold">
                   {transaction.merchant_name || "Unknown Merchant"}
                 </DialogTitle>
                 <DialogDescription className="flex items-center gap-2 mt-0.5">
@@ -132,19 +136,22 @@ const TransactionDetailDialog = ({
             </div>
           </DialogHeader>
 
-          {/* Amount highlight */}
+          {/* Amount highlight with enhanced styling */}
           <motion.div 
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1 }}
             className="mt-4 flex items-center justify-between"
           >
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-foreground">₹{transaction.amount.toLocaleString()}</span>
+              <IndianRupee className="w-5 h-5 text-foreground/70 mb-0.5" />
+              <span className="text-3xl font-bold text-foreground tracking-tight">{transaction.amount.toLocaleString()}</span>
               {transaction.currency !== "INR" && (
-                <span className="text-sm text-muted-foreground">{transaction.currency}</span>
+                <span className="text-sm text-muted-foreground ml-1">{transaction.currency}</span>
               )}
             </div>
-            <Badge className={`${confidenceInfo.bg} ${confidenceInfo.color} border-0`}>
+            <Badge className={`${confidenceInfo.bg} ${confidenceInfo.color} border-0 px-3 py-1`}>
+              <Sparkles className="w-3 h-3 mr-1" />
               {Math.round(transaction.confidence_score * 100)}% {confidenceInfo.label}
             </Badge>
           </motion.div>
@@ -155,21 +162,31 @@ const TransactionDetailDialog = ({
         {/* Transaction Details */}
         <ScrollArea className="flex-1 p-6">
           <div className="space-y-5">
-            {/* Quick Info Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
-                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            {/* Quick Info Grid - Enhanced dark mode */}
+            <div className="grid grid-cols-2 gap-3">
+              <motion.div 
+                initial={{ x: -10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.15 }}
+                className="p-3 rounded-xl bg-muted/30 dark:bg-[hsl(230_20%_18%)]/50 border border-border/50 dark:border-[hsl(230_20%_30%)]/30"
+              >
+                <div className="flex items-center gap-2 text-muted-foreground mb-1.5">
                   <Calendar className="w-3.5 h-3.5" />
-                  <span className="text-xs font-medium">Date</span>
+                  <span className="text-xs font-medium uppercase tracking-wider">Date</span>
                 </div>
                 <p className="text-sm font-semibold">
                   {format(parseISO(transaction.transaction_date), "EEEE, MMM d, yyyy")}
                 </p>
-              </div>
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
-                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              </motion.div>
+              <motion.div 
+                initial={{ x: 10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="p-3 rounded-xl bg-muted/30 dark:bg-[hsl(230_20%_18%)]/50 border border-border/50 dark:border-[hsl(230_20%_30%)]/30"
+              >
+                <div className="flex items-center gap-2 text-muted-foreground mb-1.5">
                   <Clock className="w-3.5 h-3.5" />
-                  <span className="text-xs font-medium">Status</span>
+                  <span className="text-xs font-medium uppercase tracking-wider">Status</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {transaction.is_processed ? (
@@ -189,13 +206,18 @@ const TransactionDetailDialog = ({
                     </>
                   )}
                 </div>
-              </div>
+              </motion.div>
             </div>
 
-            {/* Category & Payment Mode Selectors */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Category & Payment Mode Selectors - Enhanced styling */}
+            <motion.div 
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.25 }}
+              className="grid grid-cols-2 gap-3"
+            >
               <div className="space-y-2">
-                <Label className="text-xs flex items-center gap-1.5">
+                <Label className="text-xs flex items-center gap-1.5 text-muted-foreground uppercase tracking-wider">
                   <Tag className="w-3 h-3" />
                   Category
                 </Label>
@@ -203,10 +225,10 @@ const TransactionDetailDialog = ({
                   value={category}
                   onValueChange={(value) => onCategoryChange(transaction.id, value)}
                 >
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-10 bg-muted/30 dark:bg-[hsl(230_20%_18%)]/50 border-border/50 dark:border-[hsl(230_20%_30%)]/30">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="dark:bg-[hsl(230_20%_15%)] dark:border-[hsl(230_20%_25%)]">
                     {CATEGORIES.map((cat) => (
                       <SelectItem key={cat} value={cat}>
                         {cat}
@@ -216,7 +238,7 @@ const TransactionDetailDialog = ({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-xs flex items-center gap-1.5">
+                <Label className="text-xs flex items-center gap-1.5 text-muted-foreground uppercase tracking-wider">
                   <CreditCard className="w-3 h-3" />
                   Payment Mode
                 </Label>
@@ -224,10 +246,10 @@ const TransactionDetailDialog = ({
                   value={paymentMode}
                   onValueChange={(value) => onPaymentModeChange(transaction.id, value)}
                 >
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-10 bg-muted/30 dark:bg-[hsl(230_20%_18%)]/50 border-border/50 dark:border-[hsl(230_20%_30%)]/30">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="dark:bg-[hsl(230_20%_15%)] dark:border-[hsl(230_20%_25%)]">
                     {PAYMENT_MODES.map((mode) => (
                       <SelectItem key={mode} value={mode}>
                         {mode}
@@ -236,26 +258,36 @@ const TransactionDetailDialog = ({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Source Info */}
+            {/* Source Info - Dark mode enhanced */}
             {transaction.source_platform && (
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
-                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <motion.div 
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="p-3 rounded-xl bg-muted/30 dark:bg-[hsl(230_20%_18%)]/50 border border-border/50 dark:border-[hsl(230_20%_30%)]/30"
+              >
+                <div className="flex items-center gap-2 text-muted-foreground mb-1.5">
                   <Store className="w-3.5 h-3.5" />
-                  <span className="text-xs font-medium">Source Platform</span>
+                  <span className="text-xs font-medium uppercase tracking-wider">Source Platform</span>
                 </div>
-                <p className="text-sm">{transaction.source_platform}</p>
-              </div>
+                <p className="text-sm font-medium">{transaction.source_platform}</p>
+              </motion.div>
             )}
 
             {/* Email Subject */}
             {transaction.email_subject && (
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
-                <div className="flex items-center justify-between mb-1">
+              <motion.div 
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.35 }}
+                className="p-3 rounded-xl bg-muted/30 dark:bg-[hsl(230_20%_18%)]/50 border border-border/50 dark:border-[hsl(230_20%_30%)]/30"
+              >
+                <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Mail className="w-3.5 h-3.5" />
-                    <span className="text-xs font-medium">Email Subject</span>
+                    <span className="text-xs font-medium uppercase tracking-wider">Email Subject</span>
                   </div>
                   <Button
                     variant="ghost"
@@ -271,52 +303,68 @@ const TransactionDetailDialog = ({
                   </Button>
                 </div>
                 <p className="text-sm leading-relaxed">{transaction.email_subject}</p>
-              </div>
+              </motion.div>
             )}
 
             {/* Email Snippet / Invoice Content */}
             {transaction.email_snippet && (
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+              <motion.div 
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="p-3 rounded-xl bg-muted/30 dark:bg-[hsl(230_20%_18%)]/50 border border-border/50 dark:border-[hsl(230_20%_30%)]/30"
+              >
                 <div className="flex items-center gap-2 text-muted-foreground mb-2">
                   <FileText className="w-3.5 h-3.5" />
-                  <span className="text-xs font-medium">Email Content (Preview)</span>
+                  <span className="text-xs font-medium uppercase tracking-wider">Email Content Preview</span>
                 </div>
-                <div className="p-2 rounded bg-background/50 border border-border/30">
-                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                <div className="p-3 rounded-lg bg-background/50 dark:bg-[hsl(230_20%_12%)]/50 border border-border/30 dark:border-[hsl(230_20%_25%)]/30">
+                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">
                     {transaction.email_snippet}
                   </p>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-2 italic">
-                  * Extracted from Gmail text content. PDF invoices are not yet supported.
+                <p className="text-[10px] text-muted-foreground mt-2 italic flex items-center gap-1">
+                  <FileText className="w-3 h-3" />
+                  Extracted from Gmail text content. PDF invoices are not yet supported.
                 </p>
-              </div>
+              </motion.div>
             )}
 
             {/* Sender Info */}
             {extractedData.from && (
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
-                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+              <motion.div 
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.45 }}
+                className="p-3 rounded-xl bg-muted/30 dark:bg-[hsl(230_20%_18%)]/50 border border-border/50 dark:border-[hsl(230_20%_30%)]/30"
+              >
+                <div className="flex items-center gap-2 text-muted-foreground mb-1.5">
                   <Mail className="w-3.5 h-3.5" />
-                  <span className="text-xs font-medium">Sender</span>
+                  <span className="text-xs font-medium uppercase tracking-wider">Sender</span>
                 </div>
                 <p className="text-sm truncate">{extractedData.from}</p>
-              </div>
+              </motion.div>
             )}
 
             {/* Gmail Message ID */}
-            <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <motion.div 
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="p-3 rounded-xl bg-muted/30 dark:bg-[hsl(230_20%_18%)]/50 border border-border/50 dark:border-[hsl(230_20%_30%)]/30"
+            >
+              <div className="flex items-center gap-2 text-muted-foreground mb-1.5">
                 <FileText className="w-3.5 h-3.5" />
-                <span className="text-xs font-medium">Reference ID</span>
+                <span className="text-xs font-medium uppercase tracking-wider">Reference ID</span>
               </div>
               <div className="flex items-center gap-2">
-                <code className="text-xs bg-background/50 px-2 py-1 rounded font-mono flex-1 truncate">
+                <code className="text-xs bg-background/50 dark:bg-[hsl(230_20%_12%)]/50 px-2 py-1.5 rounded-lg font-mono flex-1 truncate border border-border/30 dark:border-[hsl(230_20%_25%)]/30">
                   {transaction.gmail_message_id}
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 shrink-0"
+                  className="h-7 w-7 shrink-0"
                   onClick={() => copyToClipboard(transaction.gmail_message_id)}
                 >
                   {copied ? (
@@ -326,17 +374,24 @@ const TransactionDetailDialog = ({
                   )}
                 </Button>
               </div>
-            </div>
+            </motion.div>
 
-            {/* AI Confidence Explanation */}
-            <div className={`p-3 rounded-lg ${confidenceInfo.bg} border border-current/10`}>
-              <div className="flex items-start gap-2">
-                <Sparkles className={`w-4 h-4 ${confidenceInfo.color} shrink-0 mt-0.5`} />
-                <div>
-                  <p className={`text-xs font-medium ${confidenceInfo.color}`}>
+            {/* AI Confidence Explanation - Enhanced */}
+            <motion.div 
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.55 }}
+              className={`p-4 rounded-xl ${confidenceInfo.bg} border border-current/10`}
+            >
+              <div className="flex items-start gap-3">
+                <div className={`w-8 h-8 rounded-full ${confidenceInfo.bg} flex items-center justify-center`}>
+                  <Sparkles className={`w-4 h-4 ${confidenceInfo.color}`} />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-sm font-semibold ${confidenceInfo.color}`}>
                     AI Confidence: {confidenceInfo.label}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {transaction.confidence_score >= 0.8
                       ? "This transaction was detected with high accuracy from a known merchant pattern."
                       : transaction.confidence_score >= 0.6
@@ -345,15 +400,20 @@ const TransactionDetailDialog = ({
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </ScrollArea>
 
-        {/* Footer Actions */}
+        {/* Footer Actions - Enhanced */}
         {!transaction.is_processed && !transaction.is_duplicate && (
           <>
             <Separator />
-            <div className="p-4 flex gap-3">
+            <motion.div 
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="p-4 flex gap-3 bg-muted/20 dark:bg-[hsl(230_20%_12%)]/50"
+            >
               <Button
                 variant="outline"
                 className="flex-1"
@@ -362,7 +422,7 @@ const TransactionDetailDialog = ({
                 Close
               </Button>
               <Button
-                className="flex-1 gap-2"
+                className="flex-1 gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                 onClick={() => {
                   onImport(transaction.id);
                   onOpenChange(false);
@@ -371,7 +431,7 @@ const TransactionDetailDialog = ({
                 <CheckCircle2 className="w-4 h-4" />
                 Import Transaction
               </Button>
-            </div>
+            </motion.div>
           </>
         )}
       </DialogContent>

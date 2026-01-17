@@ -116,6 +116,10 @@ const FinanceFlowPreviewDialog = ({
   const [viewMode, setViewMode] = useState<"list" | "cards">("list");
   const [error, setError] = useState<FinanceFlowErrorCode | null>(null);
   
+  // Detail dialog state
+  const [selectedTransaction, setSelectedTransaction] = useState<PendingTransaction | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  
   // Category overrides for editing
   const [categoryOverrides, setCategoryOverrides] = useState<Record<string, string>>({});
   const [paymentModeOverrides, setPaymentModeOverrides] = useState<Record<string, string>>({});
@@ -295,6 +299,93 @@ const FinanceFlowPreviewDialog = ({
 
   const handlePaymentModeChange = (id: string, paymentMode: string) => {
     setPaymentModeOverrides(prev => ({ ...prev, [id]: paymentMode }));
+  };
+
+  // Open transaction detail dialog
+  const openTransactionDetail = (transaction: PendingTransaction, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedTransaction(transaction);
+    setDetailDialogOpen(true);
+  };
+
+  // Import single transaction
+  const handleImportSingle = async (transactionId: string) => {
+    const transaction = pendingTransactions.find(t => t.id === transactionId);
+    if (!transaction || !user) return;
+
+    setImporting(true);
+    try {
+      const expense = {
+        user_id: user.id,
+        amount: transaction.amount,
+        category: getCategoryFromMerchant(transaction.merchant_name, transaction.id),
+        expense_date: transaction.transaction_date,
+        payment_mode: paymentModeOverrides[transaction.id] || transaction.payment_mode || "UPI",
+        notes: `Auto-imported: ${transaction.email_subject || transaction.merchant_name || "Gmail transaction"}`,
+        is_auto_generated: true,
+        source_type: "gmail",
+        source_id: transaction.gmail_message_id,
+        gmail_import_id: transaction.id,
+        confidence_score: transaction.confidence_score,
+        merchant_name: transaction.merchant_name,
+      };
+
+      const { error: insertError } = await supabase
+        .from("expenses")
+        .insert([expense]);
+
+      if (insertError) throw insertError;
+
+      // Mark as processed and store learned category
+      await supabase
+        .from("auto_imported_transactions")
+        .update({ 
+          is_processed: true,
+          learned_category: categoryOverrides[transaction.id] || getCategoryFromMerchant(transaction.merchant_name, transaction.id),
+          user_verified: !!categoryOverrides[transaction.id],
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", transaction.id);
+
+      // Update sync count
+      const { data: currentSettings } = await supabase
+        .from("gmail_sync_settings")
+        .select("total_synced_count")
+        .eq("user_id", user.id)
+        .single();
+
+      await supabase
+        .from("gmail_sync_settings")
+        .update({ 
+          total_synced_count: (currentSettings?.total_synced_count || 0) + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq("user_id", user.id);
+
+      toast({
+        title: "Transaction Imported",
+        description: `₹${transaction.amount.toLocaleString()} from ${transaction.merchant_name || "Unknown"} added to expenses.`,
+      });
+
+      // Remove from pending list
+      setPendingTransactions(prev => prev.filter(t => t.id !== transactionId));
+      setSelectedIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(transactionId);
+        return newSet;
+      });
+
+      onImportComplete();
+    } catch (err: any) {
+      console.error("Single import error:", err);
+      toast({
+        title: "Import Failed",
+        description: err.message || "Failed to import transaction.",
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
+    }
   };
 
   const handleImport = async () => {
@@ -539,7 +630,7 @@ const FinanceFlowPreviewDialog = ({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ delay: index * 0.03 }}
-                        className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                        className={`flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer group ${
                           selectedIds.has(transaction.id)
                             ? "bg-primary/5 border-primary/20"
                             : "bg-muted/30 border-transparent hover:bg-muted/50"
@@ -572,14 +663,29 @@ const FinanceFlowPreviewDialog = ({
                               </span>
                             )}
                           </div>
+                          {transaction.email_subject && (
+                            <p className="text-[10px] text-muted-foreground mt-1 truncate max-w-[280px]">
+                              {transaction.email_subject}
+                            </p>
+                          )}
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-sm font-semibold">
-                            ₹{transaction.amount.toLocaleString()}
-                          </p>
-                          <p className={`text-[10px] ${getConfidenceColor(transaction.confidence_score)}`}>
-                            {Math.round(transaction.confidence_score * 100)}% confidence
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-semibold">
+                              ₹{transaction.amount.toLocaleString()}
+                            </p>
+                            <p className={`text-[10px] ${getConfidenceColor(transaction.confidence_score)}`}>
+                              {Math.round(transaction.confidence_score * 100)}% confidence
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                            onClick={(e) => openTransactionDetail(transaction, e)}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
                       </motion.div>
                     ))}
@@ -598,18 +704,28 @@ const FinanceFlowPreviewDialog = ({
                         </div>
                         <div className="space-y-2">
                           {txs.map((tx) => (
-                            <div key={tx.id} onClick={() => toggleSelection(tx.id)}>
-                              <CategoryPreviewCard
-                                id={tx.id}
-                                merchantName={tx.merchant_name || "Unknown"}
-                                amount={tx.amount}
-                                date={format(parseISO(tx.transaction_date), "MMM d, yyyy")}
-                                category={getCategoryFromMerchant(tx.merchant_name, tx.id)}
-                                paymentMode={paymentModeOverrides[tx.id] || tx.payment_mode || "UPI"}
-                                confidenceScore={tx.confidence_score}
-                                onCategoryChange={handleCategoryChange}
-                                onPaymentModeChange={handlePaymentModeChange}
-                              />
+                            <div key={tx.id} className="relative group">
+                              <div onClick={() => toggleSelection(tx.id)}>
+                                <CategoryPreviewCard
+                                  id={tx.id}
+                                  merchantName={tx.merchant_name || "Unknown"}
+                                  amount={tx.amount}
+                                  date={format(parseISO(tx.transaction_date), "MMM d, yyyy")}
+                                  category={getCategoryFromMerchant(tx.merchant_name, tx.id)}
+                                  paymentMode={paymentModeOverrides[tx.id] || tx.payment_mode || "UPI"}
+                                  confidenceScore={tx.confidence_score}
+                                  onCategoryChange={handleCategoryChange}
+                                  onPaymentModeChange={handlePaymentModeChange}
+                                />
+                              </div>
+                              <Button
+                                variant="secondary"
+                                size="icon"
+                                className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => openTransactionDetail(tx, e)}
+                              >
+                                <Eye className="w-3 h-3" />
+                              </Button>
                             </div>
                           ))}
                         </div>
@@ -648,6 +764,18 @@ const FinanceFlowPreviewDialog = ({
           </>
         )}
       </DialogContent>
+
+      {/* Transaction Detail Dialog */}
+      <TransactionDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        transaction={selectedTransaction}
+        category={selectedTransaction ? getCategoryFromMerchant(selectedTransaction.merchant_name, selectedTransaction.id) : "Others"}
+        paymentMode={selectedTransaction ? (paymentModeOverrides[selectedTransaction.id] || selectedTransaction.payment_mode || "UPI") : "UPI"}
+        onCategoryChange={handleCategoryChange}
+        onPaymentModeChange={handlePaymentModeChange}
+        onImport={handleImportSingle}
+      />
     </Dialog>
   );
 };
