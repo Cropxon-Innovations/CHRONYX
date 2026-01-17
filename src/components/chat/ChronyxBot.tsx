@@ -6,16 +6,16 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import chronyxLogo from "@/assets/chronyx-circular-logo.png";
 import {
-  Bot,
   X,
   Send,
   Sparkles,
   User,
   Loader2,
   ChevronDown,
-  MessageSquare,
   Lightbulb,
+  RotateCcw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -35,6 +35,13 @@ const PRESET_QUESTIONS = [
   "Show me my study hours this month",
 ];
 
+const WELCOME_MESSAGE: Message = {
+  id: "welcome",
+  role: "assistant",
+  content: `Hello! I'm CHRONYX Bot, your personal life assistant. I can help you understand your:\n\n• 📊 Productivity & Tasks\n• 💰 Finances & Expenses\n• 📚 Study Progress\n• 🛡️ Insurance & Loans\n• 🎯 Goals & Achievements\n\nAsk me anything about your life data!`,
+  timestamp: new Date(),
+};
+
 interface ChronyxBotProps {
   isOpen?: boolean;
   onClose?: () => void;
@@ -43,28 +50,30 @@ interface ChronyxBotProps {
 export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }: ChronyxBotProps = {}) => {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  
   const handleClose = () => {
+    // Reset chat when closing
+    setMessages([WELCOME_MESSAGE]);
+    setShowPresets(true);
+    setInput("");
     if (externalOnClose) externalOnClose();
     else setInternalIsOpen(false);
   };
+  
   const handleOpen = () => setInternalIsOpen(true);
   
   const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPresets, setShowPresets] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   
+  // Reset chat when bot opens
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      // Add welcome message
-      setMessages([{
-        id: "welcome",
-        role: "assistant",
-        content: `Hello! I'm CHRONYX Bot, your personal life assistant. I can help you understand your:\n\n• 📊 Productivity & Tasks\n• 💰 Finances & Expenses\n• 📚 Study Progress\n• 🛡️ Insurance & Loans\n• 🎯 Goals & Achievements\n\nAsk me anything about your life data!`,
-        timestamp: new Date(),
-      }]);
+    if (isOpen) {
+      setMessages([WELCOME_MESSAGE]);
+      setShowPresets(true);
     }
   }, [isOpen]);
   
@@ -73,6 +82,12 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+  
+  const handleNewChat = () => {
+    setMessages([WELCOME_MESSAGE]);
+    setShowPresets(true);
+    setInput("");
+  };
   
   const fetchUserContext = async () => {
     if (!user) return "";
@@ -219,17 +234,28 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/10 to-transparent">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-primary" />
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-background flex items-center justify-center border border-border">
+                <img src={chronyxLogo} alt="CHRONYX" className="w-8 h-8 object-contain" />
               </div>
               <div>
                 <h3 className="font-medium text-foreground">CHRONYX Bot</h3>
                 <p className="text-xs text-muted-foreground">Your Personal Assistant</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleClose}>
-              <X className="w-5 h-5" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleNewChat}
+                title="New Chat"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
           
           {/* Messages */}
@@ -244,8 +270,8 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                   )}
                 >
                   {message.role === "assistant" && (
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <Sparkles className="w-4 h-4 text-primary" />
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-background flex items-center justify-center shrink-0 border border-border">
+                      <img src={chronyxLogo} alt="CHRONYX" className="w-6 h-6 object-contain" />
                     </div>
                   )}
                   <div
@@ -271,8 +297,8 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
               
               {isLoading && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-background flex items-center justify-center border border-border">
+                    <img src={chronyxLogo} alt="CHRONYX" className="w-6 h-6 object-contain animate-pulse" />
                   </div>
                   <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-2.5">
                     <div className="flex gap-1">
@@ -337,10 +363,10 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className={cn(
-            "fixed bottom-4 right-4 sm:right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-colors",
+            "fixed bottom-4 right-4 sm:right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-colors overflow-hidden",
             isOpen 
               ? "bg-muted text-muted-foreground" 
-              : "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"
+              : "bg-gradient-to-br from-primary to-primary/80"
           )}
         >
           <AnimatePresence mode="wait">
@@ -361,8 +387,8 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                 exit={{ rotate: -90, opacity: 0 }}
                 className="relative"
               >
-                <Bot className="w-6 h-6" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-primary animate-pulse" />
+                <img src={chronyxLogo} alt="CHRONYX Bot" className="w-10 h-10 object-contain" />
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background animate-pulse" />
               </motion.div>
             )}
           </AnimatePresence>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,10 +13,25 @@ import {
   Shield, 
   Activity,
   Calendar,
-  Loader2
+  Loader2,
+  LayoutDashboard,
+  CheckSquare,
+  StickyNote,
+  GraduationCap,
+  Trophy,
+  Users,
+  Hourglass,
+  Receipt,
+  TrendingUp,
+  PieChart,
+  Heart,
+  Lock,
+  ChevronRight
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface SearchResult {
   id: string;
@@ -27,16 +42,51 @@ interface SearchResult {
   snippet?: string;
 }
 
+interface ModuleLink {
+  path: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+  color: string;
+}
+
+const MODULES: ModuleLink[] = [
+  { path: "/app", label: "Dashboard", icon: LayoutDashboard, description: "Overview of your life", color: "text-primary" },
+  { path: "/app/todos", label: "Todos", icon: CheckSquare, description: "Manage daily tasks", color: "text-emerald-500" },
+  { path: "/app/notes", label: "Notes", icon: StickyNote, description: "Quick notes & ideas", color: "text-amber-500" },
+  { path: "/app/study", label: "Study", icon: GraduationCap, description: "Track study progress", color: "text-blue-500" },
+  { path: "/app/achievements", label: "Achievements", icon: Trophy, description: "Your accomplishments", color: "text-yellow-500" },
+  { path: "/app/memory", label: "Memory", icon: Image, description: "Photos & memories", color: "text-purple-500" },
+  { path: "/app/documents", label: "Documents", icon: FileText, description: "Important documents", color: "text-slate-500" },
+  { path: "/app/social", label: "Social", icon: Users, description: "Social profiles", color: "text-pink-500" },
+  { path: "/app/lifespan", label: "Lifespan", icon: Hourglass, description: "Time perspective", color: "text-cyan-500" },
+  { path: "/app/expenses", label: "Expenses", icon: Receipt, description: "Track spending", color: "text-red-500" },
+  { path: "/app/income", label: "Income", icon: TrendingUp, description: "Income sources", color: "text-green-500" },
+  { path: "/app/reports", label: "Reports", icon: PieChart, description: "Financial reports", color: "text-indigo-500" },
+  { path: "/app/loans", label: "Loans", icon: Wallet, description: "Loan management", color: "text-orange-500" },
+  { path: "/app/insurance", label: "Insurance", icon: Heart, description: "Insurance policies", color: "text-rose-500" },
+  { path: "/app/vault", label: "Vault", icon: Lock, description: "Secure storage", color: "text-violet-500" },
+];
+
 const Search = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
   // Debounce search
-  useState(() => {
+  useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), 300);
     return () => clearTimeout(timer);
-  });
+  }, [query]);
+
+  // Filter modules based on query
+  const filteredModules = query.trim() 
+    ? MODULES.filter(m => 
+        m.label.toLowerCase().includes(query.toLowerCase()) ||
+        m.description.toLowerCase().includes(query.toLowerCase())
+      )
+    : MODULES;
 
   const { data: results = [], isLoading } = useQuery({
     queryKey: ["global-search", debouncedQuery, user?.id],
@@ -249,26 +299,119 @@ const Search = () => {
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input
-          placeholder="Search memories, documents, finances, study..."
+          placeholder="Search modules, memories, documents, finances..."
           value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setDebouncedQuery(e.target.value);
-          }}
+          onChange={(e) => setQuery(e.target.value)}
           className="pl-10 h-12 text-lg"
           autoFocus
         />
       </div>
+
+      {/* Quick Module Navigation */}
+      {!debouncedQuery && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-2">
+            <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              Quick Navigation
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <AnimatePresence>
+              {filteredModules.map((module, index) => {
+                const Icon = module.icon;
+                return (
+                  <motion.div
+                    key={module.path}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: index * 0.03 }}
+                  >
+                    <Link to={module.path}>
+                      <Card className="group hover:bg-accent/50 hover:border-primary/30 transition-all cursor-pointer h-full">
+                        <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                          <div className={cn(
+                            "w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center group-hover:scale-110 transition-transform",
+                            module.color
+                          )}>
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm text-foreground">{module.label}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{module.description}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Filtered Modules when searching */}
+      {query && !debouncedQuery && filteredModules.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-2"
+        >
+          <p className="text-sm text-muted-foreground">Go to module:</p>
+          {filteredModules.slice(0, 5).map((module) => {
+            const Icon = module.icon;
+            return (
+              <motion.button
+                key={module.path}
+                onClick={() => navigate(module.path)}
+                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors text-left group"
+                whileHover={{ x: 4 }}
+              >
+                <div className={cn("w-8 h-8 rounded-lg bg-muted flex items-center justify-center", module.color)}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">{module.label}</p>
+                  <p className="text-xs text-muted-foreground">{module.description}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </motion.button>
+            );
+          })}
+        </motion.div>
+      )}
 
       {/* Results */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
-      ) : query && results.length === 0 ? (
+      ) : debouncedQuery && results.length === 0 ? (
         <div className="text-center py-12">
           <SearchIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No results found for "{query}"</p>
+          <p className="text-muted-foreground">No results found for "{debouncedQuery}"</p>
+          {filteredModules.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm text-muted-foreground mb-2">Try visiting:</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {filteredModules.slice(0, 3).map((module) => (
+                  <Link
+                    key={module.path}
+                    to={module.path}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    {module.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : Object.keys(groupedResults).length > 0 ? (
         <div className="space-y-6">
@@ -307,11 +450,6 @@ const Search = () => {
               </div>
             </div>
           ))}
-        </div>
-      ) : !query ? (
-        <div className="text-center py-12">
-          <SearchIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">Start typing to search across all modules</p>
         </div>
       ) : null}
     </div>

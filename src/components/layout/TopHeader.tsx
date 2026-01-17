@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,10 @@ import {
   User,
   Crown,
   ChevronDown,
+  Sparkles,
+  Zap,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface UserProfile {
   display_name: string | null;
@@ -47,24 +50,56 @@ export const TopHeader = () => {
       if (data) setProfile(data as UserProfile);
     };
     fetchProfile();
+    
+    // Subscribe to profile changes
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user?.id}` },
+        (payload) => {
+          setProfile(payload.new as UserProfile);
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
   
   const handleSignOut = async () => {
     await signOut();
   };
   
-  const getPlanBadge = () => {
+  const getPlanConfig = () => {
     switch (plan) {
       case "premium":
-        return { label: "Premium", color: "bg-gradient-to-r from-amber-500 to-orange-500 text-white" };
+        return { 
+          label: "Premium", 
+          icon: Crown,
+          className: "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-lg shadow-amber-500/25 border-0",
+          glowColor: "amber"
+        };
       case "pro":
-        return { label: "Pro", color: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white" };
+        return { 
+          label: "Pro", 
+          icon: Zap,
+          className: "bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25 border-0",
+          glowColor: "indigo"
+        };
       default:
-        return { label: "Free", color: "bg-muted text-muted-foreground" };
+        return { 
+          label: "Free", 
+          icon: Sparkles,
+          className: "bg-muted text-muted-foreground hover:bg-muted/80",
+          glowColor: null
+        };
     }
   };
   
-  const planBadge = getPlanBadge();
+  const planConfig = getPlanConfig();
+  const PlanIcon = planConfig.icon;
 
   return (
     <div className="hidden lg:flex fixed top-0 right-0 left-64 h-14 bg-background/80 backdrop-blur-sm border-b border-border z-30 items-center justify-between px-6 transition-all duration-300">
@@ -73,13 +108,23 @@ export const TopHeader = () => {
       
       {/* Right - Plan, Settings, User Menu */}
       <div className="flex items-center gap-3">
-        {/* Plan Badge */}
+        {/* Plan Badge with animation */}
         {!planLoading && (
           <Link to="/app/profile">
-            <Badge className={cn("cursor-pointer hover:opacity-90 transition-opacity", planBadge.color)}>
-              {plan !== "free" && <Crown className="w-3 h-3 mr-1" />}
-              {planBadge.label}
-            </Badge>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Badge 
+                className={cn(
+                  "cursor-pointer transition-all flex items-center gap-1.5 px-3 py-1",
+                  planConfig.className
+                )}
+              >
+                <PlanIcon className="w-3.5 h-3.5" />
+                <span className="font-medium">{planConfig.label}</span>
+              </Badge>
+            </motion.div>
           </Link>
         )}
         
@@ -117,16 +162,38 @@ export const TopHeader = () => {
             <div className="px-2 py-1.5">
               <p className="text-sm font-medium">{profile?.display_name || "User"}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              <Badge 
+                className={cn(
+                  "mt-2 text-xs",
+                  plan === "premium" 
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white" 
+                    : plan === "pro"
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                      : "bg-muted text-muted-foreground"
+                )}
+              >
+                <PlanIcon className="w-3 h-3 mr-1" />
+                {planConfig.label} Plan
+              </Badge>
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate("/app/profile")}>
               <User className="w-4 h-4 mr-2" />
-              Profile
+              Profile & Subscription
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/app/settings")}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </DropdownMenuItem>
+            {plan === "free" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/app/profile")} className="text-primary">
+                  <Crown className="w-4 h-4 mr-2" />
+                  Upgrade to Pro
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="text-rose-500 focus:text-rose-500">
               <LogOut className="w-4 h-4 mr-2" />
