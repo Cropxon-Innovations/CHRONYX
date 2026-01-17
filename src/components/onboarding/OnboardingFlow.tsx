@@ -19,7 +19,8 @@ import {
   Calendar,
   Target,
   Check,
-  Loader2
+  Loader2,
+  ArrowLeft
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,7 +36,7 @@ const FEATURE_STEPS = [
     description: "Your personal sanctuary for holding everything that matters — with continuity.",
     icon: Sparkles,
     sketch: "◎",
-    color: "from-primary/20 to-transparent",
+    gradient: "from-primary via-primary/50 to-transparent",
     preview: null
   },
   {
@@ -45,7 +46,7 @@ const FEATURE_STEPS = [
     description: "Organize todos by date, set priorities, and build quiet routines.",
     icon: CheckSquare,
     sketch: "M",
-    color: "from-emerald-500/20 to-transparent",
+    gradient: "from-emerald-500 via-emerald-500/50 to-transparent",
     preview: "todos"
   },
   {
@@ -55,7 +56,7 @@ const FEATURE_STEPS = [
     description: "Upload syllabi, track progress, and hold your learning journey.",
     icon: BookOpen,
     sketch: "◇",
-    color: "from-blue-500/20 to-transparent",
+    gradient: "from-blue-500 via-blue-500/50 to-transparent",
     preview: "study"
   },
   {
@@ -65,7 +66,7 @@ const FEATURE_STEPS = [
     description: "Track EMIs, monitor spending, and stay on top of your finances.",
     icon: Wallet,
     sketch: "△",
-    color: "from-amber-500/20 to-transparent",
+    gradient: "from-amber-500 via-amber-500/50 to-transparent",
     preview: "finance"
   },
   {
@@ -75,7 +76,7 @@ const FEATURE_STEPS = [
     description: "Never miss a renewal. All your insurance in one private place.",
     icon: Heart,
     sketch: "○",
-    color: "from-rose-500/20 to-transparent",
+    gradient: "from-rose-500 via-rose-500/50 to-transparent",
     preview: "insurance"
   },
   {
@@ -85,7 +86,7 @@ const FEATURE_STEPS = [
     description: "Upload, organize, and protect your precious memories.",
     icon: Image,
     sketch: "□",
-    color: "from-purple-500/20 to-transparent",
+    gradient: "from-purple-500 via-purple-500/50 to-transparent",
     preview: "memory"
   },
   {
@@ -95,7 +96,7 @@ const FEATURE_STEPS = [
     description: "See your life in weeks. Make each one count.",
     icon: Clock,
     sketch: "◉",
-    color: "from-cyan-500/20 to-transparent",
+    gradient: "from-cyan-500 via-cyan-500/50 to-transparent",
     preview: "lifespan"
   }
 ];
@@ -107,7 +108,7 @@ const PROFILE_STEP = {
   description: "Help us create a personalized experience for you.",
   icon: User,
   sketch: "★",
-  color: "from-indigo-500/20 to-transparent"
+  gradient: "from-indigo-500 via-indigo-500/50 to-transparent"
 };
 
 const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
@@ -125,7 +126,6 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   // All steps including profile step at the end
   const allSteps = [...FEATURE_STEPS, PROFILE_STEP];
   const isProfileStep = currentStep === allSteps.length - 1;
-  const isLastStep = currentStep === allSteps.length - 1;
 
   const handleNext = async () => {
     if (isProfileStep) {
@@ -192,8 +192,8 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const Icon = step.icon;
 
   const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 300 : -300,
+    enter: (dir: number) => ({
+      x: dir > 0 ? 300 : -300,
       opacity: 0,
       scale: 0.95
     }),
@@ -202,8 +202,8 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
       opacity: 1,
       scale: 1
     },
-    exit: (direction: number) => ({
-      x: direction > 0 ? -300 : 300,
+    exit: (dir: number) => ({
+      x: dir > 0 ? -300 : 300,
       opacity: 0,
       scale: 0.95
     })
@@ -224,6 +224,108 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentStep, isProfileStep]);
+
+  const renderPreview = (previewType: string | null) => {
+    if (!previewType) return null;
+    
+    switch (previewType) {
+      case "todos":
+        return (
+          <div className="flex flex-col gap-2 w-full max-w-xs">
+            {["Complete daily tasks", "Review progress", "Plan tomorrow"].map((task, i) => (
+              <motion.div
+                key={task}
+                className="flex items-center gap-2 text-sm text-foreground/80 bg-muted/30 p-2 rounded-lg"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 + i * 0.1 }}
+              >
+                <Check className="w-4 h-4 text-emerald-500" />
+                {task}
+              </motion.div>
+            ))}
+          </div>
+        );
+      case "study":
+        return (
+          <div className="grid grid-cols-3 gap-2 w-full max-w-xs">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => (
+              <motion.div
+                key={day}
+                className="text-center p-2 rounded-lg bg-blue-500/10 border border-blue-500/20"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 + i * 0.05 }}
+              >
+                <p className="text-xs text-muted-foreground">{day}</p>
+                <p className="text-sm font-medium text-blue-500">{Math.floor(Math.random() * 3 + 1)}h</p>
+              </motion.div>
+            ))}
+          </div>
+        );
+      case "finance":
+        return (
+          <div className="flex items-end gap-1 h-16 justify-center">
+            {[40, 65, 45, 80, 55, 70, 90].map((h, i) => (
+              <motion.div
+                key={i}
+                className="w-4 bg-gradient-to-t from-amber-500 to-amber-300 rounded-t"
+                initial={{ height: 0 }}
+                animate={{ height: `${h}%` }}
+                transition={{ delay: 0.6 + i * 0.05, duration: 0.3 }}
+              />
+            ))}
+          </div>
+        );
+      case "insurance":
+        return (
+          <div className="flex gap-3 justify-center">
+            {["Health", "Life", "Vehicle"].map((type, i) => (
+              <motion.div
+                key={type}
+                className="p-3 rounded-lg bg-rose-500/10 text-center border border-rose-500/20"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 + i * 0.1 }}
+              >
+                <Heart className="w-5 h-5 text-rose-500 mx-auto mb-1" />
+                <p className="text-xs text-muted-foreground">{type}</p>
+              </motion.div>
+            ))}
+          </div>
+        );
+      case "memory":
+        return (
+          <div className="grid grid-cols-3 gap-2 w-full max-w-xs">
+            {[1, 2, 3, 4, 5, 6].map((_, i) => (
+              <motion.div
+                key={i}
+                className="aspect-square rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/5 border border-purple-500/20"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 + i * 0.05 }}
+              />
+            ))}
+          </div>
+        );
+      case "lifespan":
+        return (
+          <div className="flex flex-wrap gap-1 justify-center max-w-xs">
+            {Array.from({ length: 52 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className={`w-2 h-2 rounded-sm ${i < 26 ? "bg-cyan-500" : "bg-muted"}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 + i * 0.01 }}
+              />
+            ))}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex items-center justify-center overflow-hidden">
@@ -271,10 +373,10 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
 
         {/* Gradient orb */}
         <motion.div
-          className={`absolute inset-0 bg-gradient-radial ${step.color} opacity-30`}
+          className={`absolute inset-0 bg-gradient-radial ${step.gradient} opacity-20`}
           key={step.id}
           initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.3 }}
+          animate={{ scale: 1, opacity: 0.2 }}
           transition={{ duration: 0.5 }}
         />
       </div>
@@ -288,7 +390,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <img src={chronyxLogo} alt="CHRONYX" className="w-16 h-16 mx-auto" />
+            <img src={chronyxLogo} alt="CHRONYX" className="w-20 h-20 mx-auto rounded-full shadow-lg" />
           </motion.div>
         )}
         
@@ -434,171 +536,97 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
             )}
 
             {/* Feature Preview Animation */}
-            {'preview' in step && step.preview && !isProfileStep && (
+            {"preview" in step && step.preview && !isProfileStep && (
               <motion.div
                 className="mt-6 p-4 bg-muted/30 rounded-xl border border-border/50"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                <div className="flex items-center justify-center gap-4">
-                  {step.preview === "todos" && (
-                    <div className="flex flex-col gap-2 w-full max-w-xs">
-                      {["Complete daily tasks", "Review progress", "Plan tomorrow"].map((task, i) => (
-                        <motion.div
-                          key={task}
-                          className="flex items-center gap-2 text-sm text-foreground/80"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.6 + i * 0.1 }}
-                        >
-                          <Check className="w-4 h-4 text-emerald-500" />
-                          {task}
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                  {step.preview === "study" && (
-                    <div className="grid grid-cols-3 gap-2 w-full max-w-xs">
-                      {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => (
-                        <motion.div
-                          key={day}
-                          className="text-center p-2 rounded-lg bg-blue-500/10"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.6 + i * 0.05 }}
-                        >
-                          <p className="text-xs text-muted-foreground">{day}</p>
-                          <p className="text-sm font-medium text-blue-500">{Math.floor(Math.random() * 3 + 1)}h</p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                  {step.preview === "finance" && (
-                    <div className="flex items-end gap-1 h-16">
-                      {[40, 65, 45, 80, 55, 70, 90].map((h, i) => (
-                        <motion.div
-                          key={i}
-                          className="w-4 bg-gradient-to-t from-amber-500 to-amber-300 rounded-t"
-                          initial={{ height: 0 }}
-                          animate={{ height: `${h}%` }}
-                          transition={{ delay: 0.6 + i * 0.05, duration: 0.3 }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  {step.preview === "insurance" && (
-                    <div className="flex gap-3">
-                      {["Health", "Life", "Vehicle"].map((type, i) => (
-                        <motion.div
-                          key={type}
-                          className="p-3 rounded-lg bg-rose-500/10 text-center"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.6 + i * 0.1 }}
-                        >
-                          <Heart className="w-5 h-5 text-rose-500 mx-auto mb-1" />
-                          <p className="text-xs">{type}</p>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                  {step.preview === "memory" && (
-                    <div className="grid grid-cols-3 gap-1">
-                      {Array(6).fill(0).map((_, i) => (
-                        <motion.div
-                          key={i}
-                          className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/30 to-pink-500/30"
-                          initial={{ opacity: 0, rotate: -10 }}
-                          animate={{ opacity: 1, rotate: 0 }}
-                          transition={{ delay: 0.6 + i * 0.05 }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  {step.preview === "lifespan" && (
-                    <div className="w-full max-w-xs">
-                      <div className="h-3 bg-muted rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-cyan-500 to-cyan-300"
-                          initial={{ width: 0 }}
-                          animate={{ width: "35%" }}
-                          transition={{ delay: 0.6, duration: 1 }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2 text-center">35% of life lived</p>
-                    </div>
-                  )}
+                <div className="flex items-center justify-center">
+                  {renderPreview(step.preview)}
                 </div>
               </motion.div>
             )}
           </motion.div>
         </AnimatePresence>
 
-        {/* Actions */}
-        <div className="mt-8 sm:mt-12 flex flex-col gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="flex gap-3 justify-center"
-          >
+        {/* Action buttons */}
+        <motion.div
+          className="mt-8 space-y-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="flex gap-3 justify-center">
             {currentStep > 0 && (
               <Button
-                onClick={handleBack}
                 variant="outline"
-                size="lg"
-                className="min-w-[100px]"
+                onClick={handleBack}
+                className="gap-2"
               >
+                <ArrowLeft className="w-4 h-4" />
                 Back
               </Button>
             )}
             <Button
               onClick={handleNext}
-              size="lg"
-              className="min-w-[140px] group"
               disabled={isSaving}
+              className="gap-2 min-w-[140px]"
             >
               {isSaving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
               ) : isProfileStep ? (
                 <>
                   Get Started
-                  <Sparkles className="ml-2 h-4 w-4" />
+                  <ArrowRight className="w-4 h-4" />
                 </>
               ) : (
                 <>
                   Continue
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </Button>
-          </motion.div>
-
+          </div>
+          
           {!isProfileStep && (
-            <motion.button
+            <button
               onClick={handleSkip}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
             >
-              Skip intro
-            </motion.button>
+              Skip to setup
+            </button>
           )}
-        </div>
+          
+          {isProfileStep && (
+            <button
+              onClick={onComplete}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Set up later
+            </button>
+          )}
+        </motion.div>
 
-        {/* Keyboard hint */}
-        {!isProfileStep && (
-          <motion.p
-            className="mt-6 sm:mt-8 text-xs text-muted-foreground/50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
-            Use arrow keys or press Enter to navigate
-          </motion.p>
-        )}
+        {/* Branding */}
+        <motion.div
+          className="mt-12 flex items-center justify-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          <span className="text-xs tracking-[0.2em] text-muted-foreground/50">
+            CHRONYX
+          </span>
+          <span className="text-[8px] text-muted-foreground/30">BY</span>
+          <span className="text-xs tracking-[0.1em] text-muted-foreground/50">
+            CROPXON
+          </span>
+        </motion.div>
       </div>
     </div>
   );

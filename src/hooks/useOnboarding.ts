@@ -25,25 +25,56 @@ export const useOnboarding = () => {
           return;
         }
 
-        // Check if user has any data (indicating they've used the app before)
-        const [todosResult, expensesResult, profileResult] = await Promise.all([
+        // Check if user has a profile with display_name (indicating they've completed onboarding)
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("display_name, birth_date, created_at")
+          .eq("id", user.id)
+          .single();
+
+        // If user has a display_name, they've completed onboarding before
+        if (profileData?.display_name) {
+          localStorage.setItem(`${ONBOARDING_KEY}_${user.id}`, "true");
+          setShowOnboarding(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if this is an existing user with any data
+        const [todosResult, expensesResult, incomeResult] = await Promise.all([
           supabase.from("todos").select("id").eq("user_id", user.id).limit(1),
           supabase.from("expenses").select("id").eq("user_id", user.id).limit(1),
-          supabase.from("profiles").select("display_name").eq("id", user.id).single()
+          supabase.from("income_entries").select("id").eq("user_id", user.id).limit(1),
         ]);
 
         const hasData = 
           (todosResult.data && todosResult.data.length > 0) ||
           (expensesResult.data && expensesResult.data.length > 0) ||
-          (profileResult.data?.display_name);
+          (incomeResult.data && incomeResult.data.length > 0);
 
         if (hasData) {
           // User has data, mark onboarding as complete
           localStorage.setItem(`${ONBOARDING_KEY}_${user.id}`, "true");
           setShowOnboarding(false);
         } else {
-          // New user, show onboarding
-          setShowOnboarding(true);
+          // Check if account was created very recently (within last 5 minutes)
+          // This helps identify truly new accounts
+          const profileCreatedAt = profileData?.created_at ? new Date(profileData.created_at) : null;
+          const now = new Date();
+          const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+          
+          // Show onboarding for new accounts (no display_name and no data)
+          // OR if the profile was just created
+          const isNewAccount = !profileData?.display_name && !hasData;
+          const isRecentlyCreated = profileCreatedAt && profileCreatedAt > fiveMinutesAgo;
+          
+          if (isNewAccount || isRecentlyCreated) {
+            setShowOnboarding(true);
+          } else {
+            // Older account without display_name but no recent activity - likely returning user
+            localStorage.setItem(`${ONBOARDING_KEY}_${user.id}`, "true");
+            setShowOnboarding(false);
+          }
         }
       } catch (error) {
         console.error("Error checking onboarding status:", error);
