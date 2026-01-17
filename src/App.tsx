@@ -47,6 +47,7 @@ const Social = lazy(() => import("./pages/app/Social"));
 const PaymentAnalytics = lazy(() => import("./pages/app/PaymentAnalytics"));
 const Notes = lazy(() => import("./pages/app/Notes"));
 const Vault = lazy(() => import("./pages/app/Vault"));
+const Tax = lazy(() => import("./pages/app/Tax"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -229,6 +230,7 @@ const AnimatedRoutes = () => {
           <Route path="analytics" element={<Suspense fallback={<PageLoader />}><PaymentAnalytics /></Suspense>} />
           <Route path="notes" element={<Suspense fallback={<PageLoader />}><Notes /></Suspense>} />
           <Route path="vault" element={<Suspense fallback={<PageLoader />}><Vault /></Suspense>} />
+          <Route path="tax" element={<Suspense fallback={<PageLoader />}><Tax /></Suspense>} />
           <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         </Route>
         <Route 
