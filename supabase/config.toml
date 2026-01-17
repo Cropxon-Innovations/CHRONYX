@@ -77,3 +77,18 @@ verify_jwt = false
 
 [functions.tax-generate-pdf]
 verify_jwt = false
+
+[functions.tax-discover-income]
+verify_jwt = false
+
+[functions.tax-discover-deductions]
+verify_jwt = false
+
+[functions.tax-recommend]
+verify_jwt = false
+
+[functions.tax-audit]
+verify_jwt = false
+
+[functions.tax-full-calculation]
+verify_jwt = false
