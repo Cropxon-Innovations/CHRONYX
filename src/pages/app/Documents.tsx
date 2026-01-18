@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  FileText, 
   GraduationCap, 
   Briefcase, 
-  IndianRupee,
   FolderOpen
 } from "lucide-react";
-import EducationRecords from "@/components/documents/EducationRecords";
-import WorkHistory from "@/components/documents/WorkHistory";
-import LifetimeEarnings from "@/components/documents/LifetimeEarnings";
 import EnhancedDocuments from "@/components/documents/EnhancedDocuments";
+import EnhancedEducationRecords from "@/components/documents/EnhancedEducationRecords";
+import EnhancedWorkHistory from "@/components/documents/EnhancedWorkHistory";
 
 const Documents = () => {
   const [activeTab, setActiveTab] = useState("documents");
@@ -30,34 +27,27 @@ const Documents = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1 bg-muted/50">
+          <TabsList className="grid w-full grid-cols-3 gap-2 h-auto p-1.5 bg-muted/50 rounded-2xl">
             <TabsTrigger 
               value="documents" 
-              className="flex items-center gap-2 py-3 data-[state=active]:bg-background"
+              className="flex items-center gap-2 py-3 rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
               <FolderOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Documents</span>
             </TabsTrigger>
             <TabsTrigger 
               value="education"
-              className="flex items-center gap-2 py-3 data-[state=active]:bg-background"
+              className="flex items-center gap-2 py-3 rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
               <GraduationCap className="h-4 w-4" />
               <span className="hidden sm:inline">Education</span>
             </TabsTrigger>
             <TabsTrigger 
               value="work"
-              className="flex items-center gap-2 py-3 data-[state=active]:bg-background"
+              className="flex items-center gap-2 py-3 rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm"
             >
               <Briefcase className="h-4 w-4" />
               <span className="hidden sm:inline">Work & Career</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="earnings"
-              className="flex items-center gap-2 py-3 data-[state=active]:bg-background"
-            >
-              <IndianRupee className="h-4 w-4" />
-              <span className="hidden sm:inline">Earnings</span>
             </TabsTrigger>
           </TabsList>
 
@@ -66,15 +56,11 @@ const Documents = () => {
           </TabsContent>
 
           <TabsContent value="education" className="mt-6">
-            <EducationRecords />
+            <EnhancedEducationRecords />
           </TabsContent>
 
           <TabsContent value="work" className="mt-6">
-            <WorkHistory />
-          </TabsContent>
-
-          <TabsContent value="earnings" className="mt-6">
-            <LifetimeEarnings />
+            <EnhancedWorkHistory />
           </TabsContent>
         </Tabs>
       </div>
