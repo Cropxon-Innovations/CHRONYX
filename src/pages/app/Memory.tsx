@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
@@ -37,7 +38,10 @@ import {
   MapPin,
   ChevronRight,
   Home,
-  FolderPlus as FolderPlusIcon
+  FolderPlus as FolderPlusIcon,
+  Share2,
+  Crown,
+  Sparkles
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
@@ -53,6 +57,11 @@ import { CollectionCard } from "@/components/memory/CollectionCard";
 import { MemoryMap } from "@/components/memory/MemoryMap";
 import { GalleryView, GalleryViewMode } from "@/components/memory/GalleryView";
 import { encryptFile } from "@/utils/crypto";
+import { StorageWidget } from "@/components/memory/StorageWidget";
+import { MemoryContextMenu } from "@/components/memory/MemoryContextMenu";
+import { EmojiIconPicker } from "@/components/memory/EmojiIconPicker";
+import { VideoPremiumGate } from "@/components/memory/VideoPremiumGate";
+import { useSubscription } from "@/hooks/useSubscription";
 
 type Memory = {
   id: string;
@@ -62,6 +71,7 @@ type Memory = {
   file_url: string;
   thumbnail_url: string | null;
   file_name: string;
+  file_size?: number | null;
   created_date: string;
   collection_id: string | null;
   folder_id: string | null;
@@ -146,6 +156,8 @@ const hashPassword = async (password: string): Promise<string> => {
 const Memory = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { isPremium, isPro } = useSubscription();
+  const [videoPremiumGateOpen, setVideoPremiumGateOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list" | "map">("grid");
   const [filterType, setFilterType] = useState<"all" | "photo" | "video">("all");
   const [filterCollection, setFilterCollection] = useState<string>("all");
@@ -1051,6 +1063,13 @@ const Memory = () => {
         </div>
       </div>
 
+      {/* Storage Widget */}
+      <StorageWidget
+        usedBytes={memories.reduce((acc, m) => acc + (m.file_size || 0), 0)}
+        totalPhotos={stats.photos}
+        totalVideos={stats.videos}
+      />
+
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <Card className="bg-card/50">
@@ -1064,7 +1083,7 @@ const Memory = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-card/50">
+        <Card className="bg-card/50 relative overflow-hidden">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <Video className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
@@ -1073,6 +1092,12 @@ const Memory = () => {
                 <p className="text-xs text-muted-foreground">Videos</p>
               </div>
             </div>
+            {!isPremium() && !isPro() && (
+              <Badge className="absolute top-2 right-2 text-[9px] bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+                <Crown className="w-3 h-3 mr-1" />
+                Premium
+              </Badge>
+            )}
           </CardContent>
         </Card>
         <Card className="bg-card/50">
@@ -1760,6 +1785,12 @@ const Memory = () => {
         onClose={() => setSlideshowOpen(false)}
         memories={filteredMemories}
         startIndex={slideshowStartIndex}
+      />
+
+      {/* Video Premium Gate */}
+      <VideoPremiumGate
+        open={videoPremiumGateOpen}
+        onClose={() => setVideoPremiumGateOpen(false)}
       />
     </div>
   );
