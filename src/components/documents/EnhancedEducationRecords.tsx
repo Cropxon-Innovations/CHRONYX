@@ -27,7 +27,14 @@ import {
   University,
   FileImage,
   FileBadge,
-  Printer
+  LayoutGrid,
+  GitBranch,
+  Calendar,
+  Clock,
+  Scroll,
+  Medal,
+  Library,
+  BookMarked
 } from "lucide-react";
 
 interface EducationRecord {
@@ -56,16 +63,30 @@ const DOCUMENT_TYPES = [
   { value: "Degree", icon: GraduationCap, color: "text-purple-500" },
   { value: "Transcript", icon: BookOpen, color: "text-green-500" },
   { value: "ID Card", icon: FileBadge, color: "text-orange-500" },
+  { value: "Migration Certificate", icon: Scroll, color: "text-teal-500" },
+  { value: "Provisional Certificate", icon: Medal, color: "text-rose-500" },
+  { value: "Bonafide Certificate", icon: BookMarked, color: "text-indigo-500" },
   { value: "Other", icon: FileImage, color: "text-gray-500" }
 ];
 
-const DEGREE_ICONS: Record<string, typeof GraduationCap> = {
-  "PhD": University,
-  "Master": University,
-  "Bachelor": GraduationCap,
-  "Diploma": Award,
-  "High School": School,
-  "default": GraduationCap
+const DEGREE_INFO: Record<string, { icon: typeof GraduationCap; color: string }> = {
+  "PhD": { icon: University, color: "from-purple-500/20 to-purple-600/10" },
+  "Doctorate": { icon: University, color: "from-purple-500/20 to-purple-600/10" },
+  "Master": { icon: Library, color: "from-blue-500/20 to-blue-600/10" },
+  "MBA": { icon: Library, color: "from-blue-500/20 to-blue-600/10" },
+  "M.Tech": { icon: Library, color: "from-blue-500/20 to-blue-600/10" },
+  "Bachelor": { icon: GraduationCap, color: "from-green-500/20 to-green-600/10" },
+  "B.Tech": { icon: GraduationCap, color: "from-green-500/20 to-green-600/10" },
+  "B.E": { icon: GraduationCap, color: "from-green-500/20 to-green-600/10" },
+  "BBA": { icon: GraduationCap, color: "from-green-500/20 to-green-600/10" },
+  "BCA": { icon: GraduationCap, color: "from-green-500/20 to-green-600/10" },
+  "Diploma": { icon: Award, color: "from-amber-500/20 to-amber-600/10" },
+  "High School": { icon: School, color: "from-rose-500/20 to-rose-600/10" },
+  "12th": { icon: School, color: "from-rose-500/20 to-rose-600/10" },
+  "10th": { icon: School, color: "from-cyan-500/20 to-cyan-600/10" },
+  "SSC": { icon: School, color: "from-cyan-500/20 to-cyan-600/10" },
+  "HSC": { icon: School, color: "from-rose-500/20 to-rose-600/10" },
+  "default": { icon: GraduationCap, color: "from-primary/20 to-primary/10" }
 };
 
 const EnhancedEducationRecords = () => {
@@ -74,6 +95,7 @@ const EnhancedEducationRecords = () => {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  const [viewMode, setViewMode] = useState<"grid" | "timeline">("timeline");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<EducationRecord | null>(null);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
@@ -243,154 +265,313 @@ const EnhancedEducationRecords = () => {
 
   const getDocumentsForRecord = (recordId: string) => allDocuments.filter(d => d.education_id === recordId);
   
-  const getDocTypeInfo = (type: string) => DOCUMENT_TYPES.find(d => d.value === type) || DOCUMENT_TYPES[5];
+  const getDocTypeInfo = (type: string) => DOCUMENT_TYPES.find(d => d.value === type) || DOCUMENT_TYPES[DOCUMENT_TYPES.length - 1];
 
-  const getDegreeIcon = (degree: string) => {
-    for (const [key, Icon] of Object.entries(DEGREE_ICONS)) {
-      if (degree.toLowerCase().includes(key.toLowerCase())) return Icon;
+  const getDegreeInfo = (degree: string) => {
+    for (const [key, info] of Object.entries(DEGREE_INFO)) {
+      if (degree.toLowerCase().includes(key.toLowerCase())) return info;
     }
-    return DEGREE_ICONS.default;
+    return DEGREE_INFO.default;
+  };
+
+  const getDuration = (startYear: number | null, endYear: number | null) => {
+    if (!startYear || !endYear) return null;
+    const years = endYear - startYear;
+    return years === 1 ? "1 year" : `${years} years`;
+  };
+
+  // Calculate total education years
+  const totalEducationYears = records.reduce((total, record) => {
+    if (record.start_year && record.end_year) {
+      return total + (record.end_year - record.start_year);
+    }
+    return total;
+  }, 0);
+
+  const renderCard = (record: EducationRecord, index: number) => {
+    const docs = getDocumentsForRecord(record.id);
+    const degreeInfo = getDegreeInfo(record.degree);
+    const DegreeIcon = degreeInfo.icon;
+    const isSelected = selectedRecord === record.id;
+    const duration = getDuration(record.start_year, record.end_year);
+
+    return (
+      <Card 
+        key={record.id} 
+        className={`group cursor-pointer transition-all duration-200 rounded-2xl border-2 hover:shadow-lg ${isSelected ? 'border-primary shadow-lg' : 'border-border/50 hover:border-primary/30'}`}
+        onClick={() => setSelectedRecord(isSelected ? null : record.id)}
+      >
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${degreeInfo.color} flex items-center justify-center shrink-0`}>
+              <DegreeIcon className="h-6 w-6 text-foreground/70" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-sm truncate">{record.degree}</h3>
+              <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                <Building className="h-3 w-3" />
+                {record.institution}
+              </p>
+              {record.course && <p className="text-xs text-muted-foreground/70 truncate">{record.course}</p>}
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {record.start_year && record.end_year && (
+                  <Badge variant="outline" className="text-xs rounded-lg flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {record.start_year} - {record.end_year}
+                  </Badge>
+                )}
+                {duration && (
+                  <Badge variant="secondary" className="text-xs rounded-lg flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> {duration}
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-xs rounded-lg">{docs.length} docs</Badge>
+              </div>
+            </div>
+          </div>
+
+          {isSelected && (
+            <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
+              {record.notes && <p className="text-sm text-muted-foreground">{record.notes}</p>}
+              
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={(e) => { e.stopPropagation(); openEdit(record); }}>
+                  <Edit2 className="h-3 w-3 mr-1" /> Edit
+                </Button>
+                <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={(e) => { e.stopPropagation(); setUploadingFor(record.id); }}>
+                  <Upload className="h-3 w-3 mr-1" /> Upload
+                </Button>
+                <Button variant="ghost" size="sm" className="rounded-xl text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this record?")) deleteRecordMutation.mutate(record.id); }}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+              
+              {docs.length > 0 && (
+                <div className="space-y-2">
+                  {docs.map(doc => {
+                    const docInfo = getDocTypeInfo(doc.document_type);
+                    const DocIcon = docInfo.icon;
+                    return (
+                      <div key={doc.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-xl">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <DocIcon className={`h-4 w-4 shrink-0 ${docInfo.color}`} />
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium truncate">{doc.title}</p>
+                            <p className="text-xs text-muted-foreground">{doc.document_type}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); window.open(doc.file_url, "_blank"); }}>
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); const a = document.createElement('a'); a.href = doc.file_url; a.download = doc.title; a.click(); }}>
+                            <Download className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("Delete?")) deleteDocMutation.mutate(doc.id); }}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-lg font-semibold">Education Records</h2>
-          <p className="text-sm text-muted-foreground">{records.length} qualifications</p>
+          <h2 className="text-lg font-semibold">Education Timeline</h2>
+          <p className="text-sm text-muted-foreground">
+            {records.length} qualifications • <span className="font-medium text-foreground">{totalEducationYears} years</span> of education
+          </p>
         </div>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setIsAddOpen(true); }} className="rounded-xl">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Education
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-muted/50 rounded-xl p-1">
+            <Button variant={viewMode === "timeline" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("timeline")} className="rounded-lg">
+              <GitBranch className="h-4 w-4 mr-1" /> Timeline
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add Education Record</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label>Institution Name</Label>
-                <Input value={formData.institution} onChange={(e) => setFormData(prev => ({ ...prev, institution: e.target.value }))} placeholder="University / School name" className="rounded-xl" />
-              </div>
-              <div>
-                <Label>Degree / Qualification</Label>
-                <Input value={formData.degree} onChange={(e) => setFormData(prev => ({ ...prev, degree: e.target.value }))} placeholder="e.g., B.Tech, MBA" className="rounded-xl" />
-              </div>
-              <div>
-                <Label>Course / Specialization</Label>
-                <Input value={formData.course} onChange={(e) => setFormData(prev => ({ ...prev, course: e.target.value }))} placeholder="e.g., Computer Science" className="rounded-xl" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Start Year</Label>
-                  <Input type="number" value={formData.start_year} onChange={(e) => setFormData(prev => ({ ...prev, start_year: e.target.value }))} placeholder="2018" className="rounded-xl" />
-                </div>
-                <div>
-                  <Label>End Year</Label>
-                  <Input type="number" value={formData.end_year} onChange={(e) => setFormData(prev => ({ ...prev, end_year: e.target.value }))} placeholder="2022" className="rounded-xl" />
-                </div>
-              </div>
-              <div>
-                <Label>Notes</Label>
-                <Textarea value={formData.notes} onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))} rows={2} className="rounded-xl" />
-              </div>
-              <Button onClick={() => addRecordMutation.mutate(formData)} disabled={!formData.institution || !formData.degree || addRecordMutation.isPending} className="w-full rounded-xl">
-                {addRecordMutation.isPending ? "Saving..." : "Save Record"}
+            <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("grid")} className="rounded-lg">
+              <LayoutGrid className="h-4 w-4 mr-1" /> Grid
+            </Button>
+          </div>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => { resetForm(); setIsAddOpen(true); }} className="rounded-xl">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Education
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Education Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {records.map((record) => {
-          const docs = getDocumentsForRecord(record.id);
-          const DegreeIcon = getDegreeIcon(record.degree);
-          const isSelected = selectedRecord === record.id;
-          
-          return (
-            <Card 
-              key={record.id} 
-              className={`group cursor-pointer transition-all duration-200 rounded-2xl border-2 hover:shadow-lg ${isSelected ? 'border-primary shadow-lg' : 'border-border/50 hover:border-primary/30'}`}
-              onClick={() => setSelectedRecord(isSelected ? null : record.id)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
-                    <DegreeIcon className="h-6 w-6 text-primary" />
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add Education Record</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label>Institution Name</Label>
+                  <Input value={formData.institution} onChange={(e) => setFormData(prev => ({ ...prev, institution: e.target.value }))} placeholder="University / School name" className="rounded-xl" />
+                </div>
+                <div>
+                  <Label>Degree / Qualification</Label>
+                  <Input value={formData.degree} onChange={(e) => setFormData(prev => ({ ...prev, degree: e.target.value }))} placeholder="e.g., B.Tech, MBA, 12th" className="rounded-xl" />
+                </div>
+                <div>
+                  <Label>Course / Specialization</Label>
+                  <Input value={formData.course} onChange={(e) => setFormData(prev => ({ ...prev, course: e.target.value }))} placeholder="e.g., Computer Science" className="rounded-xl" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Start Year</Label>
+                    <Input type="number" value={formData.start_year} onChange={(e) => setFormData(prev => ({ ...prev, start_year: e.target.value }))} placeholder="2018" className="rounded-xl" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm truncate">{record.degree}</h3>
-                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                      <Building className="h-3 w-3" />
-                      {record.institution}
-                    </p>
-                    {record.course && <p className="text-xs text-muted-foreground/70 truncate">{record.course}</p>}
-                    <div className="flex items-center gap-2 mt-2">
-                      {record.start_year && record.end_year && (
-                        <Badge variant="secondary" className="text-xs rounded-lg">{record.start_year} - {record.end_year}</Badge>
-                      )}
-                      <Badge variant="outline" className="text-xs rounded-lg">{docs.length} docs</Badge>
-                    </div>
+                  <div>
+                    <Label>End Year</Label>
+                    <Input type="number" value={formData.end_year} onChange={(e) => setFormData(prev => ({ ...prev, end_year: e.target.value }))} placeholder="2022" className="rounded-xl" />
                   </div>
                 </div>
-
-                {isSelected && (
-                  <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={(e) => { e.stopPropagation(); openEdit(record); }}>
-                        <Edit2 className="h-3 w-3 mr-1" /> Edit
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={(e) => { e.stopPropagation(); setUploadingFor(record.id); }}>
-                        <Upload className="h-3 w-3 mr-1" /> Upload
-                      </Button>
-                      <Button variant="ghost" size="sm" className="rounded-xl text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this record?")) deleteRecordMutation.mutate(record.id); }}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    
-                    {docs.length > 0 && (
-                      <div className="space-y-2">
-                        {docs.map(doc => {
-                          const docInfo = getDocTypeInfo(doc.document_type);
-                          const DocIcon = docInfo.icon;
-                          return (
-                            <div key={doc.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-xl">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <DocIcon className={`h-4 w-4 shrink-0 ${docInfo.color}`} />
-                                <div className="min-w-0">
-                                  <p className="text-xs font-medium truncate">{doc.title}</p>
-                                  <p className="text-xs text-muted-foreground">{doc.document_type}</p>
-                                </div>
-                              </div>
-                              <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); window.open(doc.file_url, "_blank"); }}>
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); const a = document.createElement('a'); a.href = doc.file_url; a.download = doc.title; a.click(); }}>
-                                  <Download className="h-3 w-3" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("Delete?")) deleteDocMutation.mutate(doc.id); }}>
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+                <div>
+                  <Label>Notes</Label>
+                  <Textarea value={formData.notes} onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))} rows={2} className="rounded-xl" />
+                </div>
+                <Button onClick={() => addRecordMutation.mutate(formData)} disabled={!formData.institution || !formData.degree || addRecordMutation.isPending} className="w-full rounded-xl">
+                  {addRecordMutation.isPending ? "Saving..." : "Save Record"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      {/* Timeline View */}
+      {viewMode === "timeline" && (
+        <div className="relative">
+          {/* Timeline line */}
+          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-transparent" />
+          
+          <div className="space-y-6">
+            {records.map((record, index) => {
+              const docs = getDocumentsForRecord(record.id);
+              const degreeInfo = getDegreeInfo(record.degree);
+              const DegreeIcon = degreeInfo.icon;
+              const isSelected = selectedRecord === record.id;
+              const duration = getDuration(record.start_year, record.end_year);
+              const isRecent = index === 0;
+              
+              return (
+                <div key={record.id} className="relative pl-16">
+                  {/* Timeline dot */}
+                  <div className={`absolute left-4 top-4 w-5 h-5 rounded-full border-4 border-background ${isRecent ? 'bg-green-500' : 'bg-primary'} shadow-lg`} />
+                  
+                  {/* Year badge on timeline */}
+                  <div className="absolute left-0 top-12 text-xs text-muted-foreground font-medium writing-mode-vertical hidden sm:block" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                    {record.end_year || record.start_year}
+                  </div>
+                  
+                  <Card 
+                    className={`transition-all duration-200 rounded-2xl border-2 cursor-pointer hover:shadow-lg ${isSelected ? 'border-primary shadow-lg' : 'border-border/50 hover:border-primary/30'}`}
+                    onClick={() => setSelectedRecord(isSelected ? null : record.id)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${degreeInfo.color} flex items-center justify-center shrink-0`}>
+                          <DegreeIcon className="h-7 w-7 text-foreground/70" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold">{record.degree}</h3>
+                            {isRecent && <Badge className="bg-green-500/20 text-green-600 border-green-500/30 rounded-lg">Latest</Badge>}
+                          </div>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Building className="h-3 w-3" /> {record.institution}
+                          </p>
+                          {record.course && <p className="text-xs text-muted-foreground/70">{record.course}</p>}
+                          <div className="flex items-center gap-3 mt-2 flex-wrap">
+                            {record.start_year && record.end_year && (
+                              <Badge variant="outline" className="text-xs rounded-lg flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {record.start_year} - {record.end_year}
+                              </Badge>
+                            )}
+                            {duration && (
+                              <Badge variant="secondary" className="text-xs rounded-lg flex items-center gap-1">
+                                <Clock className="h-3 w-3" /> {duration}
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className="text-xs rounded-lg">{docs.length} docs</Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      {isSelected && (
+                        <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
+                          {record.notes && <p className="text-sm text-muted-foreground">{record.notes}</p>}
+                          
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={(e) => { e.stopPropagation(); openEdit(record); }}>
+                              <Edit2 className="h-3 w-3 mr-1" /> Edit
+                            </Button>
+                            <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={(e) => { e.stopPropagation(); setUploadingFor(record.id); }}>
+                              <Upload className="h-3 w-3 mr-1" /> Upload Doc
+                            </Button>
+                            <Button variant="ghost" size="sm" className="rounded-xl text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("Delete this record?")) deleteRecordMutation.mutate(record.id); }}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          
+                          {docs.length > 0 && (
+                            <div className="space-y-2">
+                              {docs.map(doc => {
+                                const docInfo = getDocTypeInfo(doc.document_type);
+                                const DocIcon = docInfo.icon;
+                                return (
+                                  <div key={doc.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-xl">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <DocIcon className={`h-4 w-4 shrink-0 ${docInfo.color}`} />
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-medium truncate">{doc.title}</p>
+                                        <p className="text-xs text-muted-foreground">{doc.document_type}</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); window.open(doc.file_url, "_blank"); }}>
+                                        <Eye className="h-3 w-3" />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); const a = document.createElement('a'); a.href = doc.file_url; a.download = doc.title; a.click(); }}>
+                                        <Download className="h-3 w-3" />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("Delete?")) deleteDocMutation.mutate(doc.id); }}>
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Grid View */}
+      {viewMode === "grid" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {records.map((record, index) => renderCard(record, index))}
+        </div>
+      )}
 
       {records.length === 0 && !isLoading && (
         <div className="text-center py-16 text-muted-foreground">
@@ -420,17 +601,27 @@ const EnhancedEducationRecords = () => {
               <Input value={formData.course} onChange={(e) => setFormData(prev => ({ ...prev, course: e.target.value }))} className="rounded-xl" />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>Start Year</Label><Input type="number" value={formData.start_year} onChange={(e) => setFormData(prev => ({ ...prev, start_year: e.target.value }))} className="rounded-xl" /></div>
-              <div><Label>End Year</Label><Input type="number" value={formData.end_year} onChange={(e) => setFormData(prev => ({ ...prev, end_year: e.target.value }))} className="rounded-xl" /></div>
+              <div>
+                <Label>Start Year</Label>
+                <Input type="number" value={formData.start_year} onChange={(e) => setFormData(prev => ({ ...prev, start_year: e.target.value }))} className="rounded-xl" />
+              </div>
+              <div>
+                <Label>End Year</Label>
+                <Input type="number" value={formData.end_year} onChange={(e) => setFormData(prev => ({ ...prev, end_year: e.target.value }))} className="rounded-xl" />
+              </div>
             </div>
-            <Button onClick={() => editingRecord && updateRecordMutation.mutate({ ...formData, id: editingRecord.id })} disabled={updateRecordMutation.isPending} className="w-full rounded-xl">
-              {updateRecordMutation.isPending ? "Updating..." : "Update Record"}
+            <div>
+              <Label>Notes</Label>
+              <Textarea value={formData.notes} onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))} rows={2} className="rounded-xl" />
+            </div>
+            <Button onClick={() => editingRecord && updateRecordMutation.mutate({ ...formData, id: editingRecord.id })} disabled={!formData.institution || !formData.degree || updateRecordMutation.isPending} className="w-full rounded-xl">
+              {updateRecordMutation.isPending ? "Saving..." : "Update Record"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Upload Dialog */}
+      {/* Upload Document Dialog */}
       <Dialog open={!!uploadingFor} onOpenChange={() => setUploadingFor(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -444,24 +635,27 @@ const EnhancedEducationRecords = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {DOCUMENT_TYPES.map(type => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center gap-2">
-                        <type.icon className={`h-4 w-4 ${type.color}`} />
-                        {type.value}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {DOCUMENT_TYPES.map(type => {
+                    const TypeIcon = type.icon;
+                    return (
+                      <SelectItem key={type.value} value={type.value}>
+                        <div className="flex items-center gap-2">
+                          <TypeIcon className={`h-4 w-4 ${type.color}`} />
+                          {type.value}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Title</Label>
-              <Input value={docFormData.title} onChange={(e) => setDocFormData(prev => ({ ...prev, title: e.target.value }))} placeholder="Document title" className="rounded-xl" />
+              <Label>Document Title</Label>
+              <Input value={docFormData.title} onChange={(e) => setDocFormData(prev => ({ ...prev, title: e.target.value }))} placeholder="e.g., Semester 1 Marksheet" className="rounded-xl" />
             </div>
             <div>
-              <Label>File</Label>
-              <Input type="file" ref={fileInputRef} onChange={(e) => setDocFormData(prev => ({ ...prev, file: e.target.files?.[0] || null }))} className="rounded-xl" />
+              <Label>Select File</Label>
+              <Input type="file" onChange={(e) => setDocFormData(prev => ({ ...prev, file: e.target.files?.[0] || null }))} className="rounded-xl" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />
             </div>
             <Button onClick={() => uploadingFor && uploadDocMutation.mutate({ educationId: uploadingFor, data: docFormData })} disabled={!docFormData.file || uploadDocMutation.isPending} className="w-full rounded-xl">
               {uploadDocMutation.isPending ? "Uploading..." : "Upload Document"}
