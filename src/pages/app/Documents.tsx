@@ -1,28 +1,19 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   FileText, 
   GraduationCap, 
   Briefcase, 
   IndianRupee,
-  Plus,
   FolderOpen
 } from "lucide-react";
-import IdentityDocuments from "@/components/documents/IdentityDocuments";
 import EducationRecords from "@/components/documents/EducationRecords";
 import WorkHistory from "@/components/documents/WorkHistory";
 import LifetimeEarnings from "@/components/documents/LifetimeEarnings";
+import EnhancedDocuments from "@/components/documents/EnhancedDocuments";
 
 const Documents = () => {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("identity");
+  const [activeTab, setActiveTab] = useState("documents");
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,11 +32,11 @@ const Documents = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1 bg-muted/50">
             <TabsTrigger 
-              value="identity" 
+              value="documents" 
               className="flex items-center gap-2 py-3 data-[state=active]:bg-background"
             >
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Identity</span>
+              <FolderOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Documents</span>
             </TabsTrigger>
             <TabsTrigger 
               value="education"
@@ -70,8 +61,8 @@ const Documents = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="identity" className="mt-6">
-            <IdentityDocuments />
+          <TabsContent value="documents" className="mt-6">
+            <EnhancedDocuments />
           </TabsContent>
 
           <TabsContent value="education" className="mt-6">
