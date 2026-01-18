@@ -52,7 +52,9 @@ import { extractExifData, formatGpsCoords } from "@/components/memory/ExifExtrac
 import { MemoryExport } from "@/components/memory/MemoryExport";
 import { MemorySlideshow } from "@/components/memory/MemorySlideshow";
 import { FolderCard as _FolderCard } from "@/components/memory/FolderCard";
-import { AnimatedFolderCard, FOLDER_COLORS, FOLDER_ICONS } from "@/components/memory/AnimatedFolderCard";
+import { EnhancedFolderCard } from "@/components/memory/EnhancedFolderCard";
+import { CreateFolderDialog } from "@/components/memory/CreateFolderDialog";
+import { FOLDER_COLORS, getIconByName, getColorConfig } from "@/components/memory/FolderIconPicker";
 import { CollectionCard } from "@/components/memory/CollectionCard";
 import { MemoryMap } from "@/components/memory/MemoryMap";
 import { GalleryView, GalleryViewMode } from "@/components/memory/GalleryView";
@@ -964,102 +966,22 @@ const Memory = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Dialog open={newFolderDialogOpen} onOpenChange={setNewFolderDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <FolderPlus className="w-4 h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Folder</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create Folder</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Folder Name</label>
-                  <Input
-                    placeholder="Enter folder name"
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                  />
-                </div>
-                
-                {/* Icon Selection */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Icon</label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {FOLDER_ICONS.map((iconItem) => {
-                      const IconComp = iconItem.icon;
-                      return (
-                        <button
-                          key={iconItem.name}
-                          type="button"
-                          onClick={() => setNewFolderIcon(iconItem.name)}
-                          className={`h-10 flex items-center justify-center rounded-lg bg-accent/30 transition-all hover:bg-accent/50 ${
-                            newFolderIcon === iconItem.name ? 'ring-2 ring-primary ring-offset-2' : ''
-                          }`}
-                          title={iconItem.name}
-                        >
-                          <IconComp className="w-5 h-5" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                
-                {/* Color Selection */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Color</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {FOLDER_COLORS.map((color) => (
-                      <button
-                        key={color.name}
-                        type="button"
-                        onClick={() => setNewFolderColor(color.value)}
-                        className={`h-8 rounded-lg ${color.value} transition-all hover:scale-105 ${
-                          newFolderColor === color.value ? 'ring-2 ring-primary ring-offset-2' : ''
-                        }`}
-                        title={color.name}
-                      />
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Preview */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Preview</label>
-                  <div className={`p-3 rounded-lg border ${newFolderColor}`}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-background/50 flex items-center justify-center">
-                        {(() => {
-                          const PreviewIcon = FOLDER_ICONS.find(i => i.name === newFolderIcon)?.icon || FolderOpen;
-                          const colorClass = FOLDER_COLORS.find(c => c.value === newFolderColor);
-                          return <PreviewIcon className={`w-4 h-4 ${colorClass?.textColor || 'text-muted-foreground'}`} />;
-                        })()}
-                      </div>
-                      <span className="text-sm font-medium">{newFolderName || "Folder Name"}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter className="gap-2 sm:gap-0">
-                <Button variant="outline" onClick={() => setNewFolderDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => createFolderMutation.mutate({ 
-                    name: newFolderName, 
-                    color: newFolderColor, 
-                    icon: newFolderIcon 
-                  })}
-                  disabled={!newFolderName.trim() || createFolderMutation.isPending}
-                >
-                  Create Folder
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button variant="outline" size="sm" onClick={() => setNewFolderDialogOpen(true)}>
+            <FolderPlus className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Folder</span>
+          </Button>
+          <CreateFolderDialog
+            open={newFolderDialogOpen}
+            onOpenChange={setNewFolderDialogOpen}
+            onCreateFolder={(data) => createFolderMutation.mutate({ 
+              name: data.name, 
+              color: data.color, 
+              icon: data.icon,
+              parentFolderId: currentParentFolderId,
+            })}
+            isLoading={createFolderMutation.isPending}
+            parentFolderName={currentParentFolderId ? folderNavigationPath[folderNavigationPath.length - 1]?.name : undefined}
+          />
         </div>
       </div>
 
@@ -1210,10 +1132,12 @@ const Memory = () => {
                   className="cursor-grab active:cursor-grabbing"
                   title={hasSubfolders ? "Double-click to open" : undefined}
                 >
-                  <AnimatedFolderCard
+                  <EnhancedFolderCard
                     folder={folder}
                     isUnlocked={isUnlocked}
                     isOpen={isUnlocked}
+                    memoryCount={memories.filter(m => m.folder_id === folder.id).length}
+                    hasSubfolders={folders.some(f => f.parent_folder_id === folder.id)}
                     onLock={() => {
                       setLockingFolder(folder);
                       setLockFolderDialogOpen(true);
@@ -1232,6 +1156,10 @@ const Memory = () => {
                     onUpdate={(updates) => updateFolderMutation.mutate({ id: folder.id, ...updates })}
                     onDelete={() => deleteFolderMutation.mutate(folder.id)}
                     onClick={() => navigateToFolder(folder.id)}
+                    onCreateSubfolder={() => {
+                      navigateToFolder(folder.id);
+                      setNewFolderDialogOpen(true);
+                    }}
                   />
                 </div>
               );
