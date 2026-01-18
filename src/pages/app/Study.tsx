@@ -220,7 +220,7 @@ const Study = () => {
         </TabsContent>
 
         <TabsContent value="goals">
-          <StudyGoals />
+          <StudyGoals studyLogs={studyLogs} />
         </TabsContent>
       </Tabs>
 
