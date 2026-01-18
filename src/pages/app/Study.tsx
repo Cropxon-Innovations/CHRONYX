@@ -124,10 +124,12 @@ const Study = () => {
 
   // Upload book mutation
   const uploadBookMutation = useMutation({
-    mutationFn: async (data: { file: File; title: string; author: string; totalPages?: number }) => {
+    mutationFn: async (data: { file: File; title: string; author: string; cover?: File; totalPages?: number }) => {
       const fileExt = data.file.name.split('.').pop()?.toLowerCase() || 'pdf';
-      const filePath = `${user!.id}/${Date.now()}.${fileExt}`;
+      const timestamp = Date.now();
+      const filePath = `${user!.id}/${timestamp}.${fileExt}`;
       
+      // Upload main file
       const { error: uploadError } = await supabase.storage
         .from("library")
         .upload(filePath, data.file);
@@ -136,6 +138,22 @@ const Study = () => {
       const { data: { publicUrl } } = supabase.storage
         .from("library")
         .getPublicUrl(filePath);
+
+      // Upload cover image if provided
+      let coverUrl: string | null = null;
+      if (data.cover) {
+        const coverPath = `${user!.id}/covers/${timestamp}.jpg`;
+        const { error: coverError } = await supabase.storage
+          .from("library")
+          .upload(coverPath, data.cover);
+        
+        if (!coverError) {
+          const { data: { publicUrl: coverPublicUrl } } = supabase.storage
+            .from("library")
+            .getPublicUrl(coverPath);
+          coverUrl = coverPublicUrl;
+        }
+      }
 
       // Determine format based on extension
       let format: string = 'pdf';
@@ -151,6 +169,7 @@ const Study = () => {
         author: data.author,
         format,
         file_url: publicUrl,
+        cover_url: coverUrl,
         total_pages: data.totalPages || null,
         file_size: data.file.size,
       });

@@ -172,7 +172,7 @@ export const LibraryGrid = ({
           {filteredItems.map((item) => (
             <div
               key={item.id}
-              className="group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+              className="group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl bg-card border border-border"
               onClick={() => onItemClick(item)}
             >
               {/* Cover */}
@@ -183,16 +183,37 @@ export const LibraryGrid = ({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex flex-col items-center justify-center p-3">
                   {(() => {
                     const Icon = getFormatIcon(item.format);
-                    return <Icon className="w-12 h-12 text-muted-foreground/50" />;
+                    return <Icon className="w-10 h-10 text-muted-foreground/40 mb-3" />;
                   })()}
+                  {/* Show title/author when no cover */}
+                  <p className="text-xs font-medium text-foreground text-center line-clamp-3 px-1">
+                    {item.title}
+                  </p>
+                  {item.author && (
+                    <p className="text-[10px] text-muted-foreground text-center mt-1 line-clamp-1">
+                      {item.author}
+                    </p>
+                  )}
                 </div>
               )}
 
-              {/* Overlay gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              {/* Always visible bottom info bar */}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-8">
+                <p className="text-xs font-medium text-white truncate">
+                  {item.title}
+                </p>
+                {item.author && (
+                  <p className="text-[10px] text-white/70 truncate">{item.author}</p>
+                )}
+                {item.total_pages && item.total_pages > 0 && (
+                  <p className="text-[10px] text-white/50 mt-0.5">
+                    {item.current_page || 1} / {item.total_pages} pages
+                  </p>
+                )}
+              </div>
 
               {/* Lock indicator */}
               {item.is_locked && (
@@ -203,28 +224,13 @@ export const LibraryGrid = ({
 
               {/* Progress bar */}
               {item.progress_percent !== undefined && item.progress_percent > 0 && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30">
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/30 z-10">
                   <div
-                    className="h-full bg-primary/80"
+                    className="h-full bg-primary"
                     style={{ width: `${item.progress_percent}%` }}
                   />
                 </div>
               )}
-
-              {/* Info overlay */}
-              <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <p className="text-sm font-medium text-white truncate">
-                  {item.title}
-                </p>
-                {item.author && (
-                  <p className="text-xs text-white/70 truncate">{item.author}</p>
-                )}
-                {item.current_page && item.total_pages && (
-                  <p className="text-xs text-white/50 mt-1">
-                    Page {item.current_page} of {item.total_pages}
-                  </p>
-                )}
-              </div>
 
               {/* Actions menu */}
               <div
