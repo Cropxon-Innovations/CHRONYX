@@ -176,7 +176,7 @@ const Memory = () => {
   const [uploadTitle, setUploadTitle] = useState("");
   const [newCollectionName, setNewCollectionName] = useState("");
   const [newFolderName, setNewFolderName] = useState("");
-  const [newFolderColor, setNewFolderColor] = useState("bg-accent/30");
+  const [newFolderColor, setNewFolderColor] = useState("bg-slate-500/20");
   const [newFolderIcon, setNewFolderIcon] = useState("Default");
   const [isDragOver, setIsDragOver] = useState(false);
   
@@ -494,16 +494,31 @@ const Memory = () => {
     },
   });
 
-  // Create folder mutation - supports nested subfolders
+  // Create folder mutation - supports nested subfolders and optional locking
   const createFolderMutation = useMutation({
-    mutationFn: async ({ name, color, icon, parentFolderId }: { name: string; color: string; icon: string; parentFolderId?: string | null }) => {
+    mutationFn: async ({ name, color, icon, parentFolderId, isLocked, password }: { 
+      name: string; 
+      color: string; 
+      icon: string; 
+      parentFolderId?: string | null;
+      isLocked?: boolean;
+      password?: string;
+    }) => {
       if (!user) throw new Error("Not authenticated");
+      
+      let lockHash: string | null = null;
+      if (isLocked && password) {
+        lockHash = await hashPassword(password);
+      }
+      
       const { error } = await supabase.from("memory_folders").insert({
         user_id: user.id,
         name,
         color,
         icon,
         parent_folder_id: parentFolderId || null,
+        is_locked: isLocked || false,
+        lock_hash: lockHash,
       });
       if (error) throw error;
     },
@@ -511,9 +526,8 @@ const Memory = () => {
       queryClient.invalidateQueries({ queryKey: ["memory_folders"] });
       setNewFolderDialogOpen(false);
       setNewFolderName("");
-      setNewFolderColor("bg-accent/30");
+      setNewFolderColor("bg-slate-500/20");
       setNewFolderIcon("Default");
-      setCurrentParentFolderId(null);
       toast({ title: "Folder created" });
     },
   });
@@ -978,6 +992,8 @@ const Memory = () => {
               color: data.color, 
               icon: data.icon,
               parentFolderId: currentParentFolderId,
+              isLocked: data.isLocked,
+              password: data.password,
             })}
             isLoading={createFolderMutation.isPending}
             parentFolderName={currentParentFolderId ? folderNavigationPath[folderNavigationPath.length - 1]?.name : undefined}
@@ -1075,22 +1091,74 @@ const Memory = () => {
       {/* Folders Section - Interactive with drag/drop */}
       {(currentFolders.length > 0 || currentParentFolderId) && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               {currentParentFolderId ? 'Subfolders' : 'Folders'} {draggingMemoryId && <span className="text-primary">(Drop memory here)</span>}
             </h3>
-            {currentParentFolderId && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setNewFolderDialogOpen(true);
-                }}
-              >
-                <FolderPlusIcon className="w-4 h-4 mr-2" />
-                Create Subfolder
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Bulk Lock/Unlock buttons */}
+              {currentFolders.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Bulk lock all unlocked folders
+                      const unlockableFolders = currentFolders.filter(f => !f.is_locked);
+                      if (unlockableFolders.length === 0) {
+                        toast({ title: "All folders are already locked" });
+                        return;
+                      }
+                      // For bulk lock, we'll prompt user to set a password for each
+                      setLockingFolder(unlockableFolders[0]);
+                      setLockFolderDialogOpen(true);
+                      toast({ 
+                        title: `${unlockableFolders.length} folder(s) can be locked`,
+                        description: "Lock folders one by one for security"
+                      });
+                    }}
+                    className="gap-1.5"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Bulk Lock</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Bulk unlock all locked folders that are currently unlocked in session
+                      const lockedFolders = currentFolders.filter(f => f.is_locked);
+                      if (lockedFolders.length === 0) {
+                        toast({ title: "No locked folders to unlock" });
+                        return;
+                      }
+                      // Relock all currently unlocked folders
+                      setUnlockedFolders(new Set());
+                      toast({ 
+                        title: `${lockedFolders.length} folder(s) re-locked`,
+                        description: "All folders are now secured"
+                      });
+                    }}
+                    className="gap-1.5"
+                  >
+                    <Unlock className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Bulk Relock</span>
+                  </Button>
+                </>
+              )}
+              {currentParentFolderId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setNewFolderDialogOpen(true);
+                  }}
+                >
+                  <FolderPlusIcon className="w-4 h-4 mr-2" />
+                  Create Subfolder
+                </Button>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
             {currentFolders.map((folder, index) => {
