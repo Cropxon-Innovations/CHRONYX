@@ -219,65 +219,98 @@ export const FolderContextMenu = ({
   onDelete,
   onCreateSubfolder,
 }: FolderContextMenuProps) => {
+  // Check if folder is accessible (not locked OR already unlocked)
+  const isAccessible = !folder.is_locked || isUnlocked;
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         {children}
       </ContextMenuTrigger>
       <ContextMenuContent className="w-48">
-        <ContextMenuItem onClick={onOpen}>
-          <FolderInput className="w-4 h-4 mr-2" />
-          Open
-          <ContextMenuShortcut>Enter</ContextMenuShortcut>
-        </ContextMenuItem>
-
-        <ContextMenuSeparator />
-
-        <ContextMenuItem onClick={onRename}>
-          <Edit className="w-4 h-4 mr-2" />
-          Rename
-          <ContextMenuShortcut>F2</ContextMenuShortcut>
-        </ContextMenuItem>
-
-        <ContextMenuItem onClick={onCustomize}>
-          <ImageIcon className="w-4 h-4 mr-2" />
-          Customize
-        </ContextMenuItem>
-
-        <ContextMenuItem onClick={onCreateSubfolder}>
-          <FolderInput className="w-4 h-4 mr-2" />
-          New Subfolder
-        </ContextMenuItem>
-
-        <ContextMenuSeparator />
-
-        {!folder.is_locked ? (
-          <ContextMenuItem onClick={onLock}>
-            <Lock className="w-4 h-4 mr-2" />
-            Lock Folder
-          </ContextMenuItem>
-        ) : isUnlocked ? (
-          <ContextMenuItem onClick={onRelock}>
-            <Lock className="w-4 h-4 mr-2" />
-            Re-lock Folder
-          </ContextMenuItem>
+        {/* If locked and not unlocked, only show unlock option */}
+        {folder.is_locked && !isUnlocked ? (
+          <>
+            <ContextMenuItem onClick={onUnlock}>
+              <Lock className="w-4 h-4 mr-2 text-amber-500" />
+              Unlock Folder
+              <ContextMenuShortcut>Enter</ContextMenuShortcut>
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem 
+              disabled
+              className="text-muted-foreground"
+            >
+              <FolderInput className="w-4 h-4 mr-2" />
+              Open (Locked)
+            </ContextMenuItem>
+            <ContextMenuItem 
+              disabled
+              className="text-muted-foreground"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Rename (Locked)
+            </ContextMenuItem>
+            <ContextMenuItem 
+              disabled
+              className="text-muted-foreground"
+            >
+              <ImageIcon className="w-4 h-4 mr-2" />
+              Customize (Locked)
+            </ContextMenuItem>
+          </>
         ) : (
-          <ContextMenuItem onClick={onUnlock}>
-            <Lock className="w-4 h-4 mr-2" />
-            Unlock Folder
-          </ContextMenuItem>
+          <>
+            <ContextMenuItem onClick={onOpen}>
+              <FolderInput className="w-4 h-4 mr-2" />
+              Open
+              <ContextMenuShortcut>Enter</ContextMenuShortcut>
+            </ContextMenuItem>
+
+            <ContextMenuSeparator />
+
+            <ContextMenuItem onClick={onRename}>
+              <Edit className="w-4 h-4 mr-2" />
+              Rename
+              <ContextMenuShortcut>F2</ContextMenuShortcut>
+            </ContextMenuItem>
+
+            <ContextMenuItem onClick={onCustomize}>
+              <ImageIcon className="w-4 h-4 mr-2" />
+              Customize
+            </ContextMenuItem>
+
+            <ContextMenuItem onClick={onCreateSubfolder}>
+              <FolderInput className="w-4 h-4 mr-2" />
+              New Subfolder
+            </ContextMenuItem>
+
+            <ContextMenuSeparator />
+
+            {!folder.is_locked ? (
+              <ContextMenuItem onClick={onLock}>
+                <Lock className="w-4 h-4 mr-2" />
+                Lock Folder
+              </ContextMenuItem>
+            ) : (
+              <ContextMenuItem onClick={onRelock}>
+                <Lock className="w-4 h-4 mr-2 text-amber-500" />
+                Re-lock Folder
+              </ContextMenuItem>
+            )}
+
+            <ContextMenuSeparator />
+
+            <ContextMenuItem 
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+              <ContextMenuShortcut>⌫</ContextMenuShortcut>
+            </ContextMenuItem>
+          </>
         )}
-
-        <ContextMenuSeparator />
-
-        <ContextMenuItem 
-          onClick={onDelete}
-          className="text-destructive focus:text-destructive"
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          Delete
-          <ContextMenuShortcut>⌫</ContextMenuShortcut>
-        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );
