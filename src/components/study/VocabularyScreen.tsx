@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,13 +15,15 @@ import {
   RotateCcw,
   ChevronRight,
   Check,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
-import { format, formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface VocabularyItem {
@@ -40,15 +42,32 @@ interface VocabularyItem {
   created_at: string;
 }
 
+// Calm, intelligent review scoring algorithm
+const calculateReviewScore = (item: VocabularyItem): number => {
+  const lookupCount = item.lookup_count || 1;
+  const lastSeen = item.last_seen_at ? new Date(item.last_seen_at) : new Date(item.created_at);
+  const daysSinceLastSeen = differenceInDays(new Date(), lastSeen);
+  
+  // Higher score = should review sooner
+  // Weights: lookup frequency matters, recency matters inversely
+  const score = (lookupCount * 2) + daysSinceLastSeen;
+  
+  return score;
+};
+
 export const VocabularyScreen = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isPro } = useSubscription();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [reviewMode, setReviewMode] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [showMeaning, setShowMeaning] = useState(false);
+  
+  // Session limit based on plan
+  const sessionLimit = isPro() ? 10 : 5;
 
   const { data: vocabulary = [], isLoading } = useQuery({
     queryKey: ['vocabulary', user?.id],
@@ -119,14 +138,13 @@ export const VocabularyScreen = () => {
     return true;
   });
 
-  // Review mode - pick up to 10 words
-  const reviewWords = vocabulary
-    .sort((a, b) => {
-      const aDate = a.last_seen_at ? new Date(a.last_seen_at) : new Date(0);
-      const bDate = b.last_seen_at ? new Date(b.last_seen_at) : new Date(0);
-      return aDate.getTime() - bDate.getTime();
-    })
-    .slice(0, 10);
+  // Review mode - use intelligent scoring algorithm
+  const reviewWords = useMemo(() => {
+    return [...vocabulary]
+      .map(item => ({ ...item, score: calculateReviewScore(item) }))
+      .sort((a, b) => b.score - a.score) // Higher score = review first
+      .slice(0, sessionLimit);
+  }, [vocabulary, sessionLimit]);
 
   const currentReviewWord = reviewWords[reviewIndex];
 
@@ -142,7 +160,7 @@ export const VocabularyScreen = () => {
       setReviewIndex(0);
       toast({ 
         title: "Review complete!", 
-        description: `You reviewed ${reviewWords.length} words` 
+        description: `You reviewed ${reviewWords.length} words. Take your time.` 
       });
     }
   };
