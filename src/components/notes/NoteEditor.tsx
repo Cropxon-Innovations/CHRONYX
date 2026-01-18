@@ -3,9 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { TiptapEditor } from "./TiptapEditor";
+import { HandwritingCanvas } from "./HandwritingCanvas";
+import { PDFExportDialog } from "./PDFExportDialog";
+import { exportProfessionalPDF } from "./ProfessionalPDFExport";
+import { exportNoteToMarkdown, exportNoteToPlainText, downloadAsFile } from "./NoteExport";
 import { NoteType, getNoteTypeConfig } from "./NoteTypeSelector";
 import { EmotionSelector, Emotion } from "./EmotionSelector";
 import { LinkedEntitySuggestion, LinkedEntity } from "./LinkedEntitySuggestion";
+import { NoteData } from "./NoteCard";
 import { cn } from "@/lib/utils";
 import { 
   X, 
@@ -14,7 +19,9 @@ import {
   Sparkles,
   Clock,
   MapPin,
-  Link2
+  Link2,
+  Pen,
+  Type
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,6 +29,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+type EditorMode = "text" | "handwriting";
 
 interface NoteEditorProps {
   noteId?: string;
@@ -61,9 +70,18 @@ export const NoteEditor = ({
   const [location, setLocation] = useState(initialLocation);
   const [linkedEntities, setLinkedEntities] = useState<LinkedEntity[]>(initialLinkedEntities);
   const [autoSaveStatus, setAutoSaveStatus] = useState<"saved" | "saving" | "unsaved">("saved");
+  const [editorMode, setEditorMode] = useState<EditorMode>("text");
+  const [showPDFExport, setShowPDFExport] = useState(false);
 
   const typeConfig = getNoteTypeConfig(noteType);
   const TypeIcon = typeConfig.icon;
+
+  // Detect if device supports stylus
+  const supportsStylus = typeof window !== 'undefined' && (
+    'ontouchstart' in window || 
+    navigator.maxTouchPoints > 0 ||
+    /iPad|iPhone|Android/i.test(navigator.userAgent)
+  );
 
   // Auto-suggest title based on content
   useEffect(() => {
@@ -105,8 +123,66 @@ export const NoteEditor = ({
   };
 
   const handleExport = (format: "pdf" | "markdown" | "text") => {
-    // Export logic would go here
-    console.log("Exporting as", format);
+    const noteData: NoteData = {
+      id: noteId || "",
+      title: title || "Untitled",
+      content: "",
+      content_json: content,
+      type: noteType,
+      emotion: emotion,
+      location: location,
+      linked_entities: linkedEntities,
+      tags: [],
+      folder: null,
+      color: null,
+      is_pinned: false,
+      is_archived: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    switch (format) {
+      case "pdf":
+        setShowPDFExport(true);
+        break;
+      case "markdown":
+        const markdown = exportNoteToMarkdown(noteData);
+        const mdFileName = (title || "untitled").toLowerCase().replace(/\s+/g, "-");
+        downloadAsFile(markdown, `${mdFileName}.md`, "text/markdown");
+        break;
+      case "text":
+        const text = exportNoteToPlainText(noteData);
+        const txtFileName = (title || "untitled").toLowerCase().replace(/\s+/g, "-");
+        downloadAsFile(text, `${txtFileName}.txt`, "text/plain");
+        break;
+    }
+  };
+
+  const handlePDFExport = (options: {
+    includeLinkedData: boolean;
+    includeTimestamps: boolean;
+    addWatermark: boolean;
+    hidePrivateMetadata: boolean;
+  }) => {
+    const noteData: NoteData = {
+      id: noteId || "",
+      title: title || "Untitled",
+      content: "",
+      content_json: content,
+      type: noteType,
+      emotion: emotion,
+      location: location,
+      linked_entities: linkedEntities,
+      tags: [],
+      folder: null,
+      color: null,
+      is_pinned: false,
+      is_archived: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    exportProfessionalPDF(noteData, options);
   };
 
   const handleAddLinkedEntity = (entity: LinkedEntity) => {
@@ -146,6 +222,30 @@ export const NoteEditor = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Editor Mode Toggle (Tablet/Stylus support) */}
+          {supportsStylus && (
+            <div className="flex items-center border border-border rounded-lg p-1">
+              <Button
+                variant={editorMode === "text" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setEditorMode("text")}
+                className="h-8 px-3"
+                title="Text Editor"
+              >
+                <Type className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={editorMode === "handwriting" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setEditorMode("handwriting")}
+                className="h-8 px-3"
+                title="Handwriting (Stylus)"
+              >
+                <Pen className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -153,7 +253,7 @@ export const NoteEditor = ({
                 Export
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-popover">
               <DropdownMenuItem onClick={() => handleExport("pdf")}>
                 Export as PDF
               </DropdownMenuItem>
