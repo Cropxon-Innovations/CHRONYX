@@ -10,6 +10,7 @@ import { SmartSections, SmartSection, SMART_SECTIONS } from "@/components/notes/
 import { NoteCard, NoteData } from "@/components/notes/NoteCard";
 import { NoteEditor } from "@/components/notes/NoteEditor";
 import { NotesTimeline } from "@/components/notes/NotesTimeline";
+import { QuickNotesGrid } from "@/components/notes/QuickNotesGrid";
 import { Emotion } from "@/components/notes/EmotionSelector";
 import { LinkedEntity } from "@/components/notes/LinkedEntitySuggestion";
 import { handleExport } from "@/components/notes/NoteExport";
@@ -19,10 +20,11 @@ import {
   LayoutGrid, 
   Clock,
   Sparkles,
-  Pin
+  Pin,
+  StickyNote
 } from "lucide-react";
 
-type ViewMode = "grid" | "timeline";
+type ViewMode = "grid" | "timeline" | "sticky";
 
 const Notes = () => {
   const { user } = useAuth();
@@ -284,10 +286,20 @@ const Notes = () => {
           {/* View Toggle */}
           <div className="flex items-center border border-border rounded-xl p-1">
             <Button
+              variant={viewMode === "sticky" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("sticky")}
+              className="h-8 px-3"
+              title="Sticky Notes"
+            >
+              <StickyNote className="w-4 h-4" />
+            </Button>
+            <Button
               variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setViewMode("grid")}
               className="h-8 px-3"
+              title="Grid View"
             >
               <LayoutGrid className="w-4 h-4" />
             </Button>
@@ -296,6 +308,7 @@ const Notes = () => {
               size="sm"
               onClick={() => setViewMode("timeline")}
               className="h-8 px-3"
+              title="Timeline"
             >
               <Clock className="w-4 h-4" />
             </Button>
@@ -321,7 +334,13 @@ const Notes = () => {
 
         {/* Notes Area */}
         <div className="flex-1 min-w-0">
-          {viewMode === "timeline" ? (
+          {viewMode === "sticky" ? (
+            <QuickNotesGrid
+              notes={notes}
+              onNoteClick={handleEditNote}
+              onCreateQuickNote={() => handleCreateNote("quick_note")}
+            />
+          ) : viewMode === "timeline" ? (
             <NotesTimeline
               notes={filteredNotes}
               onEditNote={handleEditNote}
