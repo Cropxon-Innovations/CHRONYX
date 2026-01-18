@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,30 +12,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { 
   Plus, 
   Upload,
   Search,
-  Filter,
   FolderOpen,
-  FileText,
-  CreditCard,
-  Car,
-  Home,
-  Heart,
-  Shield,
-  GraduationCap,
-  Briefcase,
-  Receipt,
-  Plane,
-  Baby,
-  Stethoscope,
-  Landmark,
-  Scale,
-  Building2,
   Grid,
-  List
+  List,
+  CloudUpload,
+  X,
+  FileText,
+  FileImage,
+  FileSpreadsheet,
+  File,
+  HardDrive
 } from "lucide-react";
 import DocumentCard from "./DocumentCard";
 import DocumentCategoryManager, { getIconComponent } from "./DocumentCategoryManager";
@@ -64,6 +55,35 @@ interface DocumentCategory {
   is_default: boolean;
   sort_order: number;
 }
+
+interface PendingFile {
+  file: File;
+  id: string;
+  progress: number;
+  status: 'pending' | 'uploading' | 'done' | 'error';
+}
+
+// Get file icon based on type
+const getFileIconElement = (file: File) => {
+  const type = file.type.toLowerCase();
+  if (type.includes('pdf')) return <FileText className="h-4 w-4 text-red-500" />;
+  if (type.includes('image')) return <FileImage className="h-4 w-4 text-green-500" />;
+  if (type.includes('spreadsheet') || type.includes('excel')) return <FileSpreadsheet className="h-4 w-4 text-green-600" />;
+  return <File className="h-4 w-4 text-blue-500" />;
+};
+
+// Format file size
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+};
+
+// Get file extension
+const getFileExtension = (filename: string): string => {
+  return filename.split('.').pop()?.toUpperCase() || 'FILE';
+};
 
 // Default document types for each category
 const DEFAULT_DOCUMENT_TYPES: Record<string, { id: string; name: string; icon: string }[]> = {
@@ -115,6 +135,8 @@ const DEFAULT_CATEGORIES = [
   { id: "financial", name: "Financial", icon: "Receipt", color: "#0ea5e9" },
 ];
 
+const MAX_FILES = 10;
+
 const EnhancedDocuments = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -127,17 +149,67 @@ const EnhancedDocuments = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<string>("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [formData, setFormData] = useState({
-    category: "",
+    category: "identity",
     document_type: "",
     custom_type: "",
     title: "",
     issue_date: "",
     expiry_date: "",
-    notes: "",
-    file: null as File | null
+    notes: ""
   });
+
+  // Drag and drop handlers
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files).slice(0, MAX_FILES);
+    if (files.length > 0) {
+      const newPendingFiles: PendingFile[] = files.map(file => ({
+        file,
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        progress: 0,
+        status: 'pending'
+      }));
+      setPendingFiles(prev => [...prev, ...newPendingFiles].slice(0, MAX_FILES));
+      setIsAddOpen(true);
+    }
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []).slice(0, MAX_FILES - pendingFiles.length);
+    if (files.length > 0) {
+      const newPendingFiles: PendingFile[] = files.map(file => ({
+        file,
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        progress: 0,
+        status: 'pending'
+      }));
+      setPendingFiles(prev => [...prev, ...newPendingFiles].slice(0, MAX_FILES));
+    }
+  };
+
+  const removePendingFile = (id: string) => {
+    setPendingFiles(prev => prev.filter(f => f.id !== id));
+  };
 
   // Fetch custom categories
   const { data: customCategories = [] } = useQuery({
@@ -199,7 +271,7 @@ const EnhancedDocuments = () => {
 
   const uploadFile = async (file: File): Promise<{ url: string; size: number; type: string }> => {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${user?.id}/${Date.now()}.${fileExt}`;
+    const fileName = `${user?.id}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
     
     const { error } = await supabase.storage
       .from("documents")
@@ -214,48 +286,62 @@ const EnhancedDocuments = () => {
     return { url: publicUrl, size: file.size, type: file.type };
   };
 
-  const addMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      if (!data.file) throw new Error("No file selected");
-      
-      setUploading(true);
-      const { url, size, type } = await uploadFile(data.file);
-      
-      const docType = data.document_type || data.custom_type || "Document";
-      
-      const { error } = await supabase.from("documents").insert({
-        user_id: user?.id,
-        category: data.category,
-        document_type: docType,
-        title: data.title || docType,
-        file_url: url,
-        file_size: size,
-        file_type: type,
-        issue_date: data.issue_date || null,
-        expiry_date: data.expiry_date || null,
-        notes: data.notes
-      });
-      
-      if (error) throw error;
+  const uploadAllFiles = async () => {
+    if (pendingFiles.length === 0) {
+      toast({ title: "No files selected", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    let completed = 0;
+
+    try {
+      for (const pending of pendingFiles) {
+        setPendingFiles(prev => prev.map(f => 
+          f.id === pending.id ? { ...f, status: 'uploading' } : f
+        ));
+
+        const { url, size, type } = await uploadFile(pending.file);
+        const docType = formData.document_type || formData.custom_type || pending.file.name.split('.')[0];
+        
+        await supabase.from("documents").insert({
+          user_id: user?.id,
+          category: formData.category,
+          document_type: docType,
+          title: pendingFiles.length === 1 && formData.title ? formData.title : pending.file.name,
+          file_url: url,
+          file_size: size,
+          file_type: type,
+          issue_date: formData.issue_date || null,
+          expiry_date: formData.expiry_date || null,
+          notes: formData.notes || null
+        });
+
+        setPendingFiles(prev => prev.map(f => 
+          f.id === pending.id ? { ...f, status: 'done', progress: 100 } : f
+        ));
+
+        completed++;
+        setUploadProgress((completed / pendingFiles.length) * 100);
+      }
 
       await supabase.from("activity_logs").insert({
         user_id: user?.id,
         module: "Documents",
-        action: `Uploaded ${data.title || docType}`
+        action: `Uploaded ${pendingFiles.length} document(s)`
       });
-    },
-    onSuccess: () => {
+
       queryClient.invalidateQueries({ queryKey: ["all-documents"] });
+      toast({ title: `${pendingFiles.length} document(s) uploaded successfully` });
       setIsAddOpen(false);
       resetForm();
-      toast({ title: "Document uploaded successfully" });
-      setUploading(false);
-    },
-    onError: (error) => {
-      setUploading(false);
+    } catch (error: any) {
       toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
     }
-  });
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -277,15 +363,15 @@ const EnhancedDocuments = () => {
 
   const resetForm = () => {
     setFormData({
-      category: "",
+      category: "identity",
       document_type: "",
       custom_type: "",
       title: "",
       issue_date: "",
       expiry_date: "",
-      notes: "",
-      file: null
+      notes: ""
     });
+    setPendingFiles([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -321,40 +407,121 @@ const EnhancedDocuments = () => {
     return acc;
   }, {} as Record<string, number>);
 
+  // Calculate total size
+  const totalSize = documents.reduce((sum, doc) => sum + (doc.file_size || 0), 0);
+
   return (
-    <div className="space-y-6">
+    <div 
+      className="space-y-6"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drag Overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-primary/10 border-2 border-dashed border-primary rounded-3xl p-16 text-center">
+            <CloudUpload className="h-16 w-16 mx-auto mb-4 text-primary animate-bounce" />
+            <p className="text-xl font-medium text-primary">Drop files here</p>
+            <p className="text-sm text-muted-foreground mt-2">Up to {MAX_FILES} files at a time</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-medium">All Documents</h2>
-          <p className="text-sm text-muted-foreground">
-            {documents.length} documents stored securely
-          </p>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>{documents.length} documents</span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <HardDrive className="h-3.5 w-3.5" />
+              {formatFileSize(totalSize)} used
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <DocumentCategoryManager />
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <Dialog open={isAddOpen} onOpenChange={(open) => { setIsAddOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button onClick={() => { resetForm(); setIsAddOpen(true); }}>
+              <Button onClick={() => setIsAddOpen(true)} className="rounded-xl">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Document
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
               <DialogHeader>
-                <DialogTitle>Upload Document</DialogTitle>
+                <DialogTitle>Upload Documents</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
+                {/* Drop Zone */}
+                <div 
+                  className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer ${
+                    pendingFiles.length > 0 ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt,.gif,.webp"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <CloudUpload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-sm font-medium">Drop files or click to browse</p>
+                  <p className="text-xs text-muted-foreground mt-1">Up to {MAX_FILES} files • PDF, Images, Documents</p>
+                </div>
+
+                {/* Pending Files List */}
+                {pendingFiles.length > 0 && (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {pendingFiles.map((pf) => (
+                      <div 
+                        key={pf.id} 
+                        className="flex items-center gap-3 p-2.5 bg-muted/30 rounded-xl group"
+                      >
+                        {getFileIconElement(pf.file)}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{pf.file.name}</p>
+                          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 rounded">
+                              {getFileExtension(pf.file.name)}
+                            </Badge>
+                            <span>{formatFileSize(pf.file.size)}</span>
+                          </div>
+                        </div>
+                        {pf.status === 'uploading' ? (
+                          <Progress value={pf.progress} className="w-16 h-1.5" />
+                        ) : pf.status === 'done' ? (
+                          <Badge variant="secondary" className="text-[10px] rounded-lg">Done</Badge>
+                        ) : (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                            onClick={(e) => { e.stopPropagation(); removePendingFile(pf.id); }}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div>
                   <Label>Category</Label>
                   <Select 
                     value={formData.category}
                     onValueChange={(v) => setFormData(prev => ({ ...prev, category: v, document_type: "" }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-xl">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-xl">
                       {allCategories.map(cat => {
                         const Icon = getIconComponent(cat.icon);
                         return (
@@ -377,10 +544,10 @@ const EnhancedDocuments = () => {
                       value={formData.document_type}
                       onValueChange={(v) => setFormData(prev => ({ ...prev, document_type: v }))}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="rounded-xl">
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="rounded-xl">
                         {getDocumentTypes(formData.category).map(type => (
                           <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
                         ))}
@@ -397,26 +564,31 @@ const EnhancedDocuments = () => {
                       value={formData.custom_type}
                       onChange={(e) => setFormData(prev => ({ ...prev, custom_type: e.target.value }))}
                       placeholder="Enter document type"
+                      className="rounded-xl"
                     />
                   </div>
                 )}
 
-                <div>
-                  <Label>Title (optional)</Label>
-                  <Input
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="e.g., Front side, Updated copy"
-                  />
-                </div>
+                {pendingFiles.length === 1 && (
+                  <div>
+                    <Label>Title (optional)</Label>
+                    <Input
+                      value={formData.title}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Custom title for this document"
+                      className="rounded-xl"
+                    />
+                  </div>
+                )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label>Issue Date</Label>
                     <Input
                       type="date"
                       value={formData.issue_date}
                       onChange={(e) => setFormData(prev => ({ ...prev, issue_date: e.target.value }))}
+                      className="rounded-xl"
                     />
                   </div>
                   <div>
@@ -425,36 +597,8 @@ const EnhancedDocuments = () => {
                       type="date"
                       value={formData.expiry_date}
                       onChange={(e) => setFormData(prev => ({ ...prev, expiry_date: e.target.value }))}
+                      className="rounded-xl"
                     />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Upload File</Label>
-                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt"
-                      onChange={(e) => setFormData(prev => ({ ...prev, file: e.target.files?.[0] || null }))}
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <label htmlFor="file-upload" className="cursor-pointer">
-                      <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        {formData.file ? (
-                          <span className="text-primary font-medium">{formData.file.name}</span>
-                        ) : (
-                          "Click to upload PDF, images, or documents"
-                        )}
-                      </p>
-                      {formData.file && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {(formData.file.size / (1024 * 1024)).toFixed(2)} MB
-                        </p>
-                      )}
-                    </label>
                   </div>
                 </div>
 
@@ -465,15 +609,25 @@ const EnhancedDocuments = () => {
                     onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                     placeholder="Private notes..."
                     rows={2}
+                    className="rounded-xl"
                   />
                 </div>
 
+                {uploading && (
+                  <div className="space-y-2">
+                    <Progress value={uploadProgress} className="h-2" />
+                    <p className="text-xs text-center text-muted-foreground">
+                      Uploading... {Math.round(uploadProgress)}%
+                    </p>
+                  </div>
+                )}
+
                 <Button 
-                  onClick={() => addMutation.mutate(formData)}
-                  disabled={!formData.category || (!formData.document_type && !formData.custom_type) || !formData.file || uploading}
-                  className="w-full"
+                  onClick={uploadAllFiles}
+                  disabled={pendingFiles.length === 0 || !formData.category || uploading}
+                  className="w-full rounded-xl"
                 >
-                  {uploading ? "Uploading securely..." : "Save Document"}
+                  {uploading ? "Uploading..." : `Upload ${pendingFiles.length} Document${pendingFiles.length !== 1 ? 's' : ''}`}
                 </Button>
               </div>
             </DialogContent>
@@ -481,7 +635,7 @@ const EnhancedDocuments = () => {
         </div>
       </div>
 
-      {/* Search and Filters */}
+      {/* Search and View Toggle */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -489,21 +643,23 @@ const EnhancedDocuments = () => {
             placeholder="Search documents..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 rounded-xl"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1 p-1 bg-muted/50 rounded-xl">
           <Button
             variant={viewMode === "grid" ? "secondary" : "ghost"}
-            size="icon"
+            size="sm"
             onClick={() => setViewMode("grid")}
+            className="rounded-lg"
           >
             <Grid className="h-4 w-4" />
           </Button>
           <Button
             variant={viewMode === "list" ? "secondary" : "ghost"}
-            size="icon"
+            size="sm"
             onClick={() => setViewMode("list")}
+            className="rounded-lg"
           >
             <List className="h-4 w-4" />
           </Button>
@@ -517,11 +673,11 @@ const EnhancedDocuments = () => {
             variant={activeCategory === "all" ? "secondary" : "ghost"}
             size="sm"
             onClick={() => setActiveCategory("all")}
-            className="flex-shrink-0"
+            className="flex-shrink-0 rounded-xl"
           >
             <FolderOpen className="h-4 w-4 mr-2" />
             All
-            <Badge variant="outline" className="ml-2">{documents.length}</Badge>
+            <Badge variant="outline" className="ml-2 rounded-lg">{documents.length}</Badge>
           </Button>
           {allCategories.map(cat => {
             const Icon = getIconComponent(cat.icon);
@@ -532,11 +688,11 @@ const EnhancedDocuments = () => {
                 variant={activeCategory === cat.id ? "secondary" : "ghost"}
                 size="sm"
                 onClick={() => setActiveCategory(cat.id)}
-                className="flex-shrink-0"
+                className="flex-shrink-0 rounded-xl"
               >
                 <Icon className="h-4 w-4 mr-2" style={{ color: cat.color }} />
                 {cat.name}
-                {count > 0 && <Badge variant="outline" className="ml-2">{count}</Badge>}
+                {count > 0 && <Badge variant="outline" className="ml-2 rounded-lg">{count}</Badge>}
               </Button>
             );
           })}
@@ -545,29 +701,29 @@ const EnhancedDocuments = () => {
 
       {/* Documents Grid/List */}
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <Card key={i} className="bg-muted/30 animate-pulse">
-              <CardContent className="p-4 h-40" />
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            <Card key={i} className="bg-muted/30 animate-pulse rounded-2xl">
+              <CardContent className="p-3 h-32" />
             </Card>
           ))}
         </div>
       ) : filteredDocuments.length === 0 ? (
-        <Card className="bg-muted/30">
+        <Card className="bg-muted/30 rounded-2xl">
           <CardContent className="p-12 text-center">
             <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-30" />
             <p className="text-muted-foreground">
               {searchQuery ? "No documents match your search" : "No documents in this category"}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              {!searchQuery && "Upload your first document to get started"}
+              {!searchQuery && "Drag & drop files or click Add Document"}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className={viewMode === "grid" 
-          ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3" 
-          : "space-y-3"
+          ? "grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-4" 
+          : "space-y-2"
         }>
           {filteredDocuments.map((doc) => {
             const catInfo = getCategoryInfo(doc.category);
@@ -587,17 +743,17 @@ const EnhancedDocuments = () => {
 
       {/* Preview Dialog */}
       <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
-        <DialogContent className="max-w-4xl h-[85vh]">
+        <DialogContent className="max-w-4xl h-[85vh] rounded-2xl">
           <DialogHeader>
             <DialogTitle>Document Preview</DialogTitle>
           </DialogHeader>
           {previewUrl && (
             previewType?.includes("image") ? (
               <div className="flex-1 flex items-center justify-center overflow-auto">
-                <img src={previewUrl} alt="Document preview" className="max-w-full max-h-full object-contain" />
+                <img src={previewUrl} alt="Document preview" className="max-w-full max-h-full object-contain rounded-xl" />
               </div>
             ) : (
-              <iframe src={previewUrl} className="w-full h-full rounded-lg" />
+              <iframe src={previewUrl} className="w-full h-full rounded-xl" />
             )
           )}
         </DialogContent>
