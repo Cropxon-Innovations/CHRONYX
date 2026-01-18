@@ -96,9 +96,10 @@ export const TiptapEditor = ({
         },
       }),
     ],
-    content,
+    content: "",
     editable,
     onUpdate: ({ editor }) => {
+      // Return the JSON object directly as a string
       onChange(JSON.stringify(editor.getJSON()));
     },
     editorProps: {
@@ -121,13 +122,27 @@ export const TiptapEditor = ({
   useEffect(() => {
     if (editor && content) {
       try {
-        const parsedContent = JSON.parse(content);
-        if (JSON.stringify(editor.getJSON()) !== JSON.stringify(parsedContent)) {
+        let parsedContent = content;
+        
+        // Parse if it's a string
+        if (typeof content === 'string') {
+          parsedContent = JSON.parse(content);
+          // Handle double-stringified content
+          if (typeof parsedContent === 'string') {
+            parsedContent = JSON.parse(parsedContent);
+          }
+        }
+        
+        // Only update if content is different
+        const currentContent = JSON.stringify(editor.getJSON());
+        const newContent = JSON.stringify(parsedContent);
+        
+        if (currentContent !== newContent) {
           editor.commands.setContent(parsedContent);
         }
       } catch {
         // If content is plain text, set it directly
-        if (content !== editor.getText()) {
+        if (typeof content === 'string' && content.trim() && content !== editor.getText()) {
           editor.commands.setContent(`<p>${content}</p>`);
         }
       }

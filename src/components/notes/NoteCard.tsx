@@ -58,11 +58,29 @@ export const NoteCard = ({ note, onEdit, onPin, onArchive, onDelete }: NoteCardP
   const getPreviewText = (): string => {
     if (note.content_json) {
       try {
-        const json = typeof note.content_json === 'string' 
-          ? JSON.parse(note.content_json) 
-          : note.content_json;
-        return extractText(json).slice(0, 150);
+        let json = note.content_json;
+        
+        // Handle double-stringified JSON
+        if (typeof json === 'string') {
+          json = JSON.parse(json);
+          // Check if it's still a string (double stringified)
+          if (typeof json === 'string') {
+            json = JSON.parse(json);
+          }
+        }
+        
+        return extractText(json).trim().slice(0, 150);
       } catch {
+        // If parsing fails, try to extract from string
+        if (typeof note.content_json === 'string') {
+          // Remove JSON artifacts and extract readable text
+          const cleaned = note.content_json
+            .replace(/\{"type":"doc","content":\[.*?"text":"([^"]+)".*?\]\}/g, '$1')
+            .replace(/[{}[\]"]/g, '')
+            .replace(/type:|content:|text:/g, '')
+            .trim();
+          return cleaned.slice(0, 150);
+        }
         return "";
       }
     }
@@ -70,6 +88,7 @@ export const NoteCard = ({ note, onEdit, onPin, onArchive, onDelete }: NoteCardP
   };
 
   const extractText = (node: any): string => {
+    if (!node) return "";
     if (typeof node === 'string') return node;
     if (node.text) return node.text + " ";
     if (node.content && Array.isArray(node.content)) {

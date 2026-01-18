@@ -252,7 +252,7 @@ const Notes = () => {
         noteId={editingNote?.id}
         noteType={selectedType}
         initialTitle={editingNote?.title || ""}
-        initialContent={editingNote?.content_json ? JSON.stringify(editingNote.content_json) : ""}
+        initialContent={editingNote?.content_json ? (typeof editingNote.content_json === 'string' ? editingNote.content_json : JSON.stringify(editingNote.content_json)) : ""}
         initialEmotion={editingNote?.emotion as Emotion | undefined}
         initialLocation={editingNote?.location || ""}
         initialLinkedEntities={(editingNote?.linked_entities as LinkedEntity[]) || []}
