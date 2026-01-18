@@ -92,3 +92,12 @@ verify_jwt = false
 
 [functions.tax-full-calculation]
 verify_jwt = false
+
+[functions.dictionary]
+verify_jwt = false
+
+[functions.summarize-chapter]
+verify_jwt = false
+
+[functions.explain-paragraph]
+verify_jwt = false

@@ -251,6 +251,47 @@ export type Database = {
         }
         Relationships: []
       }
+      chapter_summaries: {
+        Row: {
+          chapter_index: number
+          created_at: string
+          id: string
+          library_item_id: string
+          summary_text: string
+          summary_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chapter_index: number
+          created_at?: string
+          id?: string
+          library_item_id: string
+          summary_text: string
+          summary_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chapter_index?: number
+          created_at?: string
+          id?: string
+          library_item_id?: string
+          summary_text?: string
+          summary_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapter_summaries_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_banks: {
         Row: {
           color: string
@@ -2909,6 +2950,47 @@ export type Database = {
           },
         ]
       }
+      study_explanations: {
+        Row: {
+          chapter_index: number | null
+          created_at: string
+          explanation_text: string
+          id: string
+          library_item_id: string | null
+          original_text: string
+          paragraph_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          chapter_index?: number | null
+          created_at?: string
+          explanation_text: string
+          id?: string
+          library_item_id?: string | null
+          original_text: string
+          paragraph_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          chapter_index?: number | null
+          created_at?: string
+          explanation_text?: string
+          id?: string
+          library_item_id?: string | null
+          original_text?: string
+          paragraph_hash?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_explanations_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_goals: {
         Row: {
           created_at: string | null
@@ -3523,6 +3605,63 @@ export type Database = {
           updated_at?: string
           user_id?: string
           website_url?: string | null
+        }
+        Relationships: []
+      }
+      vocabulary: {
+        Row: {
+          antonyms: string[] | null
+          created_at: string
+          examples: Json | null
+          id: string
+          language: string
+          last_seen_at: string | null
+          lookup_count: number | null
+          meaning: string
+          phonetic: string | null
+          source_ref_id: string | null
+          source_type: string | null
+          synonyms: string[] | null
+          translation_language: string | null
+          translation_text: string | null
+          user_id: string
+          word: string
+        }
+        Insert: {
+          antonyms?: string[] | null
+          created_at?: string
+          examples?: Json | null
+          id?: string
+          language?: string
+          last_seen_at?: string | null
+          lookup_count?: number | null
+          meaning: string
+          phonetic?: string | null
+          source_ref_id?: string | null
+          source_type?: string | null
+          synonyms?: string[] | null
+          translation_language?: string | null
+          translation_text?: string | null
+          user_id: string
+          word: string
+        }
+        Update: {
+          antonyms?: string[] | null
+          created_at?: string
+          examples?: Json | null
+          id?: string
+          language?: string
+          last_seen_at?: string | null
+          lookup_count?: number | null
+          meaning?: string
+          phonetic?: string | null
+          source_ref_id?: string | null
+          source_type?: string | null
+          synonyms?: string[] | null
+          translation_language?: string | null
+          translation_text?: string | null
+          user_id?: string
+          word?: string
         }
         Relationships: []
       }
