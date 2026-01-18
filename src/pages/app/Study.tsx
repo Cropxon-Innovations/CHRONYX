@@ -14,8 +14,19 @@ import { StudyTimeline } from "@/components/study/StudyTimeline";
 import { LibraryGrid, LibraryItem } from "@/components/study/LibraryGrid";
 import { BookReader } from "@/components/study/BookReader";
 import { AddBookDialog } from "@/components/study/AddBookDialog";
+import { EditBookDialog } from "@/components/study/EditBookDialog";
 import { StudyGoals } from "@/components/study/StudyGoals";
-import { Clock, BookOpen, Target, BarChart3 } from "lucide-react";
+import { Clock, BookOpen, Target, Archive } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 
@@ -28,7 +39,10 @@ const Study = () => {
   const [activeTab, setActiveTab] = useState("timeline");
   const [showTimer, setShowTimer] = useState(false);
   const [showAddBook, setShowAddBook] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [readingItem, setReadingItem] = useState<LibraryItem | null>(null);
+  const [editingItem, setEditingItem] = useState<LibraryItem | null>(null);
+  const [deletingItem, setDeletingItem] = useState<LibraryItem | null>(null);
 
   // Fetch study logs
   const { data: studyLogs = [], isLoading } = useQuery({
@@ -111,7 +125,7 @@ const Study = () => {
   // Upload book mutation
   const uploadBookMutation = useMutation({
     mutationFn: async (data: { file: File; title: string; author: string; totalPages?: number }) => {
-      const fileExt = data.file.name.split('.').pop();
+      const fileExt = data.file.name.split('.').pop()?.toLowerCase() || 'pdf';
       const filePath = `${user!.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
@@ -123,25 +137,130 @@ const Study = () => {
         .from("library")
         .getPublicUrl(filePath);
 
+      // Determine format based on extension
+      let format: string = 'pdf';
+      if (['epub'].includes(fileExt)) format = 'epub';
+      else if (['doc', 'docx'].includes(fileExt)) format = fileExt;
+      else if (['ppt', 'pptx'].includes(fileExt)) format = fileExt;
+      else if (['xls', 'xlsx'].includes(fileExt)) format = fileExt;
+      else if (['txt', 'rtf'].includes(fileExt)) format = 'txt';
+
       const { error } = await supabase.from("library_items").insert({
         user_id: user!.id,
         title: data.title,
         author: data.author,
-        format: fileExt === "epub" ? "epub" : "pdf",
+        format,
         file_url: publicUrl,
-        total_pages: data.totalPages || 0,
+        total_pages: data.totalPages || null,
+        file_size: data.file.size,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["library-items"] });
-      toast({ title: "Book added to library" });
+      toast({ title: "Added to library" });
       setShowAddBook(false);
     },
     onError: () => {
       toast({ title: "Failed to upload", variant: "destructive" });
     },
   });
+
+  // Edit book mutation
+  const editBookMutation = useMutation({
+    mutationFn: async (data: { id: string; title: string; author: string; totalPages?: number; notes?: string; tags?: string[] }) => {
+      const { error } = await supabase.from("library_items").update({
+        title: data.title,
+        author: data.author,
+        total_pages: data.totalPages || null,
+        notes: data.notes || null,
+        tags: data.tags || null,
+        updated_at: new Date().toISOString(),
+      }).eq("id", data.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library-items"] });
+      toast({ title: "Changes saved" });
+      setEditingItem(null);
+    },
+    onError: () => {
+      toast({ title: "Failed to save", variant: "destructive" });
+    },
+  });
+
+  // Delete book mutation
+  const deleteBookMutation = useMutation({
+    mutationFn: async (item: LibraryItem) => {
+      // Delete from storage if file_url exists
+      if (item.file_url) {
+        const pathMatch = item.file_url.match(/library\/(.+)$/);
+        if (pathMatch) {
+          await supabase.storage.from("library").remove([pathMatch[1]]);
+        }
+      }
+      const { error } = await supabase.from("library_items").delete().eq("id", item.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library-items"] });
+      toast({ title: "Deleted from library" });
+      setDeletingItem(null);
+    },
+    onError: () => {
+      toast({ title: "Failed to delete", variant: "destructive" });
+    },
+  });
+
+  // Archive/Restore mutation
+  const toggleArchiveMutation = useMutation({
+    mutationFn: async (item: LibraryItem) => {
+      const { error } = await supabase.from("library_items").update({
+        is_shared: !item.is_archived, // Using is_shared as archive flag since no is_archived column
+        updated_at: new Date().toISOString(),
+      }).eq("id", item.id);
+      if (error) throw error;
+      return !item.is_archived;
+    },
+    onSuccess: (wasArchived) => {
+      queryClient.invalidateQueries({ queryKey: ["library-items"] });
+      toast({ title: wasArchived ? "Archived" : "Restored" });
+    },
+  });
+
+  // Lock/Unlock mutation
+  const toggleLockMutation = useMutation({
+    mutationFn: async (item: LibraryItem) => {
+      const { error } = await supabase.from("library_items").update({
+        is_locked: !item.is_locked,
+        updated_at: new Date().toISOString(),
+      }).eq("id", item.id);
+      if (error) throw error;
+      return !item.is_locked;
+    },
+    onSuccess: (isNowLocked) => {
+      queryClient.invalidateQueries({ queryKey: ["library-items"] });
+      toast({ title: isNowLocked ? "Locked" : "Unlocked" });
+    },
+  });
+
+  const handleDownload = (item: LibraryItem) => {
+    if (item.file_url) {
+      const link = document.createElement('a');
+      link.href = item.file_url;
+      link.download = item.title || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleShare = (item: LibraryItem) => {
+    if (item.file_url) {
+      navigator.clipboard.writeText(item.file_url);
+      toast({ title: "Link copied to clipboard" });
+    }
+  };
 
   const handleTimerComplete = (duration: number, subject: string) => {
     addLogMutation.mutate({ duration, subject });
@@ -211,12 +330,32 @@ const Study = () => {
         </TabsContent>
 
         <TabsContent value="library">
-          <LibraryGrid
-            items={libraryItems}
-            onItemClick={setReadingItem}
-            onUpload={() => setShowAddBook(true)}
-            isLoading={libraryLoading}
-          />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant={showArchived ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setShowArchived(!showArchived)}
+                className="gap-2"
+              >
+                <Archive className="w-4 h-4" />
+                {showArchived ? "Show Active" : "Show Archived"}
+              </Button>
+            </div>
+            <LibraryGrid
+              items={libraryItems}
+              onItemClick={(item) => setReadingItem(item)}
+              onUpload={() => setShowAddBook(true)}
+              onEdit={(item) => setEditingItem(item)}
+              onDelete={(item) => setDeletingItem(item)}
+              onArchive={(item) => toggleArchiveMutation.mutate(item)}
+              onLock={(item) => toggleLockMutation.mutate(item)}
+              onDownload={handleDownload}
+              onShare={handleShare}
+              showArchived={showArchived}
+              isLoading={libraryLoading}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="goals">
@@ -241,6 +380,36 @@ const Study = () => {
         onUpload={(data) => uploadBookMutation.mutate(data)}
         isUploading={uploadBookMutation.isPending}
       />
+
+      {/* Edit Book Dialog */}
+      <EditBookDialog
+        open={!!editingItem}
+        onOpenChange={(open) => !open && setEditingItem(null)}
+        item={editingItem}
+        onSave={(data) => editBookMutation.mutate(data)}
+        isSaving={editBookMutation.isPending}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deletingItem} onOpenChange={(open) => !open && setDeletingItem(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deletingItem?.title}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this item from your library. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingItem && deleteBookMutation.mutate(deletingItem)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -45,11 +45,19 @@ export const AddBookDialog = ({
   const handleFileSelect = (selectedFile: File) => {
     if (!selectedFile) return;
 
-    // Validate file type
-    const validTypes = ["application/pdf", "application/epub+zip"];
-    if (!validTypes.includes(selectedFile.type) && 
-        !selectedFile.name.endsWith(".pdf") && 
-        !selectedFile.name.endsWith(".epub")) {
+    // Validate file type - support multiple formats
+    const validExtensions = [
+      ".pdf", ".epub",
+      ".doc", ".docx",
+      ".ppt", ".pptx",
+      ".xls", ".xlsx",
+      ".txt", ".rtf"
+    ];
+    
+    const fileName = selectedFile.name.toLowerCase();
+    const isValidFile = validExtensions.some(ext => fileName.endsWith(ext));
+    
+    if (!isValidFile) {
       return;
     }
 
@@ -57,7 +65,7 @@ export const AddBookDialog = ({
 
     // Auto-fill title from filename
     if (!title) {
-      const nameWithoutExt = selectedFile.name.replace(/\.(pdf|epub)$/i, "");
+      const nameWithoutExt = selectedFile.name.replace(/\.(pdf|epub|docx?|pptx?|xlsx?|txt|rtf)$/i, "");
       setTitle(nameWithoutExt);
     }
   };
@@ -90,12 +98,22 @@ export const AddBookDialog = ({
     setTotalPages("");
   };
 
+  const getFileFormat = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    if (['doc', 'docx'].includes(ext)) return ext;
+    if (['ppt', 'pptx'].includes(ext)) return ext;
+    if (['xls', 'xlsx'].includes(ext)) return ext;
+    if (ext === 'epub') return 'epub';
+    if (ext === 'txt' || ext === 'rtf') return 'txt';
+    return 'pdf';
+  };
+
+  const fileFormat = file ? getFileFormat(file.name) : 'pdf';
+
   const handleOpenChange = (open: boolean) => {
     if (!open) resetForm();
     onOpenChange(open);
   };
-
-  const fileFormat = file?.name.endsWith(".epub") ? "epub" : "pdf";
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -106,7 +124,7 @@ export const AddBookDialog = ({
             Add to Library
           </DialogTitle>
           <DialogDescription>
-            Upload a PDF or EPUB file to your private reading room
+            Upload documents, books, slides, or spreadsheets to your private library
           </DialogDescription>
         </DialogHeader>
 
@@ -133,12 +151,12 @@ export const AddBookDialog = ({
                 Drop your file here
               </p>
               <p className="text-sm text-muted-foreground">
-                or click to browse • PDF, EPUB
+                PDF, EPUB, DOC, DOCX, PPT, PPTX, XLS, XLSX, TXT
               </p>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.epub,application/pdf,application/epub+zip"
+                accept=".pdf,.epub,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.rtf,application/pdf,application/epub+zip,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"
                 onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
                 className="hidden"
               />

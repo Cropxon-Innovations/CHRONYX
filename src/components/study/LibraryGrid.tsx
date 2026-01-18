@@ -14,6 +14,11 @@ import {
   Trash2,
   Download,
   Share2,
+  Edit2,
+  Archive,
+  FileSpreadsheet,
+  Presentation,
+  File,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -23,17 +28,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+export type LibraryFormat = "pdf" | "epub" | "doc" | "docx" | "ppt" | "pptx" | "xls" | "xlsx" | "txt" | "other";
+
 export interface LibraryItem {
   id: string;
   title: string;
   author?: string;
-  format: "pdf" | "epub";
+  format: LibraryFormat;
+  file_url?: string;
   cover_url?: string;
   total_pages?: number;
   current_page?: number;
   progress_percent?: number;
   is_locked?: boolean;
+  is_archived?: boolean;
   last_read_at?: string;
+  notes?: string;
+  tags?: string[];
   created_at: string;
 }
 
@@ -41,31 +52,71 @@ interface LibraryGridProps {
   items: LibraryItem[];
   onItemClick: (item: LibraryItem) => void;
   onUpload: () => void;
+  onEdit?: (item: LibraryItem) => void;
   onDelete?: (item: LibraryItem) => void;
+  onArchive?: (item: LibraryItem) => void;
   onLock?: (item: LibraryItem) => void;
   onShare?: (item: LibraryItem) => void;
   onDownload?: (item: LibraryItem) => void;
   isLoading?: boolean;
+  showArchived?: boolean;
   className?: string;
 }
+
+// Get icon for file format
+const getFormatIcon = (format: LibraryFormat) => {
+  switch (format) {
+    case "epub":
+      return BookOpen;
+    case "doc":
+    case "docx":
+      return FileText;
+    case "ppt":
+    case "pptx":
+      return Presentation;
+    case "xls":
+    case "xlsx":
+      return FileSpreadsheet;
+    case "pdf":
+      return FileText;
+    default:
+      return File;
+  }
+};
+
+// Get format label for display
+const getFormatLabel = (format: LibraryFormat): string => {
+  return format.toUpperCase();
+};
 
 export const LibraryGrid = ({
   items,
   onItemClick,
   onUpload,
+  onEdit,
   onDelete,
+  onArchive,
   onLock,
   onShare,
   onDownload,
   isLoading,
+  showArchived = false,
   className,
 }: LibraryGridProps) => {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredItems = items.filter((item) =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.author?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredItems = items.filter((item) => {
+    // Filter by archive status
+    if (!showArchived && item.is_archived) return false;
+    if (showArchived && !item.is_archived) return false;
+    
+    // Filter by search query
+    return (
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  });
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -102,15 +153,19 @@ export const LibraryGrid = ({
             <BookOpen className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-medium text-foreground mb-1">
-            Your library is empty
+            {showArchived ? "No archived items" : "Your library is empty"}
           </h3>
           <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-            Upload PDFs or EPUBs to create your private reading room
+            {showArchived 
+              ? "Archived items will appear here" 
+              : "Upload PDFs, EPUBs, documents, or slides to your reading room"}
           </p>
-          <Button onClick={onUpload} variant="outline" className="gap-2">
-            <Plus className="w-4 h-4" />
-            Add First Book
-          </Button>
+          {!showArchived && (
+            <Button onClick={onUpload} variant="outline" className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add First Item
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -129,11 +184,10 @@ export const LibraryGrid = ({
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                  {item.format === "epub" ? (
-                    <BookOpen className="w-12 h-12 text-muted-foreground/50" />
-                  ) : (
-                    <FileText className="w-12 h-12 text-muted-foreground/50" />
-                  )}
+                  {(() => {
+                    const Icon = getFormatIcon(item.format);
+                    return <Icon className="w-12 h-12 text-muted-foreground/50" />;
+                  })()}
                 </div>
               )}
 
@@ -188,6 +242,10 @@ export const LibraryGrid = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="bg-popover">
+                    <DropdownMenuItem onClick={() => onEdit?.(item)}>
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      Edit Details
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onDownload?.(item)}>
                       <Download className="w-4 h-4 mr-2" />
                       Download
@@ -201,6 +259,10 @@ export const LibraryGrid = ({
                       {item.is_locked ? "Unlock" : "Lock"}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => onArchive?.(item)}>
+                      <Archive className="w-4 h-4 mr-2" />
+                      {item.is_archived ? "Restore" : "Archive"}
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => onDelete?.(item)}
                       className="text-destructive"
@@ -217,7 +279,7 @@ export const LibraryGrid = ({
                 variant="secondary"
                 className="absolute top-2 right-2 text-[10px] uppercase opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                {item.format}
+                {getFormatLabel(item.format)}
               </Badge>
             </div>
           ))}
