@@ -320,12 +320,88 @@ export type Database = {
         }
         Relationships: []
       }
+      document_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          sort_order: number | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          sort_order?: number | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          sort_order?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      document_shares: {
+        Row: {
+          access_type: string | null
+          created_at: string
+          document_id: string
+          expires_at: string | null
+          id: string
+          shared_by: string
+          shared_with_email: string
+          shared_with_user_id: string | null
+        }
+        Insert: {
+          access_type?: string | null
+          created_at?: string
+          document_id: string
+          expires_at?: string | null
+          id?: string
+          shared_by: string
+          shared_with_email: string
+          shared_with_user_id?: string | null
+        }
+        Update: {
+          access_type?: string | null
+          created_at?: string
+          document_id?: string
+          expires_at?: string | null
+          id?: string
+          shared_by?: string
+          shared_with_email?: string
+          shared_with_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_shares_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           category: string
           created_at: string
           document_type: string
           expiry_date: string | null
+          file_size: number | null
+          file_type: string | null
           file_url: string
           id: string
           is_locked: boolean | null
@@ -342,6 +418,8 @@ export type Database = {
           created_at?: string
           document_type: string
           expiry_date?: string | null
+          file_size?: number | null
+          file_type?: string | null
           file_url: string
           id?: string
           is_locked?: boolean | null
@@ -358,6 +436,8 @@ export type Database = {
           created_at?: string
           document_type?: string
           expiry_date?: string | null
+          file_size?: number | null
+          file_type?: string | null
           file_url?: string
           id?: string
           is_locked?: boolean | null
