@@ -1819,41 +1819,62 @@ export type Database = {
         Row: {
           color: string | null
           content: string | null
+          content_json: Json | null
           created_at: string
+          date_confidence: string | null
+          emotion: string | null
           folder: string | null
           id: string
           is_archived: boolean | null
           is_pinned: boolean | null
+          linked_entities: Json | null
+          location: string | null
           tags: string[] | null
           title: string
+          type: string | null
           updated_at: string
           user_id: string
+          visibility: string | null
         }
         Insert: {
           color?: string | null
           content?: string | null
+          content_json?: Json | null
           created_at?: string
+          date_confidence?: string | null
+          emotion?: string | null
           folder?: string | null
           id?: string
           is_archived?: boolean | null
           is_pinned?: boolean | null
+          linked_entities?: Json | null
+          location?: string | null
           tags?: string[] | null
           title?: string
+          type?: string | null
           updated_at?: string
           user_id: string
+          visibility?: string | null
         }
         Update: {
           color?: string | null
           content?: string | null
+          content_json?: Json | null
           created_at?: string
+          date_confidence?: string | null
+          emotion?: string | null
           folder?: string | null
           id?: string
           is_archived?: boolean | null
           is_pinned?: boolean | null
+          linked_entities?: Json | null
+          location?: string | null
           tags?: string[] | null
           title?: string
+          type?: string | null
           updated_at?: string
           user_id?: string
+          visibility?: string | null
         }
         Relationships: []
       }
