@@ -1550,6 +1550,66 @@ export type Database = {
           },
         ]
       }
+      library_items: {
+        Row: {
+          author: string | null
+          cover_url: string | null
+          created_at: string
+          file_size: number | null
+          file_url: string
+          format: string
+          id: string
+          is_locked: boolean | null
+          is_shared: boolean | null
+          lock_hash: string | null
+          notes: string | null
+          share_token: string | null
+          tags: string[] | null
+          title: string
+          total_pages: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author?: string | null
+          cover_url?: string | null
+          created_at?: string
+          file_size?: number | null
+          file_url: string
+          format?: string
+          id?: string
+          is_locked?: boolean | null
+          is_shared?: boolean | null
+          lock_hash?: string | null
+          notes?: string | null
+          share_token?: string | null
+          tags?: string[] | null
+          title: string
+          total_pages?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string | null
+          cover_url?: string | null
+          created_at?: string
+          file_size?: number | null
+          file_url?: string
+          format?: string
+          id?: string
+          is_locked?: boolean | null
+          is_shared?: boolean | null
+          lock_hash?: string | null
+          notes?: string | null
+          share_token?: string | null
+          tags?: string[] | null
+          title?: string
+          total_pages?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       loan_documents: {
         Row: {
           document_type: string | null
@@ -2143,6 +2203,106 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      reading_highlights: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          item_id: string
+          note: string | null
+          page_number: number
+          position_data: Json | null
+          text_snippet: string | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          note?: string | null
+          page_number: number
+          position_data?: Json | null
+          text_snippet?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          note?: string | null
+          page_number?: number
+          position_data?: Json | null
+          text_snippet?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_highlights_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reading_state: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          font_size: number | null
+          id: string
+          item_id: string
+          last_page: number | null
+          last_read_at: string | null
+          progress_percent: number | null
+          reading_mode: string | null
+          theme: string | null
+          total_minutes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          font_size?: number | null
+          id?: string
+          item_id: string
+          last_page?: number | null
+          last_read_at?: string | null
+          progress_percent?: number | null
+          reading_mode?: string | null
+          theme?: string | null
+          total_minutes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          font_size?: number | null
+          id?: string
+          item_id?: string
+          last_page?: number | null
+          last_read_at?: string | null
+          progress_percent?: number | null
+          reading_mode?: string | null
+          theme?: string | null
+          total_minutes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_state_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       salary_records: {
         Row: {

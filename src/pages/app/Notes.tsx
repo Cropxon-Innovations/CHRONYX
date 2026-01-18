@@ -11,6 +11,7 @@ import { NoteCard, NoteData } from "@/components/notes/NoteCard";
 import { NoteEditor } from "@/components/notes/NoteEditor";
 import { NotesTimeline } from "@/components/notes/NotesTimeline";
 import { QuickNotesGrid } from "@/components/notes/QuickNotesGrid";
+import { DailyReflection } from "@/components/notes/DailyReflection";
 import { Emotion } from "@/components/notes/EmotionSelector";
 import { LinkedEntity } from "@/components/notes/LinkedEntitySuggestion";
 import { handleExport } from "@/components/notes/NoteExport";
@@ -333,7 +334,10 @@ const Notes = () => {
         />
 
         {/* Notes Area */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 space-y-6">
+          {/* Daily Reflection Prompt */}
+          <DailyReflection onReflectionSaved={fetchNotes} />
+
           {viewMode === "sticky" ? (
             <QuickNotesGrid
               notes={notes}

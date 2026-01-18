@@ -324,12 +324,22 @@ export const NoteEditor = ({
             )}
           </div>
 
-          {/* Editor */}
-          <TiptapEditor
-            content={content}
-            onChange={setContent}
-            placeholder={`Start writing your ${typeConfig.label.toLowerCase()}...`}
-          />
+          {/* Editor - Text or Handwriting */}
+          {editorMode === "handwriting" ? (
+            <HandwritingCanvas
+              className="min-h-[400px]"
+              onStrokesChange={(strokes) => {
+                // Store strokes as JSON in content for now
+                // Future: OCR integration
+              }}
+            />
+          ) : (
+            <TiptapEditor
+              content={content}
+              onChange={setContent}
+              placeholder={`Start writing your ${typeConfig.label.toLowerCase()}...`}
+            />
+          )}
 
           {/* Smart Linking Suggestions */}
           <LinkedEntitySuggestion
@@ -340,6 +350,14 @@ export const NoteEditor = ({
           />
         </div>
       </div>
+
+      {/* PDF Export Dialog */}
+      <PDFExportDialog
+        open={showPDFExport}
+        onOpenChange={setShowPDFExport}
+        onExport={handlePDFExport}
+        noteTitle={title}
+      />
     </div>
   );
 };
