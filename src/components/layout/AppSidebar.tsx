@@ -104,7 +104,7 @@ const navSections: NavSection[] = [
     items: [
       { path: "/app/memory", label: "Memory", icon: Images },
       { path: "/app/documents", label: "Documents", icon: FileText },
-      { path: "/app/social", label: "Social", icon: Users },
+      { path: "/app/social", label: "Social", icon: Users, badge: "BETA" },
       { path: "/app/lifespan", label: "Lifespan", icon: Hourglass },
     ],
   },
