@@ -24,6 +24,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { LibraryItem } from "./LibraryGrid";
+import { InlineDictionary } from "./InlineDictionary";
+import { ExplainParagraph } from "./ExplainParagraph";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import * as pdfjsLib from "pdfjs-dist";
 
 // Set worker source for PDF.js
@@ -58,6 +62,7 @@ export const BookReader = ({
   onClose,
   onProgressUpdate,
 }: BookReaderProps) => {
+  const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(item.total_pages || 0);
   const [theme, setTheme] = useState<ReadingTheme>(initialTheme);
@@ -69,12 +74,75 @@ export const BookReader = ({
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   
+  // AI Features state
+  const [selectedText, setSelectedText] = useState("");
+  const [selectionPos, setSelectionPos] = useState({ x: 0, y: 0 });
+  const [showDictionary, setShowDictionary] = useState(false);
+  const [showExplain, setShowExplain] = useState(false);
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hideControlsTimer = useRef<NodeJS.Timeout | null>(null);
 
   const progress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
   const themeStyle = THEME_STYLES[theme];
+
+  // Handle text selection for dictionary/explain
+  const handleTextSelection = useCallback(() => {
+    const selection = window.getSelection();
+    const text = selection?.toString().trim();
+    
+    if (text && text.length > 0) {
+      const range = selection?.getRangeAt(0);
+      const rect = range?.getBoundingClientRect();
+      
+      if (rect) {
+        setSelectedText(text);
+        setSelectionPos({ x: rect.left, y: rect.bottom });
+        
+        // Single word = dictionary, multiple words = explain
+        if (text.split(/\s+/).length === 1) {
+          setShowDictionary(true);
+          setShowExplain(false);
+        } else if (text.length > 20) {
+          setShowExplain(true);
+          setShowDictionary(false);
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('mouseup', handleTextSelection);
+    return () => document.removeEventListener('mouseup', handleTextSelection);
+  }, [handleTextSelection]);
+
+  const handleSaveToVocabulary = async (word: string, data: any) => {
+    if (!user?.id) return;
+    
+    await supabase.from('vocabulary').insert({
+      user_id: user.id,
+      word,
+      meaning: data.meaning,
+      phonetic: data.phonetic,
+      synonyms: data.synonyms,
+      antonyms: data.antonyms,
+      examples: data.examples,
+      translation_text: data.translation,
+      source_type: 'study_reader',
+      source_ref_id: item.id,
+    });
+  };
+
+  const closeDictionary = () => {
+    setShowDictionary(false);
+    setSelectedText("");
+  };
+
+  const closeExplain = () => {
+    setShowExplain(false);
+    setSelectedText("");
+  };
 
   // Determine actual file URL
   const actualFileUrl = fileUrl || (item as any).file_url;
@@ -428,6 +496,28 @@ export const BookReader = ({
               )}
             />
           </div>
+        )}
+
+        {/* Inline Dictionary */}
+        {showDictionary && selectedText && (
+          <InlineDictionary
+            selectedText={selectedText}
+            position={selectionPos}
+            onClose={closeDictionary}
+            onSaveToVocabulary={handleSaveToVocabulary}
+            libraryItemId={item.id}
+          />
+        )}
+
+        {/* Explain Paragraph */}
+        {showExplain && selectedText && (
+          <ExplainParagraph
+            paragraphText={selectedText}
+            libraryItemId={item.id}
+            chapterIndex={currentPage}
+            position={selectionPos}
+            onClose={closeExplain}
+          />
         )}
 
         {/* Page navigation (Book mode) */}
