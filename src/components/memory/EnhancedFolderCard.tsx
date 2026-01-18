@@ -137,13 +137,13 @@ export const EnhancedFolderCard = ({
     setCustomizeOpen(false);
   };
 
-  // Mac-style folder card
+  // Mac/Apple-style folder card - proper folder shape
   const cardContent = (
     <div
       className={cn(
-        "group relative cursor-pointer transition-all duration-300 ease-out",
-        "transform hover:-translate-y-1",
-        isDragOver && "scale-105",
+        "group relative cursor-pointer transition-all duration-300 ease-out flex flex-col items-center",
+        "transform hover:-translate-y-1 hover:scale-105",
+        isDragOver && "scale-110",
       )}
       onClick={handleClick}
       onDragOver={handleDragOver}
@@ -152,185 +152,148 @@ export const EnhancedFolderCard = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Mac-style folder shape */}
-      <div className="relative">
-        {/* Folder back (tab) */}
+      {/* Mac-style folder icon */}
+      <div className="relative w-20 h-16 sm:w-24 sm:h-20">
+        {/* Folder back/tab */}
         <div 
-          className={cn(
-            "absolute top-0 left-2 w-8 h-3 rounded-t-md transition-all duration-300",
-            colorConfig.bg,
-            "border-t border-l border-r",
-            colorConfig.border
-          )}
+          className="absolute top-0 left-1 w-8 sm:w-10 h-3 sm:h-4 rounded-t-lg"
           style={{
-            background: `linear-gradient(180deg, ${colorConfig.hex}40 0%, ${colorConfig.hex}20 100%)`,
+            background: `linear-gradient(180deg, ${colorConfig.hex} 0%, ${colorConfig.hex}dd 100%)`,
           }}
         />
         
         {/* Folder body */}
         <div 
           className={cn(
-            "relative mt-2 rounded-lg transition-all duration-300 overflow-hidden",
-            "border shadow-sm",
-            colorConfig.border,
-            isDragOver && "ring-2 ring-primary shadow-lg",
-            isHovered && "shadow-md",
-            folder.is_locked && !isUnlocked && "opacity-90"
+            "absolute top-2 sm:top-3 inset-x-0 bottom-0 rounded-lg sm:rounded-xl transition-all duration-300",
+            isDragOver && "ring-2 ring-primary",
+            folder.is_locked && !isUnlocked && "opacity-80"
           )}
           style={{
-            background: `linear-gradient(145deg, ${colorConfig.hex}25 0%, ${colorConfig.hex}15 50%, ${colorConfig.hex}10 100%)`,
+            background: `linear-gradient(160deg, ${colorConfig.hex} 0%, ${colorConfig.hex}dd 50%, ${colorConfig.hex}bb 100%)`,
+            boxShadow: isHovered 
+              ? `0 8px 20px ${colorConfig.hex}50, inset 0 1px 0 rgba(255,255,255,0.2)` 
+              : `0 4px 12px ${colorConfig.hex}30, inset 0 1px 0 rgba(255,255,255,0.15)`,
           }}
         >
-          {/* Folder content area */}
-          <div className="p-3 sm:p-4">
-            {/* Icon area */}
-            <div className="flex items-center justify-center mb-3">
-              <div 
-                className={cn(
-                  "relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center",
-                  "bg-background/40 backdrop-blur-sm",
-                  "transition-all duration-300",
-                  isHovered && isAccessible && "scale-110",
-                  folder.is_locked && !isUnlocked && "blur-[2px]"
-                )}
-              >
-                {isEmoji ? (
-                  <span className="text-3xl sm:text-4xl select-none">
-                    {folder.icon?.replace("emoji:", "")}
-                  </span>
-                ) : (
-                  (() => {
-                    const IconComponent = getIconByName(folder.icon || "Default");
-                    return (
-                      <IconComponent 
-                        className={cn(
-                          "w-8 h-8 sm:w-10 sm:h-10 transition-all duration-300",
-                          colorConfig.text
-                        )} 
-                      />
-                    );
-                  })()
-                )}
-              </div>
-            </div>
-
-            {/* Folder name */}
-            <div className="text-center">
-              <span 
-                className={cn(
-                  "text-sm sm:text-base font-medium line-clamp-2 transition-all",
-                  folder.is_locked && !isUnlocked && "blur-[1px]"
-                )}
-                title={folder.name}
-              >
-                {folder.name}
-              </span>
-              
-              {/* Meta info */}
-              <div className="flex items-center justify-center gap-2 mt-1 text-xs text-muted-foreground">
-                {memoryCount > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Images className="w-3 h-3" />
-                    {memoryCount}
-                  </span>
-                )}
-                {hasSubfolders && (
-                  <span className="flex items-center gap-1">
-                    <FolderOpen className="w-3 h-3" />
-                  </span>
-                )}
-                {hasSubfolders && isAccessible && (
-                  <ChevronRight className="w-3 h-3" />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Lock overlay for locked folders */}
-          {folder.is_locked && !isUnlocked && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-lg">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 rounded-full bg-amber-500/20 border border-amber-500/50 flex items-center justify-center animate-pulse">
-                  <Lock className="w-6 h-6 text-amber-500" />
-                </div>
-                <span className="text-xs font-medium text-muted-foreground">Click to unlock</span>
-              </div>
-            </div>
-          )}
-
-          {/* Unlocked indicator */}
-          {folder.is_locked && isUnlocked && (
-            <div className="absolute top-2 right-2">
-              <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center">
-                <Unlock className="w-3.5 h-3.5 text-green-500" />
-              </div>
-            </div>
-          )}
-
-          {/* Action buttons (only show when accessible and hovered) */}
-          {isAccessible && (
+          {/* Folder highlight/shine effect */}
+          <div 
+            className="absolute inset-x-0 top-0 h-2 sm:h-3 rounded-t-lg sm:rounded-t-xl"
+            style={{
+              background: `linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%)`,
+            }}
+          />
+          
+          {/* Inner icon/emoji display */}
+          <div className="absolute inset-0 flex items-center justify-center">
             <div 
               className={cn(
-                "absolute top-2 right-2 flex items-center gap-1 transition-all duration-200",
-                isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
+                "w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center",
+                "bg-white/15 backdrop-blur-[2px]",
+                "transition-all duration-300",
+                folder.is_locked && !isUnlocked && "blur-[3px] opacity-50"
               )}
             >
-              {folder.is_locked && isUnlocked && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRelock();
-                  }}
-                  title="Re-lock folder"
-                >
-                  <Lock className="w-3.5 h-3.5 text-amber-500" />
-                </Button>
+              {isEmoji ? (
+                <span className="text-xl sm:text-2xl select-none drop-shadow-sm">
+                  {folder.icon?.replace("emoji:", "")}
+                </span>
+              ) : (
+                (() => {
+                  const IconComponent = getIconByName(folder.icon || "Default");
+                  return (
+                    <IconComponent 
+                      className="w-5 h-5 sm:w-6 sm:h-6 text-white/90 drop-shadow-sm"
+                    />
+                  );
+                })()
               )}
-              {!folder.is_locked && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onLock();
-                  }}
-                  title="Lock folder"
-                >
-                  <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setNewName(folder.name);
-                  setRenameOpen(true);
-                }}
-                title="Rename folder"
-              >
-                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCustomizeOpen(true);
-                }}
-                title="Customize folder"
-              >
-                <Palette className="w-3.5 h-3.5 text-muted-foreground" />
-              </Button>
+            </div>
+          </div>
+          
+          {/* Lock overlay for locked folders */}
+          {folder.is_locked && !isUnlocked && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px] rounded-lg sm:rounded-xl">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-500/25 border-2 border-amber-400/60 flex items-center justify-center animate-pulse shadow-lg">
+                <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 drop-shadow" />
+              </div>
+            </div>
+          )}
+
+          {/* Unlocked indicator badge */}
+          {folder.is_locked && isUnlocked && (
+            <div className="absolute -top-1 -right-1 z-10">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-green-500 border-2 border-background flex items-center justify-center shadow-md">
+                <Unlock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
+              </div>
             </div>
           )}
         </div>
+
+        {/* Hover action buttons */}
+        {isAccessible && isHovered && (
+          <div className="absolute -top-2 -right-2 flex items-center gap-0.5 z-10">
+            {folder.is_locked && isUnlocked && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-6 w-6 rounded-full shadow-md"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRelock();
+                }}
+                title="Re-lock"
+              >
+                <Lock className="w-3 h-3 text-amber-600" />
+              </Button>
+            )}
+            {!folder.is_locked && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-6 w-6 rounded-full shadow-md"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLock();
+                }}
+                title="Lock"
+              >
+                <Lock className="w-3 h-3" />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* Folder name and meta - below the folder icon */}
+      <div className="mt-2 text-center w-full px-1">
+        <span 
+          className={cn(
+            "text-xs sm:text-sm font-medium line-clamp-2 transition-all leading-tight",
+            folder.is_locked && !isUnlocked && "text-muted-foreground"
+          )}
+          title={folder.name}
+        >
+          {folder.is_locked && !isUnlocked ? "Click to unlock" : folder.name}
+        </span>
+        
+        {/* Meta info */}
+        {isAccessible && (memoryCount > 0 || hasSubfolders) && (
+          <div className="flex items-center justify-center gap-1.5 mt-0.5 text-[10px] sm:text-xs text-muted-foreground">
+            {memoryCount > 0 && (
+              <span className="flex items-center gap-0.5">
+                <Images className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                {memoryCount}
+              </span>
+            )}
+            {hasSubfolders && (
+              <span className="flex items-center gap-0.5">
+                <FolderOpen className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                <ChevronRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -417,27 +380,48 @@ export const EnhancedFolderCard = ({
               onColorChange={setSelectedColor}
             />
 
-            {/* Preview */}
+            {/* Preview - Mac-style folder */}
             <div>
               <label className="text-sm font-medium mb-3 block">Preview</label>
-              <div 
-                className="p-4 rounded-lg border flex items-center gap-3"
-                style={{
-                  background: `linear-gradient(145deg, ${getColorConfig(selectedColor).hex}25 0%, ${getColorConfig(selectedColor).hex}15 100%)`,
-                  borderColor: `${getColorConfig(selectedColor).hex}40`,
-                }}
-              >
-                <div className="w-12 h-12 rounded-xl bg-background/60 flex items-center justify-center">
-                  {selectedIcon.startsWith("emoji:") ? (
-                    <span className="text-2xl">{selectedIcon.replace("emoji:", "")}</span>
-                  ) : (
-                    (() => {
-                      const PreviewIcon = getIconByName(selectedIcon);
-                      return <PreviewIcon className={cn("w-6 h-6", getColorConfig(selectedColor).text)} />;
-                    })()
-                  )}
+              <div className="flex justify-center py-4">
+                <div className="flex flex-col items-center">
+                  {/* Mac-style folder preview */}
+                  <div className="relative w-20 h-16">
+                    {/* Tab */}
+                    <div 
+                      className="absolute top-0 left-1 w-8 h-3 rounded-t-lg"
+                      style={{
+                        background: `linear-gradient(180deg, ${getColorConfig(selectedColor).hex} 0%, ${getColorConfig(selectedColor).hex}dd 100%)`,
+                      }}
+                    />
+                    {/* Body */}
+                    <div 
+                      className="absolute top-2 inset-x-0 bottom-0 rounded-xl"
+                      style={{
+                        background: `linear-gradient(160deg, ${getColorConfig(selectedColor).hex} 0%, ${getColorConfig(selectedColor).hex}dd 50%, ${getColorConfig(selectedColor).hex}bb 100%)`,
+                        boxShadow: `0 4px 12px ${getColorConfig(selectedColor).hex}40`,
+                      }}
+                    >
+                      <div 
+                        className="absolute inset-x-0 top-0 h-2 rounded-t-xl"
+                        style={{ background: `linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%)` }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+                          {selectedIcon.startsWith("emoji:") ? (
+                            <span className="text-xl">{selectedIcon.replace("emoji:", "")}</span>
+                          ) : (
+                            (() => {
+                              const PreviewIcon = getIconByName(selectedIcon);
+                              return <PreviewIcon className="w-5 h-5 text-white/90" />;
+                            })()
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-medium mt-2">{folder.name}</span>
                 </div>
-                <span className="text-sm font-medium">{folder.name}</span>
               </div>
             </div>
           </div>
