@@ -13,7 +13,6 @@ import {
   Eye, 
   Download, 
   Trash2, 
-  Share2, 
   Printer,
   MoreVertical,
   Calendar,
@@ -23,11 +22,14 @@ import {
   Image as ImageIcon,
   File,
   Copy,
-  ExternalLink,
-  Send
+  Send,
+  FileImage,
+  FileSpreadsheet,
+  FileType,
+  FileArchive,
+  HardDrive
 } from "lucide-react";
-import { format, isAfter, isBefore, addMonths } from "date-fns";
-import { getIconComponent } from "./DocumentCategoryManager";
+import { format, isBefore, addMonths } from "date-fns";
 
 interface Document {
   id: string;
@@ -53,6 +55,40 @@ interface DocumentCardProps {
   onPreview: (doc: Document) => void;
 }
 
+// Get file extension from filename or URL
+const getFileExtension = (url: string, mimeType?: string | null): string => {
+  if (mimeType) {
+    const ext = mimeType.split('/')[1];
+    if (ext) return ext.toUpperCase();
+  }
+  const urlParts = url.split('.');
+  const ext = urlParts[urlParts.length - 1]?.split('?')[0];
+  return ext?.toUpperCase() || 'FILE';
+};
+
+// Get icon and color based on file type
+const getFileTypeInfo = (mimeType?: string | null, url?: string) => {
+  const type = mimeType?.toLowerCase() || '';
+  const ext = getFileExtension(url || '', mimeType).toLowerCase();
+  
+  if (type.includes('pdf') || ext === 'pdf') {
+    return { icon: FileText, color: '#ef4444', label: 'PDF' };
+  }
+  if (type.includes('image') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+    return { icon: FileImage, color: '#22c55e', label: ext.toUpperCase() };
+  }
+  if (type.includes('spreadsheet') || type.includes('excel') || ['xls', 'xlsx', 'csv'].includes(ext)) {
+    return { icon: FileSpreadsheet, color: '#22c55e', label: ext.toUpperCase() };
+  }
+  if (type.includes('word') || type.includes('document') || ['doc', 'docx'].includes(ext)) {
+    return { icon: FileType, color: '#3b82f6', label: ext.toUpperCase() };
+  }
+  if (type.includes('zip') || type.includes('archive') || ['zip', 'rar', '7z'].includes(ext)) {
+    return { icon: FileArchive, color: '#f97316', label: ext.toUpperCase() };
+  }
+  return { icon: File, color: '#6366f1', label: ext.toUpperCase() || 'FILE' };
+};
+
 const DocumentCard = ({ document, categoryIcon, categoryColor, onDelete, onPreview }: DocumentCardProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -60,8 +96,9 @@ const DocumentCard = ({ document, categoryIcon, categoryColor, onDelete, onPrevi
   const [shareEmail, setShareEmail] = useState("");
   const [sharing, setSharing] = useState(false);
 
-  const IconComponent = getIconComponent(categoryIcon || "FileText");
-  const color = categoryColor || "#6366f1";
+  const fileTypeInfo = getFileTypeInfo(document.file_type, document.file_url);
+  const FileIcon = fileTypeInfo.icon;
+  const color = categoryColor || fileTypeInfo.color;
 
   const getExpiryStatus = (expiryDate: string | null) => {
     if (!expiryDate) return null;
@@ -76,18 +113,12 @@ const DocumentCard = ({ document, categoryIcon, categoryColor, onDelete, onPrevi
 
   const expiryStatus = getExpiryStatus(document.expiry_date);
 
-  const getFileIcon = () => {
-    const type = document.file_type?.toLowerCase() || "";
-    if (type.includes("pdf")) return <FileText className="h-5 w-5" style={{ color }} />;
-    if (type.includes("image")) return <ImageIcon className="h-5 w-5" style={{ color }} />;
-    return <File className="h-5 w-5" style={{ color }} />;
-  };
-
   const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return "Unknown size";
+    if (!bytes) return null;
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
   };
 
   const handleDownload = async () => {
@@ -136,14 +167,12 @@ const DocumentCard = ({ document, categoryIcon, categoryColor, onDelete, onPrevi
     
     setSharing(true);
     try {
-      // Check if user exists
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, email")
         .eq("email", shareEmail.trim())
         .single();
 
-      // Create share record
       const { error } = await supabase.from("document_shares").insert({
         document_id: document.id,
         shared_by: user?.id,
@@ -169,7 +198,7 @@ const DocumentCard = ({ document, categoryIcon, categoryColor, onDelete, onPrevi
       const filePath = document.file_url.split("/documents/")[1];
       const { data } = await supabase.storage
         .from("documents")
-        .createSignedUrl(filePath || document.file_url, 86400); // 24 hours
+        .createSignedUrl(filePath || document.file_url, 86400);
       
       if (data?.signedUrl) {
         await navigator.clipboard.writeText(data.signedUrl);
@@ -180,51 +209,53 @@ const DocumentCard = ({ document, categoryIcon, categoryColor, onDelete, onPrevi
     }
   };
 
+  const fileSize = formatFileSize(document.file_size);
+  const fileExtension = getFileExtension(document.file_url, document.file_type);
+
   return (
     <>
-      <Card className="group bg-card/50 border-border/50 hover:bg-muted/30 hover:shadow-md transition-all duration-200">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105"
-                style={{ backgroundColor: `${color}15` }}
-              >
-                {getFileIcon()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-sm truncate pr-2">{document.title}</h3>
-                <p className="text-xs text-muted-foreground truncate">{document.document_type}</p>
-              </div>
+      <Card className="group bg-card/60 border-border/40 hover:bg-card hover:shadow-lg hover:border-primary/20 transition-all duration-300 rounded-2xl overflow-hidden">
+        <CardContent className="p-3">
+          {/* Header with Icon & Title */}
+          <div className="flex items-start gap-3 mb-2">
+            <div 
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
+              style={{ backgroundColor: `${fileTypeInfo.color}15` }}
+            >
+              <FileIcon className="h-4 w-4" style={{ color: fileTypeInfo.color }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-sm truncate leading-tight">{document.title}</h3>
+              <p className="text-[11px] text-muted-foreground truncate">{document.document_type}</p>
             </div>
             <div className="flex items-center gap-1">
-              {document.is_locked && <Lock className="h-4 w-4 text-muted-foreground" />}
+              {document.is_locked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreVertical className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <MoreVertical className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => onPreview(document)}>
-                    <Eye className="h-4 w-4 mr-2" />
+                <DropdownMenuContent align="end" className="w-44 rounded-xl">
+                  <DropdownMenuItem onClick={() => onPreview(document)} className="text-xs">
+                    <Eye className="h-3.5 w-3.5 mr-2" />
                     Preview
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleDownload}>
-                    <Download className="h-4 w-4 mr-2" />
+                  <DropdownMenuItem onClick={handleDownload} className="text-xs">
+                    <Download className="h-3.5 w-3.5 mr-2" />
                     Download
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handlePrint}>
-                    <Printer className="h-4 w-4 mr-2" />
+                  <DropdownMenuItem onClick={handlePrint} className="text-xs">
+                    <Printer className="h-3.5 w-3.5 mr-2" />
                     Print
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShareOpen(true)}>
-                    <Send className="h-4 w-4 mr-2" />
+                  <DropdownMenuItem onClick={() => setShareOpen(true)} className="text-xs">
+                    <Send className="h-3.5 w-3.5 mr-2" />
                     Share with User
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCopyLink}>
-                    <Copy className="h-4 w-4 mr-2" />
+                  <DropdownMenuItem onClick={handleCopyLink} className="text-xs">
+                    <Copy className="h-3.5 w-3.5 mr-2" />
                     Copy Link (24h)
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -234,9 +265,9 @@ const DocumentCard = ({ document, categoryIcon, categoryColor, onDelete, onPrevi
                         onDelete(document.id);
                       }
                     }}
-                    className="text-destructive focus:text-destructive"
+                    className="text-destructive focus:text-destructive text-xs"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="h-3.5 w-3.5 mr-2" />
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -244,43 +275,61 @@ const DocumentCard = ({ document, categoryIcon, categoryColor, onDelete, onPrevi
             </div>
           </div>
 
-          <div className="space-y-2 text-xs text-muted-foreground mb-3">
+          {/* File Info Row */}
+          <div className="flex items-center gap-2 mb-2">
+            <Badge 
+              variant="secondary" 
+              className="text-[10px] px-1.5 py-0 h-5 rounded-md font-medium"
+              style={{ backgroundColor: `${fileTypeInfo.color}15`, color: fileTypeInfo.color }}
+            >
+              {fileExtension}
+            </Badge>
+            {fileSize && (
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <HardDrive className="h-3 w-3" />
+                <span>{fileSize}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Dates */}
+          <div className="space-y-1 text-[10px] text-muted-foreground mb-2">
             {document.issue_date && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Calendar className="h-3 w-3" />
                 <span>Issued: {format(new Date(document.issue_date), "MMM d, yyyy")}</span>
               </div>
             )}
             {document.expiry_date && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {expiryStatus === "expired" && <AlertCircle className="h-3 w-3 text-destructive" />}
                 {expiryStatus === "expiring" && <AlertCircle className="h-3 w-3 text-yellow-500" />}
+                {expiryStatus === "valid" && <Calendar className="h-3 w-3" />}
                 <span className={expiryStatus === "expired" ? "text-destructive" : expiryStatus === "expiring" ? "text-yellow-500" : ""}>
                   Expires: {format(new Date(document.expiry_date), "MMM d, yyyy")}
                 </span>
               </div>
             )}
-            <div className="text-muted-foreground/70">
-              {formatFileSize(document.file_size)}
-            </div>
           </div>
 
+          {/* Status Badge */}
           {expiryStatus && (
             <Badge 
               variant={expiryStatus === "expired" ? "destructive" : expiryStatus === "expiring" ? "secondary" : "outline"}
-              className="mb-3"
+              className="text-[10px] px-1.5 py-0 h-4 rounded-md mb-2"
             >
               {expiryStatus === "expired" ? "Expired" : expiryStatus === "expiring" ? "Expiring Soon" : "Valid"}
             </Badge>
           )}
 
-          <div className="flex gap-2 pt-2 border-t border-border/50">
-            <Button variant="ghost" size="sm" className="flex-1" onClick={() => onPreview(document)}>
-              <Eye className="h-4 w-4 mr-1" />
+          {/* Action Buttons */}
+          <div className="flex gap-1.5 pt-2 border-t border-border/30">
+            <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs rounded-lg" onClick={() => onPreview(document)}>
+              <Eye className="h-3 w-3 mr-1" />
               View
             </Button>
-            <Button variant="ghost" size="sm" className="flex-1" onClick={handleDownload}>
-              <Download className="h-4 w-4 mr-1" />
+            <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs rounded-lg" onClick={handleDownload}>
+              <Download className="h-3 w-3 mr-1" />
               Download
             </Button>
           </div>
@@ -289,7 +338,7 @@ const DocumentCard = ({ document, categoryIcon, categoryColor, onDelete, onPrevi
 
       {/* Share Dialog */}
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle>Share with Chronyx User</DialogTitle>
           </DialogHeader>
@@ -301,12 +350,13 @@ const DocumentCard = ({ document, categoryIcon, categoryColor, onDelete, onPrevi
                 value={shareEmail}
                 onChange={(e) => setShareEmail(e.target.value)}
                 placeholder="Enter email address"
+                className="rounded-xl"
               />
             </div>
             <Button 
               onClick={handleShare} 
               disabled={!shareEmail.trim() || sharing}
-              className="w-full"
+              className="w-full rounded-xl"
             >
               <Send className="h-4 w-4 mr-2" />
               {sharing ? "Sharing..." : "Share Document"}
