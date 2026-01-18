@@ -997,6 +997,7 @@ const Memory = () => {
             })}
             isLoading={createFolderMutation.isPending}
             parentFolderName={currentParentFolderId ? folderNavigationPath[folderNavigationPath.length - 1]?.name : undefined}
+            existingFolderNames={currentFolders.map(f => f.name)}
           />
         </div>
       </div>

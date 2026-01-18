@@ -14,6 +14,7 @@ interface CreateFolderDialogProps {
   onCreateFolder: (data: { name: string; color: string; icon: string; isLocked?: boolean; password?: string }) => void;
   isLoading?: boolean;
   parentFolderName?: string;
+  existingFolderNames?: string[];
 }
 
 // Default dark slate color (index 1 = Slate)
@@ -25,6 +26,7 @@ export const CreateFolderDialog = ({
   onCreateFolder,
   isLoading = false,
   parentFolderName,
+  existingFolderNames = [],
 }: CreateFolderDialogProps) => {
   const [folderName, setFolderName] = useState("");
   const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
@@ -57,8 +59,13 @@ export const CreateFolderDialog = ({
     }
   }, [open]);
 
+  // Check for duplicate folder name
+  const isDuplicateName = existingFolderNames.some(
+    name => name.toLowerCase().trim() === folderName.toLowerCase().trim()
+  );
+
   const handleCreate = () => {
-    if (folderName.trim()) {
+    if (folderName.trim() && !isDuplicateName) {
       if (enableLock && lockPassword !== confirmPassword) {
         return; // Passwords don't match
       }
@@ -98,13 +105,16 @@ export const CreateFolderDialog = ({
               placeholder="Enter folder name..."
               value={folderName}
               onChange={(e) => setFolderName(e.target.value)}
-              className="text-base"
+              className={cn("text-base", isDuplicateName && "border-destructive")}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && folderName.trim() && passwordsMatch) {
+                if (e.key === "Enter" && folderName.trim() && passwordsMatch && !isDuplicateName) {
                   handleCreate();
                 }
               }}
             />
+            {isDuplicateName && (
+              <p className="text-xs text-destructive">A folder with this name already exists</p>
+            )}
           </div>
 
           {/* Icon & Color Picker */}
@@ -177,70 +187,76 @@ export const CreateFolderDialog = ({
             )}
           </div>
 
-          {/* Live Preview */}
+          {/* Live Preview - Clean Mac-style folder only */}
           <div className="space-y-2">
             <Label className="text-sm font-medium flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-500" />
               Preview
             </Label>
-            <div className="flex justify-center p-4 bg-accent/10 rounded-lg border border-border">
-              {/* Mac-style folder preview */}
-              <div className="relative">
+            <div className="flex justify-center py-4">
+              {/* Mac-style folder - no background box */}
+              <div className="relative w-[100px]">
                 {/* Folder tab */}
                 <div 
-                  className="absolute top-0 left-2 w-8 h-3 rounded-t-md"
+                  className="absolute top-0 left-2 w-10 h-4 rounded-t-lg"
                   style={{
-                    background: `linear-gradient(180deg, ${colorConfig.hex}50 0%, ${colorConfig.hex}30 100%)`,
-                    borderTop: `1px solid ${colorConfig.hex}60`,
-                    borderLeft: `1px solid ${colorConfig.hex}60`,
-                    borderRight: `1px solid ${colorConfig.hex}60`,
+                    background: `linear-gradient(180deg, ${colorConfig.hex} 0%, ${colorConfig.hex}cc 100%)`,
                   }}
                 />
                 
                 {/* Folder body */}
                 <div 
-                  className="mt-2 rounded-lg overflow-hidden shadow-sm"
+                  className="relative mt-3 rounded-xl overflow-hidden"
                   style={{
-                    background: `linear-gradient(145deg, ${colorConfig.hex}35 0%, ${colorConfig.hex}20 50%, ${colorConfig.hex}15 100%)`,
-                    border: `1px solid ${colorConfig.hex}40`,
+                    background: `linear-gradient(160deg, ${colorConfig.hex} 0%, ${colorConfig.hex}dd 40%, ${colorConfig.hex}bb 100%)`,
+                    boxShadow: `0 4px 12px ${colorConfig.hex}40, inset 0 1px 0 ${colorConfig.hex}40`,
                   }}
                 >
-                  <div className="p-4 flex flex-col items-center gap-2">
+                  {/* Folder front flap effect */}
+                  <div 
+                    className="absolute inset-x-0 top-0 h-3 rounded-t-xl"
+                    style={{
+                      background: `linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%)`,
+                    }}
+                  />
+                  
+                  <div className="p-4 pt-5 flex flex-col items-center gap-2">
                     {/* Icon */}
                     <div 
                       className={cn(
-                        "w-14 h-14 rounded-xl flex items-center justify-center bg-background/40 backdrop-blur-sm",
+                        "w-10 h-10 rounded-lg flex items-center justify-center",
+                        "bg-white/20 backdrop-blur-sm",
                         enableLock && "blur-[2px]"
                       )}
                     >
                       {isEmoji ? (
-                        <span className="text-3xl select-none">{selectedIcon.replace("emoji:", "")}</span>
+                        <span className="text-2xl select-none">{selectedIcon.replace("emoji:", "")}</span>
                       ) : (
                         (() => {
                           const PreviewIcon = getIconByName(selectedIcon);
-                          return <PreviewIcon className={cn("w-8 h-8", colorConfig.text)} />;
+                          return <PreviewIcon className="w-5 h-5 text-white/90" />;
                         })()
                       )}
                     </div>
-                    
-                    {/* Name */}
-                    <span className={cn(
-                      "text-sm font-medium text-center max-w-[120px] truncate",
-                      enableLock && "blur-[1px]"
-                    )}>
-                      {folderName || "Folder Name"}
-                    </span>
                   </div>
                   
                   {/* Lock overlay in preview */}
                   {enableLock && (
-                    <div className="absolute inset-0 mt-2 flex items-center justify-center bg-background/50 backdrop-blur-sm rounded-lg">
-                      <div className="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/50 flex items-center justify-center">
-                        <Lock className="w-5 h-5 text-amber-500" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-xl">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/30 border border-amber-400/60 flex items-center justify-center">
+                        <Lock className="w-4 h-4 text-amber-300" />
                       </div>
                     </div>
                   )}
                 </div>
+                
+                {/* Folder name below */}
+                <p className={cn(
+                  "text-xs font-medium text-center mt-2 truncate",
+                  enableLock && "opacity-70"
+                )}>
+                  {folderName || "Folder Name"}
+                </p>
               </div>
             </div>
           </div>
@@ -255,7 +271,7 @@ export const CreateFolderDialog = ({
           </Button>
           <Button
             onClick={handleCreate}
-            disabled={!folderName.trim() || isLoading || !passwordsMatch}
+            disabled={!folderName.trim() || isLoading || !passwordsMatch || isDuplicateName}
             className="gap-2"
           >
             {isLoading ? (
