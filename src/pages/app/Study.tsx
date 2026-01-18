@@ -16,7 +16,10 @@ import { BookReader } from "@/components/study/BookReader";
 import { AddBookDialog } from "@/components/study/AddBookDialog";
 import { EditBookDialog } from "@/components/study/EditBookDialog";
 import { StudyGoals } from "@/components/study/StudyGoals";
-import { Clock, BookOpen, Target, Archive } from "lucide-react";
+import { VocabularyScreen } from "@/components/study/VocabularyScreen";
+import { StudyAnalytics } from "@/components/study/StudyAnalytics";
+import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,8 +38,10 @@ const Study = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { logActivity } = useActivityLog();
+  const [searchParams] = useSearchParams();
   
-  const [activeTab, setActiveTab] = useState("timeline");
+  const initialTab = searchParams.get('tab') || "timeline";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [showTimer, setShowTimer] = useState(false);
   const [showAddBook, setShowAddBook] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -329,7 +334,7 @@ const Study = () => {
 
       {/* Tabs - Calm, minimal */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/30 border border-border p-1 h-auto">
+        <TabsList className="bg-muted/30 border border-border p-1 h-auto flex-wrap">
           <TabsTrigger value="timeline" className="data-[state=active]:bg-card gap-2">
             <Clock className="w-4 h-4" />
             Timeline
@@ -338,9 +343,17 @@ const Study = () => {
             <BookOpen className="w-4 h-4" />
             Library
           </TabsTrigger>
+          <TabsTrigger value="vocabulary" className="data-[state=active]:bg-card gap-2">
+            <BookMarked className="w-4 h-4" />
+            Vocabulary
+          </TabsTrigger>
           <TabsTrigger value="goals" className="data-[state=active]:bg-card gap-2">
             <Target className="w-4 h-4" />
             Goals
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-card gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Analytics
           </TabsTrigger>
         </TabsList>
 
@@ -377,8 +390,16 @@ const Study = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="vocabulary">
+          <VocabularyScreen />
+        </TabsContent>
+
         <TabsContent value="goals">
           <StudyGoals studyLogs={studyLogs} />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <StudyAnalytics />
         </TabsContent>
       </Tabs>
 
