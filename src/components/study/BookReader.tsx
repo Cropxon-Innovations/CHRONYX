@@ -8,11 +8,6 @@ import {
   X,
   Settings,
   Bookmark,
-  MessageSquare,
-  Search,
-  Download,
-  Share2,
-  Lock,
   Sun,
   Moon,
   Sunset,
@@ -21,6 +16,7 @@ import {
   Minimize2,
   Book,
   FileText,
+  Loader2,
 } from "lucide-react";
 import {
   Popover,
@@ -28,6 +24,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { LibraryItem } from "./LibraryGrid";
+import * as pdfjsLib from "pdfjs-dist";
+
+// Set worker source for PDF.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 type ReadingTheme = "day" | "sepia" | "night";
 type ReadingMode = "book" | "document";
@@ -57,22 +57,91 @@ export const BookReader = ({
   initialMode = "book",
   onClose,
   onProgressUpdate,
-  onAddHighlight,
 }: BookReaderProps) => {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(item.total_pages || 0);
   const [theme, setTheme] = useState<ReadingTheme>(initialTheme);
   const [mode, setMode] = useState<ReadingMode>(initialMode);
-  const [fontSize, setFontSize] = useState(16);
+  const [scale, setScale] = useState(1.5);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [renderError, setRenderError] = useState<string | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const hideControlsTimer = useRef<NodeJS.Timeout | null>(null);
 
   const progress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
   const themeStyle = THEME_STYLES[theme];
+
+  // Determine actual file URL
+  const actualFileUrl = fileUrl || (item as any).file_url;
+
+  // Load PDF document
+  useEffect(() => {
+    if (!actualFileUrl) {
+      setRenderError("No file URL provided");
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if it's a PDF
+    const isPdf = actualFileUrl.toLowerCase().includes('.pdf') || item.format === 'pdf';
+    if (!isPdf) {
+      setRenderError(`${item.format?.toUpperCase() || 'This format'} viewing is not yet supported. Download to view.`);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setRenderError(null);
+
+    const loadPdf = async () => {
+      try {
+        const loadingTask = pdfjsLib.getDocument(actualFileUrl);
+        const pdf = await loadingTask.promise;
+        setPdfDoc(pdf);
+        setTotalPages(pdf.numPages);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error loading PDF:", error);
+        setRenderError("Failed to load PDF. The file may be corrupted or inaccessible.");
+        setIsLoading(false);
+      }
+    };
+
+    loadPdf();
+  }, [actualFileUrl, item.format]);
+
+  // Render current page
+  useEffect(() => {
+    if (!pdfDoc || !canvasRef.current) return;
+
+    const renderPage = async () => {
+      try {
+        const page = await pdfDoc.getPage(currentPage);
+        const viewport = page.getViewport({ scale });
+        
+        const canvas = canvasRef.current!;
+        const context = canvas.getContext("2d")!;
+        
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({
+          canvasContext: context,
+          viewport: viewport,
+          canvas: canvas,
+        } as any).promise;
+      } catch (error) {
+        console.error("Error rendering page:", error);
+      }
+    };
+
+    renderPage();
+  }, [pdfDoc, currentPage, scale]);
 
   // Auto-hide controls
   const resetControlsTimer = useCallback(() => {
@@ -100,6 +169,7 @@ export const BookReader = ({
       if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         goToPreviousPage();
       } else if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " ") {
+        e.preventDefault();
         goToNextPage();
       } else if (e.key === "Escape") {
         if (isFullscreen) {
@@ -153,19 +223,9 @@ export const BookReader = ({
   };
 
   const goToPage = (page: number) => {
-    const validPage = Math.max(1, Math.min(page, totalPages));
+    const validPage = Math.max(1, Math.min(page, totalPages || 1));
     setCurrentPage(validPage);
   };
-
-  // Simulate loading (replace with actual PDF.js/EPUB.js rendering)
-  useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      if (!totalPages) setTotalPages(item.total_pages || 300); // Fallback
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [fileUrl, item.total_pages, totalPages]);
 
   return (
     <div
@@ -205,7 +265,7 @@ export const BookReader = ({
             {item.title}
           </h1>
           <p className="text-xs opacity-60">
-            Page {currentPage} of {totalPages}
+            Page {currentPage} of {totalPages || "..."}
           </p>
         </div>
 
@@ -290,19 +350,19 @@ export const BookReader = ({
                   </div>
                 </div>
 
-                {/* Font size */}
+                {/* Zoom */}
                 <div>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Font Size: {fontSize}px
+                    Zoom: {Math.round(scale * 100)}%
                   </p>
                   <div className="flex items-center gap-3">
                     <Type className="w-3 h-3 text-muted-foreground" />
                     <Slider
-                      value={[fontSize]}
-                      onValueChange={([v]) => setFontSize(v)}
-                      min={12}
-                      max={24}
-                      step={1}
+                      value={[scale]}
+                      onValueChange={([v]) => setScale(v)}
+                      min={0.5}
+                      max={3}
+                      step={0.1}
                       className="flex-1"
                     />
                     <Type className="w-5 h-5 text-muted-foreground" />
@@ -343,47 +403,35 @@ export const BookReader = ({
       </header>
 
       {/* Main Reading Area */}
-      <main className="flex-1 flex items-center justify-center overflow-hidden relative">
+      <main className="flex-1 flex items-center justify-center overflow-auto relative p-4">
         {isLoading ? (
-          <div className="animate-pulse text-center">
-            <div className="w-64 h-96 bg-muted/20 rounded-lg mx-auto mb-4" />
-            <p className="text-sm opacity-60">Loading page...</p>
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 opacity-60" />
+            <p className="text-sm opacity-60">Loading document...</p>
           </div>
-        ) : mode === "book" ? (
-          /* Book Mode - Page by page */
-          <div
-            className={cn(
-              "w-full max-w-2xl mx-auto px-8 py-12",
-              "prose prose-lg dark:prose-invert",
-              theme === "sepia" && "prose-amber",
-              "transition-all duration-300"
-            )}
-            style={{ fontSize: `${fontSize}px` }}
-          >
-            {/* Placeholder for actual PDF.js / EPUB.js content */}
-            <div className="min-h-[60vh] flex items-center justify-center border border-dashed border-current/20 rounded-lg">
-              <div className="text-center opacity-60">
-                <p className="text-lg font-medium mb-2">Page {currentPage}</p>
-                <p className="text-sm">
-                  PDF.js / EPUB.js will render content here
-                </p>
-              </div>
-            </div>
+        ) : renderError ? (
+          <div className="text-center max-w-md">
+            <FileText className="w-12 h-12 mx-auto mb-4 opacity-40" />
+            <p className="text-sm opacity-60 mb-4">{renderError}</p>
+            <Button variant="outline" onClick={onClose}>
+              Back to Library
+            </Button>
           </div>
         ) : (
-          /* Document Mode - Scrollable */
-          <div className="w-full h-full overflow-auto px-4 py-8">
-            <div className="max-w-4xl mx-auto">
-              {/* Placeholder for scrollable document view */}
-              <div className="min-h-[200vh] border border-dashed border-current/20 rounded-lg flex items-start justify-center pt-20">
-                <p className="opacity-60">Scrollable document view</p>
-              </div>
-            </div>
+          <div className="relative">
+            <canvas
+              ref={canvasRef}
+              className={cn(
+                "max-w-full shadow-xl rounded",
+                theme === "sepia" && "sepia",
+                theme === "night" && "invert hue-rotate-180"
+              )}
+            />
           </div>
         )}
 
         {/* Page navigation (Book mode) */}
-        {mode === "book" && (
+        {mode === "book" && !isLoading && !renderError && (
           <>
             <button
               onClick={goToPreviousPage}
