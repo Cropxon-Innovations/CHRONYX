@@ -12,7 +12,7 @@ import FinancialOverview from "@/components/dashboard/FinancialOverview";
 import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import PendingYesterdayTasks from "@/components/dashboard/PendingYesterdayTasks";
-import { MotivationalQuotes } from "@/components/dashboard/MotivationalQuotes";
+import { DailyReflection } from "@/components/notes/DailyReflection";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -131,8 +131,8 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in px-1 sm:px-0">
-      {/* Motivational Quote */}
-      <MotivationalQuotes />
+      {/* Daily Reflection Widget */}
+      <DailyReflection />
 
       {/* Header with User Menu */}
       <header className="flex items-start justify-between gap-4">
