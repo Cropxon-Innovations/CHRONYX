@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { PasswordField } from "@/components/vault/PasswordField";
 import {
   Dialog,
   DialogContent,
@@ -734,14 +735,14 @@ const Vault = () => {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Password</Label>
-                  <Input
-                    type="password"
-                    value={formData.password || ""}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  />
-                </div>
+                <PasswordField
+                  value={formData.password || ""}
+                  onChange={(value) => setFormData({ ...formData, password: value })}
+                  label="Password"
+                  placeholder="Enter or generate password"
+                  showGenerator={true}
+                  showStrengthMeter={true}
+                />
                 <div className="space-y-2">
                   <Label>Website URL</Label>
                   <Input
