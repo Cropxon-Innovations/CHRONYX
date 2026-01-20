@@ -8,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { LiveClock } from "./LiveClock";
+import { HeaderQuote } from "./HeaderQuote";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -111,6 +112,9 @@ export const TopHeader = () => {
     <div className="hidden lg:flex fixed top-0 right-0 left-64 h-14 bg-background/80 backdrop-blur-sm border-b border-border z-30 items-center justify-between px-6 transition-all duration-300">
       {/* Left - Clock */}
       <LiveClock />
+      
+      {/* Center - Motivational Quote */}
+      <HeaderQuote />
       
       {/* Right - Theme Toggle, Plan, Settings, User Menu */}
       <div className="flex items-center gap-2">
