@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Check, Circle, MoreHorizontal, X, Pencil, Trash2, Plus, Calendar, ChevronLeft, ChevronRight, ArrowUpDown, Flag, Repeat, BarChart3, Clock } from "lucide-react";
+import { Check, Circle, MoreHorizontal, X, Pencil, Trash2, Plus, Calendar, ChevronLeft, ChevronRight, ArrowUpDown, Flag, Repeat, BarChart3, Clock, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -18,9 +19,12 @@ import TaskTemplates from "@/components/todos/TaskTemplates";
 import ProductivityStats from "@/components/todos/ProductivityStats";
 import DailyBadges from "@/components/todos/DailyBadges";
 import PendingYesterdaySection from "@/components/todos/PendingYesterdaySection";
-import TimelineView from "@/components/todos/TimelineView";
+import DayTimeline from "@/components/todos/DayTimeline";
+import WeeklyTimeBudget from "@/components/todos/WeeklyTimeBudget";
+import ProductivityHistory from "@/components/todos/ProductivityHistory";
+import DailySchedulePDF from "@/components/todos/DailySchedulePDF";
 
-type ViewMode = "day" | "week" | "month" | "timeline" | "analytics";
+type ViewMode = "day" | "week" | "month" | "history" | "analytics";
 type TodoStatus = "pending" | "done" | "skipped";
 type Priority = "high" | "medium" | "low";
 type SortBy = "created" | "priority" | "status";
@@ -59,6 +63,7 @@ const Todos = () => {
   const [loading, setLoading] = useState(true);
   const [newTodoText, setNewTodoText] = useState("");
   const [newTodoPriority, setNewTodoPriority] = useState<Priority>("medium");
+  const [newTodoDuration, setNewTodoDuration] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -168,6 +173,7 @@ const Todos = () => {
         status: "pending",
         date: dateStr,
         priority: newTodoPriority,
+        duration_hours: newTodoDuration,
       })
       .select()
       .single();
@@ -182,10 +188,12 @@ const Todos = () => {
         is_recurring: false,
         recurrence_type: null,
         recurrence_days: null,
+        duration_hours: data.duration_hours,
       };
       setAllTodos([newTodo, ...allTodos]);
       setNewTodoText("");
       setNewTodoPriority("medium");
+      setNewTodoDuration(null);
       setIsAdding(false);
       toast({ title: "Task added" });
       logActivity(`Added task: ${data.text.substring(0, 30)}`, "Todos");
@@ -471,7 +479,7 @@ const Todos = () => {
             <p className="text-sm text-muted-foreground mt-1">Track your task completion over time</p>
           </div>
           <div className="flex bg-muted rounded-lg p-1 flex-wrap">
-            {(["day", "week", "month", "timeline", "analytics"] as ViewMode[]).map((mode) => (
+            {(["day", "week", "month", "history", "analytics"] as ViewMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
@@ -482,7 +490,7 @@ const Todos = () => {
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode === "timeline" ? <><Clock className="w-4 h-4" /> Timeline</> : mode}
+                {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode === "history" ? <><History className="w-4 h-4" /> History</> : mode}
               </button>
             ))}
           </div>
@@ -492,30 +500,18 @@ const Todos = () => {
     );
   }
 
-  if (viewMode === "timeline") {
-    const dateStr = format(selectedDate, "yyyy-MM-dd");
-    const timelineTodos = allTodos
-      .filter(t => t.date === dateStr)
-      .map(t => ({
-        id: t.id,
-        text: t.text,
-        status: t.status,
-        duration_hours: t.duration_hours || 0,
-        priority: t.priority,
-        date: t.date,
-      }));
-
+  if (viewMode === "history") {
     return (
       <div className="space-y-6 animate-fade-in">
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-light text-foreground tracking-wide">Daily Timeline</h1>
+            <h1 className="text-2xl font-light text-foreground tracking-wide">Productivity History</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Plan your day within 16 productive hours (24h - 6h sleep - 2h essentials)
+              See how productive and organized you've been with daily scores
             </p>
           </div>
           <div className="flex bg-muted rounded-lg p-1 flex-wrap">
-            {(["day", "week", "month", "timeline", "analytics"] as ViewMode[]).map((mode) => (
+            {(["day", "week", "month", "history", "analytics"] as ViewMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
@@ -526,28 +522,13 @@ const Todos = () => {
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode === "timeline" ? <><Clock className="w-4 h-4" /> Timeline</> : mode}
+                {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode === "history" ? <><History className="w-4 h-4" /> History</> : mode}
               </button>
             ))}
           </div>
         </header>
 
-        {/* Date Navigation */}
-        <div className="flex items-center justify-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setSelectedDate(subDays(selectedDate, 1))}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-lg font-medium">{format(selectedDate, "EEEE, MMMM d, yyyy")}</span>
-          <Button variant="ghost" size="icon" onClick={() => setSelectedDate(addDays(selectedDate, 1))}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-
-        <TimelineView 
-          todos={timelineTodos} 
-          selectedDate={selectedDate} 
-          onRefresh={fetchAllTodos}
-        />
+        <ProductivityHistory todos={allTodos} />
       </div>
     );
   }
@@ -587,7 +568,7 @@ const Todos = () => {
 
         {/* View Toggle */}
         <div className="flex bg-muted rounded-lg p-1 flex-wrap">
-          {(["day", "week", "month", "timeline", "analytics"] as ViewMode[]).map((mode) => (
+          {(["day", "week", "month", "history", "analytics"] as ViewMode[]).map((mode) => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
@@ -598,7 +579,7 @@ const Todos = () => {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode === "timeline" ? <><Clock className="w-4 h-4" /> Timeline</> : mode}
+              {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode === "history" ? <><History className="w-4 h-4" /> History</> : mode}
             </button>
           ))}
         </div>
@@ -613,11 +594,22 @@ const Todos = () => {
         />
       )}
 
+      {/* Day Timeline & Weekly Budget */}
+      {viewMode === "day" && <DayTimeline todos={todos} />}
+      {viewMode === "week" && <WeeklyTimeBudget todos={allTodos} selectedDate={selectedDate} />}
+
       {/* Productivity Stats & Badges */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ProductivityStats todos={allTodos} />
         <DailyBadges todos={allTodos} />
       </div>
+
+      {/* Export PDF Button for Day View */}
+      {viewMode === "day" && (
+        <div className="flex justify-end">
+          <DailySchedulePDF todos={todos} selectedDate={selectedDate} />
+        </div>
+      )}
 
       {/* Date Navigation & Controls */}
       <div className="flex flex-col sm:flex-row gap-4">
