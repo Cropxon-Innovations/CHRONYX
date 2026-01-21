@@ -3442,6 +3442,7 @@ export type Database = {
         Row: {
           created_at: string | null
           date: string
+          duration_hours: number | null
           id: string
           is_recurring: boolean | null
           parent_recurring_id: string | null
@@ -3456,6 +3457,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           date?: string
+          duration_hours?: number | null
           id?: string
           is_recurring?: boolean | null
           parent_recurring_id?: string | null
@@ -3470,6 +3472,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           date?: string
+          duration_hours?: number | null
           id?: string
           is_recurring?: boolean | null
           parent_recurring_id?: string | null

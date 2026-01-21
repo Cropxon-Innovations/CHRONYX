@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Check, Circle, MoreHorizontal, X, Pencil, Trash2, Plus, Calendar, ChevronLeft, ChevronRight, ArrowUpDown, Flag, Repeat, BarChart3 } from "lucide-react";
+import { Check, Circle, MoreHorizontal, X, Pencil, Trash2, Plus, Calendar, ChevronLeft, ChevronRight, ArrowUpDown, Flag, Repeat, BarChart3, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +18,9 @@ import TaskTemplates from "@/components/todos/TaskTemplates";
 import ProductivityStats from "@/components/todos/ProductivityStats";
 import DailyBadges from "@/components/todos/DailyBadges";
 import PendingYesterdaySection from "@/components/todos/PendingYesterdaySection";
+import TimelineView from "@/components/todos/TimelineView";
 
-type ViewMode = "day" | "week" | "month" | "analytics";
+type ViewMode = "day" | "week" | "month" | "timeline" | "analytics";
 type TodoStatus = "pending" | "done" | "skipped";
 type Priority = "high" | "medium" | "low";
 type SortBy = "created" | "priority" | "status";
@@ -33,6 +34,7 @@ interface Todo {
   is_recurring: boolean;
   recurrence_type: string | null;
   recurrence_days: number[] | null;
+  duration_hours?: number | null;
 }
 
 const statusConfig = {
@@ -97,6 +99,7 @@ const Todos = () => {
         is_recurring: t.is_recurring || false,
         recurrence_type: t.recurrence_type,
         recurrence_days: t.recurrence_days,
+        duration_hours: t.duration_hours,
       })));
     }
     setLoading(false);
@@ -467,24 +470,84 @@ const Todos = () => {
             <h1 className="text-2xl font-light text-foreground tracking-wide">Productivity Analytics</h1>
             <p className="text-sm text-muted-foreground mt-1">Track your task completion over time</p>
           </div>
-          <div className="flex bg-muted rounded-lg p-1">
-            {(["day", "week", "month", "analytics"] as ViewMode[]).map((mode) => (
+          <div className="flex bg-muted rounded-lg p-1 flex-wrap">
+            {(["day", "week", "month", "timeline", "analytics"] as ViewMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={cn(
-                  "px-3 py-1.5 text-sm rounded-md transition-colors capitalize",
+                  "px-3 py-1.5 text-sm rounded-md transition-colors capitalize flex items-center gap-1",
                   viewMode === mode
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode}
+                {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode === "timeline" ? <><Clock className="w-4 h-4" /> Timeline</> : mode}
               </button>
             ))}
           </div>
         </header>
         <ProductivityAnalytics todos={allTodos} />
+      </div>
+    );
+  }
+
+  if (viewMode === "timeline") {
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    const timelineTodos = allTodos
+      .filter(t => t.date === dateStr)
+      .map(t => ({
+        id: t.id,
+        text: t.text,
+        status: t.status,
+        duration_hours: t.duration_hours || 0,
+        priority: t.priority,
+        date: t.date,
+      }));
+
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-light text-foreground tracking-wide">Daily Timeline</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Plan your day within 16 productive hours (24h - 6h sleep - 2h essentials)
+            </p>
+          </div>
+          <div className="flex bg-muted rounded-lg p-1 flex-wrap">
+            {(["day", "week", "month", "timeline", "analytics"] as ViewMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={cn(
+                  "px-3 py-1.5 text-sm rounded-md transition-colors capitalize flex items-center gap-1",
+                  viewMode === mode
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode === "timeline" ? <><Clock className="w-4 h-4" /> Timeline</> : mode}
+              </button>
+            ))}
+          </div>
+        </header>
+
+        {/* Date Navigation */}
+        <div className="flex items-center justify-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => setSelectedDate(subDays(selectedDate, 1))}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-lg font-medium">{format(selectedDate, "EEEE, MMMM d, yyyy")}</span>
+          <Button variant="ghost" size="icon" onClick={() => setSelectedDate(addDays(selectedDate, 1))}>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+
+        <TimelineView 
+          todos={timelineTodos} 
+          selectedDate={selectedDate} 
+          onRefresh={fetchAllTodos}
+        />
       </div>
     );
   }
@@ -523,19 +586,19 @@ const Todos = () => {
         </div>
 
         {/* View Toggle */}
-        <div className="flex bg-muted rounded-lg p-1">
-          {(["day", "week", "month", "analytics"] as ViewMode[]).map((mode) => (
+        <div className="flex bg-muted rounded-lg p-1 flex-wrap">
+          {(["day", "week", "month", "timeline", "analytics"] as ViewMode[]).map((mode) => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
               className={cn(
-                "px-3 py-1.5 text-sm rounded-md transition-colors capitalize",
+                "px-3 py-1.5 text-sm rounded-md transition-colors capitalize flex items-center gap-1",
                 viewMode === mode
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode}
+              {mode === "analytics" ? <BarChart3 className="w-4 h-4" /> : mode === "timeline" ? <><Clock className="w-4 h-4" /> Timeline</> : mode}
             </button>
           ))}
         </div>
