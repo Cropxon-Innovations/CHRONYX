@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { LiveClock } from "./LiveClock";
 import { HeaderQuote } from "./HeaderQuote";
+import { LifespanSpinner } from "./LifespanSpinner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -110,8 +111,11 @@ export const TopHeader = () => {
 
   return (
     <div className="hidden lg:flex fixed top-0 right-0 left-64 h-14 bg-background/80 backdrop-blur-sm border-b border-border z-30 items-center justify-between px-6 transition-all duration-300">
-      {/* Left - Clock */}
-      <LiveClock />
+      {/* Left - Lifespan Spinner & Clock */}
+      <div className="flex items-center gap-3">
+        <LifespanSpinner />
+        <LiveClock />
+      </div>
       
       {/* Center - Motivational Quote */}
       <HeaderQuote />
