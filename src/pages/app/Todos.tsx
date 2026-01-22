@@ -880,36 +880,72 @@ const Todos = () => {
 
           {/* Add Todo Inline */}
           {isAdding && (
-            <div className="flex items-center gap-3 p-4">
-              <Circle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-              <Select value={newTodoPriority} onValueChange={(v) => setNewTodoPriority(v as Priority)}>
-                <SelectTrigger className="w-24 h-8">
-                  <Flag className={cn("w-3 h-3 mr-1", priorityConfig[newTodoPriority].color)} />
-                  <span className="text-xs">{newTodoPriority}</span>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                value={newTodoText}
-                onChange={(e) => setNewTodoText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") addTodo();
-                  if (e.key === "Escape") setIsAdding(false);
-                }}
-                placeholder="What needs to be done?"
-                className="h-8 text-sm flex-1"
-                autoFocus
-              />
-              <Button size="sm" variant="ghost" onClick={addTodo}>
-                <Check className="w-4 h-4" />
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setIsAdding(false)}>
-                <X className="w-4 h-4" />
-              </Button>
+            <div className="flex flex-col gap-3 p-4">
+              <div className="flex items-center gap-3">
+                <Circle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                <Select value={newTodoPriority} onValueChange={(v) => setNewTodoPriority(v as Priority)}>
+                  <SelectTrigger className="w-24 h-8">
+                    <Flag className={cn("w-3 h-3 mr-1", priorityConfig[newTodoPriority].color)} />
+                    <span className="text-xs">{newTodoPriority}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  value={newTodoText}
+                  onChange={(e) => setNewTodoText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addTodo();
+                    if (e.key === "Escape") setIsAdding(false);
+                  }}
+                  placeholder="What needs to be done?"
+                  className="h-8 text-sm flex-1"
+                  autoFocus
+                />
+                <Button size="sm" variant="ghost" onClick={addTodo}>
+                  <Check className="w-4 h-4" />
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setIsAdding(false)}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              {/* Duration Input */}
+              <div className="flex items-center gap-2 ml-8">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Duration:</span>
+                <div className="flex items-center gap-1">
+                  {[0.5, 1, 2, 3, 4].map((hours) => (
+                    <button
+                      key={hours}
+                      onClick={() => setNewTodoDuration(newTodoDuration === hours ? null : hours)}
+                      className={cn(
+                        "px-2 py-1 text-xs rounded-md border transition-colors",
+                        newTodoDuration === hours
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border hover:bg-accent"
+                      )}
+                    >
+                      {hours}h
+                    </button>
+                  ))}
+                  <Input
+                    type="number"
+                    min="0.5"
+                    max="12"
+                    step="0.5"
+                    value={newTodoDuration || ""}
+                    onChange={(e) => setNewTodoDuration(e.target.value ? parseFloat(e.target.value) : null)}
+                    placeholder="Custom"
+                    className="h-7 w-16 text-xs"
+                  />
+                </div>
+                {newTodoDuration && (
+                  <span className="text-xs text-primary font-medium">{newTodoDuration}h allocated</span>
+                )}
+              </div>
             </div>
           )}
         </div>
