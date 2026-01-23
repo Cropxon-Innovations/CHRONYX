@@ -92,6 +92,8 @@ interface TaxWizardState {
   auditScore: number;
   calculation: any;
   comparison: any;
+  tdsPaid: number;
+  advanceTaxPaid: number;
 }
 
 const STEPS = [
@@ -131,6 +133,8 @@ export function TaxWizard() {
     auditScore: 0,
     calculation: null,
     comparison: null,
+    tdsPaid: 0,
+    advanceTaxPaid: 0,
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -145,6 +149,10 @@ export function TaxWizard() {
     if (data.gross_salary) {
       setManualIncome(data.gross_salary);
     }
+    // Pre-fill TDS from Form 16
+    if (data.total_tds_deducted) {
+      setState(prev => ({ ...prev, tdsPaid: data.total_tds_deducted || 0 }));
+    }
     // Pre-fill deductions from Form 16
     const newDeductions: Record<string, number> = {};
     if (data.section_80c) newDeductions["80C"] = data.section_80c;
@@ -153,6 +161,8 @@ export function TaxWizard() {
     if (data.section_24b) newDeductions["24B"] = data.section_24b;
     if (data.section_80e) newDeductions["80E"] = data.section_80e;
     if (data.hra_exemption) newDeductions["HRA"] = data.hra_exemption;
+    if (data.standard_deduction) newDeductions["STD"] = data.standard_deduction;
+    if (data.professional_tax) newDeductions["PT"] = data.professional_tax;
     
     setState(prev => ({ ...prev, deductions: { ...prev.deductions, ...newDeductions } }));
     toast.success("Form 16 data imported successfully!");
@@ -575,6 +585,44 @@ export function TaxWizard() {
                 <TaxScenarioSelector onScenariosChange={handleScenariosChange} />
 
                 <Separator />
+
+                {/* TDS Paid Section */}
+                <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/30 rounded-lg space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="border-emerald-500 text-emerald-600">TDS</Badge>
+                    <Label className="font-medium">Tax Deducted at Source</Label>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">TDS from Employer (Form 16)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="e.g., 510659"
+                        value={state.tdsPaid || ""}
+                        onChange={(e) => setState(prev => ({ ...prev, tdsPaid: Math.max(0, Number(e.target.value)) }))}
+                        className="bg-background"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Advance Tax Paid (if any)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="e.g., 50000"
+                        value={state.advanceTaxPaid || ""}
+                        onChange={(e) => setState(prev => ({ ...prev, advanceTaxPaid: Math.max(0, Number(e.target.value)) }))}
+                        className="bg-background"
+                      />
+                    </div>
+                  </div>
+                  {state.tdsPaid > 0 && (
+                    <p className="text-xs text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      TDS of {formatCurrency(state.tdsPaid)} will be adjusted against your tax liability
+                    </p>
+                  )}
+                </div>
 
                 <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
                   <span className="font-medium">Total Gross Income</span>
@@ -1223,7 +1271,38 @@ export function TaxWizard() {
                         {formatCurrency(state.calculation.total_tax_liability)}
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm text-muted-foreground">
+                    
+                    {/* TDS & Refund Section */}
+                    <Separator className="my-3" />
+                    <div className="space-y-2 bg-muted/30 p-3 rounded-lg">
+                      <div className="flex justify-between">
+                        <span className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">TDS</Badge>
+                          Less: TDS Deducted at Source
+                        </span>
+                        <span className="text-green-600">- {formatCurrency(state.tdsPaid)}</span>
+                      </div>
+                      {state.advanceTaxPaid > 0 && (
+                        <div className="flex justify-between">
+                          <span>Less: Advance Tax Paid</span>
+                          <span className="text-green-600">- {formatCurrency(state.advanceTaxPaid)}</span>
+                        </div>
+                      )}
+                      <Separator className="my-2" />
+                      {(() => {
+                        const totalTaxPaid = state.tdsPaid + state.advanceTaxPaid;
+                        const refundOrPayable = state.calculation.total_tax_liability - totalTaxPaid;
+                        const isRefund = refundOrPayable < 0;
+                        return (
+                          <div className={`flex justify-between font-bold text-lg ${isRefund ? 'text-green-600' : 'text-red-600'}`}>
+                            <span>{isRefund ? '(-) Refund Due' : '(+) Tax Payable'}</span>
+                            <span>{formatCurrency(Math.abs(refundOrPayable))}</span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="flex justify-between text-sm text-muted-foreground pt-2">
                       <span>Effective Tax Rate</span>
                       <span>{state.calculation.effective_rate}%</span>
                     </div>

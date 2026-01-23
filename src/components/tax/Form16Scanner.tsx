@@ -186,31 +186,64 @@ const Form16Scanner = ({ onDataExtracted }: Form16ScannerProps) => {
   const extractForm16Details = (text: string): ExtractedForm16Data => {
     const data: ExtractedForm16Data = {};
     const confidence: Record<string, number> = {};
-    const fullText = text.toLowerCase();
 
-    // Employee/PAN patterns
-    const panMatch = text.match(/PAN\s*(?:of\s*(?:the\s*)?(?:Employee|Deductee))?[:\s]*([A-Z]{5}\d{4}[A-Z])/i);
-    if (panMatch) { data.pan = panMatch[1].toUpperCase(); confidence.pan = 0.95; }
+    // Helper function to extract amounts from text patterns
+    const extractAmount = (patterns: RegExp[], searchText: string = text): { value: number; confidence: number } | null => {
+      for (const pattern of patterns) {
+        const match = searchText.match(pattern);
+        if (match) {
+          // Handle amounts like "3171503.00" or "31,71,503" or "3171503"
+          const amountStr = match[1].replace(/,/g, '').replace(/\s/g, '');
+          const amount = parseFloat(amountStr);
+          if (!isNaN(amount) && amount > 0) return { value: amount, confidence: 0.9 };
+        }
+      }
+      return null;
+    };
 
+    // PAN - Employee PAN
+    const panPatterns = [
+      /PAN\s*of\s*(?:the\s*)?(?:Employee|Deductee)[:\s]*([A-Z]{5}\d{4}[A-Z])/i,
+      /Employee\s*PAN[:\s]*([A-Z]{5}\d{4}[A-Z])/i,
+      /PAN[:\s]*([A-Z]{5}\d{4}[A-Z])/i,
+    ];
+    for (const pattern of panPatterns) {
+      const match = text.match(pattern);
+      if (match && !match[1].match(/^[A-Z]{4}\d{5}[A-Z]$/)) { // Exclude TAN format
+        data.pan = match[1].toUpperCase();
+        confidence.pan = 0.95;
+        break;
+      }
+    }
+
+    // Employee Name
     const namePatterns = [
-      /(?:Name\s*of\s*(?:the\s*)?Employee|Employee\s*Name)[:\s]*([A-Z][a-zA-Z\s]{3,50})/i,
-      /(?:Name\s*of\s*(?:the\s*)?Deductee)[:\s]*([A-Z][a-zA-Z\s]{3,50})/i,
+      /(?:Name\s*(?:and\s*)?(?:address\s*)?of\s*(?:the\s*)?(?:Employee|Deductee))[:\s]*([A-Z][A-Z\s]{2,40})(?:\s*\n|,)/i,
+      /(?:Employee\s*Name)[:\s]*([A-Z][A-Za-z\s]{2,40})/i,
     ];
     for (const pattern of namePatterns) {
       const match = text.match(pattern);
-      if (match) { data.employee_name = match[1].trim(); confidence.employee_name = 0.9; break; }
+      if (match) {
+        data.employee_name = match[1].trim().split(/\n/)[0].trim();
+        confidence.employee_name = 0.9;
+        break;
+      }
     }
 
-    // Employer details
+    // Employer Name
     const employerPatterns = [
-      /(?:Name\s*(?:and\s*)?(?:Address\s*)?of\s*(?:the\s*)?(?:Employer|Deductor))[:\s]*([A-Za-z\s]+(?:Ltd|Limited|Pvt|Private|Inc|Corporation|LLP)?)/i,
-      /(?:Employer\s*Name)[:\s]*([A-Za-z\s]+(?:Ltd|Limited|Pvt|Private)?)/i,
+      /(?:Name\s*(?:and\s*)?(?:address\s*)?of\s*(?:the\s*)?(?:Employer|Deductor))[:\s]*([A-Z][A-Za-z\s()]+(?:PRIVATE\s*)?(?:LIMITED|LTD)?)/i,
     ];
     for (const pattern of employerPatterns) {
       const match = text.match(pattern);
-      if (match) { data.employer_name = match[1].trim(); confidence.employer_name = 0.85; break; }
+      if (match) {
+        data.employer_name = match[1].trim().split(/\n/)[0].trim();
+        confidence.employer_name = 0.85;
+        break;
+      }
     }
 
+    // Employer TAN
     const tanMatch = text.match(/TAN\s*(?:of\s*(?:the\s*)?(?:Deductor|Employer))?[:\s]*([A-Z]{4}\d{5}[A-Z])/i);
     if (tanMatch) { data.employer_tan = tanMatch[1].toUpperCase(); confidence.employer_tan = 0.95; }
 
@@ -218,97 +251,191 @@ const Form16Scanner = ({ onDataExtracted }: Form16ScannerProps) => {
     const ayMatch = text.match(/Assessment\s*Year[:\s]*(\d{4}[-–]\d{2,4})/i);
     if (ayMatch) { data.assessment_year = ayMatch[1]; confidence.assessment_year = 0.95; }
 
-    // Salary Components
-    const extractAmount = (patterns: RegExp[]): { value: number; confidence: number } | null => {
-      for (const pattern of patterns) {
-        const match = text.match(pattern);
-        if (match) {
-          const amount = parseFloat(match[1].replace(/,/g, ''));
-          if (!isNaN(amount) && amount > 0) return { value: amount, confidence: 0.8 };
-        }
-      }
-      return null;
-    };
+    // ======= PART B - SALARY DETAILS =======
+    
+    // 1(a) Salary as per section 17(1) - This is the main salary figure
+    const salaryPatterns = [
+      /Salary\s*as\s*per\s*(?:provisions\s*)?(?:contained\s*in\s*)?section\s*17\s*\(?\s*1\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+      /section\s*17\s*\(?\s*1\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+    ];
+    const salaryResult = extractAmount(salaryPatterns);
+    if (salaryResult) { data.basic_salary = salaryResult.value; confidence.basic_salary = salaryResult.confidence; }
 
-    // Gross Salary
+    // 1(d) Gross Salary Total
     const grossPatterns = [
-      /(?:Gross\s*Salary|Total\s*Gross\s*Salary)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
-      /(?:1\.\s*Gross\s*Salary)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+      /(?:1\.\s*)?(?:\(d\)\s*)?(?:Total|Gross\s*Salary)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+      /Gross\s*Salary[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+      /Total\s*(?:Rs\.?)?\s*([\d,\.]+)\s*(?:\n|$)/i,
     ];
-    const gross = extractAmount(grossPatterns);
-    if (gross) { data.gross_salary = gross.value; confidence.gross_salary = gross.confidence; }
+    const grossResult = extractAmount(grossPatterns);
+    if (grossResult) { data.gross_salary = grossResult.value; confidence.gross_salary = grossResult.confidence; }
 
-    // Basic Salary
-    const basicPatterns = [
-      /(?:Basic\s*Salary|Basic)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
-      /(?:Salary\s*(?:as\s*per\s*)?(?:section\s*)?17\(1\))[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+    // Perquisites 17(2)
+    const perqPatterns = [
+      /(?:perquisites?\s*)?(?:under\s*)?section\s*17\s*\(?\s*2\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
     ];
-    const basic = extractAmount(basicPatterns);
-    if (basic) { data.basic_salary = basic.value; confidence.basic_salary = basic.confidence; }
+    const perqResult = extractAmount(perqPatterns);
+    if (perqResult && perqResult.value > 0) { data.perquisites = perqResult.value; confidence.perquisites = perqResult.confidence; }
 
-    // HRA
-    const hraPatterns = [
-      /(?:House\s*Rent\s*Allowance|HRA)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+    // ======= EXEMPTIONS UNDER SECTION 10 =======
+    
+    // HRA Exemption 10(13A)
+    const hraExemptPatterns = [
+      /House\s*rent\s*allowance\s*(?:under\s*)?(?:section\s*)?10\s*\(?\s*13A\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+      /10\s*\(?\s*13A\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
     ];
-    const hra = extractAmount(hraPatterns);
-    if (hra) { data.hra = hra.value; confidence.hra = hra.confidence; }
+    const hraExemptResult = extractAmount(hraExemptPatterns);
+    if (hraExemptResult) { data.hra_exemption = hraExemptResult.value; confidence.hra_exemption = hraExemptResult.confidence; }
 
-    // Standard Deduction
-    const stdDeductionPatterns = [
-      /(?:Standard\s*Deduction)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
-      /(?:Deduction\s*u\/s\s*16\(ia\))[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+    // LTA 10(5)
+    const ltaPatterns = [
+      /(?:Travel\s*)?(?:concession|assistance)\s*(?:under\s*)?(?:section\s*)?10\s*\(?\s*5\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
     ];
-    const stdDeduction = extractAmount(stdDeductionPatterns);
-    if (stdDeduction) { data.standard_deduction = stdDeduction.value; confidence.standard_deduction = stdDeduction.confidence; }
+    const ltaResult = extractAmount(ltaPatterns);
+    if (ltaResult && ltaResult.value > 0) { data.lta = ltaResult.value; confidence.lta = ltaResult.confidence; }
 
-    // Professional Tax
-    const ptPatterns = [
-      /(?:Professional\s*Tax|Tax\s*on\s*Employment)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
-      /(?:Deduction\s*u\/s\s*16\(iii\))[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+    // Total exemption under section 10
+    const totalExemptPatterns = [
+      /Total\s*amount\s*of\s*exemption\s*claimed\s*under\s*section\s*10[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
     ];
-    const pt = extractAmount(ptPatterns);
-    if (pt) { data.professional_tax = pt.value; confidence.professional_tax = pt.confidence; }
+    const totalExempt = extractAmount(totalExemptPatterns);
 
-    // Chapter VI-A Deductions
+    // Total salary received from current employer (after exemptions)
+    const netSalaryPatterns = [
+      /Total\s*amount\s*of\s*salary\s*received\s*from\s*current\s*employer[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+    ];
+    const netSalary = extractAmount(netSalaryPatterns);
+    if (netSalary) { data.total_income = netSalary.value; confidence.total_income = netSalary.confidence; }
+
+    // ======= DEDUCTIONS UNDER SECTION 16 =======
+    
+    // Standard Deduction 16(ia)
+    const stdDeductPatterns = [
+      /Standard\s*deduction\s*(?:under\s*)?(?:section\s*)?16\s*\(?\s*ia\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+      /16\s*\(?\s*ia\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+    ];
+    const stdResult = extractAmount(stdDeductPatterns);
+    if (stdResult) { data.standard_deduction = stdResult.value; confidence.standard_deduction = stdResult.confidence; }
+
+    // Entertainment Allowance 16(ii)
+    const entAllowPatterns = [
+      /Entertainment\s*allowance\s*(?:under\s*)?(?:section\s*)?16\s*\(?\s*ii\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+    ];
+    const entResult = extractAmount(entAllowPatterns);
+    if (entResult && entResult.value > 0) { data.entertainment_allowance = entResult.value; confidence.entertainment_allowance = entResult.confidence; }
+
+    // Professional Tax / Tax on Employment 16(iii)
+    const profTaxPatterns = [
+      /Tax\s*on\s*employment\s*(?:under\s*)?(?:section\s*)?16\s*\(?\s*iii\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+      /Professional\s*Tax[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+      /16\s*\(?\s*iii\s*\)?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+    ];
+    const profTaxResult = extractAmount(profTaxPatterns);
+    if (profTaxResult) { data.professional_tax = profTaxResult.value; confidence.professional_tax = profTaxResult.confidence; }
+
+    // Income chargeable under head Salaries
+    const incSalaryPatterns = [
+      /Income\s*chargeable\s*under\s*(?:the\s*)?head\s*[""']?Salaries[""']?[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+    ];
+    const incSalaryResult = extractAmount(incSalaryPatterns);
+
+    // Gross Total Income
+    const gtiPatterns = [
+      /Gross\s*total\s*income[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+    ];
+    const gtiResult = extractAmount(gtiPatterns);
+
+    // ======= CHAPTER VI-A DEDUCTIONS =======
+    
+    // 80C - Life insurance, PF, etc. (use Deductible Amount column)
     const sec80cPatterns = [
-      /(?:80C|Section\s*80C)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
-      /(?:Deduction\s*u\/s\s*80C)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+      /(?:section\s*)?80C[^D][:\s,]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
+      /80C\s*(?:,\s*80CCC\s*(?:and|&)\s*80CCD\s*\(1\))?\s*(?:[\d,\.]+)\s+([\d,\.]+)/i,
+      /life\s*insurance\s*premia[^]*?80C[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
     ];
-    const sec80c = extractAmount(sec80cPatterns);
-    if (sec80c) { data.section_80c = sec80c.value; confidence.section_80c = sec80c.confidence; }
+    const sec80cResult = extractAmount(sec80cPatterns);
+    if (sec80cResult) { data.section_80c = sec80cResult.value; confidence.section_80c = sec80cResult.confidence; }
 
+    // 80CCD(1B) - NPS additional
     const sec80ccd1bPatterns = [
-      /(?:80CCD\(1B\)|Section\s*80CCD\s*\(1B\))[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+      /80CCD\s*\(?\s*1B\s*\)?[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
+      /notified\s*pension\s*scheme[^]*?80CCD\s*\(?\s*1B\s*\)?[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
     ];
-    const sec80ccd = extractAmount(sec80ccd1bPatterns);
-    if (sec80ccd) { data.section_80ccd_1b = sec80ccd.value; confidence.section_80ccd_1b = sec80ccd.confidence; }
+    const sec80ccd1bResult = extractAmount(sec80ccd1bPatterns);
+    if (sec80ccd1bResult) { data.section_80ccd_1b = sec80ccd1bResult.value; confidence.section_80ccd_1b = sec80ccd1bResult.confidence; }
 
+    // 80D - Health insurance
     const sec80dPatterns = [
-      /(?:80D|Section\s*80D)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+      /(?:section\s*)?80D[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
+      /health\s*insurance\s*premia[^]*?80D[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
     ];
-    const sec80d = extractAmount(sec80dPatterns);
-    if (sec80d) { data.section_80d = sec80d.value; confidence.section_80d = sec80d.confidence; }
+    const sec80dResult = extractAmount(sec80dPatterns);
+    if (sec80dResult) { data.section_80d = sec80dResult.value; confidence.section_80d = sec80dResult.confidence; }
 
-    const sec24bPatterns = [
-      /(?:24\(b\)|Section\s*24\s*\(b\)|Interest\s*on\s*Housing\s*Loan)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+    // 80E - Education loan interest
+    const sec80ePatterns = [
+      /(?:section\s*)?80E[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
+      /interest\s*on\s*loan[^]*?higher\s*education[^]*?80E[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
     ];
-    const sec24b = extractAmount(sec24bPatterns);
-    if (sec24b) { data.section_24b = sec24b.value; confidence.section_24b = sec24b.confidence; }
+    const sec80eResult = extractAmount(sec80ePatterns);
+    if (sec80eResult && sec80eResult.value > 0) { data.section_80e = sec80eResult.value; confidence.section_80e = sec80eResult.confidence; }
 
-    // TDS
-    const tdsPatterns = [
-      /(?:Total\s*Tax\s*Deducted|TDS\s*Deducted|Tax\s*Deducted\s*at\s*Source)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+    // 80G - Donations
+    const sec80gPatterns = [
+      /(?:section\s*)?80G[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
+      /donations[^]*?80G[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
     ];
-    const tds = extractAmount(tdsPatterns);
-    if (tds) { data.total_tds_deducted = tds.value; confidence.total_tds_deducted = tds.confidence; }
+    const sec80gResult = extractAmount(sec80gPatterns);
+    if (sec80gResult && sec80gResult.value > 0) { data.section_80g = sec80gResult.value; confidence.section_80g = sec80gResult.confidence; }
 
-    // Total/Taxable Income
+    // 80TTA - Savings interest
+    const sec80ttaPatterns = [
+      /(?:section\s*)?80TTA[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
+      /savings\s*account[^]*?80TTA[:\s]*(?:[\d,\.]+)\s+([\d,\.]+)/i,
+    ];
+    const sec80ttaResult = extractAmount(sec80ttaPatterns);
+    if (sec80ttaResult && sec80ttaResult.value > 0) { data.section_80tta = sec80ttaResult.value; confidence.section_80tta = sec80ttaResult.confidence; }
+
+    // ======= TAX CALCULATION =======
+    
+    // Total taxable income (Line 12)
     const taxablePatterns = [
-      /(?:Total\s*Income|Taxable\s*Income)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
-      /(?:Net\s*Taxable\s*Income)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+)/i,
+      /(?:12\.\s*)?Total\s*taxable\s*income[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+      /taxable\s*income\s*\(9-11\)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
     ];
-    const taxable = extractAmount(taxablePatterns);
-    if (taxable) { data.taxable_income = taxable.value; confidence.taxable_income = taxable.confidence; }
+    const taxableResult = extractAmount(taxablePatterns);
+    if (taxableResult) { data.taxable_income = taxableResult.value; confidence.taxable_income = taxableResult.confidence; }
+
+    // ======= TDS DETAILS =======
+    
+    // Total TDS from quarterly summary
+    const tdsPatterns = [
+      /Total\s*(?:\(Rs\.\))?\s*[\d,\.]+\s+([\d,\.]+)\s+([\d,\.]+)/i,
+      /Net\s*tax\s*payable[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+      /Tax\s*payable[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,\.]+)/i,
+    ];
+    const tdsResult = extractAmount(tdsPatterns);
+    if (tdsResult) { data.total_tds_deducted = tdsResult.value; confidence.total_tds_deducted = tdsResult.confidence; }
+
+    // Try to extract quarterly TDS from table
+    const quarterlyPattern = /Q([1-4])\s+[A-Z]+\s+([\d,\.]+)\s+([\d,\.]+)/gi;
+    let quarterMatch;
+    while ((quarterMatch = quarterlyPattern.exec(text)) !== null) {
+      const quarter = parseInt(quarterMatch[1]);
+      const tdsAmount = parseFloat(quarterMatch[3].replace(/,/g, ''));
+      if (!isNaN(tdsAmount)) {
+        if (quarter === 1) data.tds_q1 = tdsAmount;
+        else if (quarter === 2) data.tds_q2 = tdsAmount;
+        else if (quarter === 3) data.tds_q3 = tdsAmount;
+        else if (quarter === 4) data.tds_q4 = tdsAmount;
+      }
+    }
+
+    // Calculate total TDS from quarters if not found
+    if (!data.total_tds_deducted && (data.tds_q1 || data.tds_q2 || data.tds_q3 || data.tds_q4)) {
+      data.total_tds_deducted = (data.tds_q1 || 0) + (data.tds_q2 || 0) + (data.tds_q3 || 0) + (data.tds_q4 || 0);
+      confidence.total_tds_deducted = 0.85;
+    }
 
     data.confidence_scores = confidence;
     return data;
