@@ -15,6 +15,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { downloadTaxPDF } from "./TaxPDFGenerator";
+import Form16Scanner, { ExtractedForm16Data } from "./Form16Scanner";
+import TaxScenarioSelector from "./TaxScenarioSelector";
 import {
   Calendar,
   ArrowRight,
@@ -38,6 +40,7 @@ import {
   PiggyBank,
   Target,
   RefreshCw,
+  Upload,
 } from "lucide-react";
 
 interface DiscoveredIncome {
@@ -132,6 +135,33 @@ export function TaxWizard() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [manualIncome, setManualIncome] = useState<number>(0);
+  const [form16Data, setForm16Data] = useState<ExtractedForm16Data | null>(null);
+  const [scenarioData, setScenarioData] = useState<Record<string, Record<string, number | string>>>({});
+
+  // Handle Form16 data extraction
+  const handleForm16Data = (data: ExtractedForm16Data) => {
+    setForm16Data(data);
+    // Pre-fill income from Form 16
+    if (data.gross_salary) {
+      setManualIncome(data.gross_salary);
+    }
+    // Pre-fill deductions from Form 16
+    const newDeductions: Record<string, number> = {};
+    if (data.section_80c) newDeductions["80C"] = data.section_80c;
+    if (data.section_80d) newDeductions["80D"] = data.section_80d;
+    if (data.section_80ccd_1b) newDeductions["80CCD1B"] = data.section_80ccd_1b;
+    if (data.section_24b) newDeductions["24B"] = data.section_24b;
+    if (data.section_80e) newDeductions["80E"] = data.section_80e;
+    if (data.hra_exemption) newDeductions["HRA"] = data.hra_exemption;
+    
+    setState(prev => ({ ...prev, deductions: { ...prev.deductions, ...newDeductions } }));
+    toast.success("Form 16 data imported successfully!");
+  };
+
+  // Handle scenario data changes
+  const handleScenariosChange = (data: Record<string, Record<string, number | string>>) => {
+    setScenarioData(data);
+  };
 
   const currentStep = STEPS.find((s) => s.id === state.step);
   const progress = (state.step / STEPS.length) * 100;
@@ -414,6 +444,23 @@ export function TaxWizard() {
                   </div>
                 </div>
 
+                <Separator />
+
+                {/* Form 16 Upload Section */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Upload Form 16 (Optional)
+                  </Label>
+                  <Form16Scanner onDataExtracted={handleForm16Data} />
+                  {form16Data && (
+                    <Badge variant="secondary" className="mt-2">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Form 16 imported
+                    </Badge>
+                  )}
+                </div>
+
                 <Alert>
                   <Info className="w-4 h-4" />
                   <AlertDescription className="text-xs">
@@ -521,6 +568,11 @@ export function TaxWizard() {
                     </div>
                   </div>
                 )}
+
+                <Separator />
+
+                {/* Tax Scenarios for additional income */}
+                <TaxScenarioSelector onScenariosChange={handleScenariosChange} />
 
                 <Separator />
 

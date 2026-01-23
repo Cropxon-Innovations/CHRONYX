@@ -157,7 +157,7 @@ export function TaxScenarioSelector({ onScenariosChange }: TaxScenarioSelectorPr
 
   const getScenarioTotal = (scenarioId: string): number => {
     const data = scenarioData[scenarioId] || {};
-    return Object.values(data).reduce((sum: number, val) => {
+    return Object.values(data).reduce<number>((sum, val) => {
       const num = typeof val === 'number' ? val : parseFloat(String(val));
       return sum + (isNaN(num) ? 0 : num);
     }, 0);

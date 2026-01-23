@@ -60,7 +60,6 @@ export const InsuranceDocuments = ({ insuranceId }: InsuranceDocumentsProps) => 
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      const fileExt = file.name.split(".").pop();
       const filePath = `${insuranceId}/${Date.now()}_${file.name}`;
 
       const { error: uploadError } = await supabase.storage
@@ -69,14 +68,17 @@ export const InsuranceDocuments = ({ insuranceId }: InsuranceDocumentsProps) => 
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
+      // Get a signed URL since the bucket is private
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from("insurance-documents")
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year expiry
+
+      if (signedUrlError) throw signedUrlError;
 
       const { error: dbError } = await supabase.from("insurance_documents").insert({
         insurance_id: insuranceId,
         file_name: file.name,
-        file_url: urlData.publicUrl,
+        file_url: signedUrlData.signedUrl,
         file_type: file.type,
         document_type: selectedType,
       });
