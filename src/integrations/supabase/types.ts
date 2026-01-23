@@ -1242,6 +1242,69 @@ export type Database = {
         }
         Relationships: []
       }
+      deduction_rules: {
+        Row: {
+          age_limit_applies: boolean | null
+          assessment_year: string
+          calculation_formula: string | null
+          calculation_type: string | null
+          conditions: Json | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          document_required: boolean | null
+          document_types: string[] | null
+          id: string
+          is_active: boolean | null
+          max_limit: number | null
+          regime_applicable: string
+          section_code: string
+          section_name: string
+          senior_limit: number | null
+          super_senior_limit: number | null
+        }
+        Insert: {
+          age_limit_applies?: boolean | null
+          assessment_year: string
+          calculation_formula?: string | null
+          calculation_type?: string | null
+          conditions?: Json | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          document_required?: boolean | null
+          document_types?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          max_limit?: number | null
+          regime_applicable: string
+          section_code: string
+          section_name: string
+          senior_limit?: number | null
+          super_senior_limit?: number | null
+        }
+        Update: {
+          age_limit_applies?: boolean | null
+          assessment_year?: string
+          calculation_formula?: string | null
+          calculation_type?: string | null
+          conditions?: Json | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          document_required?: boolean | null
+          document_types?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          max_limit?: number | null
+          regime_applicable?: string
+          section_code?: string
+          section_name?: string
+          senior_limit?: number | null
+          super_senior_limit?: number | null
+        }
+        Relationships: []
+      }
       document_categories: {
         Row: {
           color: string | null
@@ -1676,6 +1739,54 @@ export type Database = {
           severity?: string
           stack_trace?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      exemption_rules: {
+        Row: {
+          assessment_year: string
+          calculation_formula: string | null
+          calculation_type: string
+          conditions: Json | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          exemption_type: string
+          id: string
+          is_active: boolean | null
+          max_limit: number | null
+          regime_applicable: string
+          section_reference: string | null
+        }
+        Insert: {
+          assessment_year: string
+          calculation_formula?: string | null
+          calculation_type: string
+          conditions?: Json | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          exemption_type: string
+          id?: string
+          is_active?: boolean | null
+          max_limit?: number | null
+          regime_applicable: string
+          section_reference?: string | null
+        }
+        Update: {
+          assessment_year?: string
+          calculation_formula?: string | null
+          calculation_type?: string
+          conditions?: Json | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          exemption_type?: string
+          id?: string
+          is_active?: boolean | null
+          max_limit?: number | null
+          regime_applicable?: string
+          section_reference?: string | null
         }
         Relationships: []
       }
@@ -2360,6 +2471,65 @@ export type Database = {
             columns: ["goal_id"]
             isOneToOne: false
             referencedRelation: "financial_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      income_components: {
+        Row: {
+          component_name: string
+          confidence_score: number | null
+          created_at: string | null
+          employer_name: string | null
+          exemption_applied: number | null
+          exemption_section: string | null
+          gross_amount: number | null
+          id: string
+          is_auto_detected: boolean | null
+          source_type: string
+          tan: string | null
+          tax_profile_id: string
+          taxable_amount: number | null
+          user_confirmed: boolean | null
+        }
+        Insert: {
+          component_name: string
+          confidence_score?: number | null
+          created_at?: string | null
+          employer_name?: string | null
+          exemption_applied?: number | null
+          exemption_section?: string | null
+          gross_amount?: number | null
+          id?: string
+          is_auto_detected?: boolean | null
+          source_type: string
+          tan?: string | null
+          tax_profile_id: string
+          taxable_amount?: number | null
+          user_confirmed?: boolean | null
+        }
+        Update: {
+          component_name?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          employer_name?: string | null
+          exemption_applied?: number | null
+          exemption_section?: string | null
+          gross_amount?: number | null
+          id?: string
+          is_auto_detected?: boolean | null
+          source_type?: string
+          tan?: string | null
+          tax_profile_id?: string
+          taxable_amount?: number | null
+          user_confirmed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_components_tax_profile_id_fkey"
+            columns: ["tax_profile_id"]
+            isOneToOne: false
+            referencedRelation: "tax_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -5326,6 +5496,458 @@ export type Database = {
           recurrence_type?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      tax_audit_log: {
+        Row: {
+          action_type: string
+          changed_by: string | null
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string
+          field_name: string | null
+          id: string
+          ip_address: string | null
+          new_value: string | null
+          old_value: string | null
+          tax_profile_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          changed_by?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type: string
+          field_name?: string | null
+          id?: string
+          ip_address?: string | null
+          new_value?: string | null
+          old_value?: string | null
+          tax_profile_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          changed_by?: string | null
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          field_name?: string | null
+          id?: string
+          ip_address?: string | null
+          new_value?: string | null
+          old_value?: string | null
+          tax_profile_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_audit_log_tax_profile_id_fkey"
+            columns: ["tax_profile_id"]
+            isOneToOne: false
+            referencedRelation: "tax_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_computations: {
+        Row: {
+          advance_tax_paid: number | null
+          alternate_regime_tax: number | null
+          audit_score: number | null
+          cess: number | null
+          computation_breakdown: Json | null
+          computation_version: number | null
+          created_at: string | null
+          effective_rate: number | null
+          gross_salary: number | null
+          gross_total_income: number | null
+          id: string
+          is_optimal: boolean | null
+          other_income: number | null
+          professional_tax: number | null
+          rebate_87a: number | null
+          refund_or_payable: number | null
+          regime_used: string
+          risk_level: string | null
+          savings_vs_alternate: number | null
+          self_assessment_tax: number | null
+          slab_tax: number | null
+          standard_deduction: number | null
+          surcharge: number | null
+          tax_profile_id: string
+          taxable_income: number | null
+          tds_paid: number | null
+          total_deductions: number | null
+          total_exemptions: number | null
+          total_tax_liability: number | null
+        }
+        Insert: {
+          advance_tax_paid?: number | null
+          alternate_regime_tax?: number | null
+          audit_score?: number | null
+          cess?: number | null
+          computation_breakdown?: Json | null
+          computation_version?: number | null
+          created_at?: string | null
+          effective_rate?: number | null
+          gross_salary?: number | null
+          gross_total_income?: number | null
+          id?: string
+          is_optimal?: boolean | null
+          other_income?: number | null
+          professional_tax?: number | null
+          rebate_87a?: number | null
+          refund_or_payable?: number | null
+          regime_used: string
+          risk_level?: string | null
+          savings_vs_alternate?: number | null
+          self_assessment_tax?: number | null
+          slab_tax?: number | null
+          standard_deduction?: number | null
+          surcharge?: number | null
+          tax_profile_id: string
+          taxable_income?: number | null
+          tds_paid?: number | null
+          total_deductions?: number | null
+          total_exemptions?: number | null
+          total_tax_liability?: number | null
+        }
+        Update: {
+          advance_tax_paid?: number | null
+          alternate_regime_tax?: number | null
+          audit_score?: number | null
+          cess?: number | null
+          computation_breakdown?: Json | null
+          computation_version?: number | null
+          created_at?: string | null
+          effective_rate?: number | null
+          gross_salary?: number | null
+          gross_total_income?: number | null
+          id?: string
+          is_optimal?: boolean | null
+          other_income?: number | null
+          professional_tax?: number | null
+          rebate_87a?: number | null
+          refund_or_payable?: number | null
+          regime_used?: string
+          risk_level?: string | null
+          savings_vs_alternate?: number | null
+          self_assessment_tax?: number | null
+          slab_tax?: number | null
+          standard_deduction?: number | null
+          surcharge?: number | null
+          tax_profile_id?: string
+          taxable_income?: number | null
+          tds_paid?: number | null
+          total_deductions?: number | null
+          total_exemptions?: number | null
+          total_tax_liability?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_computations_tax_profile_id_fkey"
+            columns: ["tax_profile_id"]
+            isOneToOne: false
+            referencedRelation: "tax_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_deductions: {
+        Row: {
+          allowed_amount: number | null
+          claimed_amount: number | null
+          confidence_score: number | null
+          created_at: string | null
+          description: string | null
+          document_required: boolean | null
+          document_uploaded: boolean | null
+          document_url: string | null
+          id: string
+          is_auto_detected: boolean | null
+          max_limit: number | null
+          regime_applicable: string | null
+          section_code: string
+          tax_profile_id: string
+        }
+        Insert: {
+          allowed_amount?: number | null
+          claimed_amount?: number | null
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          document_required?: boolean | null
+          document_uploaded?: boolean | null
+          document_url?: string | null
+          id?: string
+          is_auto_detected?: boolean | null
+          max_limit?: number | null
+          regime_applicable?: string | null
+          section_code: string
+          tax_profile_id: string
+        }
+        Update: {
+          allowed_amount?: number | null
+          claimed_amount?: number | null
+          confidence_score?: number | null
+          created_at?: string | null
+          description?: string | null
+          document_required?: boolean | null
+          document_uploaded?: boolean | null
+          document_url?: string | null
+          id?: string
+          is_auto_detected?: boolean | null
+          max_limit?: number | null
+          regime_applicable?: string | null
+          section_code?: string
+          tax_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_deductions_tax_profile_id_fkey"
+            columns: ["tax_profile_id"]
+            isOneToOne: false
+            referencedRelation: "tax_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_documents: {
+        Row: {
+          document_type: string
+          extracted_data: Json | null
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          section_code: string | null
+          tax_profile_id: string
+          uploaded_at: string | null
+          verified: boolean | null
+          verified_at: string | null
+        }
+        Insert: {
+          document_type: string
+          extracted_data?: Json | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          section_code?: string | null
+          tax_profile_id: string
+          uploaded_at?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+        }
+        Update: {
+          document_type?: string
+          extracted_data?: Json | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          section_code?: string | null
+          tax_profile_id?: string
+          uploaded_at?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_documents_tax_profile_id_fkey"
+            columns: ["tax_profile_id"]
+            isOneToOne: false
+            referencedRelation: "tax_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_filings: {
+        Row: {
+          acknowledgement_number: string | null
+          computation_id: string | null
+          computation_pdf_url: string | null
+          consent_ip: string | null
+          consent_timestamp: string | null
+          created_at: string | null
+          filing_date: string | null
+          filing_fee: number | null
+          filing_status: string | null
+          filing_type: string
+          id: string
+          itr_form: string | null
+          itr_pdf_url: string | null
+          itrv_url: string | null
+          payment_id: string | null
+          payment_status: string | null
+          tax_profile_id: string
+          updated_at: string | null
+          user_consent: boolean | null
+        }
+        Insert: {
+          acknowledgement_number?: string | null
+          computation_id?: string | null
+          computation_pdf_url?: string | null
+          consent_ip?: string | null
+          consent_timestamp?: string | null
+          created_at?: string | null
+          filing_date?: string | null
+          filing_fee?: number | null
+          filing_status?: string | null
+          filing_type: string
+          id?: string
+          itr_form?: string | null
+          itr_pdf_url?: string | null
+          itrv_url?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
+          tax_profile_id: string
+          updated_at?: string | null
+          user_consent?: boolean | null
+        }
+        Update: {
+          acknowledgement_number?: string | null
+          computation_id?: string | null
+          computation_pdf_url?: string | null
+          consent_ip?: string | null
+          consent_timestamp?: string | null
+          created_at?: string | null
+          filing_date?: string | null
+          filing_fee?: number | null
+          filing_status?: string | null
+          filing_type?: string
+          id?: string
+          itr_form?: string | null
+          itr_pdf_url?: string | null
+          itrv_url?: string | null
+          payment_id?: string | null
+          payment_status?: string | null
+          tax_profile_id?: string
+          updated_at?: string | null
+          user_consent?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_filings_computation_id_fkey"
+            columns: ["computation_id"]
+            isOneToOne: false
+            referencedRelation: "tax_computations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tax_filings_tax_profile_id_fkey"
+            columns: ["tax_profile_id"]
+            isOneToOne: false
+            referencedRelation: "tax_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_profiles: {
+        Row: {
+          aadhaar_linked: boolean | null
+          acknowledgement_number: string | null
+          age_category: string | null
+          assessment_year: string
+          created_at: string | null
+          employer_name: string | null
+          employer_tan: string | null
+          filed_at: string | null
+          financial_year: string
+          form16_uploaded: boolean | null
+          form16_url: string | null
+          id: string
+          is_locked: boolean | null
+          pan: string | null
+          regime_selected: string | null
+          residential_status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          aadhaar_linked?: boolean | null
+          acknowledgement_number?: string | null
+          age_category?: string | null
+          assessment_year: string
+          created_at?: string | null
+          employer_name?: string | null
+          employer_tan?: string | null
+          filed_at?: string | null
+          financial_year: string
+          form16_uploaded?: boolean | null
+          form16_url?: string | null
+          id?: string
+          is_locked?: boolean | null
+          pan?: string | null
+          regime_selected?: string | null
+          residential_status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          aadhaar_linked?: boolean | null
+          acknowledgement_number?: string | null
+          age_category?: string | null
+          assessment_year?: string
+          created_at?: string | null
+          employer_name?: string | null
+          employer_tan?: string | null
+          filed_at?: string | null
+          financial_year?: string
+          form16_uploaded?: boolean | null
+          form16_url?: string | null
+          id?: string
+          is_locked?: boolean | null
+          pan?: string | null
+          regime_selected?: string | null
+          residential_status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tax_slabs: {
+        Row: {
+          assessment_year: string
+          created_at: string | null
+          display_order: number | null
+          id: string
+          max_income: number | null
+          min_income: number
+          rate: number
+          rebate_applicable: boolean | null
+          regime: string
+          surcharge_applicable: boolean | null
+        }
+        Insert: {
+          assessment_year: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          max_income?: number | null
+          min_income: number
+          rate: number
+          rebate_applicable?: boolean | null
+          regime: string
+          surcharge_applicable?: boolean | null
+        }
+        Update: {
+          assessment_year?: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          max_income?: number | null
+          min_income?: number
+          rate?: number
+          rebate_applicable?: boolean | null
+          regime?: string
+          surcharge_applicable?: boolean | null
         }
         Relationships: []
       }
