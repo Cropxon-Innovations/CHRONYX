@@ -122,8 +122,9 @@ serve(async (req) => {
     }
 
     // 5. High refund flag
-    const totalDeductions = Object.values(deductions || {}).reduce((sum: number, v: any) => sum + Number(v), 0);
-    const deductionRatio = gross_income > 0 ? totalDeductions / gross_income : 0;
+    const totalDeductions = (Object.values(deductions || {}) as any[]).reduce((sum: number, v: any) => sum + Number(v || 0), 0) as number;
+    const grossIncomeNum = Number(gross_income) || 0;
+    const deductionRatio = grossIncomeNum > 0 ? totalDeductions / grossIncomeNum : 0;
     
     if (deductionRatio > 0.5) {
       auditScore -= 10;
