@@ -290,6 +290,54 @@ export type Database = {
           },
         ]
       }
+      billing_addresses: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          city: string
+          country: string | null
+          created_at: string
+          full_name: string
+          gstin: string | null
+          id: string
+          is_default: boolean | null
+          pincode: string
+          state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          city: string
+          country?: string | null
+          created_at?: string
+          full_name: string
+          gstin?: string | null
+          id?: string
+          is_default?: boolean | null
+          pincode: string
+          state: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          city?: string
+          country?: string | null
+          created_at?: string
+          full_name?: string
+          gstin?: string | null
+          id?: string
+          is_default?: boolean | null
+          pincode?: string
+          state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       book_assets: {
         Row: {
           alt_text: string | null
@@ -3575,6 +3623,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_records: {
+        Row: {
+          amount: number
+          billing_address: string
+          billing_city: string
+          billing_gstin: string | null
+          billing_name: string
+          billing_pincode: string
+          billing_state: string
+          created_at: string
+          currency: string | null
+          id: string
+          invoice_number: string | null
+          invoice_sent_at: string | null
+          plan: string
+          razorpay_order_id: string
+          razorpay_payment_id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          billing_address: string
+          billing_city: string
+          billing_gstin?: string | null
+          billing_name: string
+          billing_pincode: string
+          billing_state: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          invoice_number?: string | null
+          invoice_sent_at?: string | null
+          plan: string
+          razorpay_order_id: string
+          razorpay_payment_id: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          billing_address?: string
+          billing_city?: string
+          billing_gstin?: string | null
+          billing_name?: string
+          billing_pincode?: string
+          billing_state?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          invoice_number?: string | null
+          invoice_sent_at?: string | null
+          plan?: string
+          razorpay_order_id?: string
+          razorpay_payment_id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       plan_limits: {
         Row: {
