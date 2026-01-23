@@ -40,6 +40,7 @@ import {
   PieChart,
   Heart,
   BookMarked,
+  GitBranch,
 } from "lucide-react";
 import {
   Dialog,
@@ -107,7 +108,7 @@ const navSections: NavSection[] = [
     items: [
       { path: "/app/memory", label: "Memory", icon: Images },
       { path: "/app/documents", label: "Documents", icon: FileText },
-      { path: "/app/family-tree", label: "Family Tree", icon: Users, badge: "NEW" },
+      { path: "/app/family-tree", label: "Family Tree", icon: GitBranch, badge: "NEW" },
       { path: "/app/social", label: "Social", icon: Users, badge: "BETA" },
       { path: "/app/lifespan", label: "Lifespan", icon: Hourglass },
     ],

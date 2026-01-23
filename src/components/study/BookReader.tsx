@@ -7,7 +7,6 @@ import {
   ChevronRight,
   X,
   Settings,
-  Bookmark,
   Sun,
   Moon,
   Sunset,
@@ -71,6 +70,9 @@ const THEME_STYLES: Record<
   },
 };
 
+// Swipe threshold for page navigation
+const SWIPE_THRESHOLD = 50;
+
 export const BookReader = ({
   item,
   fileUrl,
@@ -98,12 +100,23 @@ export const BookReader = ({
   const [showDictionary, setShowDictionary] = useState(false);
   const [showExplain, setShowExplain] = useState(false);
   
+  // Swipe gesture state
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const hideControlsTimer = useRef<NodeJS.Timeout | null>(null);
 
   const progress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
   const themeStyle = THEME_STYLES[theme];
+
+  // Detect if on mobile/tablet
+  const isMobileOrTablet = typeof window !== "undefined" && 
+    (window.innerWidth < 1024 || 'ontouchstart' in window);
 
   // Handle text selection for dictionary/explain
   const handleTextSelection = useCallback(() => {
@@ -254,6 +267,67 @@ export const BookReader = ({
     };
   }, [resetControlsTimer]);
 
+  // Touch handlers for swipe gestures
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (mode !== "book") return;
+    setTouchEnd(null);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (mode !== "book" || !touchStart) return;
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    });
+  };
+
+  const handleTouchEnd = () => {
+    if (mode !== "book" || !touchStart || !touchEnd) return;
+    
+    const distanceX = touchStart.x - touchEnd.x;
+    const distanceY = touchStart.y - touchEnd.y;
+    
+    // Check if horizontal swipe (not vertical scrolling)
+    if (Math.abs(distanceX) > Math.abs(distanceY) && Math.abs(distanceX) > SWIPE_THRESHOLD) {
+      if (distanceX > 0) {
+        // Swiped left - next page
+        goToNextPageWithAnimation("left");
+      } else {
+        // Swiped right - previous page
+        goToPreviousPageWithAnimation("right");
+      }
+    }
+    
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  const goToNextPageWithAnimation = (direction: "left" | "right") => {
+    if (currentPage >= totalPages || isAnimating) return;
+    setSlideDirection(direction);
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentPage(prev => prev + 1);
+      setIsAnimating(false);
+      setSlideDirection(null);
+    }, 200);
+  };
+
+  const goToPreviousPageWithAnimation = (direction: "left" | "right") => {
+    if (currentPage <= 1 || isAnimating) return;
+    setSlideDirection(direction);
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentPage(prev => prev - 1);
+      setIsAnimating(false);
+      setSlideDirection(null);
+    }, 200);
+  };
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -318,6 +392,14 @@ export const BookReader = ({
     setCurrentPage(validPage);
   };
 
+  // Get animation classes for page transitions
+  const getPageAnimationClass = () => {
+    if (!isAnimating || !slideDirection) return "";
+    return slideDirection === "left" 
+      ? "animate-slide-out-left" 
+      : "animate-slide-out-right";
+  };
+
   return (
     <div
       ref={containerRef}
@@ -327,7 +409,9 @@ export const BookReader = ({
         themeStyle.text
       )}
       onMouseMove={resetControlsTimer}
-      onTouchStart={resetControlsTimer}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Top Bar */}
       <header
@@ -341,6 +425,7 @@ export const BookReader = ({
             variant="ghost"
             size="sm"
             onClick={onClose}
+            className="rounded-xl"
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             Library
@@ -363,32 +448,38 @@ export const BookReader = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-9 w-9 rounded-xl"
               >
                 {mode === "book" ? <Book className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-48 p-2 bg-popover">
-              <p className="text-xs text-muted-foreground mb-2 px-2">Reading Mode</p>
+            <PopoverContent align="end" className="w-52 p-2 bg-popover rounded-xl">
+              <p className="text-xs text-muted-foreground mb-2 px-2 font-medium">Reading Mode</p>
               <button
                 onClick={() => setMode("book")}
                 className={cn(
-                  "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors",
-                  mode === "book" ? "bg-accent" : "hover:bg-muted"
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                  mode === "book" ? "bg-accent text-accent-foreground" : "hover:bg-muted"
                 )}
               >
                 <Book className="w-4 h-4" />
-                Book Mode
+                <div className="text-left">
+                  <p className="font-medium">Book Mode</p>
+                  <p className="text-xs text-muted-foreground">Page by page, swipe to navigate</p>
+                </div>
               </button>
               <button
                 onClick={() => setMode("document")}
                 className={cn(
-                  "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors",
-                  mode === "document" ? "bg-accent" : "hover:bg-muted"
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors mt-1",
+                  mode === "document" ? "bg-accent text-accent-foreground" : "hover:bg-muted"
                 )}
               >
                 <FileText className="w-4 h-4" />
-                Document Mode
+                <div className="text-left">
+                  <p className="font-medium">Document Mode</p>
+                  <p className="text-xs text-muted-foreground">Vertical scrolling</p>
+                </div>
               </button>
             </PopoverContent>
           </Popover>
@@ -399,16 +490,16 @@ export const BookReader = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-9 w-9 rounded-xl"
               >
                 <Settings className="w-4 h-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-64 p-4 bg-popover">
+            <PopoverContent align="end" className="w-64 p-4 bg-popover rounded-xl">
               <div className="space-y-4">
                 {/* Theme selector */}
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">Theme</p>
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">Theme</p>
                   <div className="flex gap-2">
                     {Object.entries(THEME_STYLES).map(([key, style]) => {
                       const Icon = style.icon;
@@ -417,14 +508,14 @@ export const BookReader = ({
                           key={key}
                           onClick={() => setTheme(key as ReadingTheme)}
                           className={cn(
-                            "flex-1 flex flex-col items-center gap-1 p-2 rounded-lg border transition-colors",
+                            "flex-1 flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all",
                             theme === key
-                              ? "border-primary bg-primary/10"
+                              ? "border-primary bg-primary/10 shadow-sm"
                               : "border-border hover:bg-muted"
                           )}
                         >
                           <Icon className="w-4 h-4" />
-                          <span className="text-xs">{style.label}</span>
+                          <span className="text-xs font-medium">{style.label}</span>
                         </button>
                       );
                     })}
@@ -433,7 +524,7 @@ export const BookReader = ({
 
                 {/* Zoom */}
                 <div>
-                  <p className="text-xs text-muted-foreground mb-2">
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">
                     Zoom: {Math.round(scale * 100)}%
                   </p>
                   <div className="flex items-center gap-3">
@@ -457,7 +548,7 @@ export const BookReader = ({
             variant="ghost"
             size="icon"
             onClick={toggleFullscreen}
-            className="h-8 w-8"
+            className="h-9 w-9 rounded-xl"
           >
             {isFullscreen ? (
               <Minimize2 className="w-4 h-4" />
@@ -470,7 +561,7 @@ export const BookReader = ({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-8 w-8"
+            className="h-9 w-9 rounded-xl"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -478,7 +569,13 @@ export const BookReader = ({
       </header>
 
       {/* Main Reading Area */}
-      <main className="flex-1 flex items-center justify-center overflow-auto relative p-4">
+      <main 
+        ref={contentRef}
+        className={cn(
+          "flex-1 flex items-center justify-center overflow-auto relative p-4",
+          mode === "document" && "overflow-y-auto"
+        )}
+      >
         {isLoading ? (
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 opacity-60" />
@@ -488,19 +585,26 @@ export const BookReader = ({
           <div className="text-center max-w-md">
             <FileText className="w-12 h-12 mx-auto mb-4 opacity-40" />
             <p className="text-sm opacity-60 mb-4">{renderError}</p>
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} className="rounded-xl">
               Back to Library
             </Button>
           </div>
         ) : (
-          <div className="relative">
+          <div className={cn("relative transition-transform duration-200", getPageAnimationClass())}>
             <canvas
               ref={canvasRef}
               className={cn(
-                "max-w-full shadow-xl rounded",
+                "max-w-full shadow-xl rounded-lg",
                 themeStyle.canvasFilter
               )}
             />
+            
+            {/* Swipe hint for mobile in book mode */}
+            {mode === "book" && isMobileOrTablet && currentPage === 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-background/80 backdrop-blur-sm rounded-full text-xs text-muted-foreground animate-fade-in">
+                Swipe left/right to navigate
+              </div>
+            )}
           </div>
         )}
 
@@ -526,8 +630,8 @@ export const BookReader = ({
           />
         )}
 
-        {/* Page navigation (Book mode) */}
-        {mode === "book" && !isLoading && !renderError && (
+        {/* Page navigation (Book mode - desktop) */}
+        {mode === "book" && !isLoading && !renderError && !isMobileOrTablet && (
           <>
             <button
               onClick={goToPreviousPage}
@@ -537,9 +641,7 @@ export const BookReader = ({
                 showControls ? "opacity-100" : "opacity-0",
                 currentPage <= 1 
                   ? "opacity-30 cursor-not-allowed" 
-                  : theme === "night" 
-                    ? "hover:bg-gray-800" 
-                    : "hover:bg-gray-100"
+                  : "hover:bg-muted"
               )}
             >
               <ChevronLeft className="w-6 h-6" />
@@ -552,13 +654,25 @@ export const BookReader = ({
                 showControls ? "opacity-100" : "opacity-0",
                 currentPage >= totalPages 
                   ? "opacity-30 cursor-not-allowed" 
-                  : theme === "night" 
-                    ? "hover:bg-gray-800" 
-                    : "hover:bg-gray-100"
+                  : "hover:bg-muted"
               )}
             >
               <ChevronRight className="w-6 h-6" />
             </button>
+          </>
+        )}
+
+        {/* Tap zones for mobile navigation */}
+        {mode === "book" && isMobileOrTablet && !isLoading && !renderError && (
+          <>
+            <div 
+              className="absolute left-0 top-0 bottom-0 w-1/4 cursor-pointer" 
+              onClick={goToPreviousPage}
+            />
+            <div 
+              className="absolute right-0 top-0 bottom-0 w-1/4 cursor-pointer" 
+              onClick={goToNextPage}
+            />
           </>
         )}
       </main>
@@ -566,8 +680,7 @@ export const BookReader = ({
       {/* Bottom Control Bar */}
       <footer
         className={cn(
-          "flex items-center justify-between gap-4 px-4 py-3 border-t transition-opacity duration-300",
-          theme === "night" ? "border-gray-800" : "border-gray-200",
+          "flex items-center justify-between gap-4 px-4 py-3 border-t border-border transition-opacity duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
       >
@@ -576,7 +689,7 @@ export const BookReader = ({
           size="sm"
           onClick={goToPreviousPage}
           disabled={currentPage <= 1}
-          className={cn(theme === "night" && "hover:bg-gray-800 text-gray-100")}
+          className="rounded-xl"
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           Prev
@@ -592,7 +705,7 @@ export const BookReader = ({
             step={1}
             className="flex-1"
           />
-          <span className="text-sm opacity-60 flex-shrink-0 min-w-[3rem] text-center">
+          <span className="text-sm opacity-60 flex-shrink-0 min-w-[3rem] text-center font-medium">
             {progress}%
           </span>
         </div>
@@ -602,12 +715,30 @@ export const BookReader = ({
           size="sm"
           onClick={goToNextPage}
           disabled={currentPage >= totalPages}
-          className={cn(theme === "night" && "hover:bg-gray-800 text-gray-100")}
+          className="rounded-xl"
         >
           Next
           <ChevronRight className="w-4 h-4 ml-1" />
         </Button>
       </footer>
+
+      {/* Custom CSS for slide animations */}
+      <style>{`
+        @keyframes slideOutLeft {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(-50px); opacity: 0.5; }
+        }
+        @keyframes slideOutRight {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(50px); opacity: 0.5; }
+        }
+        .animate-slide-out-left {
+          animation: slideOutLeft 0.2s ease-out;
+        }
+        .animate-slide-out-right {
+          animation: slideOutRight 0.2s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
