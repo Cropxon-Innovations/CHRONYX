@@ -47,6 +47,8 @@ import AIAssistPanel from "./AIAssistPanel";
 import ChapterComments from "./ChapterComments";
 import CoverDesigner from "./CoverDesigner";
 
+type BookStatus = "draft" | "writing" | "editing" | "review" | "published";
+
 interface Book {
   id: string;
   title: string;
@@ -54,11 +56,13 @@ interface Book {
   author_name: string | null;
   description: string | null;
   cover_url: string | null;
-  status: "draft" | "writing" | "editing" | "review" | "published";
+  status: BookStatus;
   genre: string | null;
   word_count: number;
   reading_time_minutes: number;
   settings: any;
+  created_at: string;
+  updated_at: string;
 }
 
 interface Chapter {
