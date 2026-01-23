@@ -589,36 +589,6 @@ const featureCards = [
       </div>
     ),
   },
-  {
-    id: "eauthor",
-    title: "E-Author",
-    subtitle: "Write & publish books",
-    icon: PenTool,
-    color: "from-purple-500 to-pink-500",
-    bgColor: "bg-purple-500/10",
-    borderColor: "border-purple-500/30",
-    content: (
-      <div className="space-y-2">
-        <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded" />
-            <div>
-              <p className="text-[10px] font-medium">My First Novel</p>
-              <p className="text-[8px] text-muted-foreground">12 chapters • 45K words</p>
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-1.5">
-          {[{ l: "Draft", v: "3" }, { l: "Published", v: "1" }, { l: "Reviews", v: "24" }].map((d) => (
-            <div key={d.l} className="flex-1 p-1.5 bg-muted/20 rounded text-center">
-              <p className="text-[7px] text-muted-foreground">{d.l}</p>
-              <p className="text-[9px] font-semibold">{d.v}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    ),
-  },
 ];
 
 // Animated Live Preview Component - Optimized for performance
@@ -869,7 +839,6 @@ const Landing = () => {
     { icon: Clock, label: "Lifespan", desc: "Time visualization" },
     { icon: Share2, label: "Share", desc: "Seamless content sharing", highlight: true },
     { icon: Gift, label: "Rewards", desc: "Earn & redeem points", highlight: true },
-    { icon: PenTool, label: "E-Author", desc: "Write & publish books" },
     { icon: TreePine, label: "Family Tree", desc: "Genealogy records" },
     { icon: FileText, label: "Documents", desc: "Secure document vault" },
     { icon: Folder, label: "Notes", desc: "Smart note-taking" },

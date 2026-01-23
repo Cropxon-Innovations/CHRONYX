@@ -115,7 +115,7 @@ const Library = () => {
           current_page: state?.last_page || 1,
           progress_percent: state?.progress_percent ? Number(state.progress_percent) : 0,
           is_locked: item.is_locked || false,
-          is_archived: false,
+          is_archived: item.is_archived || false,
           last_read_at: state?.last_read_at || undefined,
           created_at: item.created_at,
         };
@@ -287,6 +287,47 @@ const Library = () => {
     setShareDialogOpen(true);
   };
 
+  const handleLock = async (item: LibraryItem) => {
+    const newLockState = !item.is_locked;
+    const { error } = await supabase
+      .from("library_items")
+      .update({ is_locked: newLockState })
+      .eq("id", item.id);
+    
+    if (!error) {
+      toast({ title: newLockState ? "Book locked" : "Book unlocked" });
+      fetchLibraryItems();
+    }
+  };
+
+  const handleArchive = async (item: LibraryItem) => {
+    const newArchiveState = !item.is_archived;
+    const { error } = await supabase
+      .from("library_items")
+      .update({ is_archived: newArchiveState })
+      .eq("id", item.id);
+    
+    if (!error) {
+      toast({ title: newArchiveState ? "Book archived" : "Book restored" });
+      fetchLibraryItems();
+    }
+  };
+
+  const handleDownload = (item: LibraryItem) => {
+    if (item.file_url) {
+      const link = document.createElement('a');
+      link.href = item.file_url;
+      link.download = `${item.title}.${item.format}`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: "Download started" });
+    } else {
+      toast({ title: "No file available", variant: "destructive" });
+    }
+  };
+
   const handleCloseReader = () => {
     setReaderOpen(false);
     setSelectedItem(null);
@@ -443,6 +484,9 @@ const Library = () => {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onShare={handleShare}
+            onLock={handleLock}
+            onArchive={handleArchive}
+            onDownload={handleDownload}
           />
         </TabsContent>
 
@@ -485,8 +529,12 @@ const Library = () => {
             isLoading={loading}
             onItemClick={handleItemClick}
             onUpload={() => setUploadDialogOpen(true)}
+            onEdit={handleEdit}
             onDelete={handleDelete}
             onShare={handleShare}
+            onLock={handleLock}
+            onArchive={handleArchive}
+            onDownload={handleDownload}
           />
         </TabsContent>
 

@@ -153,11 +153,23 @@ export const StudySubjectManager = () => {
   const [expandedChapters, setExpandedChapters] = useState<Set<string>>(new Set());
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
-  // Dialogs
+  // Add Dialogs
   const [showAddSubject, setShowAddSubject] = useState(false);
   const [showAddChapter, setShowAddChapter] = useState(false);
   const [showAddModule, setShowAddModule] = useState(false);
   const [showAddTopic, setShowAddTopic] = useState(false);
+
+  // Edit Dialogs
+  const [showEditSubject, setShowEditSubject] = useState(false);
+  const [showEditChapter, setShowEditChapter] = useState(false);
+  const [showEditModule, setShowEditModule] = useState(false);
+  const [showEditTopic, setShowEditTopic] = useState(false);
+
+  // Edit form states
+  const [editingSubject, setEditingSubject] = useState<StudySubject | null>(null);
+  const [editingChapter, setEditingChapter] = useState<StudyChapter | null>(null);
+  const [editingModule, setEditingModule] = useState<StudyModule | null>(null);
+  const [editingTopic, setEditingTopic] = useState<StudyTopic | null>(null);
 
   // Form states
   const [newSubject, setNewSubject] = useState({ name: "", icon: "📚", color: "#6366F1" });
@@ -439,6 +451,127 @@ export const StudySubjectManager = () => {
     },
   });
 
+  // Edit mutations
+  const editSubjectMutation = useMutation({
+    mutationFn: async (data: { id: string; name: string; icon: string; color: string }) => {
+      const { error } = await supabase.from("study_subjects").update({
+        name: data.name,
+        icon: data.icon,
+        color: data.color,
+      }).eq("id", data.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["study-subjects"] });
+      toast.success("Subject updated!");
+      setShowEditSubject(false);
+      setEditingSubject(null);
+    },
+  });
+
+  const editChapterMutation = useMutation({
+    mutationFn: async (data: { id: string; name: string }) => {
+      const { error } = await supabase.from("study_chapters").update({ name: data.name }).eq("id", data.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["study-chapters"] });
+      toast.success("Chapter updated!");
+      setShowEditChapter(false);
+      setEditingChapter(null);
+    },
+  });
+
+  const editModuleMutation = useMutation({
+    mutationFn: async (data: { id: string; name: string }) => {
+      const { error } = await supabase.from("study_modules").update({ name: data.name }).eq("id", data.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["study-modules"] });
+      toast.success("Module updated!");
+      setShowEditModule(false);
+      setEditingModule(null);
+    },
+  });
+
+  const editTopicMutation = useMutation({
+    mutationFn: async (data: { id: string; topic_name: string; estimated_hours: number }) => {
+      const { error } = await supabase.from("syllabus_topics").update({
+        topic_name: data.topic_name,
+        estimated_hours: data.estimated_hours,
+      }).eq("id", data.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] });
+      toast.success("Topic updated!");
+      setShowEditTopic(false);
+      setEditingTopic(null);
+    },
+  });
+
+  // Delete mutations
+  const deleteSubjectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Delete all chapters under this subject first
+      const subjectChapters = chapters.filter(c => c.subject_id === id);
+      for (const chapter of subjectChapters) {
+        await supabase.from("study_modules").delete().eq("chapter_id", chapter.id);
+        await supabase.from("syllabus_topics").delete().eq("chapter_id", chapter.id);
+      }
+      await supabase.from("study_chapters").delete().eq("subject_id", id);
+      const { error } = await supabase.from("study_subjects").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["study-subjects"] });
+      queryClient.invalidateQueries({ queryKey: ["study-chapters"] });
+      queryClient.invalidateQueries({ queryKey: ["study-modules"] });
+      queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] });
+      toast.success("Subject deleted!");
+    },
+  });
+
+  const deleteChapterMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("study_modules").delete().eq("chapter_id", id);
+      await supabase.from("syllabus_topics").delete().eq("chapter_id", id);
+      const { error } = await supabase.from("study_chapters").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["study-chapters"] });
+      queryClient.invalidateQueries({ queryKey: ["study-modules"] });
+      queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] });
+      toast.success("Chapter deleted!");
+    },
+  });
+
+  const deleteModuleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("syllabus_topics").delete().eq("module_id", id);
+      const { error } = await supabase.from("study_modules").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["study-modules"] });
+      queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] });
+      toast.success("Module deleted!");
+    },
+  });
+
+  const deleteTopicMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("syllabus_topics").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] });
+      toast.success("Topic deleted!");
+    },
+  });
+
   const toggleExpand = (type: "subject" | "chapter" | "module", id: string) => {
     const setFn = type === "subject" 
       ? setExpandedSubjects 
@@ -539,14 +672,16 @@ export const StudySubjectManager = () => {
             <div key={subject.id} className="rounded-xl border border-border overflow-hidden bg-card">
               {/* Subject Header */}
               <Collapsible open={expandedSubjects.has(subject.id)} onOpenChange={() => toggleExpand("subject", subject.id)}>
-                <CollapsibleTrigger className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors">
-                  {expandedSubjects.has(subject.id) ? (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  )}
-                  <span className="text-2xl">{subject.icon}</span>
-                  <span className="font-semibold text-foreground flex-1 text-left">{subject.name}</span>
+                <div className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors">
+                  <CollapsibleTrigger className="flex items-center gap-3 flex-1">
+                    {expandedSubjects.has(subject.id) ? (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    <span className="text-2xl">{subject.icon}</span>
+                    <span className="font-semibold text-foreground flex-1 text-left">{subject.name}</span>
+                  </CollapsibleTrigger>
                   <div className="flex items-center gap-2">
                     <Progress value={subject.progress} className="w-20 h-2" />
                     <Badge 
@@ -556,8 +691,37 @@ export const StudySubjectManager = () => {
                       {subject.completedTopics}/{subject.totalTopics}
                     </Badge>
                     {subject.progress === 100 && <Sparkles className="w-4 h-4 text-amber-500" />}
+                    {!subject.id.startsWith('legacy-') && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingSubject(subject);
+                            setShowEditSubject(true);
+                          }}
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete subject "${subject.name}" and all its chapters, modules, and topics?`)) {
+                              deleteSubjectMutation.mutate(subject.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </>
+                    )}
                   </div>
-                </CollapsibleTrigger>
+                </div>
                 
                 <CollapsibleContent>
                   <div className="border-t border-border">
@@ -583,22 +747,53 @@ export const StudySubjectManager = () => {
                           open={expandedChapters.has(chapter.id)} 
                           onOpenChange={() => toggleExpand("chapter", chapter.id)}
                         >
-                          <CollapsibleTrigger className="w-full px-6 py-2.5 flex items-center gap-3 hover:bg-muted/20 transition-colors border-b border-border/50">
-                            {expandedChapters.has(chapter.id) ? (
-                              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-                            )}
-                            <BookOpen className="w-4 h-4 text-primary/70" />
-                            <span className="font-medium text-sm text-foreground flex-1 text-left">{chapter.name}</span>
+                          <div className="w-full px-6 py-2.5 flex items-center gap-3 hover:bg-muted/20 transition-colors border-b border-border/50">
+                            <CollapsibleTrigger className="flex items-center gap-3 flex-1">
+                              {expandedChapters.has(chapter.id) ? (
+                                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                              )}
+                              <BookOpen className="w-4 h-4 text-primary/70" />
+                              <span className="font-medium text-sm text-foreground flex-1 text-left">{chapter.name}</span>
+                            </CollapsibleTrigger>
                             <div className="flex items-center gap-2">
                               <Progress value={chapter.progress} className="w-16 h-1.5" />
                               <Badge variant="secondary" className="text-[10px]">
                                 {chapter.completedTopics}/{chapter.totalTopics}
                               </Badge>
                               {chapter.progress === 100 && <Medal className="w-3.5 h-3.5 text-amber-500" />}
+                              {!chapter.id.startsWith('legacy-') && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingChapter(chapter);
+                                      setShowEditChapter(true);
+                                    }}
+                                  >
+                                    <Edit2 className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-destructive hover:text-destructive"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (confirm(`Delete chapter "${chapter.name}" and all its modules and topics?`)) {
+                                        deleteChapterMutation.mutate(chapter.id);
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </>
+                              )}
                             </div>
-                          </CollapsibleTrigger>
+                          </div>
                           
                           <CollapsibleContent>
                             <div className="pl-10 pr-4 py-2 space-y-1 bg-muted/10">
@@ -628,7 +823,9 @@ export const StudySubjectManager = () => {
                                         <TopicItem 
                                           key={topic.id} 
                                           topic={topic} 
-                                          onToggle={(completed) => toggleTopicMutation.mutate({ id: topic.id, completed })} 
+                                          onToggle={(completed) => toggleTopicMutation.mutate({ id: topic.id, completed })}
+                                          onEdit={() => { setEditingTopic(topic); setShowEditTopic(true); }}
+                                          onDelete={() => { if (confirm(`Delete topic "${topic.topic_name}"?`)) deleteTopicMutation.mutate(topic.id); }}
                                         />
                                       ))}
                                     </div>
@@ -641,7 +838,9 @@ export const StudySubjectManager = () => {
                                 <TopicItem 
                                   key={topic.id} 
                                   topic={topic} 
-                                  onToggle={(completed) => toggleTopicMutation.mutate({ id: topic.id, completed })} 
+                                  onToggle={(completed) => toggleTopicMutation.mutate({ id: topic.id, completed })}
+                                  onEdit={() => { setEditingTopic(topic); setShowEditTopic(true); }}
+                                  onDelete={() => { if (confirm(`Delete topic "${topic.topic_name}"?`)) deleteTopicMutation.mutate(topic.id); }}
                                 />
                               ))}
 
@@ -930,16 +1129,160 @@ export const StudySubjectManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Subject Dialog */}
+      <Dialog open={showEditSubject} onOpenChange={setShowEditSubject}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Subject</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Subject Name</Label>
+              <Input 
+                value={editingSubject?.name || ""} 
+                onChange={(e) => setEditingSubject(prev => prev ? { ...prev, name: e.target.value } : null)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Icon</Label>
+              <div className="flex flex-wrap gap-2">
+                {AVAILABLE_ICONS.map(icon => (
+                  <button
+                    key={icon}
+                    onClick={() => setEditingSubject(prev => prev ? { ...prev, icon } : null)}
+                    className={cn(
+                      "w-10 h-10 rounded-lg border text-xl flex items-center justify-center transition-all",
+                      editingSubject?.icon === icon ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    {icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditSubject(false)}>Cancel</Button>
+            <Button 
+              onClick={() => editingSubject && editSubjectMutation.mutate(editingSubject)} 
+              disabled={!editingSubject?.name.trim()}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Chapter Dialog */}
+      <Dialog open={showEditChapter} onOpenChange={setShowEditChapter}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Chapter</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Chapter Name</Label>
+              <Input 
+                value={editingChapter?.name || ""} 
+                onChange={(e) => setEditingChapter(prev => prev ? { ...prev, name: e.target.value } : null)} 
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditChapter(false)}>Cancel</Button>
+            <Button 
+              onClick={() => editingChapter && editChapterMutation.mutate({ id: editingChapter.id, name: editingChapter.name })} 
+              disabled={!editingChapter?.name.trim()}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Module Dialog */}
+      <Dialog open={showEditModule} onOpenChange={setShowEditModule}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Module</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Module Name</Label>
+              <Input 
+                value={editingModule?.name || ""} 
+                onChange={(e) => setEditingModule(prev => prev ? { ...prev, name: e.target.value } : null)} 
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditModule(false)}>Cancel</Button>
+            <Button 
+              onClick={() => editingModule && editModuleMutation.mutate({ id: editingModule.id, name: editingModule.name })} 
+              disabled={!editingModule?.name.trim()}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Topic Dialog */}
+      <Dialog open={showEditTopic} onOpenChange={setShowEditTopic}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Topic</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Topic Name</Label>
+              <Input 
+                value={editingTopic?.topic_name || ""} 
+                onChange={(e) => setEditingTopic(prev => prev ? { ...prev, topic_name: e.target.value } : null)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Estimated Hours</Label>
+              <Input 
+                type="number"
+                value={editingTopic?.estimated_hours || 1} 
+                onChange={(e) => setEditingTopic(prev => prev ? { ...prev, estimated_hours: parseFloat(e.target.value) || 1 } : null)} 
+                min="0.5"
+                step="0.5"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditTopic(false)}>Cancel</Button>
+            <Button 
+              onClick={() => editingTopic && editTopicMutation.mutate({ 
+                id: editingTopic.id, 
+                topic_name: editingTopic.topic_name, 
+                estimated_hours: editingTopic.estimated_hours 
+              })} 
+              disabled={!editingTopic?.topic_name.trim()}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-// Topic Item Component
-const TopicItem = ({ topic, onToggle }: { topic: StudyTopic; onToggle: (completed: boolean) => void }) => {
+// Topic Item Component with Edit/Delete
+const TopicItem = ({ topic, onToggle, onEdit, onDelete }: { 
+  topic: StudyTopic; 
+  onToggle: (completed: boolean) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+}) => {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-lg transition-all",
+        "flex items-center gap-3 px-3 py-2 rounded-lg transition-all group",
         topic.is_completed 
           ? "bg-emerald-500/10 border border-emerald-500/20" 
           : "bg-background border border-border hover:border-primary/30"
@@ -968,6 +1311,17 @@ const TopicItem = ({ topic, onToggle }: { topic: StudyTopic; onToggle: (complete
       
       <Badge variant="outline" className="text-[10px]">{topic.estimated_hours}h</Badge>
       {topic.is_completed && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+      
+      {onEdit && onDelete && (
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onEdit}>
+            <Edit2 className="w-3 h-3" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={onDelete}>
+            <Trash2 className="w-3 h-3" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
