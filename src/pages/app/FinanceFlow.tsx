@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Mail,
   RefreshCw,
@@ -41,20 +43,43 @@ import {
   AlertCircle,
   Info,
   Sparkles,
+  FolderCheck,
+  FolderX,
+  Timer,
+  Bell,
+  Megaphone,
+  MessageSquare,
+  Trash2,
+  Play,
+  Pause,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { format, formatDistanceToNow, differenceInMinutes } from "date-fns";
+import { format, formatDistanceToNow, differenceInMinutes, differenceInSeconds } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 // Types
+interface FolderSettings {
+  inbox: boolean;
+  promotions: boolean;
+  updates: boolean;
+  social: boolean;
+  spam: boolean;
+  trash: boolean;
+}
+
 interface SyncSettings {
   is_enabled: boolean;
   gmail_email: string | null;
   last_sync_at: string | null;
   sync_status: string;
   total_synced_count: number;
+  scan_folders: FolderSettings;
+  sync_frequency_minutes: number;
+  scan_days: number;
+  scan_mode: 'limited' | 'full';
+  last_auto_sync_at: string | null;
 }
 
 interface ImportedTransaction {
@@ -72,6 +97,7 @@ interface ImportedTransaction {
   source_platform: string;
   raw_extracted_data: any;
   created_at: string;
+  transaction_type: 'debit' | 'credit';
 }
 
 interface SyncHistory {
@@ -97,6 +123,16 @@ const PIPELINE_STEPS = [
   { id: "store", label: "Ledger", icon: CheckCircle2, description: "Stored securely" },
 ];
 
+// Folder configurations
+const FOLDER_CONFIG = [
+  { id: 'inbox', label: 'Inbox', icon: Inbox, description: 'Primary transaction emails' },
+  { id: 'promotions', label: 'Promotions', icon: Megaphone, description: 'Promotional emails' },
+  { id: 'updates', label: 'Updates', icon: Bell, description: 'Update notifications' },
+  { id: 'social', label: 'Social', icon: MessageSquare, description: 'Social network alerts' },
+  { id: 'spam', label: 'Spam', icon: AlertTriangle, description: 'Spam folder (risky)' },
+  { id: 'trash', label: 'Trash', icon: Trash2, description: 'Deleted emails' },
+];
+
 const FinanceFlow = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -110,8 +146,10 @@ const FinanceFlow = () => {
   const [currentPipelineStep, setCurrentPipelineStep] = useState<number>(-1);
   const [activeTab, setActiveTab] = useState("dashboard");
   
-  // Auto-sync countdown
-  const [nextSyncMinutes, setNextSyncMinutes] = useState<number>(30);
+  // Auto-sync state
+  const [nextSyncSeconds, setNextSyncSeconds] = useState<number>(1800); // 30 minutes
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+  const autoSyncRef = useRef<NodeJS.Timeout | null>(null);
   
   // Stats
   const [stats, setStats] = useState({
@@ -157,15 +195,35 @@ const FinanceFlow = () => {
       .maybeSingle();
     
     if (settingsData) {
-      setSettings(settingsData);
+      const rawFolders = settingsData.scan_folders as Record<string, boolean> | null;
+      const scanFolders: FolderSettings = {
+        inbox: rawFolders?.inbox ?? true,
+        promotions: rawFolders?.promotions ?? true,
+        updates: rawFolders?.updates ?? true,
+        social: rawFolders?.social ?? false,
+        spam: rawFolders?.spam ?? false,
+        trash: rawFolders?.trash ?? false,
+      };
       
-      // Calculate next sync
+      const scanMode = (settingsData.scan_mode === 'full' || settingsData.scan_mode === 'limited') 
+        ? settingsData.scan_mode 
+        : 'limited';
+      
+      setSettings({
+        ...settingsData,
+        scan_folders: scanFolders,
+        sync_frequency_minutes: settingsData.sync_frequency_minutes || 30,
+        scan_days: settingsData.scan_days || 90,
+        scan_mode: scanMode,
+      });
+      
+      // Calculate next sync countdown
       if (settingsData.last_sync_at) {
         const lastSync = new Date(settingsData.last_sync_at);
         const now = new Date();
-        const minutesSince = differenceInMinutes(now, lastSync);
-        const syncFreq = 30; // Default 30 minutes
-        setNextSyncMinutes(Math.max(0, syncFreq - minutesSince));
+        const secondsSince = differenceInSeconds(now, lastSync);
+        const syncFreq = (settingsData.sync_frequency_minutes || 30) * 60;
+        setNextSyncSeconds(Math.max(0, syncFreq - secondsSince));
       }
     }
     
@@ -178,9 +236,16 @@ const FinanceFlow = () => {
       .limit(500);
     
     if (txData) {
-      setTransactions(txData);
-      calculateStats(txData);
-      calculateDetection(txData);
+      const typedTxData = txData.map(tx => {
+        const rawData = tx.raw_extracted_data as Record<string, unknown> | null;
+        return {
+          ...tx,
+          transaction_type: (tx.transaction_type || rawData?.transactionType || 'debit') as 'debit' | 'credit'
+        };
+      });
+      setTransactions(typedTxData);
+      calculateStats(typedTxData);
+      calculateDetection(typedTxData);
     }
     
     // Fetch sync history
@@ -202,20 +267,38 @@ const FinanceFlow = () => {
     fetchData();
   }, [fetchData]);
 
-  // Auto-sync countdown timer
+  // Auto-sync countdown timer (updates every second)
   useEffect(() => {
     const interval = setInterval(() => {
-      setNextSyncMinutes(prev => Math.max(0, prev - 1));
-    }, 60000);
+      setNextSyncSeconds(prev => {
+        const newVal = Math.max(0, prev - 1);
+        // When countdown reaches 0, trigger auto-sync
+        if (newVal === 0 && autoSyncEnabled && settings?.is_enabled) {
+          handleAutoSync();
+          return (settings?.sync_frequency_minutes || 30) * 60; // Reset countdown
+        }
+        return newVal;
+      });
+    }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [autoSyncEnabled, settings?.is_enabled, settings?.sync_frequency_minutes]);
+
+  // Handle auto-sync
+  const handleAutoSync = async () => {
+    if (!user || syncing || !settings?.is_enabled) return;
+    
+    console.log('[FinanceFlow] Triggering auto-sync...');
+    await handleSync(true);
+  };
 
   // Calculate stats
   const calculateStats = (txs: ImportedTransaction[]) => {
     const debitTxs = txs.filter(t => 
-      t.raw_extracted_data?.transactionType === 'debit' || !t.raw_extracted_data?.transactionType
+      t.transaction_type === 'debit' || t.raw_extracted_data?.transactionType === 'debit' || !t.raw_extracted_data?.transactionType
     );
-    const creditTxs = txs.filter(t => t.raw_extracted_data?.transactionType === 'credit');
+    const creditTxs = txs.filter(t => 
+      t.transaction_type === 'credit' || t.raw_extracted_data?.transactionType === 'credit'
+    );
     
     setStats({
       totalTransactions: txs.length,
@@ -265,8 +348,8 @@ const FinanceFlow = () => {
     });
   };
 
-  // Manual sync
-  const handleSync = async () => {
+  // Manual/Auto sync
+  const handleSync = async (isAuto = false) => {
     if (!user || syncing) return;
     
     setSyncing(true);
@@ -293,9 +376,17 @@ const FinanceFlow = () => {
       const result = response.data;
       
       toast({
-        title: "Sync Complete",
+        title: isAuto ? "Auto-Sync Complete" : "Sync Complete",
         description: `Processed ${result.processed} emails, imported ${result.imported} transactions`,
       });
+      
+      // Update last auto sync time
+      if (isAuto) {
+        await supabase
+          .from("gmail_sync_settings")
+          .update({ last_auto_sync_at: new Date().toISOString() })
+          .eq("user_id", user.id);
+      }
       
       // Refresh data
       setTimeout(() => {
@@ -316,36 +407,133 @@ const FinanceFlow = () => {
     }
   };
 
-  // Approve transaction
+  // Update folder settings
+  const handleFolderToggle = async (folderId: string, enabled: boolean) => {
+    if (!user || !settings) return;
+    
+    const newFolders = {
+      ...settings.scan_folders,
+      [folderId]: enabled,
+    };
+    
+    await supabase
+      .from("gmail_sync_settings")
+      .update({ scan_folders: newFolders })
+      .eq("user_id", user.id);
+    
+    setSettings({ ...settings, scan_folders: newFolders });
+    
+    toast({
+      title: `${FOLDER_CONFIG.find(f => f.id === folderId)?.label} ${enabled ? 'enabled' : 'disabled'}`,
+    });
+  };
+
+  // Update scan mode
+  const handleScanModeChange = async (mode: 'limited' | 'full') => {
+    if (!user || !settings) return;
+    
+    const newFolders = mode === 'full' 
+      ? { inbox: true, promotions: true, updates: true, social: true, spam: true, trash: true }
+      : { inbox: true, promotions: true, updates: true, social: false, spam: false, trash: false };
+    
+    await supabase
+      .from("gmail_sync_settings")
+      .update({ scan_mode: mode, scan_folders: newFolders })
+      .eq("user_id", user.id);
+    
+    setSettings({ ...settings, scan_mode: mode, scan_folders: newFolders });
+    
+    toast({
+      title: `Scan mode changed to ${mode}`,
+      description: mode === 'full' ? 'All folders will be scanned' : 'Only primary folders will be scanned',
+    });
+  };
+
+  // Update sync frequency
+  const handleSyncFrequencyChange = async (minutes: string) => {
+    if (!user || !settings) return;
+    
+    const freq = parseInt(minutes);
+    
+    await supabase
+      .from("gmail_sync_settings")
+      .update({ sync_frequency_minutes: freq })
+      .eq("user_id", user.id);
+    
+    setSettings({ ...settings, sync_frequency_minutes: freq });
+    setNextSyncSeconds(freq * 60);
+    
+    toast({
+      title: `Auto-sync interval updated`,
+      description: `Syncing every ${freq} minutes`,
+    });
+  };
+
+  // Approve transaction - adds to Expenses (debit) or Income (credit)
   const handleApprove = async (txId: string) => {
     const tx = transactions.find(t => t.id === txId);
     if (!tx || !user) return;
     
-    // Create expense
-    const { error: expenseError } = await supabase
-      .from("expenses")
-      .insert({
-        user_id: user.id,
-        expense_date: tx.transaction_date,
-        amount: tx.amount,
-        category: tx.raw_extracted_data?.category || "Other",
-        payment_mode: tx.payment_mode,
-        merchant_name: tx.merchant_name,
-        notes: `Approved from FinanceFlow: ${tx.email_subject?.substring(0, 80)}`,
-        is_auto_generated: true,
-        source_type: "gmail",
-        gmail_import_id: tx.id,
-      });
+    const isCredit = tx.transaction_type === 'credit' || tx.raw_extracted_data?.transactionType === 'credit';
     
-    if (!expenseError) {
-      // Update transaction
-      await supabase
-        .from("auto_imported_transactions")
-        .update({ is_processed: true, needs_review: false })
-        .eq("id", txId);
+    if (isCredit) {
+      // Add to Income
+      const { error: incomeError } = await supabase
+        .from("income_entries")
+        .insert({
+          user_id: user.id,
+          income_date: tx.transaction_date,
+          amount: tx.amount,
+          notes: `Auto-imported from Gmail: ${tx.merchant_name || tx.email_subject?.substring(0, 80)}`,
+          is_auto_generated: true,
+          source_type: "gmail",
+          gmail_import_id: tx.id,
+          confidence_score: tx.confidence_score,
+          merchant_name: tx.merchant_name,
+        });
       
-      toast({ title: "Transaction approved and added to expenses" });
-      fetchData();
+      if (!incomeError) {
+        await supabase
+          .from("auto_imported_transactions")
+          .update({ is_processed: true, needs_review: false })
+          .eq("id", txId);
+        
+        toast({ 
+          title: "Added to Income",
+          description: `₹${Number(tx.amount).toLocaleString()} credited from ${tx.merchant_name || 'Unknown'}`,
+        });
+        fetchData();
+      }
+    } else {
+      // Add to Expenses
+      const { error: expenseError } = await supabase
+        .from("expenses")
+        .insert({
+          user_id: user.id,
+          expense_date: tx.transaction_date,
+          amount: tx.amount,
+          category: tx.raw_extracted_data?.category || "Other",
+          payment_mode: tx.payment_mode,
+          merchant_name: tx.merchant_name,
+          notes: `Approved from FinanceFlow: ${tx.email_subject?.substring(0, 80)}`,
+          is_auto_generated: true,
+          source_type: "gmail",
+          gmail_import_id: tx.id,
+          confidence_score: tx.confidence_score,
+        });
+      
+      if (!expenseError) {
+        await supabase
+          .from("auto_imported_transactions")
+          .update({ is_processed: true, needs_review: false })
+          .eq("id", txId);
+        
+        toast({ 
+          title: "Added to Expenses",
+          description: `₹${Number(tx.amount).toLocaleString()} debited to ${tx.raw_extracted_data?.category || 'Other'}`,
+        });
+        fetchData();
+      }
     }
   };
 
@@ -361,6 +549,13 @@ const FinanceFlow = () => {
   };
 
   const reviewQueue = transactions.filter(t => t.needs_review && !t.is_processed);
+
+  // Format countdown
+  const formatCountdown = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   if (loading) {
     return (
@@ -384,24 +579,41 @@ const FinanceFlow = () => {
           </p>
         </div>
         
-        <Button
-          onClick={handleSync}
-          disabled={syncing || !settings?.is_enabled}
-          className="gap-2"
-        >
-          {syncing ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4" />
-          )}
-          {syncing ? "Syncing..." : "Fetch Now"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Auto-sync toggle */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border">
+            {autoSyncEnabled ? (
+              <Play className="w-3 h-3 text-emerald-500" />
+            ) : (
+              <Pause className="w-3 h-3 text-muted-foreground" />
+            )}
+            <span className="text-xs text-muted-foreground">Auto</span>
+            <Switch
+              checked={autoSyncEnabled}
+              onCheckedChange={setAutoSyncEnabled}
+              className="scale-75"
+            />
+          </div>
+          
+          <Button
+            onClick={() => handleSync(false)}
+            disabled={syncing || !settings?.is_enabled}
+            className="gap-2"
+          >
+            {syncing ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+            {syncing ? "Syncing..." : "Fetch Now"}
+          </Button>
+        </div>
       </div>
 
       {/* Top Status Bar */}
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
         <CardContent className="py-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {/* Connection Status */}
             <div className="flex items-center gap-3">
               <div className={cn(
@@ -446,15 +658,37 @@ const FinanceFlow = () => {
               </div>
             </div>
 
-            {/* Next Sync */}
+            {/* Next Auto-Sync with countdown */}
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-full flex items-center justify-center",
+                autoSyncEnabled && settings?.is_enabled ? "bg-primary/20" : "bg-muted"
+              )}>
+                <Timer className={cn(
+                  "w-5 h-5",
+                  autoSyncEnabled && settings?.is_enabled ? "text-primary" : "text-muted-foreground"
+                )} />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Next Auto-Sync</p>
+                <p className="text-sm font-medium font-mono">
+                  {autoSyncEnabled && settings?.is_enabled 
+                    ? formatCountdown(nextSyncSeconds)
+                    : "Paused"
+                  }
+                </p>
+              </div>
+            </div>
+
+            {/* Sync Frequency */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                 <Activity className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Next Auto-Sync</p>
+                <p className="text-xs text-muted-foreground">Frequency</p>
                 <p className="text-sm font-medium">
-                  {settings?.is_enabled ? `In ${nextSyncMinutes} min` : "—"}
+                  Every {settings?.sync_frequency_minutes || 30} min
                 </p>
               </div>
             </div>
@@ -533,7 +767,6 @@ const FinanceFlow = () => {
             })}
           </div>
           
-          {/* Pipeline Stats */}
           {syncing && (
             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2 px-2">
               <span>Processing...</span>
@@ -545,10 +778,14 @@ const FinanceFlow = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="dashboard" className="gap-1">
             <Activity className="w-3 h-3" />
             <span className="hidden sm:inline">Dashboard</span>
+          </TabsTrigger>
+          <TabsTrigger value="folders" className="gap-1">
+            <FolderOpen className="w-3 h-3" />
+            <span className="hidden sm:inline">Folders</span>
           </TabsTrigger>
           <TabsTrigger value="review" className="gap-1 relative">
             <Eye className="w-3 h-3" />
@@ -590,7 +827,7 @@ const FinanceFlow = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-sm flex items-center gap-1">
                       <TrendingDown className="w-3 h-3 text-destructive" />
-                      Debits
+                      Debits (Expenses)
                     </span>
                     <span className="font-medium text-destructive">
                       {stats.totalDebits} (₹{stats.debitAmount.toLocaleString()})
@@ -599,7 +836,7 @@ const FinanceFlow = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-sm flex items-center gap-1">
                       <TrendingUp className="w-3 h-3 text-emerald-500" />
-                      Credits
+                      Credits (Income)
                     </span>
                     <span className="font-medium text-emerald-500">
                       {stats.totalCredits} (₹{stats.creditAmount.toLocaleString()})
@@ -685,14 +922,14 @@ const FinanceFlow = () => {
                     <Inbox className="w-5 h-5 text-emerald-500" />
                     <div className="flex-1">
                       <p className="text-sm font-medium">Active Data</p>
-                      <p className="text-xs text-muted-foreground">Last 90 days</p>
+                      <p className="text-xs text-muted-foreground">Last {settings?.scan_days || 90} days</p>
                     </div>
                     <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30">
                       {transactions.filter(t => {
                         const date = new Date(t.created_at);
-                        const ninetyDaysAgo = new Date();
-                        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-                        return date > ninetyDaysAgo;
+                        const daysAgo = new Date();
+                        daysAgo.setDate(daysAgo.getDate() - (settings?.scan_days || 90));
+                        return date > daysAgo;
                       }).length}
                     </Badge>
                   </div>
@@ -700,14 +937,14 @@ const FinanceFlow = () => {
                     <Archive className="w-5 h-5 text-muted-foreground" />
                     <div className="flex-1">
                       <p className="text-sm font-medium">Archived</p>
-                      <p className="text-xs text-muted-foreground">Older than 90 days</p>
+                      <p className="text-xs text-muted-foreground">Older transactions</p>
                     </div>
                     <Badge variant="outline">
                       {transactions.filter(t => {
                         const date = new Date(t.created_at);
-                        const ninetyDaysAgo = new Date();
-                        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-                        return date <= ninetyDaysAgo;
+                        const daysAgo = new Date();
+                        daysAgo.setDate(daysAgo.getDate() - (settings?.scan_days || 90));
+                        return date <= daysAgo;
                       }).length}
                     </Badge>
                   </div>
@@ -788,6 +1025,194 @@ const FinanceFlow = () => {
           </Card>
         </TabsContent>
 
+        {/* Folders Tab - NEW */}
+        <TabsContent value="folders" className="space-y-4 mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Folder Coverage Panel */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4" />
+                  Folder Coverage
+                </CardTitle>
+                <CardDescription>
+                  Select which Gmail folders to scan for transactions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {FOLDER_CONFIG.map((folder) => {
+                    const Icon = folder.icon;
+                    const isEnabled = settings?.scan_folders?.[folder.id as keyof FolderSettings] ?? false;
+                    const isRisky = folder.id === 'spam' || folder.id === 'trash';
+                    
+                    return (
+                      <div
+                        key={folder.id}
+                        className={cn(
+                          "flex items-center justify-between p-3 rounded-lg border transition-colors",
+                          isEnabled ? "bg-primary/5 border-primary/20" : "bg-muted/30 border-transparent",
+                          isRisky && isEnabled && "border-amber-500/30 bg-amber-500/5"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-8 h-8 rounded-full flex items-center justify-center",
+                            isEnabled ? "bg-primary/10" : "bg-muted"
+                          )}>
+                            <Icon className={cn(
+                              "w-4 h-4",
+                              isEnabled ? "text-primary" : "text-muted-foreground",
+                              isRisky && isEnabled && "text-amber-500"
+                            )} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium flex items-center gap-2">
+                              {folder.label}
+                              {isRisky && (
+                                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-500 border-amber-500/30">
+                                  Risky
+                                </Badge>
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{folder.description}</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={(checked) => handleFolderToggle(folder.id, checked)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Scan Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Settings2 className="w-4 h-4" />
+                  Scan Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure auto-sync frequency and scan range
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Scan Mode */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Scan Mode</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div
+                      onClick={() => handleScanModeChange('limited')}
+                      className={cn(
+                        "p-4 rounded-lg border-2 cursor-pointer transition-colors",
+                        settings?.scan_mode === 'limited' 
+                          ? "border-primary bg-primary/5" 
+                          : "border-muted hover:border-primary/30"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <FolderCheck className="w-4 h-4 text-primary" />
+                        <span className="font-medium">Limited</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Scan Inbox, Promotions, and Updates only
+                      </p>
+                    </div>
+                    <div
+                      onClick={() => handleScanModeChange('full')}
+                      className={cn(
+                        "p-4 rounded-lg border-2 cursor-pointer transition-colors",
+                        settings?.scan_mode === 'full' 
+                          ? "border-primary bg-primary/5" 
+                          : "border-muted hover:border-primary/30"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <FolderOpen className="w-4 h-4 text-amber-500" />
+                        <span className="font-medium">Full</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Scan all folders including Spam & Trash
+                      </p>
+                    </div>
+                  </div>
+                  {settings?.scan_mode === 'full' && (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        Full mode will scan all Gmail folders including Spam and Trash for maximum transaction detection. This may increase processing time.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Auto-Sync Frequency */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Auto-Sync Frequency</Label>
+                  <Select
+                    value={String(settings?.sync_frequency_minutes || 30)}
+                    onValueChange={handleSyncFrequencyChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15">Every 15 minutes</SelectItem>
+                      <SelectItem value="30">Every 30 minutes</SelectItem>
+                      <SelectItem value="60">Every 1 hour</SelectItem>
+                      <SelectItem value="120">Every 2 hours</SelectItem>
+                      <SelectItem value="360">Every 6 hours</SelectItem>
+                      <SelectItem value="720">Every 12 hours</SelectItem>
+                      <SelectItem value="1440">Once a day</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically sync new transactions from Gmail
+                  </p>
+                </div>
+
+                <Separator />
+
+                {/* Data Range */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Data Range</Label>
+                  <Select
+                    value={String(settings?.scan_days || 90)}
+                    onValueChange={async (value) => {
+                      const days = parseInt(value);
+                      await supabase
+                        .from("gmail_sync_settings")
+                        .update({ scan_days: days })
+                        .eq("user_id", user?.id);
+                      setSettings(s => s ? { ...s, scan_days: days } : s);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30">Last 30 days</SelectItem>
+                      <SelectItem value="60">Last 60 days</SelectItem>
+                      <SelectItem value="90">Last 90 days</SelectItem>
+                      <SelectItem value="180">Last 6 months</SelectItem>
+                      <SelectItem value="365">Last 1 year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    How far back to scan for transaction emails
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         {/* Review Queue Tab */}
         <TabsContent value="review" className="mt-4">
           <Card>
@@ -802,7 +1227,7 @@ const FinanceFlow = () => {
                 )}
               </CardTitle>
               <CardDescription>
-                Low-confidence transactions that need your review
+                Low-confidence transactions that need your review. Approve to add to Expenses (debits) or Income (credits).
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -814,69 +1239,92 @@ const FinanceFlow = () => {
               ) : (
                 <ScrollArea className="h-[500px]">
                   <div className="space-y-3">
-                    {reviewQueue.map((tx) => (
-                      <motion.div
-                        key={tx.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-4 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium">{tx.merchant_name}</span>
-                              <Badge variant="outline" className="text-[10px]">
-                                {tx.payment_mode}
-                              </Badge>
-                              <Badge 
-                                variant="secondary" 
-                                className={cn(
-                                  "text-[10px]",
-                                  (tx.confidence_score || 0) < 0.5 
-                                    ? "bg-destructive/10 text-destructive" 
-                                    : "bg-amber-500/10 text-amber-500"
-                                )}
-                              >
-                                {Math.round((tx.confidence_score || 0) * 100)}% confidence
-                              </Badge>
-                            </div>
-                            <p className="text-lg font-semibold">₹{Number(tx.amount).toLocaleString()}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {format(new Date(tx.transaction_date), "dd MMM yyyy")} • {tx.source_platform}
-                            </p>
-                            {tx.review_reason && (
-                              <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
-                                <Info className="w-3 h-3" />
-                                {tx.review_reason}
+                    {reviewQueue.map((tx) => {
+                      const isCredit = tx.transaction_type === 'credit' || tx.raw_extracted_data?.transactionType === 'credit';
+                      
+                      return (
+                        <motion.div
+                          key={tx.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-4 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <span className="font-medium">{tx.merchant_name || 'Unknown'}</span>
+                                <Badge variant="outline" className="text-[10px]">
+                                  {tx.payment_mode}
+                                </Badge>
+                                <Badge 
+                                  variant="secondary" 
+                                  className={cn(
+                                    "text-[10px]",
+                                    isCredit 
+                                      ? "bg-emerald-500/10 text-emerald-500" 
+                                      : "bg-destructive/10 text-destructive"
+                                  )}
+                                >
+                                  {isCredit ? '↓ Credit (Income)' : '↑ Debit (Expense)'}
+                                </Badge>
+                                <Badge 
+                                  variant="secondary" 
+                                  className={cn(
+                                    "text-[10px]",
+                                    (tx.confidence_score || 0) < 0.5 
+                                      ? "bg-destructive/10 text-destructive" 
+                                      : "bg-amber-500/10 text-amber-500"
+                                  )}
+                                >
+                                  {Math.round((tx.confidence_score || 0) * 100)}% confidence
+                                </Badge>
+                              </div>
+                              <p className={cn(
+                                "text-lg font-semibold",
+                                isCredit ? "text-emerald-500" : "text-foreground"
+                              )}>
+                                {isCredit ? '+' : ''}₹{Number(tx.amount).toLocaleString()}
                               </p>
-                            )}
-                            <p className="text-xs text-muted-foreground mt-2 truncate">
-                              {tx.email_subject}
-                            </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {format(new Date(tx.transaction_date), "dd MMM yyyy")} • {tx.source_platform}
+                              </p>
+                              {tx.review_reason && (
+                                <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
+                                  <Info className="w-3 h-3" />
+                                  {tx.review_reason}
+                                </p>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-2 truncate">
+                                {tx.email_subject}
+                              </p>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className={cn(
+                                  "gap-1",
+                                  isCredit && "bg-emerald-600 hover:bg-emerald-700"
+                                )}
+                                onClick={() => handleApprove(tx.id)}
+                              >
+                                <ThumbsUp className="w-3 h-3" />
+                                {isCredit ? 'Add to Income' : 'Add to Expenses'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1"
+                                onClick={() => handleReject(tx.id)}
+                              >
+                                <ThumbsDown className="w-3 h-3" />
+                                Reject
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex flex-col gap-2">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              className="gap-1"
-                              onClick={() => handleApprove(tx.id)}
-                            >
-                              <ThumbsUp className="w-3 h-3" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="gap-1"
-                              onClick={() => handleReject(tx.id)}
-                            >
-                              <ThumbsDown className="w-3 h-3" />
-                              Reject
-                            </Button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 </ScrollArea>
               )}
@@ -936,7 +1384,7 @@ const FinanceFlow = () => {
                               {item.sync_type}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
                             <span>{item.emails_scanned} emails scanned</span>
                             <span>•</span>
                             <span>{item.transactions_found} found</span>
@@ -985,37 +1433,50 @@ const FinanceFlow = () => {
             <CardContent>
               <ScrollArea className="h-[500px]">
                 <div className="space-y-1">
-                  {transactions.slice(0, 100).map((tx) => (
-                    <div
-                      key={tx.id}
-                      className="flex items-center gap-3 p-2 rounded text-xs hover:bg-muted/30 transition-colors font-mono"
-                    >
-                      <span className="text-muted-foreground shrink-0">
-                        {format(new Date(tx.created_at), "MMM dd HH:mm")}
-                      </span>
-                      <span className={cn(
-                        "shrink-0 w-16",
-                        tx.is_duplicate ? "text-amber-500" : "text-emerald-500"
-                      )}>
-                        {tx.is_duplicate ? "[DUPE]" : "[NEW]"}
-                      </span>
-                      <span className="text-muted-foreground shrink-0 w-12">
-                        {tx.payment_mode?.substring(0, 4)}
-                      </span>
-                      <span className="shrink-0 w-20 text-right">
-                        ₹{Number(tx.amount).toLocaleString()}
-                      </span>
-                      <span className="truncate flex-1">
-                        {tx.merchant_name}
-                      </span>
-                      <span className={cn(
-                        "shrink-0",
-                        (tx.confidence_score || 0) >= 0.7 ? "text-emerald-500" : "text-amber-500"
-                      )}>
-                        {Math.round((tx.confidence_score || 0) * 100)}%
-                      </span>
-                    </div>
-                  ))}
+                  {transactions.slice(0, 100).map((tx) => {
+                    const isCredit = tx.transaction_type === 'credit' || tx.raw_extracted_data?.transactionType === 'credit';
+                    
+                    return (
+                      <div
+                        key={tx.id}
+                        className="flex items-center gap-3 p-2 rounded text-xs hover:bg-muted/30 transition-colors font-mono"
+                      >
+                        <span className="text-muted-foreground shrink-0">
+                          {format(new Date(tx.created_at), "MMM dd HH:mm")}
+                        </span>
+                        <span className={cn(
+                          "shrink-0 w-16",
+                          tx.is_duplicate ? "text-amber-500" : "text-emerald-500"
+                        )}>
+                          {tx.is_duplicate ? "[DUPE]" : "[NEW]"}
+                        </span>
+                        <span className={cn(
+                          "shrink-0 w-12",
+                          isCredit ? "text-emerald-500" : "text-destructive"
+                        )}>
+                          {isCredit ? "CR" : "DR"}
+                        </span>
+                        <span className="text-muted-foreground shrink-0 w-12">
+                          {tx.payment_mode?.substring(0, 4)}
+                        </span>
+                        <span className={cn(
+                          "shrink-0 w-24 text-right",
+                          isCredit ? "text-emerald-500" : ""
+                        )}>
+                          {isCredit ? '+' : ''}₹{Number(tx.amount).toLocaleString()}
+                        </span>
+                        <span className="truncate flex-1">
+                          {tx.merchant_name || 'Unknown'}
+                        </span>
+                        <span className={cn(
+                          "shrink-0",
+                          (tx.confidence_score || 0) >= 0.7 ? "text-emerald-500" : "text-amber-500"
+                        )}>
+                          {Math.round((tx.confidence_score || 0) * 100)}%
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </ScrollArea>
             </CardContent>

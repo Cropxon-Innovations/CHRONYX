@@ -143,6 +143,7 @@ export type Database = {
           review_reason: string | null
           source_platform: string | null
           transaction_date: string
+          transaction_type: string | null
           updated_at: string
           user_id: string
           user_verified: boolean | null
@@ -173,6 +174,7 @@ export type Database = {
           review_reason?: string | null
           source_platform?: string | null
           transaction_date: string
+          transaction_type?: string | null
           updated_at?: string
           user_id: string
           user_verified?: boolean | null
@@ -203,6 +205,7 @@ export type Database = {
           review_reason?: string | null
           source_platform?: string | null
           transaction_date?: string
+          transaction_type?: string | null
           updated_at?: string
           user_id?: string
           user_verified?: boolean | null
@@ -1814,9 +1817,14 @@ export type Database = {
           id: string
           is_enabled: boolean
           is_paused: boolean | null
+          last_auto_sync_at: string | null
           last_history_id: string | null
           last_sync_at: string | null
           refresh_token_encrypted: string | null
+          scan_days: number | null
+          scan_folders: Json | null
+          scan_mode: string | null
+          sync_frequency_minutes: number | null
           sync_status: string | null
           token_expires_at: string | null
           total_synced_count: number | null
@@ -1832,9 +1840,14 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           is_paused?: boolean | null
+          last_auto_sync_at?: string | null
           last_history_id?: string | null
           last_sync_at?: string | null
           refresh_token_encrypted?: string | null
+          scan_days?: number | null
+          scan_folders?: Json | null
+          scan_mode?: string | null
+          sync_frequency_minutes?: number | null
           sync_status?: string | null
           token_expires_at?: string | null
           total_synced_count?: number | null
@@ -1850,9 +1863,14 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           is_paused?: boolean | null
+          last_auto_sync_at?: string | null
           last_history_id?: string | null
           last_sync_at?: string | null
           refresh_token_encrypted?: string | null
+          scan_days?: number | null
+          scan_folders?: Json | null
+          scan_mode?: string | null
+          sync_frequency_minutes?: number | null
           sync_status?: string | null
           token_expires_at?: string | null
           total_synced_count?: number | null
@@ -1864,35 +1882,57 @@ export type Database = {
       income_entries: {
         Row: {
           amount: number
+          confidence_score: number | null
           created_at: string
+          gmail_import_id: string | null
           id: string
           income_date: string
           income_source_id: string | null
+          is_auto_generated: boolean | null
+          merchant_name: string | null
           notes: string | null
+          source_type: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           amount: number
+          confidence_score?: number | null
           created_at?: string
+          gmail_import_id?: string | null
           id?: string
           income_date?: string
           income_source_id?: string | null
+          is_auto_generated?: boolean | null
+          merchant_name?: string | null
           notes?: string | null
+          source_type?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           amount?: number
+          confidence_score?: number | null
           created_at?: string
+          gmail_import_id?: string | null
           id?: string
           income_date?: string
           income_source_id?: string | null
+          is_auto_generated?: boolean | null
+          merchant_name?: string | null
           notes?: string | null
+          source_type?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "income_entries_gmail_import_id_fkey"
+            columns: ["gmail_import_id"]
+            isOneToOne: false
+            referencedRelation: "auto_imported_transactions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "income_entries_income_source_id_fkey"
             columns: ["income_source_id"]
