@@ -50,6 +50,7 @@ const Vault = lazy(() => import("./pages/app/Vault"));
 const Tax = lazy(() => import("./pages/app/Tax"));
 const Library = lazy(() => import("./pages/app/Library"));
 const FamilyTree = lazy(() => import("./pages/app/FamilyTree"));
+const FinanceFlow = lazy(() => import("./pages/app/FinanceFlow"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -263,6 +264,7 @@ const AnimatedRoutes = () => {
           <Route path="tax" element={<Suspense fallback={<PageLoader />}><Tax /></Suspense>} />
           <Route path="library" element={<Suspense fallback={<PageLoader />}><Library /></Suspense>} />
           <Route path="family-tree" element={<Suspense fallback={<PageLoader />}><FamilyTree /></Suspense>} />
+          <Route path="financeflow" element={<Suspense fallback={<PageLoader />}><FinanceFlow /></Suspense>} />
           <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         </Route>
         <Route 
