@@ -20,7 +20,7 @@ const Tax = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-light text-foreground tracking-wide">
-              Tax Dashboard
+              TAXYN
             </h1>
             <Badge variant="outline" className="text-[9px] py-0 px-1.5 bg-violet-500/10 text-violet-500 border-violet-500/30">
               <FlaskConical className="w-2.5 h-2.5 mr-0.5" />
@@ -28,7 +28,7 @@ const Tax = () => {
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            {fyLabel} • Indian Income Tax Calculator
+            {fyLabel} • CA-Grade Indian Income Tax System
           </p>
         </div>
         
@@ -50,8 +50,8 @@ const Tax = () => {
       {/* Step-by-Step Tax Wizard */}
       <TaxWizard />
 
-      {/* Legal Disclaimer */}
-      <TaxLegalDisclaimer />
+      {/* Legal Disclaimer - Comprehensive version */}
+      <TaxLegalDisclaimer variant="comprehensive" />
     </div>
   );
 };
