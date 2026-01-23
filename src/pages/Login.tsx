@@ -9,12 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { LeftSketchAnimation, RightSketchAnimation, FloatingParticles } from "@/components/auth/LoginAnimations";
 import { motion, AnimatePresence } from "framer-motion";
-import { Github, Apple, Lock, Loader2, Shield, Smartphone, ArrowLeft, Key, X } from "lucide-react";
+import { Github, Apple, Lock, Loader2, Shield, Smartphone, ArrowLeft, Key, X, Fingerprint } from "lucide-react";
 import { DomainAutoRedirect } from "@/components/auth/DomainCanonicalizer";
 import { OAuthErrorBanner } from "@/components/auth/OAuthErrorBanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { TwoFactorLoginVerification } from "@/components/auth/TwoFactorLoginVerification";
+import { WebAuthnRegistration } from "@/components/auth/WebAuthnRegistration";
 import originxOneLogo from "@/assets/originx-one-logo.png";
 
 // CHRONYX Logo Component (same as Landing page)
@@ -83,6 +85,14 @@ const Login = () => {
   const [isTotpVerifying, setIsTotpVerifying] = useState(false);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
 
+  // 2FA Login Verification State
+  const [show2FAVerification, setShow2FAVerification] = useState(false);
+  const [pending2FAUser, setPending2FAUser] = useState<{ id: string; email: string } | null>(null);
+  const [pending2FAMethods, setPending2FAMethods] = useState<{ totp: boolean; webauthn: boolean }>({ totp: false, webauthn: false });
+
+  // WebAuthn Registration State
+  const [showWebAuthnRegistration, setShowWebAuthnRegistration] = useState(false);
+
   // Get the intended destination from state, or default to /app
   const from = (location.state as { from?: string })?.from || "/app";
 
@@ -100,6 +110,32 @@ const Login = () => {
       setRememberMe(true);
     }
   }, []);
+
+  // Check if user has 2FA enabled after successful password login
+  const check2FAAndProceed = async (userId: string, userEmail: string) => {
+    try {
+      const { data: twoFAData } = await supabase
+        .from("user_2fa")
+        .select("totp_enabled, webauthn_enabled")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (twoFAData && (twoFAData.totp_enabled || twoFAData.webauthn_enabled)) {
+        // User has 2FA enabled, show verification dialog
+        setPending2FAUser({ id: userId, email: userEmail });
+        setPending2FAMethods({
+          totp: twoFAData.totp_enabled || false,
+          webauthn: twoFAData.webauthn_enabled || false,
+        });
+        setShow2FAVerification(true);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Error checking 2FA status:", err);
+      return false;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,26 +180,49 @@ const Login = () => {
           navigate(from, { replace: true });
         }
       } else {
-        const { error } = await signIn(email, password);
+        const { error, data } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
         if (error) {
           toast({
             title: "Sign in failed",
             description: "Invalid email or password.",
             variant: "destructive",
           });
-        } else {
-          // Handle remember me
-          if (rememberMe) {
-            localStorage.setItem("chronyx_remember_email", email);
-          } else {
-            localStorage.removeItem("chronyx_remember_email");
+        } else if (data?.user) {
+          // Check if user has 2FA enabled
+          const requires2FA = await check2FAAndProceed(data.user.id, data.user.email || email);
+          
+          if (!requires2FA) {
+            // No 2FA, proceed with login
+            if (rememberMe) {
+              localStorage.setItem("chronyx_remember_email", email);
+            } else {
+              localStorage.removeItem("chronyx_remember_email");
+            }
+            navigate(from, { replace: true });
           }
-          navigate(from, { replace: true });
         }
       }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handle2FASuccess = () => {
+    setShow2FAVerification(false);
+    if (rememberMe) {
+      localStorage.setItem("chronyx_remember_email", email);
+    } else {
+      localStorage.removeItem("chronyx_remember_email");
+    }
+    toast({
+      title: "Welcome back!",
+      description: "Two-factor authentication verified.",
+    });
+    navigate(from, { replace: true });
   };
 
   const handleGoogleSignIn = async () => {
@@ -701,6 +760,35 @@ const Login = () => {
             </AnimatePresence>
           </DialogContent>
         </Dialog>
+
+        {/* 2FA Login Verification Dialog */}
+        {pending2FAUser && (
+          <TwoFactorLoginVerification
+            open={show2FAVerification}
+            onOpenChange={(open) => {
+              setShow2FAVerification(open);
+              if (!open) {
+                setPending2FAUser(null);
+              }
+            }}
+            onSuccess={handle2FASuccess}
+            userId={pending2FAUser.id}
+            email={pending2FAUser.email}
+            has2FAMethods={pending2FAMethods}
+          />
+        )}
+
+        {/* WebAuthn Registration Dialog */}
+        <WebAuthnRegistration
+          open={showWebAuthnRegistration}
+          onOpenChange={setShowWebAuthnRegistration}
+          onSuccess={() => {
+            toast({
+              title: "Passkey registered!",
+              description: "You can now use it for passwordless login.",
+            });
+          }}
+        />
       </motion.main>
     </>
   );
