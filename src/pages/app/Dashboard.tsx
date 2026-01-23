@@ -14,6 +14,8 @@ import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import PendingYesterdayTasks from "@/components/dashboard/PendingYesterdayTasks";
 import { DailyReflection } from "@/components/notes/DailyReflection";
 import { BioCard } from "@/components/dashboard/BioCard";
+import TodaySummary from "@/components/dashboard/TodaySummary";
+import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -285,6 +287,12 @@ const Dashboard = () => {
         <LoanWidget />
         <InsuranceWidget />
         <UpcomingReminders />
+      </section>
+
+      {/* Today's Summary & Notifications - Unified System View */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+        <TodaySummary />
+        <NotificationCenter />
       </section>
 
       {/* Bottom Grid */}

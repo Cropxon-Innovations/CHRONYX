@@ -38,6 +38,7 @@ import {
   Users,
   StickyNote,
   Lock,
+  Shield,
   PieChart,
   Heart,
   BookMarked,
@@ -118,6 +119,7 @@ const navSections: NavSection[] = [
     title: "Security",
     items: [
       { path: "/app/vault", label: "Vault", icon: Lock },
+      { path: "/app/privacy", label: "Privacy Center", icon: Shield },
     ],
   },
 ];
