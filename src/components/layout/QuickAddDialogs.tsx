@@ -29,9 +29,19 @@ interface QuickTodoDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const PRIORITY_OPTIONS = [
+  { value: "high", label: "High", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+  { value: "medium", label: "Medium", color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" },
+  { value: "low", label: "Low", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
+];
+
 export const QuickTodoDialog = ({ open, onOpenChange }: QuickTodoDialogProps) => {
   const { user } = useAuth();
   const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState("medium");
+  const [durationHours, setDurationHours] = useState<string>("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -43,6 +53,10 @@ export const QuickTodoDialog = ({ open, onOpenChange }: QuickTodoDialogProps) =>
       text: title.trim(),
       status: "pending",
       date: format(new Date(), "yyyy-MM-dd"),
+      priority,
+      duration_hours: durationHours ? parseFloat(durationHours) : null,
+      start_time: startTime || null,
+      end_time: endTime || null,
     });
 
     setSaving(false);
@@ -51,6 +65,10 @@ export const QuickTodoDialog = ({ open, onOpenChange }: QuickTodoDialogProps) =>
     } else {
       toast.success("Task added!");
       setTitle("");
+      setPriority("medium");
+      setDurationHours("");
+      setStartTime("");
+      setEndTime("");
       onOpenChange(false);
     }
   };
@@ -63,7 +81,7 @@ export const QuickTodoDialog = ({ open, onOpenChange }: QuickTodoDialogProps) =>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Task Title</Label>
+            <Label>Task Title *</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -71,6 +89,74 @@ export const QuickTodoDialog = ({ open, onOpenChange }: QuickTodoDialogProps) =>
               autoFocus
               onKeyDown={(e) => e.key === "Enter" && handleSave()}
             />
+          </div>
+          
+          {/* Priority */}
+          <div className="space-y-2">
+            <Label>Priority</Label>
+            <Select value={priority} onValueChange={setPriority}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_OPTIONS.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Duration */}
+          <div className="space-y-2">
+            <Label>Estimated Duration (hours)</Label>
+            <div className="flex items-center gap-2">
+              {[0.5, 1, 2, 4].map((hours) => (
+                <Button
+                  key={hours}
+                  type="button"
+                  variant={durationHours === hours.toString() ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDurationHours(durationHours === hours.toString() ? "" : hours.toString())}
+                  className="text-xs"
+                >
+                  {hours}h
+                </Button>
+              ))}
+              <Input
+                type="number"
+                min="0.5"
+                max="12"
+                step="0.5"
+                value={durationHours}
+                onChange={(e) => setDurationHours(e.target.value)}
+                placeholder="Custom"
+                className="w-20 h-8 text-xs"
+              />
+            </div>
+          </div>
+
+          {/* Time Range */}
+          <div className="space-y-2">
+            <Label>Time Range (optional)</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="flex-1"
+                placeholder="Start"
+              />
+              <span className="text-muted-foreground">to</span>
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="flex-1"
+                placeholder="End"
+              />
+            </div>
           </div>
         </div>
         <DialogFooter>
