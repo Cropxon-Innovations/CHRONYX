@@ -1,3 +1,4 @@
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,10 +9,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AnimatePresence, motion } from "framer-motion";
 import { OfflineIndicator } from "@/components/pwa/OfflineIndicator";
 import { PWAUpdater } from "@/components/pwa/PWAUpdater";
-import { useState, useEffect, lazy, Suspense } from "react";
 import SplashScreen from "@/components/layout/SplashScreen";
 import PageLoader from "@/components/layout/PageLoader";
-import { supabase } from "@/integrations/supabase/client";
 
 // Lazy load pages for better performance
 const Landing = lazy(() => import("./pages/Landing"));
