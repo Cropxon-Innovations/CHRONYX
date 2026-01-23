@@ -26,6 +26,7 @@ import { FamilyTreeVisualization } from "@/components/family/FamilyTreeVisualiza
 import { AddMemberDialog } from "@/components/family/AddMemberDialog";
 import { MemberDetailPanel } from "@/components/family/MemberDetailPanel";
 import { CertifiedExportDialog } from "@/components/family/CertifiedExportDialog";
+import { DemoDataGenerator } from "@/components/family/DemoDataGenerator";
 import { FamilyAuditLog } from "@/components/family/FamilyAuditLog";
 
 export interface FamilyMember {
@@ -174,7 +175,11 @@ const FamilyTree = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <DemoDataGenerator 
+                onSuccess={() => refetch()} 
+                hasExistingData={members.length > 0} 
+              />
               <Button variant="outline" size="sm" onClick={() => setShowAuditLog(true)}>
                 <Clock className="w-4 h-4 mr-2" />
                 Activity Log
