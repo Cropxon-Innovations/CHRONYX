@@ -20,12 +20,20 @@ import {
   Eye,
   Download,
   CheckCircle2,
-  Circle
+  Circle,
+  AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import Tesseract from "tesseract.js";
+import * as pdfjsLib from 'pdfjs-dist';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Configure pdf.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 interface ExtractedPolicyData {
   policy_name?: string;
@@ -36,19 +44,22 @@ interface ExtractedPolicyData {
   sum_assured?: string;
   start_date?: string;
   renewal_date?: string;
+  insured_name?: string;
+  premium_frequency?: string;
 }
 
 interface PolicyDocumentScannerProps {
   onDataExtracted: (data: ExtractedPolicyData & { document_url?: string }) => void;
 }
 
-type ProcessStep = 'idle' | 'uploading' | 'scanning' | 'extracting' | 'review' | 'complete';
+type ProcessStep = 'idle' | 'uploading' | 'converting' | 'scanning' | 'extracting' | 'review' | 'complete';
 
 const PROCESS_STEPS = [
-  { id: 'uploading', label: 'Uploading Document' },
-  { id: 'scanning', label: 'Scanning Document' },
-  { id: 'extracting', label: 'Extracting Details' },
-  { id: 'review', label: 'Review & Confirm' },
+  { id: 'uploading', label: 'Uploading' },
+  { id: 'converting', label: 'Processing' },
+  { id: 'scanning', label: 'Scanning' },
+  { id: 'extracting', label: 'Extracting' },
+  { id: 'review', label: 'Review' },
 ];
 
 const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) => {
@@ -60,6 +71,7 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
   const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState<string | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractedPolicyData | null>(null);
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,54 +86,141 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
+  // Convert PDF page to image using canvas
+  const convertPdfPageToImage = async (pdfData: ArrayBuffer, pageNum: number = 1): Promise<Blob> => {
+    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    const page = await pdf.getPage(pageNum);
+    
+    // Use higher scale for better OCR quality
+    const scale = 2.5;
+    const viewport = page.getViewport({ scale });
+    
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d')!;
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    
+    await page.render({
+      canvasContext: context,
+      viewport: viewport,
+      canvas: canvas,
+    }).promise;
+    
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to convert PDF to image'));
+        }
+      }, 'image/png', 1.0);
+    });
+  };
+
+  // Extract text from all PDF pages
+  const extractTextFromPdf = async (pdfData: ArrayBuffer): Promise<string> => {
+    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    let fullText = '';
+    
+    // Extract text from first 5 pages (usually enough for policy details)
+    const maxPages = Math.min(pdf.numPages, 5);
+    
+    for (let i = 1; i <= maxPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+      fullText += pageText + '\n';
+    }
+    
+    return fullText;
+  };
+
   const extractPolicyDetails = (text: string): ExtractedPolicyData => {
     const data: ExtractedPolicyData = {};
     const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    const fullText = text.toLowerCase();
 
-    // Policy Number patterns
+    // Enhanced Policy Number patterns for Indian insurers
     const policyPatterns = [
-      /policy\s*(?:no|number|#)[:\s]*([A-Z0-9\-\/]+)/i,
-      /certificate\s*(?:no|number)[:\s]*([A-Z0-9\-\/]+)/i,
-      /(?:policy|certificate)\s*([A-Z]{2,}\d{8,})/i,
+      /policy\s*(?:no|number|#|id)[:\s.]*([A-Z0-9\-\/]{6,})/i,
+      /certificate\s*(?:no|number)[:\s.]*([A-Z0-9\-\/]{6,})/i,
+      /(?:policy|certificate)[:\s]*([A-Z]{2,}\d{10,})/i,
+      /(?:member\s*id|uhid)[:\s.]*([A-Z0-9\-\/]+)/i,
+      /registration\s*(?:no|number)[:\s.]*([A-Z0-9\-\/]+)/i,
+      /proposal\s*(?:no|number)[:\s.]*([A-Z0-9\-\/]+)/i,
     ];
     for (const pattern of policyPatterns) {
       const match = text.match(pattern);
-      if (match) {
-        data.policy_number = match[1].trim();
+      if (match && match[1].length >= 6) {
+        data.policy_number = match[1].trim().toUpperCase();
         break;
       }
     }
 
-    // Provider/Company name patterns
+    // Enhanced Provider/Company patterns - especially for Care Health
     const providerPatterns = [
-      /(?:insurer|company|provider)[:\s]*([A-Za-z\s]+(?:Insurance|Assurance|Life))/i,
-      /(ICICI|HDFC|SBI|LIC|Bajaj|Tata|Max|Star|Reliance|New India|Oriental|United India|Care|Niva Bupa|Acko|Digit)[\s\w]*(?:Insurance|Life|General|Health)?/i,
+      // Care Health Insurance specific
+      /(Care\s*Health\s*Insurance)/i,
+      /(Religare\s*Health\s*Insurance)/i, // Care was previously Religare
+      // Other major Indian insurers
+      /(?:insurer|company|provider|underwritten\s*by)[:\s]*([A-Za-z\s]+(?:Insurance|Assurance|Life|Health))/i,
+      /(ICICI\s*(?:Prudential|Lombard)[\s\w]*(?:Insurance|Life|Health)?)/i,
+      /(HDFC\s*(?:Life|Ergo)[\s\w]*(?:Insurance)?)/i,
+      /(SBI\s*(?:Life|General)[\s\w]*(?:Insurance)?)/i,
+      /(LIC\s*(?:of\s*India)?)/i,
+      /(Bajaj\s*Allianz[\s\w]*(?:Insurance)?)/i,
+      /(Tata\s*AIA[\s\w]*(?:Life)?)/i,
+      /(Max\s*(?:Life|Bupa)[\s\w]*(?:Insurance)?)/i,
+      /(Star\s*Health[\s\w]*(?:Insurance)?)/i,
+      /(Reliance[\s\w]*(?:Insurance|General)?)/i,
+      /(New\s*India\s*Assurance)/i,
+      /(Oriental\s*Insurance)/i,
+      /(United\s*India\s*Insurance)/i,
+      /(Niva\s*Bupa[\s\w]*(?:Insurance)?)/i,
+      /(Aditya\s*Birla[\s\w]*(?:Insurance|Health)?)/i,
+      /(Kotak[\s\w]*(?:Life|General)?)/i,
+      /(Acko[\s\w]*(?:Insurance)?)/i,
+      /(Digit[\s\w]*(?:Insurance)?)/i,
+      /(Go\s*Digit[\s\w]*(?:Insurance)?)/i,
+      /(ManipalCigna[\s\w]*(?:Health)?)/i,
+      /(Chola\s*MS[\s\w]*(?:Insurance)?)/i,
     ];
     for (const pattern of providerPatterns) {
       const match = text.match(pattern);
       if (match) {
-        data.provider = match[1]?.trim() || match[0].trim();
+        data.provider = (match[1]?.trim() || match[0].trim()).replace(/\s+/g, ' ');
         break;
       }
     }
 
-    // Sum Assured patterns
+    // Enhanced Sum Assured patterns
     const sumPatterns = [
-      /sum\s*(?:assured|insured)[:\s]*(?:Rs\.?|INR|₹)\s*([\d,]+)/i,
-      /(?:coverage|cover)\s*(?:amount)?[:\s]*(?:Rs\.?|INR|₹)\s*([\d,]+)/i,
+      /sum\s*(?:assured|insured)[:\s]*(?:Rs\.?|INR|₹|Rupees)?\s*([\d,]+(?:\.\d+)?)\s*(?:lakhs?|lacs?)?/i,
+      /(?:coverage|cover|si)\s*(?:amount)?[:\s]*(?:Rs\.?|INR|₹|Rupees)?\s*([\d,]+(?:\.\d+)?)\s*(?:lakhs?|lacs?)?/i,
+      /(?:total\s*)?(?:coverage|si|sum\s*insured)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d+)?)/i,
+      /base\s*(?:si|sum\s*insured)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d+)?)/i,
     ];
     for (const pattern of sumPatterns) {
       const match = text.match(pattern);
       if (match) {
-        data.sum_assured = match[1].replace(/,/g, '');
+        let amount = match[1].replace(/,/g, '');
+        // Check if it mentions lakhs
+        if (/lakhs?|lacs?/i.test(match[0])) {
+          amount = String(parseFloat(amount) * 100000);
+        }
+        data.sum_assured = amount;
         break;
       }
     }
 
-    // Premium patterns
+    // Enhanced Premium patterns
     const premiumPatterns = [
-      /(?:premium|annual\s*premium)[:\s]*(?:Rs\.?|INR|₹)\s*([\d,]+)/i,
-      /(?:premium\s*amount)[:\s]*(?:Rs\.?|INR|₹)\s*([\d,]+)/i,
+      /(?:total\s*)?(?:premium|annual\s*premium)[:\s]*(?:Rs\.?|INR|₹|Rupees)?\s*([\d,]+(?:\.\d+)?)/i,
+      /(?:premium\s*(?:amount|payable))[:\s]*(?:Rs\.?|INR|₹|Rupees)?\s*([\d,]+(?:\.\d+)?)/i,
+      /(?:gross\s*premium)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d+)?)/i,
+      /(?:net\s*premium)[:\s]*(?:Rs\.?|INR|₹)?\s*([\d,]+(?:\.\d+)?)/i,
     ];
     for (const pattern of premiumPatterns) {
       const match = text.match(pattern);
@@ -131,12 +230,31 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
       }
     }
 
-    // Date patterns
-    const datePatterns = [
-      /(?:commencement|start|effective)\s*date[:\s]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
-      /(?:policy|risk)\s*(?:start|from)\s*date[:\s]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
+    // Premium frequency
+    if (/annual|yearly/i.test(fullText)) {
+      data.premium_frequency = 'Annual';
+    } else if (/half[\s-]?yearly|semi[\s-]?annual/i.test(fullText)) {
+      data.premium_frequency = 'Half-Yearly';
+    } else if (/quarterly/i.test(fullText)) {
+      data.premium_frequency = 'Quarterly';
+    } else if (/monthly/i.test(fullText)) {
+      data.premium_frequency = 'Monthly';
+    }
+
+    // Enhanced Date patterns
+    const dateFormats = [
+      /(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/g,
+      /(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s,]+\d{2,4})/gi,
+      /(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/g,
     ];
-    for (const pattern of datePatterns) {
+    
+    // Start date patterns
+    const startPatterns = [
+      /(?:commencement|start|effective|policy\s*(?:start|from)|risk\s*start|inception)\s*date[:\s]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
+      /(?:from|start|effective)\s*[:\s]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
+      /policy\s*period[:\s]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})\s*(?:to|till|-)/i,
+    ];
+    for (const pattern of startPatterns) {
       const match = text.match(pattern);
       if (match) {
         data.start_date = parseDate(match[1]);
@@ -146,8 +264,8 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
 
     // Renewal/Expiry date patterns
     const renewalPatterns = [
-      /(?:renewal|expiry|maturity)\s*date[:\s]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
-      /(?:valid|policy)\s*(?:till|upto|until)[:\s]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
+      /(?:renewal|expiry|maturity|valid\s*(?:till|upto|until)|policy\s*(?:to|end))\s*(?:date)?[:\s]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
+      /(?:to|till|upto|until)[:\s]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
     ];
     for (const pattern of renewalPatterns) {
       const match = text.match(pattern);
@@ -157,19 +275,33 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
       }
     }
 
-    // Policy Type detection
+    // Insured name patterns
+    const namePatterns = [
+      /(?:insured\s*name|proposer|policy\s*holder|life\s*assured|member\s*name)[:\s]*([A-Z][a-zA-Z\s]{2,40})/i,
+      /(?:name\s*of\s*(?:the\s*)?(?:insured|proposer|member))[:\s]*([A-Z][a-zA-Z\s]{2,40})/i,
+    ];
+    for (const pattern of namePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        data.insured_name = match[1].trim();
+        break;
+      }
+    }
+
+    // Enhanced Policy Type detection
     const typeKeywords: Record<string, RegExp> = {
-      'Health': /health|medical|mediclaim|hospitalization/i,
-      'Term Life': /term\s*(?:life|insurance|plan)|life\s*cover/i,
-      'Life': /life\s*insurance|endowment|whole\s*life/i,
-      'Car': /motor\s*car|car\s*insurance|private\s*car/i,
+      'Health': /health|medical|mediclaim|hospitalization|optima|secure|freedom|care\s*(?:advantage|supreme|heart|plus)/i,
+      'Term Life': /term\s*(?:life|insurance|plan)|life\s*cover|ismart|saral\s*jeevan/i,
+      'Life': /life\s*insurance|endowment|whole\s*life|ulip|money\s*back/i,
+      'Car': /motor\s*car|car\s*insurance|private\s*car|comprehensive\s*(?:motor|car)/i,
       'Bike': /two\s*wheeler|bike|motorcycle|scooter/i,
-      'Home': /home|house|dwelling|household/i,
+      'Home': /home|house|dwelling|household|property\s*insurance/i,
       'Travel': /travel|overseas|international|trip/i,
-      'Critical Illness': /critical\s*illness|cancer|heart/i,
-      'Personal Accident': /personal\s*accident|pa\s*cover/i,
-      'Property': /property|commercial|shop|office/i,
-      'Child Plan': /child|education\s*plan|children/i,
+      'Critical Illness': /critical\s*illness|cancer|heart\s*care/i,
+      'Personal Accident': /personal\s*accident|pa\s*cover|accidental/i,
+      'Property': /property|commercial|shop|office|fire\s*insurance/i,
+      'Child Plan': /child|education\s*plan|children|sukanya/i,
+      'Super Top-up': /super\s*top[\s-]?up|top[\s-]?up/i,
     };
     for (const [type, pattern] of Object.entries(typeKeywords)) {
       if (pattern.test(text)) {
@@ -178,13 +310,28 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
       }
     }
 
-    // Try to extract policy name from first few meaningful lines
-    for (const line of lines.slice(0, 10)) {
-      if (line.length > 10 && line.length < 100 && 
-          /(?:policy|plan|scheme|insurance)/i.test(line) &&
-          !/@|www\.|\.com|phone|tel|fax/i.test(line)) {
-        data.policy_name = line.replace(/[^\w\s-]/g, '').trim();
+    // Try to extract policy name from meaningful lines
+    const policyNamePatterns = [
+      /(?:policy|plan|product)\s*(?:name|type)[:\s]*([^\n]{5,60})/i,
+      /(?:scheme|product)[:\s]*([^\n]{5,60})/i,
+    ];
+    for (const pattern of policyNamePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        data.policy_name = match[1].replace(/[^\w\s\-]/g, '').trim();
         break;
+      }
+    }
+
+    // Fallback: look for policy name in first meaningful lines
+    if (!data.policy_name) {
+      for (const line of lines.slice(0, 15)) {
+        if (line.length > 10 && line.length < 80 && 
+            /(?:policy|plan|scheme|insurance|health|care|optima|secure)/i.test(line) &&
+            !/@|www\.|\.com|phone|tel|fax|email|address/i.test(line)) {
+          data.policy_name = line.replace(/[^\w\s\-()]/g, '').trim();
+          break;
+        }
       }
     }
 
@@ -193,12 +340,28 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
 
   const parseDate = (dateStr: string): string => {
     try {
-      const parts = dateStr.split(/[-\/]/);
+      // Handle different date formats
+      let parts: string[] = [];
+      
+      if (dateStr.includes('/')) {
+        parts = dateStr.split('/');
+      } else if (dateStr.includes('-')) {
+        parts = dateStr.split('-');
+      }
+      
       if (parts.length === 3) {
         let day = parts[0];
         let month = parts[1];
         let year = parts[2];
         
+        // Check if year is first (YYYY-MM-DD format)
+        if (parts[0].length === 4) {
+          year = parts[0];
+          month = parts[1];
+          day = parts[2];
+        }
+        
+        // Handle 2-digit year
         if (year.length === 2) {
           year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
         }
@@ -239,16 +402,18 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File too large (max 10MB)");
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("File too large (max 15MB)");
       return;
     }
 
-    // Create preview
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+    // Reset states
     setExtractedData(null);
     setUploadedDocumentUrl(null);
+    setErrorMessage(null);
+    setOpen(true);
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
     try {
       // Step 1: Uploading
@@ -259,40 +424,95 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
       setUploadedDocumentUrl(docUrl);
       setProgress(100);
 
-      // Step 2: Scanning
-      setCurrentStep('scanning');
-      setProgress(0);
-      
-      const result = await Tesseract.recognize(file, 'eng', {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            setProgress(Math.round(m.progress * 100));
-          }
-        },
-      });
+      let extractedText = '';
+      let previewBlob: Blob | null = null;
 
-      // Step 3: Extracting
+      if (isPdf) {
+        // Step 2: Converting PDF
+        setCurrentStep('converting');
+        setProgress(0);
+
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // First try to extract text directly from PDF
+        try {
+          extractedText = await extractTextFromPdf(arrayBuffer);
+          setProgress(50);
+          
+          // If text extraction yields good results, skip OCR
+          if (extractedText.length > 500) {
+            console.log("PDF text extraction successful:", extractedText.substring(0, 500));
+            
+            // Still convert first page for preview
+            previewBlob = await convertPdfPageToImage(arrayBuffer, 1);
+            const previewUrl = URL.createObjectURL(previewBlob);
+            setPreviewUrl(previewUrl);
+            setProgress(100);
+          } else {
+            // Text extraction didn't work well, need OCR
+            console.log("PDF text extraction insufficient, using OCR...");
+            previewBlob = await convertPdfPageToImage(arrayBuffer, 1);
+            const previewUrl = URL.createObjectURL(previewBlob);
+            setPreviewUrl(previewUrl);
+            setProgress(100);
+            extractedText = ''; // Reset to trigger OCR
+          }
+        } catch (pdfError) {
+          console.error("PDF text extraction error:", pdfError);
+          // Try converting to image for OCR
+          previewBlob = await convertPdfPageToImage(arrayBuffer, 1);
+          const previewUrl = URL.createObjectURL(previewBlob);
+          setPreviewUrl(previewUrl);
+          setProgress(100);
+        }
+      } else {
+        // For images, create preview directly
+        const previewUrl = URL.createObjectURL(file);
+        setPreviewUrl(previewUrl);
+        previewBlob = file;
+      }
+
+      // Step 3: OCR Scanning (if needed)
+      if (!extractedText || extractedText.length < 200) {
+        setCurrentStep('scanning');
+        setProgress(0);
+        
+        const fileToScan = isPdf && previewBlob ? previewBlob : file;
+        
+        const result = await Tesseract.recognize(fileToScan, 'eng', {
+          logger: (m) => {
+            if (m.status === 'recognizing text') {
+              setProgress(Math.round(m.progress * 100));
+            }
+          },
+        });
+        
+        extractedText = result.data.text;
+      }
+
+      // Step 4: Extracting
       setCurrentStep('extracting');
       setProgress(50);
       
-      const extractedText = result.data.text;
-      console.log("OCR Text:", extractedText);
+      console.log("Full extracted text:", extractedText);
 
       const data = extractPolicyDetails(extractedText);
       setExtractedData(data);
       setProgress(100);
 
-      // Step 4: Review
+      // Step 5: Review
       setCurrentStep('review');
 
       if (Object.keys(data).length === 0) {
-        toast.warning("Could not extract details. Please enter manually.");
+        toast.warning("Could not extract details automatically. Please enter manually.");
       } else {
-        toast.success("Details extracted! Review and confirm.");
+        const fieldsFound = Object.keys(data).filter(k => data[k as keyof ExtractedPolicyData]);
+        toast.success(`Extracted ${fieldsFound.length} fields. Review and confirm.`);
       }
     } catch (error) {
       console.error("Processing error:", error);
-      toast.error("Failed to process document");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to process document");
+      toast.error("Failed to process document. Please try again.");
       setCurrentStep('idle');
     } finally {
       e.target.value = "";
@@ -309,7 +529,7 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
       setTimeout(() => {
         setOpen(false);
         resetState();
-        toast.success("Data applied to form");
+        toast.success("Policy details applied to form");
       }, 500);
     }
   };
@@ -324,13 +544,16 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     setUploadedDocumentUrl(null);
     setCurrentStep('idle');
     setProgress(0);
+    setErrorMessage(null);
   };
 
   const getStepStatus = (stepId: string): 'pending' | 'active' | 'complete' => {
-    const stepIndex = PROCESS_STEPS.findIndex(s => s.id === stepId);
-    const currentIndex = PROCESS_STEPS.findIndex(s => s.id === currentStep);
+    const stepOrder = ['uploading', 'converting', 'scanning', 'extracting', 'review'];
+    const stepIndex = stepOrder.indexOf(stepId);
+    const currentIndex = stepOrder.indexOf(currentStep);
     
     if (currentStep === 'complete') return 'complete';
+    if (currentStep === 'idle') return 'pending';
     if (stepIndex < currentIndex) return 'complete';
     if (stepIndex === currentIndex) return 'active';
     return 'pending';
@@ -343,32 +566,37 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
           type="button" 
           variant="outline" 
           size="sm" 
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setOpen(true);
+            resetState();
+          }}
           className="gap-2"
         >
           <Upload className="w-4 h-4" />
-          Upload Document
+          Scan Policy Document
         </Button>
         {isMobileOrTablet && (
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm" 
-            onClick={() => cameraInputRef.current?.click()}
-            className="gap-2"
-          >
-            <Camera className="w-4 h-4" />
-            Scan
-          </Button>
+          <>
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={() => cameraInputRef.current?.click()}
+              className="gap-2"
+            >
+              <Camera className="w-4 h-4" />
+              Scan
+            </Button>
+          </>
         )}
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFileChange}
-          className="hidden"
-        />
       </div>
 
       <Dialog open={open} onOpenChange={(isOpen) => {
@@ -379,43 +607,43 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5" />
-              Upload Policy Document
+              Scan Policy Document
             </DialogTitle>
             <DialogDescription>
-              Upload a policy document to auto-extract details using OCR
+              Upload a policy document (PDF or image) to auto-extract details using AI
             </DialogDescription>
           </DialogHeader>
 
           {/* Progress Steps */}
           {currentStep !== 'idle' && (
             <div className="border rounded-lg p-4 bg-muted/30">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-1">
                 {PROCESS_STEPS.map((step, index) => {
                   const status = getStepStatus(step.id);
                   return (
                     <div key={step.id} className="flex items-center flex-1">
                       <div className="flex flex-col items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
                           status === 'complete' ? 'bg-green-500 text-white' :
                           status === 'active' ? 'bg-primary text-primary-foreground animate-pulse' :
                           'bg-muted text-muted-foreground'
                         }`}>
                           {status === 'complete' ? (
-                            <CheckCircle2 className="w-5 h-5" />
+                            <CheckCircle2 className="w-4 h-4" />
                           ) : status === 'active' ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <Circle className="w-4 h-4" />
+                            <Circle className="w-3 h-3" />
                           )}
                         </div>
-                        <span className={`text-xs mt-1 text-center ${
+                        <span className={`text-[10px] mt-1 text-center ${
                           status === 'active' ? 'text-primary font-medium' : 'text-muted-foreground'
                         }`}>
                           {step.label}
                         </span>
                       </div>
                       {index < PROCESS_STEPS.length - 1 && (
-                        <div className={`flex-1 h-0.5 mx-2 ${
+                        <div className={`flex-1 h-0.5 mx-1 ${
                           getStepStatus(PROCESS_STEPS[index + 1].id) !== 'pending' 
                             ? 'bg-green-500' 
                             : 'bg-muted'
@@ -426,10 +654,14 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
                 })}
               </div>
               
-              {(currentStep === 'uploading' || currentStep === 'scanning' || currentStep === 'extracting') && (
+              {['uploading', 'converting', 'scanning', 'extracting'].includes(currentStep) && (
                 <div className="mt-4 space-y-1">
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{currentStep === 'uploading' ? 'Uploading...' : currentStep === 'scanning' ? 'Scanning...' : 'Extracting...'}</span>
+                    <span>
+                      {currentStep === 'uploading' ? 'Uploading document...' : 
+                       currentStep === 'converting' ? 'Processing PDF...' :
+                       currentStep === 'scanning' ? 'Running OCR scan...' : 'Extracting details...'}
+                    </span>
                     <span>{progress}%</span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -443,13 +675,21 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
             </div>
           )}
 
+          {/* Error message */}
+          {errorMessage && (
+            <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           <div className="space-y-4">
             {currentStep === 'idle' && (
               <div className="border-2 border-dashed border-border rounded-lg p-8 text-center space-y-4">
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,.pdf"
+                  accept="image/*,.pdf,application/pdf"
                   onChange={handleFileChange}
                   className="hidden"
                 />
@@ -474,7 +714,7 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Supports JPG, PNG, PDF (max 10MB)
+                  Supports PDF, JPG, PNG, WEBP (max 15MB)
                 </p>
               </div>
             )}
@@ -485,10 +725,15 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
                   <img 
                     src={previewUrl} 
                     alt="Document preview" 
-                    className="w-full h-auto object-contain"
+                    className="w-full h-auto object-contain bg-muted/30"
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <Button size="sm" variant="secondary" className="gap-1">
+                    <Button 
+                      size="sm" 
+                      variant="secondary" 
+                      className="gap-1"
+                      onClick={() => window.open(previewUrl, '_blank')}
+                    >
                       <Eye className="w-3 h-3" />
                       Preview
                     </Button>
