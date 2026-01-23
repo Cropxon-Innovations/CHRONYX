@@ -29,10 +29,10 @@ import { ExplainParagraph } from "./ExplainParagraph";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import * as pdfjsLib from "pdfjs-dist";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-// Set worker source for PDF.js - use unpkg CDN which is more reliable
-const PDFJS_VERSION = "5.4.530";
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
+// Always use locally bundled pdf.js worker (prevents CDN/blocked dynamic imports)
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 type ReadingTheme = "day" | "sepia" | "night";
 type ReadingMode = "book" | "document";
@@ -48,10 +48,25 @@ interface BookReaderProps {
   onAddHighlight?: (page: number, text: string, note?: string) => void;
 }
 
-const THEME_STYLES: Record<ReadingTheme, { bg: string; text: string; label: string; icon: React.ElementType }> = {
-  day: { bg: "bg-white", text: "text-gray-900", label: "Day", icon: Sun },
-  sepia: { bg: "bg-amber-50", text: "text-amber-900", label: "Sepia", icon: Sunset },
-  night: { bg: "bg-gray-900", text: "text-gray-100", label: "Night", icon: Moon },
+const THEME_STYLES: Record<
+  ReadingTheme,
+  { bg: string; text: string; label: string; icon: React.ElementType; canvasFilter?: string }
+> = {
+  day: { bg: "bg-background", text: "text-foreground", label: "Day", icon: Sun },
+  sepia: {
+    bg: "bg-background",
+    text: "text-foreground",
+    label: "Sepia",
+    icon: Sunset,
+    canvasFilter: "sepia",
+  },
+  night: {
+    bg: "bg-background",
+    text: "text-foreground",
+    label: "Night",
+    icon: Moon,
+    canvasFilter: "invert hue-rotate-180",
+  },
 };
 
 export const BookReader = ({
@@ -169,7 +184,12 @@ export const BookReader = ({
 
     const loadPdf = async () => {
       try {
-        const loadingTask = pdfjsLib.getDocument(actualFileUrl);
+        // Use conservative settings to avoid CORS/range issues on storage URLs
+        const loadingTask = pdfjsLib.getDocument({
+          url: actualFileUrl,
+          disableRange: true,
+          disableStream: true,
+        } as any);
         const pdf = await loadingTask.promise;
         setPdfDoc(pdf);
         setTotalPages(pdf.numPages);
@@ -310,8 +330,7 @@ export const BookReader = ({
       {/* Top Bar */}
       <header
         className={cn(
-          "flex items-center justify-between gap-4 px-4 py-3 border-b transition-opacity duration-300",
-          theme === "night" ? "border-gray-800" : "border-gray-200",
+          "flex items-center justify-between gap-4 px-4 py-3 border-b border-border transition-opacity duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
       >
@@ -320,9 +339,6 @@ export const BookReader = ({
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className={cn(
-              theme === "night" && "hover:bg-gray-800 text-gray-100"
-            )}
           >
             <ChevronLeft className="w-4 h-4 mr-1" />
             Library
@@ -345,10 +361,7 @@ export const BookReader = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className={cn(
-                  "h-8 w-8",
-                  theme === "night" && "hover:bg-gray-800 text-gray-100"
-                )}
+                className="h-8 w-8"
               >
                 {mode === "book" ? <Book className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
               </Button>
@@ -384,10 +397,7 @@ export const BookReader = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className={cn(
-                  "h-8 w-8",
-                  theme === "night" && "hover:bg-gray-800 text-gray-100"
-                )}
+                className="h-8 w-8"
               >
                 <Settings className="w-4 h-4" />
               </Button>
@@ -445,10 +455,7 @@ export const BookReader = ({
             variant="ghost"
             size="icon"
             onClick={toggleFullscreen}
-            className={cn(
-              "h-8 w-8",
-              theme === "night" && "hover:bg-gray-800 text-gray-100"
-            )}
+            className="h-8 w-8"
           >
             {isFullscreen ? (
               <Minimize2 className="w-4 h-4" />
@@ -461,10 +468,7 @@ export const BookReader = ({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className={cn(
-              "h-8 w-8",
-              theme === "night" && "hover:bg-gray-800 text-gray-100"
-            )}
+            className="h-8 w-8"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -492,8 +496,7 @@ export const BookReader = ({
               ref={canvasRef}
               className={cn(
                 "max-w-full shadow-xl rounded",
-                theme === "sepia" && "sepia",
-                theme === "night" && "invert hue-rotate-180"
+                themeStyle.canvasFilter
               )}
             />
           </div>
