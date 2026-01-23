@@ -779,6 +779,48 @@ export type Database = {
           },
         ]
       }
+      content_shares: {
+        Row: {
+          access_count: number
+          content_id: string
+          content_type: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          recipient_email: string | null
+          share_method: string
+          share_token: string
+          user_id: string
+        }
+        Insert: {
+          access_count?: number
+          content_id: string
+          content_type: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          recipient_email?: string | null
+          share_method: string
+          share_token: string
+          user_id: string
+        }
+        Update: {
+          access_count?: number
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          recipient_email?: string | null
+          share_method?: string
+          share_token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       creator_payouts: {
         Row: {
           amount: number
@@ -3294,6 +3336,78 @@ export type Database = {
           },
         ]
       }
+      redemption_requests: {
+        Row: {
+          amount_rupees: number
+          created_at: string
+          id: string
+          notes: string | null
+          payment_details: Json | null
+          payment_method: string
+          points_to_redeem: number
+          processed_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount_rupees: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_details?: Json | null
+          payment_method: string
+          points_to_redeem: number
+          processed_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount_rupees?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_details?: Json | null
+          payment_method?: string
+          points_to_redeem?: number
+          processed_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rewards_transactions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          points: number
+          reference_id: string | null
+          reference_type: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          points: number
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       salary_records: {
         Row: {
           annual_amount: number | null
@@ -4666,6 +4780,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_rewards: {
+        Row: {
+          available_points: number | null
+          created_at: string
+          id: string
+          lifetime_earnings_rupees: number | null
+          redeemed_points: number
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          available_points?: number | null
+          created_at?: string
+          id?: string
+          lifetime_earnings_rupees?: number | null
+          redeemed_points?: number
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          available_points?: number | null
+          created_at?: string
+          id?: string
+          lifetime_earnings_rupees?: number | null
+          redeemed_points?: number
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vault_items: {
         Row: {
           category: string | null
@@ -4909,6 +5056,17 @@ export type Database = {
       }
     }
     Functions: {
+      add_reward_points: {
+        Args: {
+          p_description?: string
+          p_points: number
+          p_reference_id?: string
+          p_reference_type?: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       check_usage_limit: {
         Args: { p_plan_type: string; p_usage_type: string; p_user_id: string }
         Returns: Json
