@@ -29,10 +29,12 @@ import { ExplainParagraph } from "./ExplainParagraph";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import * as pdfjsLib from "pdfjs-dist";
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-// Always use locally bundled pdf.js worker (prevents CDN/blocked dynamic imports)
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+// Use legacy build which includes worker inline - most reliable for Vite
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 type ReadingTheme = "day" | "sepia" | "night";
 type ReadingMode = "book" | "document";

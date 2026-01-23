@@ -64,7 +64,7 @@ const Terms = () => {
           <section>
             <h2 className="text-xl font-medium text-foreground mb-3">5. Intellectual Property</h2>
             <p className="text-muted-foreground leading-relaxed">
-              The CHRONYX platform, including its design, features, and code, is owned by CROPXON. You retain ownership of all content you upload to the platform.
+              The CHRONYX platform, including its design, features, and code, is owned by ORIGINX LABS PVT. LTD. You retain ownership of all content you upload to the platform.
             </p>
           </section>
 
@@ -99,13 +99,13 @@ const Terms = () => {
           <section>
             <h2 className="text-xl font-medium text-foreground mb-3">10. Contact</h2>
             <p className="text-muted-foreground leading-relaxed">
-              For questions about these terms, contact us at legal@cropxon.com
+              For questions about these terms, contact us at legal@originxlabs.com
             </p>
           </section>
         </div>
 
         <div className="mt-12 pt-6 border-t border-border text-center">
-          <p className="text-xs text-muted-foreground/60">CHRONYX by CROPXON</p>
+          <p className="text-xs text-muted-foreground/60">CHRONYX by ORIGINX LABS</p>
         </div>
       </div>
     </motion.main>

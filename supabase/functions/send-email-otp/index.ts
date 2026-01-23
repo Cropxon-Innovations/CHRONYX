@@ -92,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
             <!-- Header -->
             <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 36px 32px; text-align: center;">
               <h1 style="color: white; margin: 0; font-size: 28px; letter-spacing: 0.2em; font-weight: 300;">CHRONYX</h1>
-              <p style="color: #64748b; font-size: 9px; letter-spacing: 0.15em; margin-top: 6px;">BY CROPXON</p>
+              <p style="color: #64748b; font-size: 9px; letter-spacing: 0.15em; margin-top: 6px;">BY ORIGINX LABS</p>
               <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
                 <p style="color: #94a3b8; font-size: 11px; letter-spacing: 0.2em; margin: 0;">${headerTitle}</p>
                 <p style="color: #64748b; font-size: 9px; letter-spacing: 0.1em; margin-top: 4px;">${headerSubtitle}</p>

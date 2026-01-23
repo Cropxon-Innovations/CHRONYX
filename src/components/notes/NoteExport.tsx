@@ -218,7 +218,7 @@ export const exportNoteToPDF = (note: NoteData, options: ExportOptions = {}) => 
     const footerY = pageHeight - 10;
     pdf.setFontSize(8);
     pdf.setTextColor(150, 150, 150);
-    pdf.text("Powered by Cropxon Innovations Pvt Ltd", margin, footerY);
+    pdf.text("Powered by Originx Labs Pvt Ltd", margin, footerY);
     pdf.text(`Page 1`, pageWidth - margin - 15, footerY);
   }
   
