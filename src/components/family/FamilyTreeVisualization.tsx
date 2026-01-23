@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { useMemo, useRef, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Plus, User, CheckCircle2, AlertCircle, Heart, ChevronDown } from "lucide-react";
+import { Plus, User, CheckCircle2, AlertCircle, Heart, ChevronDown, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import type { FamilyMember } from "@/pages/app/FamilyTree";
 
 interface FamilyTreeVisualizationProps {
@@ -263,24 +264,52 @@ export const FamilyTreeVisualization = ({
     };
   }, [members]);
 
-  // Pan handlers
+  // Drag position for visual line
+  const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
+  const [dragFromNode, setDragFromNode] = useState<{ x: number; y: number } | null>(null);
+
+  // Pan handlers (for canvas panning, not member dragging)
   const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    // Only pan if not dragging a member
+    if (!dragFromMember) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    }
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-  };
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isDragging && !dragFromMember) {
+      setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+    }
+    
+    // Update drag line position
+    if (dragFromMember && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setDragPosition({
+        x: (e.clientX - rect.left - pan.x) / zoom,
+        y: (e.clientY - rect.top - pan.y) / zoom,
+      });
+    }
+  }, [isDragging, dragFromMember, dragStart, pan, zoom]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+    
+    // Handle member linking
+    if (dragFromMember && dragOverMember && dragFromMember !== dragOverMember && onLinkMembers) {
+      onLinkMembers(dragFromMember, dragOverMember);
+      toast.success("Members linked! Edit relationship in detail panel.");
+    }
+    
+    setDragFromMember(null);
+    setDragOverMember(null);
+    setDragPosition(null);
+    setDragFromNode(null);
+  }, [dragFromMember, dragOverMember, onLinkMembers]);
 
   // Touch handlers for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
+    if (e.touches.length === 1 && !dragFromMember) {
       setIsDragging(true);
       setDragStart({ x: e.touches[0].clientX - pan.x, y: e.touches[0].clientY - pan.y });
     }
@@ -288,11 +317,23 @@ export const FamilyTreeVisualization = ({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || e.touches.length !== 1) return;
-    setPan({ x: e.touches[0].clientX - dragStart.x, y: e.touches[0].clientY - dragStart.y });
+    if (!dragFromMember) {
+      setPan({ x: e.touches[0].clientX - dragStart.x, y: e.touches[0].clientY - dragStart.y });
+    }
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
+    setDragFromMember(null);
+    setDragOverMember(null);
+    setDragPosition(null);
+    setDragFromNode(null);
+  };
+
+  // Start dragging a member to link
+  const handleMemberDragStart = (member: FamilyMember, x: number, y: number) => {
+    setDragFromMember(member.id);
+    setDragFromNode({ x: x + NODE_WIDTH / 2, y: y + NODE_HEIGHT / 2 });
   };
 
   // Render member node
@@ -300,29 +341,60 @@ export const FamilyTreeVisualization = ({
     const { member, x, y, type } = node;
     const isSelected = selectedMemberId === member.id;
     const isSelf = type === "self";
+    const isDragSource = dragFromMember === member.id;
+    const isDragTarget = dragOverMember === member.id;
 
     return (
       <foreignObject key={member.id} x={x} y={y} width={NODE_WIDTH} height={NODE_HEIGHT}>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
+          animate={{ 
+            opacity: isDragSource ? 0.6 : 1, 
+            scale: isDragTarget ? 1.05 : 1,
+            borderColor: isDragTarget ? "hsl(var(--primary))" : undefined,
+          }}
+          transition={{ duration: 0.2 }}
           className={cn(
-            "w-full h-full p-3 rounded-xl border-2 cursor-pointer transition-all",
+            "w-full h-full p-3 rounded-xl border-2 cursor-pointer transition-all relative",
             isSelf ? "bg-primary/5" : "bg-card",
             isSelected 
               ? "border-primary shadow-lg shadow-primary/20" 
               : isSelf 
                 ? "border-primary/50 hover:border-primary hover:shadow-md"
-                : "border-border hover:border-primary/50 hover:shadow-md"
+                : "border-border hover:border-primary/50 hover:shadow-md",
+            isDragTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background"
           )}
           onClick={() => onMemberClick(member)}
+          onMouseEnter={() => {
+            if (dragFromMember && dragFromMember !== member.id) {
+              setDragOverMember(member.id);
+            }
+          }}
+          onMouseLeave={() => {
+            if (dragOverMember === member.id) {
+              setDragOverMember(null);
+            }
+          }}
         >
+          {/* Drag handle indicator */}
+          {onLinkMembers && (
+            <div
+              className="absolute -right-2 -top-2 w-6 h-6 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center cursor-grab hover:bg-primary/20 hover:scale-110 transition-all"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                handleMemberDragStart(member, x, y);
+              }}
+              title="Drag to link with another member"
+            >
+              <Link2 className="w-3 h-3 text-primary" />
+            </div>
+          )}
+
           <div className="flex items-start gap-2">
             <div className={cn(
               "w-10 h-10 rounded-full flex items-center justify-center shrink-0 border-2",
-              member.gender === "Male" ? "bg-blue-100 text-blue-600 border-blue-200" :
-              member.gender === "Female" ? "bg-pink-100 text-pink-600 border-pink-200" :
+              member.gender === "Male" ? "bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800" :
+              member.gender === "Female" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800" :
               "bg-muted text-muted-foreground border-muted-foreground/20"
             )}>
               {member.photo_url ? (
@@ -341,7 +413,7 @@ export const FamilyTreeVisualization = ({
               variant={member.is_verified ? "default" : "outline"} 
               className={cn(
                 "text-[10px] h-5",
-                member.is_verified && "bg-green-500/10 text-green-600 border-green-500/20"
+                member.is_verified && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
               )}
             >
               {member.is_verified ? (
@@ -475,6 +547,31 @@ export const FamilyTreeVisualization = ({
             );
           })}
         </g>
+
+        {/* Drag-to-link visual line */}
+        {dragFromNode && dragPosition && (
+          <g>
+            <line
+              x1={dragFromNode.x}
+              y1={dragFromNode.y}
+              x2={dragPosition.x}
+              y2={dragPosition.y}
+              stroke="hsl(var(--primary))"
+              strokeWidth={3}
+              strokeDasharray="8,4"
+              strokeLinecap="round"
+              className="animate-pulse"
+            />
+            <circle
+              cx={dragPosition.x}
+              cy={dragPosition.y}
+              r={8}
+              fill="hsl(var(--primary) / 0.3)"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+            />
+          </g>
+        )}
 
         {/* Member nodes */}
         {allNodes.map(node => renderMemberNode(node))}
