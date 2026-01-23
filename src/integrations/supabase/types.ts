@@ -3899,6 +3899,44 @@ export type Database = {
           },
         ]
       }
+      study_chapters: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          subject_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          subject_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          subject_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_chapters_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "study_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_explanations: {
         Row: {
           chapter_index: number | null
@@ -4037,6 +4075,77 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      study_modules: {
+        Row: {
+          chapter_id: string
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_modules_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "study_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_subjects: {
+        Row: {
+          color: string
+          created_at: string
+          icon: string
+          id: string
+          is_default: boolean
+          name: string
+          sort_order: number
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          sort_order?: number
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       subject_colors: {
         Row: {
@@ -4267,6 +4376,7 @@ export type Database = {
       }
       syllabus_topics: {
         Row: {
+          chapter_id: string | null
           chapter_name: string
           completed_at: string | null
           created_at: string | null
@@ -4284,12 +4394,14 @@ export type Database = {
           source_page: string | null
           status: string | null
           subject: string
+          subject_id: string | null
           time_spent_minutes: number | null
           topic_name: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          chapter_id?: string | null
           chapter_name: string
           completed_at?: string | null
           created_at?: string | null
@@ -4307,12 +4419,14 @@ export type Database = {
           source_page?: string | null
           status?: string | null
           subject: string
+          subject_id?: string | null
           time_spent_minutes?: number | null
           topic_name: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          chapter_id?: string | null
           chapter_name?: string
           completed_at?: string | null
           created_at?: string | null
@@ -4330,6 +4444,7 @@ export type Database = {
           source_page?: string | null
           status?: string | null
           subject?: string
+          subject_id?: string | null
           time_spent_minutes?: number | null
           topic_name?: string
           updated_at?: string | null
@@ -4337,10 +4452,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "syllabus_topics_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "study_chapters"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "syllabus_topics_module_id_fkey"
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "syllabus_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "syllabus_topics_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "study_subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -4389,12 +4518,14 @@ export type Database = {
       }
       todos: {
         Row: {
+          category: string | null
           created_at: string | null
           date: string
           duration_hours: number | null
           end_time: string | null
           id: string
           is_recurring: boolean | null
+          linked_topic_id: string | null
           parent_recurring_id: string | null
           priority: string | null
           recurrence_days: number[] | null
@@ -4406,12 +4537,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           date?: string
           duration_hours?: number | null
           end_time?: string | null
           id?: string
           is_recurring?: boolean | null
+          linked_topic_id?: string | null
           parent_recurring_id?: string | null
           priority?: string | null
           recurrence_days?: number[] | null
@@ -4423,12 +4556,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           date?: string
           duration_hours?: number | null
           end_time?: string | null
           id?: string
           is_recurring?: boolean | null
+          linked_topic_id?: string | null
           parent_recurring_id?: string | null
           priority?: string | null
           recurrence_days?: number[] | null
@@ -4440,6 +4575,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "todos_linked_topic_id_fkey"
+            columns: ["linked_topic_id"]
+            isOneToOne: false
+            referencedRelation: "syllabus_topics"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "todos_parent_recurring_id_fkey"
             columns: ["parent_recurring_id"]
