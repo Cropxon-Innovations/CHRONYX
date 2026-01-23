@@ -38,6 +38,7 @@ import {
 import { ProfileCompletionIndicator } from "@/components/profile/ProfileCompletionIndicator";
 import { ImageCropper } from "@/components/profile/ImageCropper";
 import { AccountResetDialog } from "@/components/settings/AccountResetDialog";
+import { BioSettings } from "@/components/settings/BioSettings";
 
 interface Profile {
   id: string;
@@ -1015,6 +1016,9 @@ const Settings = () => {
           </div>
         </div>
       </section>
+
+      {/* Health Profile Section */}
+      <BioSettings />
 
       {/* Data Export Section */}
       <section className="bg-card border border-border rounded-lg p-6 space-y-4">

@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LibraryGrid, LibraryItem, LibraryFormat } from "@/components/study/LibraryGrid";
 import { AddBookDialog } from "@/components/study/AddBookDialog";
+import { EditBookDialog } from "@/components/study/EditBookDialog";
 import { BookReader } from "@/components/study/BookReader";
 import { HighlightsPanel } from "@/components/study/HighlightsPanel";
 import { VocabularyPanel } from "@/components/study/VocabularyPanel";
@@ -32,6 +33,11 @@ const Library = () => {
   const [activeTab, setActiveTab] = useState("my-library");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<LibraryItem | null>(null);
+  const [isEditSaving, setIsEditSaving] = useState(false);
   
   // Reader state
   const [selectedItem, setSelectedItem] = useState<LibraryItem | null>(null);
@@ -228,6 +234,65 @@ const Library = () => {
     }
   };
 
+  const handleEdit = (item: LibraryItem) => {
+    setEditingItem(item);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = async (data: {
+    id: string;
+    title: string;
+    author: string;
+    totalPages?: number;
+    notes?: string;
+    tags?: string[];
+    coverFile?: File;
+  }) => {
+    if (!user) return;
+    setIsEditSaving(true);
+
+    try {
+      let coverUrl = editingItem?.cover_url;
+
+      // Upload new cover if provided
+      if (data.coverFile) {
+        const coverPath = `${user.id}/covers/${Date.now()}_cover.jpg`;
+        const { error: coverError } = await supabase.storage
+          .from("library")
+          .upload(coverPath, data.coverFile);
+
+        if (!coverError) {
+          const { data: coverUrlData } = supabase.storage
+            .from("library")
+            .getPublicUrl(coverPath);
+          coverUrl = coverUrlData.publicUrl;
+        }
+      }
+
+      const { error } = await supabase
+        .from("library_items")
+        .update({
+          title: data.title,
+          author: data.author || null,
+          total_pages: data.totalPages || null,
+          cover_url: coverUrl,
+        })
+        .eq("id", data.id);
+
+      if (error) throw error;
+
+      toast({ title: "Book updated" });
+      setEditDialogOpen(false);
+      setEditingItem(null);
+      fetchLibraryItems();
+    } catch (error) {
+      console.error("Error updating book:", error);
+      toast({ title: "Error", description: "Failed to update book", variant: "destructive" });
+    } finally {
+      setIsEditSaving(false);
+    }
+  };
+
   const handleShare = (item: LibraryItem) => {
     setShareItem(item);
     setShareDialogOpen(true);
@@ -386,6 +451,7 @@ const Library = () => {
             isLoading={loading}
             onItemClick={handleItemClick}
             onUpload={() => setUploadDialogOpen(true)}
+            onEdit={handleEdit}
             onDelete={handleDelete}
             onShare={handleShare}
           />
@@ -462,6 +528,15 @@ const Library = () => {
         onOpenChange={setUploadDialogOpen}
         onUpload={handleUpload}
         isUploading={isUploading}
+      />
+
+      {/* Edit Book Dialog */}
+      <EditBookDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        item={editingItem}
+        onSave={handleEditSave}
+        isSaving={isEditSaving}
       />
 
       {/* Share/Publish Dialog */}

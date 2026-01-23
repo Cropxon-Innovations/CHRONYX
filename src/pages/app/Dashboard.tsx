@@ -13,6 +13,7 @@ import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import PendingYesterdayTasks from "@/components/dashboard/PendingYesterdayTasks";
 import { DailyReflection } from "@/components/notes/DailyReflection";
+import { BioCard } from "@/components/dashboard/BioCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -131,6 +132,9 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in px-1 sm:px-0">
+      {/* Bio Card - Health Profile */}
+      <BioCard />
+      
       {/* Daily Reflection Widget */}
       <DailyReflection />
 

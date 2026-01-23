@@ -293,12 +293,12 @@ export const LibraryGrid = ({
                 </div>
 
                 {/* Hover overlay with actions */}
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-background/95 via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center pb-5">
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-foreground/90 via-foreground/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center pb-5">
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="h-9 px-4 text-xs rounded-full shadow-lg bg-background/95 backdrop-blur-sm hover:bg-background"
+                      className="h-9 px-4 text-xs rounded-full shadow-lg bg-background text-foreground hover:bg-background/90"
                       onClick={() => onItemClick(item)}
                     >
                       Read Now
@@ -308,30 +308,30 @@ export const LibraryGrid = ({
                         <Button
                           variant="secondary"
                           size="icon"
-                          className="h-9 w-9 rounded-full shadow-lg bg-background/95 backdrop-blur-sm hover:bg-background"
+                          className="h-9 w-9 rounded-full shadow-lg bg-background text-foreground hover:bg-background/90"
                         >
                           <MoreVertical className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-popover w-44">
-                        <DropdownMenuItem onClick={() => onEdit?.(item)}>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem onClick={() => onEdit?.(item)} className="text-foreground">
                           <Edit2 className="w-4 h-4 mr-2" />
                           Edit Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onDownload?.(item)}>
+                        <DropdownMenuItem onClick={() => onDownload?.(item)} className="text-foreground">
                           <Download className="w-4 h-4 mr-2" />
                           Download
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onShare?.(item)}>
+                        <DropdownMenuItem onClick={() => onShare?.(item)} className="text-foreground">
                           <Share2 className="w-4 h-4 mr-2" />
                           Share
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onLock?.(item)}>
+                        <DropdownMenuItem onClick={() => onLock?.(item)} className="text-foreground">
                           <Lock className="w-4 h-4 mr-2" />
                           {item.is_locked ? "Unlock" : "Lock"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onArchive?.(item)}>
+                        <DropdownMenuItem onClick={() => onArchive?.(item)} className="text-foreground">
                           <Archive className="w-4 h-4 mr-2" />
                           {item.is_archived ? "Restore" : "Archive"}
                         </DropdownMenuItem>

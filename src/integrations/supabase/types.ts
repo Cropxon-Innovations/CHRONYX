@@ -3093,11 +3093,14 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio_updated_at: string | null
           birth_date: string | null
+          blood_group: string | null
           created_at: string | null
           display_name: string | null
           email: string | null
           email_verified: boolean | null
+          height_cm: number | null
           id: string
           phone_number: string | null
           phone_verified: boolean | null
@@ -3107,14 +3110,18 @@ export type Database = {
           target_age: number | null
           updated_at: string | null
           username: string | null
+          weight_kg: number | null
         }
         Insert: {
           avatar_url?: string | null
+          bio_updated_at?: string | null
           birth_date?: string | null
+          blood_group?: string | null
           created_at?: string | null
           display_name?: string | null
           email?: string | null
           email_verified?: boolean | null
+          height_cm?: number | null
           id: string
           phone_number?: string | null
           phone_verified?: boolean | null
@@ -3124,14 +3131,18 @@ export type Database = {
           target_age?: number | null
           updated_at?: string | null
           username?: string | null
+          weight_kg?: number | null
         }
         Update: {
           avatar_url?: string | null
+          bio_updated_at?: string | null
           birth_date?: string | null
+          blood_group?: string | null
           created_at?: string | null
           display_name?: string | null
           email?: string | null
           email_verified?: boolean | null
+          height_cm?: number | null
           id?: string
           phone_number?: string | null
           phone_verified?: boolean | null
@@ -3141,6 +3152,7 @@ export type Database = {
           target_age?: number | null
           updated_at?: string | null
           username?: string | null
+          weight_kg?: number | null
         }
         Relationships: []
       }
@@ -4380,12 +4392,14 @@ export type Database = {
           created_at: string | null
           date: string
           duration_hours: number | null
+          end_time: string | null
           id: string
           is_recurring: boolean | null
           parent_recurring_id: string | null
           priority: string | null
           recurrence_days: number[] | null
           recurrence_type: string | null
+          start_time: string | null
           status: string
           text: string
           updated_at: string | null
@@ -4395,12 +4409,14 @@ export type Database = {
           created_at?: string | null
           date?: string
           duration_hours?: number | null
+          end_time?: string | null
           id?: string
           is_recurring?: boolean | null
           parent_recurring_id?: string | null
           priority?: string | null
           recurrence_days?: number[] | null
           recurrence_type?: string | null
+          start_time?: string | null
           status?: string
           text: string
           updated_at?: string | null
@@ -4410,12 +4426,14 @@ export type Database = {
           created_at?: string | null
           date?: string
           duration_hours?: number | null
+          end_time?: string | null
           id?: string
           is_recurring?: boolean | null
           parent_recurring_id?: string | null
           priority?: string | null
           recurrence_days?: number[] | null
           recurrence_type?: string | null
+          start_time?: string | null
           status?: string
           text?: string
           updated_at?: string | null
