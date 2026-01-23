@@ -1218,17 +1218,15 @@ export function TaxWizard() {
                     <AlertDescription className="text-xs">
                       This is a computer-generated tax estimate for informational purposes only. It does not constitute tax advice. 
                       Please consult a qualified Chartered Accountant or tax professional for accurate tax filing. 
-                      CHRONYX and Cropxon Innovations Pvt. Ltd. are not responsible for any discrepancies.
+                      CHRONYX and ORIGINX LABS PVT. LTD. are not responsible for any discrepancies.
                     </AlertDescription>
                   </Alert>
 
                   {/* Footer */}
                   <div className="text-center pt-4 border-t text-xs text-muted-foreground">
                     <p className="font-semibold text-foreground">Prepared by CHRONYX</p>
-                    <p>A product of Cropxon Innovations Pvt. Ltd.</p>
+                    <p>A product of ORIGINX LABS PVT. LTD.</p>
                     <p className="mt-2">Digitally generated • Signed electronically</p>
-                    <p className="font-medium mt-1">Abhishek Panda</p>
-                    <p>CEO & Director</p>
                   </div>
                 </CardContent>
                 <CardFooter className="flex gap-2 bg-muted/30 border-t">

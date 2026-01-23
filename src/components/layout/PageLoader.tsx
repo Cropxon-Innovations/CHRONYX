@@ -69,7 +69,7 @@ const PageLoader = () => {
             CHRONYX
           </h1>
           <span className="text-[8px] sm:text-[9px] tracking-[0.12em] text-muted-foreground mt-0.5">
-            BY CROPXON
+            BY ORIGINX LABS
           </span>
         </div>
         

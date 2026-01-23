@@ -809,7 +809,7 @@ const Landing = () => {
       <span className="sr-only">
         CHRONYX is a private personal system of record for managing your life - tasks, finances, tax calculations, 
         insurance policies, and memories. Indian Income Tax Calculator with Old vs New Regime comparison. 
-        Built by Cropxon Innovations.
+        Built by ORIGINX LABS PVT. LTD.
       </span>
 
       {/* Apple-style background effects */}
@@ -1304,7 +1304,7 @@ const Landing = () => {
                   <span className="text-xl font-extralight tracking-[0.15em]">CHRONYX</span>
                 </div>
                 <p className="text-sm text-muted-foreground font-light">A quiet space for your life.</p>
-                <p className="text-xs text-muted-foreground/60 mt-3">by Cropxon Innovations</p>
+                <p className="text-xs text-muted-foreground/60 mt-3">by ORIGINX LABS</p>
               </div>
 
               {/* Product */}
@@ -1334,14 +1334,14 @@ const Landing = () => {
                   <li><Link to="/contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
                   <li><a href="mailto:Office@getchronyx.com" className="hover:text-foreground transition-colors">Office@getchronyx.com</a></li>
                   <li><a href="mailto:support@getchronyx.com" className="hover:text-foreground transition-colors">support@getchronyx.com</a></li>
-                  <li><a href="https://www.cropxon.com" target="_blank" rel="noopener" className="hover:text-foreground transition-colors">cropxon.com</a></li>
+                  <li><a href="https://www.originxlabs.com" target="_blank" rel="noopener" className="hover:text-foreground transition-colors">originxlabs.com</a></li>
                 </ul>
               </div>
             </div>
 
             <div className="pt-8 border-t border-border/20 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-xs text-muted-foreground/60">
-                © 2024-2026 Cropxon Innovations Pvt. Ltd. All rights reserved.
+                © 2024-2026 ORIGINX LABS PVT. LTD. All rights reserved.
               </p>
               <p className="text-xs text-muted-foreground/40 tracking-wider">Private · Quiet · Timeless</p>
             </div>

@@ -36,7 +36,7 @@ export function TaxLegalDisclaimer({ variant = "minimal" }: TaxLegalDisclaimerPr
         <div className="flex items-center gap-2 mt-3 pt-2 border-t border-amber-500/20">
           <AlertTriangle className="w-3 h-3" />
           <span className="text-[10px]">
-            © {new Date().getFullYear()} Cropxon Innovations Pvt. Ltd. • India-compliant
+            © {new Date().getFullYear()} ORIGINX LABS PVT. LTD. • India-compliant
           </span>
         </div>
       </AlertDescription>

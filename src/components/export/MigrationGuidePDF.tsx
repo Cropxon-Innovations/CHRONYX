@@ -102,7 +102,7 @@ const MigrationGuidePDF = () => {
       doc.text("RLS Policies | Enum References | Database Functions", pageWidth / 2, 153, { align: "center" });
       
       doc.setFontSize(8);
-      doc.text("CropXon Innovations Pvt Ltd", pageWidth / 2, pageHeight - 30, { align: "center" });
+      doc.text("ORIGINX LABS PVT. LTD.", pageWidth / 2, pageHeight - 30, { align: "center" });
 
       // ========== TABLE OF CONTENTS ==========
       doc.addPage();

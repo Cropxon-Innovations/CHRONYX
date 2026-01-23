@@ -173,10 +173,10 @@ const handler = async (req: Request): Promise<Response> => {
               </p>
               <div style="padding-top: 12px; border-top: 1px solid #334155;">
                 <p style="margin: 0 0 2px; font-size: 10px; color: #475569; font-weight: 500;">
-                  CHRONYX by CROPXON INNOVATIONS PVT. LTD.
+                  CHRONYX by ORIGINX LABS PVT. LTD.
                 </p>
                 <p style="margin: 0; font-size: 9px; color: #374151;">
-                  <a href="https://www.cropxon.com" style="color: #475569; text-decoration: underline;">www.cropxon.com</a>
+                  <a href="https://www.originxlabs.com" style="color: #475569; text-decoration: underline;">www.originxlabs.com</a>
                 </p>
               </div>
             </div>

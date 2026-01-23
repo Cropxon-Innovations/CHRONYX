@@ -156,7 +156,7 @@ export const PDFExportDialog = ({
         <div className="rounded-lg bg-muted/50 p-3 border border-border/50">
           <p className="text-xs text-muted-foreground">
             <strong>Your document, your control.</strong> PDFs are generated
-            locally and include CHRONYX branding by Cropxon Innovations Pvt. Ltd.
+            locally and include CHRONYX branding by ORIGINX LABS PVT. LTD.
           </p>
         </div>
 
