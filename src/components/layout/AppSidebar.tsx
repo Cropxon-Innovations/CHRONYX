@@ -29,6 +29,7 @@ import {
   ChevronRight,
   Search,
   Mail,
+  Zap,
   Phone,
   CheckCircle2,
   AlertCircle,
@@ -94,12 +95,13 @@ const navSections: NavSection[] = [
   {
     title: "Finance",
     items: [
+      { path: "/app/financeflow", label: "FinanceFlow", icon: Zap, badge: "NEW" },
       { path: "/app/expenses", label: "Expenses", icon: Receipt },
       { path: "/app/income", label: "Income", icon: TrendingUp },
       { path: "/app/reports", label: "Reports & Budget", icon: PieChart },
       { path: "/app/loans", label: "Loans & EMI", icon: Wallet },
       { path: "/app/insurance", label: "Insurance", icon: Heart },
-      { path: "/app/tax", label: "Tax & FY", icon: FileText, badge: "NEW" },
+      { path: "/app/tax", label: "Tax & FY", icon: FileText },
     ],
   },
   {
