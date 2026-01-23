@@ -1,6 +1,7 @@
 {
   "name": "CHRONYX — Personal Life Management App",
   "short_name": "CHRONYX",
+  "version": "1.0.1",
   "description": "Your private, secure personal space for everything. Manage tasks, notes, finances, and memories in one encrypted vault. Built by ORIGINX LABS PVT. LTD.",
   "start_url": "/",
   "display": "standalone",
