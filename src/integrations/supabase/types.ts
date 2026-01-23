@@ -4752,7 +4752,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      study_leaderboard: {
+        Row: {
+          avatar_url: string | null
+          completed_topics: number | null
+          current_streak: number | null
+          display_name: string | null
+          study_hours: number | null
+          total_points: number | null
+          user_id: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_usage_limit: {

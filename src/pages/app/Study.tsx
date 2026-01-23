@@ -19,7 +19,10 @@ import { StudyGoals } from "@/components/study/StudyGoals";
 import { VocabularyScreen } from "@/components/study/VocabularyScreen";
 import { StudyAnalytics } from "@/components/study/StudyAnalytics";
 import { StudyProgressTracker } from "@/components/study/StudyProgressTracker";
-import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare } from "lucide-react";
+import { StudyLeaderboard } from "@/components/study/StudyLeaderboard";
+import { SpacedRepetitionReminders } from "@/components/study/SpacedRepetitionReminders";
+import { SyllabusAIParser } from "@/components/study/SyllabusAIParser";
+import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import {
   AlertDialog,
@@ -41,7 +44,7 @@ const Study = () => {
   const { logActivity } = useActivityLog();
   const [searchParams] = useSearchParams();
   
-  const initialTab = searchParams.get('tab') || "timeline";
+  const initialTab = searchParams.get('tab') || "progress";
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showTimer, setShowTimer] = useState(false);
   const [showAddBook, setShowAddBook] = useState(false);
@@ -352,13 +355,17 @@ const Study = () => {
       {/* Tabs - Calm, minimal */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-muted/30 border border-border p-1 h-auto flex-wrap">
-          <TabsTrigger value="timeline" className="data-[state=active]:bg-card gap-2">
-            <Clock className="w-4 h-4" />
-            <span className="hidden sm:inline">Timeline</span>
-          </TabsTrigger>
           <TabsTrigger value="progress" className="data-[state=active]:bg-card gap-2">
             <CheckSquare className="w-4 h-4" />
             <span className="hidden sm:inline">Progress</span>
+          </TabsTrigger>
+          <TabsTrigger value="reviews" className="data-[state=active]:bg-card gap-2">
+            <Brain className="w-4 h-4" />
+            <span className="hidden sm:inline">Reviews</span>
+          </TabsTrigger>
+          <TabsTrigger value="leaderboard" className="data-[state=active]:bg-card gap-2">
+            <Trophy className="w-4 h-4" />
+            <span className="hidden sm:inline">Leaderboard</span>
           </TabsTrigger>
           <TabsTrigger value="library" className="data-[state=active]:bg-card gap-2">
             <BookOpen className="w-4 h-4" />
@@ -367,10 +374,6 @@ const Study = () => {
           <TabsTrigger value="vocabulary" className="data-[state=active]:bg-card gap-2">
             <BookMarked className="w-4 h-4" />
             <span className="hidden sm:inline">Vocabulary</span>
-          </TabsTrigger>
-          <TabsTrigger value="goals" className="data-[state=active]:bg-card gap-2">
-            <Target className="w-4 h-4" />
-            <span className="hidden sm:inline">Goals</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="data-[state=active]:bg-card gap-2">
             <BarChart3 className="w-4 h-4" />
@@ -383,7 +386,20 @@ const Study = () => {
         </TabsContent>
 
         <TabsContent value="progress">
-          <StudyProgressTracker />
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <SyllabusAIParser onSuccess={() => queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] })} />
+            </div>
+            <StudyProgressTracker />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="reviews">
+          <SpacedRepetitionReminders />
+        </TabsContent>
+
+        <TabsContent value="leaderboard">
+          <StudyLeaderboard />
         </TabsContent>
 
         <TabsContent value="library">
