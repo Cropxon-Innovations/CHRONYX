@@ -122,21 +122,3 @@ verify_jwt = false
 
 [functions.send-financial-report]
 verify_jwt = false
-
-[functions.ai-categorize]
-verify_jwt = false
-
-[functions.social-sync]
-verify_jwt = false
-
-[functions.social-publish]
-verify_jwt = false
-
-[functions.parse-syllabus]
-verify_jwt = false
-
-[functions.analyze-note]
-verify_jwt = false
-
-[functions.get-google-client-id]
-verify_jwt = false
