@@ -56,22 +56,22 @@ const DATA_CATEGORIES: DataCategory[] = [
   {
     id: "tasks",
     label: "Tasks & Activity",
-    description: "Todos, achievements, activity logs",
+    description: "Todos, achievements, activity logs, daily badges",
     tables: ["todos", "achievements", "activity_logs", "daily_badges"],
     icon: "✅",
   },
   {
     id: "study",
     label: "Study Data",
-    description: "Study logs, goals, notes, syllabus",
-    tables: ["study_logs", "study_goals", "notes", "syllabus_documents", "syllabus_topics", "syllabus_modules"],
+    description: "Study logs, goals, notes, syllabus, library",
+    tables: ["study_logs", "study_goals", "notes", "syllabus_documents", "syllabus_topics", "syllabus_modules", "library_items"],
     icon: "📚",
   },
   {
     id: "documents",
     label: "Documents",
-    description: "Uploaded documents, education records",
-    tables: ["documents", "education_records", "education_documents"],
+    description: "Uploaded documents, education records, work history",
+    tables: ["documents", "education_records", "education_documents", "work_history"],
     icon: "📄",
   },
   {
@@ -82,11 +82,32 @@ const DATA_CATEGORIES: DataCategory[] = [
     icon: "📸",
   },
   {
+    id: "family",
+    label: "Family Tree",
+    description: "Family members, relationships, identity documents",
+    tables: ["family_members", "family_documents", "family_audit_log", "family_tree_exports"],
+    icon: "👨‍👩‍👧‍👦",
+  },
+  {
     id: "social",
     label: "Social Profiles",
-    description: "Connected social accounts",
-    tables: ["social_profiles"],
+    description: "Connected social accounts, posts",
+    tables: ["social_profiles", "social_posts"],
     icon: "🔗",
+  },
+  {
+    id: "vault",
+    label: "Vault & Passwords",
+    description: "Stored passwords and secure notes",
+    tables: ["vault_items"],
+    icon: "🔐",
+  },
+  {
+    id: "books",
+    label: "eAuthor Books",
+    description: "Your authored books, chapters, assets",
+    tables: ["books", "book_chapters", "book_sections", "book_assets", "book_comments"],
+    icon: "📖",
   },
 ];
 

@@ -23,6 +23,7 @@ import DayTimeline from "@/components/todos/DayTimeline";
 import WeeklyTimeBudget from "@/components/todos/WeeklyTimeBudget";
 import ProductivityHistory from "@/components/todos/ProductivityHistory";
 import DailySchedulePDF from "@/components/todos/DailySchedulePDF";
+import { EditTodoDialog } from "@/components/todos/EditTodoDialog";
 
 type ViewMode = "day" | "week" | "month" | "history" | "analytics";
 type TodoStatus = "pending" | "done" | "skipped";
@@ -39,6 +40,8 @@ interface Todo {
   recurrence_type: string | null;
   recurrence_days: number[] | null;
   duration_hours?: number | null;
+  start_time?: string | null;
+  end_time?: string | null;
 }
 
 const statusConfig = {
@@ -66,6 +69,8 @@ const Todos = () => {
   const [newTodoDuration, setNewTodoDuration] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("created");
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
@@ -105,6 +110,8 @@ const Todos = () => {
         recurrence_type: t.recurrence_type,
         recurrence_days: t.recurrence_days,
         duration_hours: t.duration_hours,
+        start_time: t.start_time,
+        end_time: t.end_time,
       })));
     }
     setLoading(false);
@@ -436,8 +443,16 @@ const Todos = () => {
   };
 
   const startEditing = (todo: Todo) => {
-    setEditingId(todo.id);
-    setEditText(todo.text);
+    setSelectedTodo(todo);
+    setEditDialogOpen(true);
+  };
+
+  const handleTodoUpdate = (updatedTodo: Todo) => {
+    setAllTodos(allTodos.map(t => t.id === updatedTodo.id ? updatedTodo : t));
+  };
+
+  const handleTodoDelete = (id: string) => {
+    deleteTodo(id);
   };
 
   const groupedTodos = todos.reduce((acc, todo) => {
@@ -851,6 +866,17 @@ const Todos = () => {
                       {todo.is_recurring && (
                         <Repeat className="w-3 h-3 text-muted-foreground shrink-0" />
                       )}
+                      {(todo.duration_hours || todo.start_time) && (
+                        <Badge variant="secondary" className="text-[10px] shrink-0 gap-1">
+                          <Clock className="w-2.5 h-2.5" />
+                          {todo.start_time && todo.end_time 
+                            ? `${todo.start_time}-${todo.end_time}` 
+                            : todo.duration_hours 
+                              ? `${todo.duration_hours}h`
+                              : ""
+                          }
+                        </Badge>
+                      )}
                     </div>
                   )}
                 </div>
@@ -863,16 +889,14 @@ const Todos = () => {
                     {statusConfig[todo.status].label}
                   </Badge>
                   
-                  {editingId !== todo.id && (
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEditing(todo)}>
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => deleteTodo(todo.id)}>
-                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEditing(todo)}>
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => deleteTodo(todo.id)}>
+                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))
@@ -1035,6 +1059,15 @@ const Todos = () => {
           Add Task for {format(selectedDate, "MMM d")}
         </Button>
       )}
+
+      {/* Edit Todo Dialog */}
+      <EditTodoDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        todo={selectedTodo}
+        onUpdate={handleTodoUpdate}
+        onDelete={handleTodoDelete}
+      />
     </div>
   );
 };
