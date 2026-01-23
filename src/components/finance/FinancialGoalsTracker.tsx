@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,10 +33,12 @@ import {
   Loader2,
   Sparkles,
   Flag,
-  Clock
+  Clock,
+  PartyPopper
 } from "lucide-react";
 import { format, differenceInDays, addMonths } from "date-fns";
 import { cn } from "@/lib/utils";
+import confetti from "canvas-confetti";
 
 interface FinancialGoal {
   id: string;
@@ -221,7 +223,9 @@ export const FinancialGoalsTracker = () => {
       const goal = goals.find(g => g.id === goalId);
       if (!goal) throw new Error("Goal not found");
 
+      const oldProgress = (goal.current_amount / goal.target_amount) * 100;
       const newAmount = goal.current_amount + amount;
+      const newProgress = (newAmount / goal.target_amount) * 100;
       const isComplete = newAmount >= goal.target_amount;
 
       await supabase
@@ -235,21 +239,81 @@ export const FinancialGoalsTracker = () => {
 
       // Check and update milestones
       const goalMilestones = milestones.filter(m => m.goal_id === goalId && !m.achieved_at);
-      const progress = (newAmount / goal.target_amount) * 100;
 
       for (const milestone of goalMilestones) {
-        if (progress >= milestone.target_percentage) {
+        if (newProgress >= milestone.target_percentage) {
           await supabase
             .from("goal_milestones")
             .update({ achieved_at: new Date().toISOString() })
             .eq("id", milestone.id);
         }
       }
+
+      // Return milestone info for celebration
+      return { oldProgress, newProgress, goalTitle: goal.title };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["financial-goals"] });
       queryClient.invalidateQueries({ queryKey: ["goal-milestones"] });
-      toast.success("Contribution added!");
+      
+      const { oldProgress, newProgress, goalTitle } = data;
+      
+      // Trigger confetti for milestone achievements
+      const milestonesHit = [25, 50, 75, 100].filter(
+        m => oldProgress < m && newProgress >= m
+      );
+      
+      if (milestonesHit.length > 0) {
+        const highestMilestone = Math.max(...milestonesHit);
+        
+        // Celebration confetti
+        const duration = highestMilestone === 100 ? 4000 : 2000;
+        const particleCount = highestMilestone === 100 ? 200 : 100;
+        
+        const colors = highestMilestone === 100 
+          ? ['#FFD700', '#FFA500', '#FF6347', '#32CD32', '#00CED1']
+          : ['#22c55e', '#3b82f6', '#8b5cf6'];
+
+        confetti({
+          particleCount,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors,
+        });
+
+        if (highestMilestone === 100) {
+          // Extra celebration for completion
+          setTimeout(() => {
+            confetti({
+              particleCount: 50,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0 },
+              colors,
+            });
+          }, 250);
+          setTimeout(() => {
+            confetti({
+              particleCount: 50,
+              angle: 120,
+              spread: 55,
+              origin: { x: 1 },
+              colors,
+            });
+          }, 400);
+          
+          toast.success(`🎉 Congratulations! You've completed "${goalTitle}"!`, {
+            duration: 5000,
+          });
+        } else {
+          toast.success(`🎯 ${highestMilestone}% milestone reached for "${goalTitle}"!`, {
+            duration: 3000,
+          });
+        }
+      } else {
+        toast.success("Contribution added!");
+      }
+      
       setShowContributeDialog(null);
       setContributionAmount("");
     },
