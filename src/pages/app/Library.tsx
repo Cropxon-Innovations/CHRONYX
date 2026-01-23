@@ -247,27 +247,14 @@ const Library = () => {
     notes?: string;
     tags?: string[];
     coverFile?: File;
+    coverUrl?: string;
   }) => {
     if (!user) return;
     setIsEditSaving(true);
 
     try {
-      let coverUrl = editingItem?.cover_url;
-
-      // Upload new cover if provided
-      if (data.coverFile) {
-        const coverPath = `${user.id}/covers/${Date.now()}_cover.jpg`;
-        const { error: coverError } = await supabase.storage
-          .from("library")
-          .upload(coverPath, data.coverFile);
-
-        if (!coverError) {
-          const { data: coverUrlData } = supabase.storage
-            .from("library")
-            .getPublicUrl(coverPath);
-          coverUrl = coverUrlData.publicUrl;
-        }
-      }
+      // Use coverUrl from dialog (already uploaded there) or existing
+      const coverUrl = data.coverUrl || editingItem?.cover_url;
 
       const { error } = await supabase
         .from("library_items")
@@ -275,6 +262,8 @@ const Library = () => {
           title: data.title,
           author: data.author || null,
           total_pages: data.totalPages || null,
+          notes: data.notes || null,
+          tags: data.tags || null,
           cover_url: coverUrl,
         })
         .eq("id", data.id);

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Edit2, Upload, X, ImageIcon } from "lucide-react";
+import { Edit2, Upload, X, ImageIcon, FileText, Loader2 } from "lucide-react";
 import { LibraryItem } from "./LibraryGrid";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface EditBookDialogProps {
   open: boolean;
@@ -27,9 +31,30 @@ interface EditBookDialogProps {
     notes?: string;
     tags?: string[];
     coverFile?: File;
+    coverUrl?: string;
   }) => void;
   isSaving?: boolean;
 }
+
+// Helper to extract metadata from PDF
+const extractPdfMetadata = async (url: string): Promise<{ pages?: number; author?: string }> => {
+  try {
+    const pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    
+    const loadingTask = pdfjsLib.getDocument(url);
+    const pdf = await loadingTask.promise;
+    const metadata = await pdf.getMetadata();
+    
+    return {
+      pages: pdf.numPages,
+      author: (metadata?.info as any)?.Author || undefined,
+    };
+  } catch (error) {
+    console.error("Error extracting PDF metadata:", error);
+    return {};
+  }
+};
 
 export const EditBookDialog = ({
   open,
@@ -38,6 +63,7 @@ export const EditBookDialog = ({
   onSave,
   isSaving,
 }: EditBookDialogProps) => {
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [totalPages, setTotalPages] = useState("");
@@ -45,31 +71,74 @@ export const EditBookDialog = ({
   const [tags, setTags] = useState("");
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [isExtractingMeta, setIsExtractingMeta] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const NOTES_LIMIT = 200;
+
+  // Fetch full item data from database when dialog opens
   useEffect(() => {
-    if (item) {
+    if (item && open) {
+      fetchFullItemData();
+    }
+  }, [item, open]);
+
+  const fetchFullItemData = async () => {
+    if (!item?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("library_items")
+        .select("*")
+        .eq("id", item.id)
+        .single();
+      
+      if (error) throw error;
+      
+      setTitle(data.title || "");
+      setAuthor(data.author || "");
+      setTotalPages(data.total_pages?.toString() || "");
+      setNotes(data.notes || "");
+      setTags(data.tags?.join(", ") || "");
+      setCoverPreview(data.cover_url || null);
+      setCoverFile(null);
+      
+      // Auto-fetch metadata if pages/author missing and it's a PDF
+      if ((!data.total_pages || !data.author) && data.file_url && data.format === 'pdf') {
+        setIsExtractingMeta(true);
+        const metadata = await extractPdfMetadata(data.file_url);
+        
+        if (metadata.pages && !data.total_pages) {
+          setTotalPages(metadata.pages.toString());
+        }
+        if (metadata.author && !data.author) {
+          setAuthor(metadata.author);
+        }
+        setIsExtractingMeta(false);
+      }
+    } catch (error) {
+      console.error("Error fetching item data:", error);
+      // Fall back to passed item data
       setTitle(item.title || "");
       setAuthor(item.author || "");
       setTotalPages(item.total_pages?.toString() || "");
       setNotes((item as any).notes || "");
       setTags((item as any).tags?.join(", ") || "");
       setCoverPreview(item.cover_url || null);
-      setCoverFile(null);
     }
-  }, [item]);
+  };
 
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
       return;
     }
 
@@ -89,18 +158,47 @@ export const EditBookDialog = ({
     }
   };
 
-  const handleSubmit = () => {
-    if (!item || !title.trim()) return;
+  const handleSubmit = async () => {
+    if (!item || !title.trim() || !user) return;
+
+    let finalCoverUrl = coverPreview;
+
+    // If a new cover file was selected, upload it
+    if (coverFile) {
+      try {
+        const coverPath = `${user.id}/covers/${Date.now()}_cover.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from("library")
+          .upload(coverPath, coverFile);
+
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage
+            .from("library")
+            .getPublicUrl(coverPath);
+          finalCoverUrl = urlData.publicUrl;
+        }
+      } catch (error) {
+        console.error("Cover upload error:", error);
+      }
+    }
 
     onSave({
       id: item.id,
       title: title.trim(),
       author: author.trim(),
       totalPages: totalPages ? parseInt(totalPages) : undefined,
-      notes: notes.trim() || undefined,
+      notes: notes.trim().slice(0, NOTES_LIMIT) || undefined,
       tags: tags ? tags.split(",").map(t => t.trim()).filter(Boolean) : undefined,
       coverFile: coverFile || undefined,
+      coverUrl: finalCoverUrl || undefined,
     });
+  };
+
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (value.length <= NOTES_LIMIT) {
+      setNotes(value);
+    }
   };
 
   return (
@@ -121,7 +219,6 @@ export const EditBookDialog = ({
           <div className="space-y-3">
             <Label>Book Cover</Label>
             <div className="flex items-start gap-4">
-              {/* Cover Preview */}
               <div 
                 className={cn(
                   "relative w-24 h-32 rounded-lg border-2 border-dashed border-border overflow-hidden",
@@ -194,7 +291,15 @@ export const EditBookDialog = ({
 
           {/* Author */}
           <div className="space-y-2">
-            <Label htmlFor="edit-author">Author</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="edit-author">Author</Label>
+              {isExtractingMeta && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Auto-detecting...
+                </span>
+              )}
+            </div>
             <Input
               id="edit-author"
               value={author}
@@ -206,13 +311,21 @@ export const EditBookDialog = ({
 
           {/* Total Pages */}
           <div className="space-y-2">
-            <Label htmlFor="edit-pages">Total Pages</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="edit-pages">Total Pages</Label>
+              {isExtractingMeta && (
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <FileText className="w-3 h-3" />
+                  Counting...
+                </span>
+              )}
+            </div>
             <Input
               id="edit-pages"
               type="number"
               value={totalPages}
               onChange={(e) => setTotalPages(e.target.value)}
-              placeholder="Optional"
+              placeholder="Auto-detected from PDF"
               className="bg-card"
             />
           </div>
@@ -224,20 +337,38 @@ export const EditBookDialog = ({
               id="edit-tags"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              placeholder="Comma-separated tags"
+              placeholder="e.g., programming, javascript, tutorial"
               className="bg-card"
             />
+            {tags && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {tags.split(",").map((tag, i) => tag.trim() && (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    {tag.trim()}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Notes */}
+          {/* Notes with character limit */}
           <div className="space-y-2">
-            <Label htmlFor="edit-notes">Notes</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="edit-notes">Notes</Label>
+              <span className={cn(
+                "text-xs",
+                notes.length > NOTES_LIMIT * 0.9 ? "text-amber-500" : "text-muted-foreground"
+              )}>
+                {notes.length}/{NOTES_LIMIT}
+              </span>
+            </div>
             <Textarea
               id="edit-notes"
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Personal notes about this item..."
-              className="bg-card min-h-[80px]"
+              onChange={handleNotesChange}
+              placeholder="Brief notes about this item..."
+              className="bg-card min-h-[60px] resize-none"
+              maxLength={NOTES_LIMIT}
             />
           </div>
         </div>
@@ -247,7 +378,14 @@ export const EditBookDialog = ({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={!title.trim() || isSaving}>
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
