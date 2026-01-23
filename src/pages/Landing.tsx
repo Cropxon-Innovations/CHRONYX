@@ -24,7 +24,17 @@ import {
   ChevronRight,
   TrendingUp,
   PiggyBank,
-  Bot
+  Bot,
+  Library,
+  Share2,
+  Gift,
+  Globe,
+  Users,
+  FileText,
+  Coins,
+  PenTool,
+  TreePine,
+  Folder
 } from "lucide-react";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import LandingNav from "@/components/landing/LandingNav";
@@ -479,6 +489,136 @@ const featureCards = [
       </div>
     ),
   },
+  {
+    id: "library",
+    title: "Digital Library",
+    subtitle: "World's hub for knowledge",
+    icon: Library,
+    color: "from-cyan-500 to-teal-500",
+    bgColor: "bg-cyan-500/10",
+    borderColor: "border-cyan-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="grid grid-cols-3 gap-1.5">
+          {["PDF", "EPUB", "Notes"].map((type, i) => (
+            <motion.div
+              key={type}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20 text-center"
+            >
+              <BookOpen className="w-3 h-3 mx-auto mb-1 text-cyan-600" />
+              <span className="text-[8px] text-muted-foreground">{type}</span>
+            </motion.div>
+          ))}
+        </div>
+        <div className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
+          <span className="text-[10px]">Uploaded Books</span>
+          <span className="text-[10px] font-semibold text-cyan-600">24</span>
+        </div>
+        <div className="flex justify-between text-[8px] text-muted-foreground">
+          <span>Share with anyone</span>
+          <span className="text-cyan-500">Global access</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "rewards",
+    title: "Rewards Hub",
+    subtitle: "Earn & redeem points",
+    icon: Gift,
+    color: "from-amber-500 to-yellow-500",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/30",
+    content: (
+      <div className="space-y-2.5">
+        <div className="p-2.5 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 rounded-lg border border-amber-500/20">
+          <div className="flex justify-between items-center">
+            <span className="text-[8px] text-muted-foreground uppercase tracking-wide">Your Points</span>
+            <Coins className="w-3 h-3 text-amber-500" />
+          </div>
+          <p className="text-lg font-bold text-amber-600">12,450</p>
+          <p className="text-[8px] text-muted-foreground">= ₹124.50 cashback</p>
+        </div>
+        <div className="flex gap-1.5">
+          {[{ l: "Share", v: "+5" }, { l: "Review", v: "+10" }, { l: "Daily", v: "+2" }].map((d) => (
+            <div key={d.l} className="flex-1 p-1.5 bg-muted/20 rounded text-center">
+              <p className="text-[7px] text-muted-foreground">{d.l}</p>
+              <p className="text-[9px] font-semibold text-green-600">{d.v}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "share",
+    title: "Seamless Share",
+    subtitle: "Share anything instantly",
+    icon: Share2,
+    color: "from-blue-500 to-indigo-500",
+    bgColor: "bg-blue-500/10",
+    borderColor: "border-blue-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+          <Globe className="w-3.5 h-3.5 text-blue-500" />
+          <div className="flex-1">
+            <p className="text-[10px] font-medium">Public Library</p>
+            <p className="text-[8px] text-muted-foreground">12 items shared globally</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-1">
+          {[{ icon: Users, label: "Friends" }, { icon: Globe, label: "Public" }, { icon: Lock, label: "Private" }].map((item) => (
+            <motion.div
+              key={item.label}
+              className="p-1.5 bg-muted/20 rounded text-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              <item.icon className="w-3 h-3 mx-auto mb-0.5 text-muted-foreground" />
+              <span className="text-[7px]">{item.label}</span>
+            </motion.div>
+          ))}
+        </div>
+        <div className="flex justify-between text-[8px]">
+          <span className="text-muted-foreground">Each share = +5 points</span>
+          <span className="text-blue-500 font-medium">Earn while sharing!</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "eauthor",
+    title: "E-Author",
+    subtitle: "Write & publish books",
+    icon: PenTool,
+    color: "from-purple-500 to-pink-500",
+    bgColor: "bg-purple-500/10",
+    borderColor: "border-purple-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded" />
+            <div>
+              <p className="text-[10px] font-medium">My First Novel</p>
+              <p className="text-[8px] text-muted-foreground">12 chapters • 45K words</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-1.5">
+          {[{ l: "Draft", v: "3" }, { l: "Published", v: "1" }, { l: "Reviews", v: "24" }].map((d) => (
+            <div key={d.l} className="flex-1 p-1.5 bg-muted/20 rounded text-center">
+              <p className="text-[7px] text-muted-foreground">{d.l}</p>
+              <p className="text-[9px] font-semibold">{d.v}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
 ];
 
 // Animated Live Preview Component - Optimized for performance
@@ -721,11 +861,18 @@ const Landing = () => {
   const features = [
     { icon: CheckSquare, label: "Tasks", desc: "Daily todos & productivity" },
     { icon: BookOpen, label: "Study", desc: "Syllabus & learning tracker" },
+    { icon: Library, label: "Library", desc: "Upload books & notes", highlight: true },
     { icon: Wallet, label: "Finance", desc: "Budget, loans & savings" },
     { icon: Calculator, label: "Tax", desc: "Smart Indian tax calculator", highlight: true },
     { icon: Heart, label: "Insurance", desc: "Policy management" },
     { icon: Image, label: "Memory", desc: "Private photo vault" },
     { icon: Clock, label: "Lifespan", desc: "Time visualization" },
+    { icon: Share2, label: "Share", desc: "Seamless content sharing", highlight: true },
+    { icon: Gift, label: "Rewards", desc: "Earn & redeem points", highlight: true },
+    { icon: PenTool, label: "E-Author", desc: "Write & publish books" },
+    { icon: TreePine, label: "Family Tree", desc: "Genealogy records" },
+    { icon: FileText, label: "Documents", desc: "Secure document vault" },
+    { icon: Folder, label: "Notes", desc: "Smart note-taking" },
   ];
 
   const stats = [
@@ -1002,10 +1149,14 @@ const Landing = () => {
             <h2 className="text-3xl sm:text-4xl font-extralight text-foreground mb-6 tracking-tight">
               What is CHRONYX?
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed font-light">
-              CHRONYX is a <strong className="text-foreground font-medium">personal system of record</strong> — 
-              a quiet place to hold the threads of your life. Tasks, knowledge, finances, tax calculations, and memories.
-              Not a productivity tool. Just a place for continuity.
+            <p className="text-lg text-muted-foreground leading-relaxed font-light mb-4">
+              CHRONYX is the <strong className="text-foreground font-medium">world's most complete personal digital hub</strong> — 
+              a quiet place to hold the threads of your life. Tasks, knowledge, finances, tax calculations, library, and memories.
+              Not just a productivity tool. A seamless ecosystem for your entire life.
+            </p>
+            <p className="text-base text-muted-foreground leading-relaxed font-light">
+              Upload books, share knowledge globally, earn rewards, track your studies, manage finances — all in one beautiful, 
+              private space. Earn points for every action and redeem them for real money.
             </p>
           </article>
         </RevealSection>
@@ -1018,7 +1169,7 @@ const Landing = () => {
                 Everything you need, nothing you don't
               </h2>
               <p className="text-lg text-muted-foreground font-light max-w-xl mx-auto">
-                A personal dashboard for tasks, studies, finances, taxes, insurance, and memories
+                Your complete digital ecosystem — library, tasks, finance, rewards, and seamless sharing
               </p>
             </div>
             
@@ -1132,6 +1283,205 @@ const Landing = () => {
                       <span className="text-2xl font-light text-violet-600">₹0</span>
                     </div>
                     <p className="text-center text-sm text-green-600 font-medium">✓ Zero tax under New Regime (87A Rebate)</p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </RevealSection>
+
+        {/* DIGITAL LIBRARY HIGHLIGHT */}
+        <RevealSection className="px-6 py-24 bg-muted/10 border-t border-border/10">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <motion.div 
+                className="relative order-2 md:order-1"
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+              >
+                <div className="absolute -inset-4 bg-gradient-to-br from-cyan-500/10 to-teal-500/10 rounded-3xl blur-2xl" />
+                <div className="relative p-8 bg-card/80 backdrop-blur-sm border border-cyan-500/20 rounded-2xl">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    {[
+                      { icon: BookOpen, label: "PDFs", count: "156" },
+                      { icon: FileText, label: "Notes", count: "89" },
+                      { icon: Library, label: "EPUBs", count: "24" },
+                      { icon: Share2, label: "Shared", count: "12" },
+                    ].map((item, i) => (
+                      <motion.div
+                        key={item.label}
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.1 }}
+                        className="p-4 bg-muted/30 rounded-xl text-center"
+                      >
+                        <item.icon className="w-6 h-6 mx-auto mb-2 text-cyan-600" />
+                        <p className="text-lg font-medium">{item.count}</p>
+                        <p className="text-xs text-muted-foreground">{item.label}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <div className="p-4 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
+                    <div className="flex items-center gap-3">
+                      <Globe className="w-5 h-5 text-cyan-600" />
+                      <div>
+                        <p className="text-sm font-medium">World's Digital Hub</p>
+                        <p className="text-xs text-muted-foreground">Share & access knowledge globally</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+              <div className="order-1 md:order-2">
+                <motion.div 
+                  className="flex items-center gap-3 mb-6"
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center">
+                    <Library className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-sm text-cyan-600 font-medium tracking-wider uppercase">Digital Library</span>
+                </motion.div>
+                <h2 className="text-3xl sm:text-4xl font-extralight text-foreground mb-6 tracking-tight">
+                  World's Most <span className="text-cyan-600 font-light">Online Digital Hub</span>
+                </h2>
+                <p className="text-lg text-muted-foreground mb-8 font-light leading-relaxed">
+                  Upload your books, notes, and documents. Read with Day/Sepia/Night themes, 
+                  track progress, and share with anyone globally.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    "Upload PDFs, EPUBs & documents",
+                    "Kindle/Apple Books-style reader",
+                    "Auto-sync reading progress",
+                    "Inline dictionary & translation",
+                    "Share globally with anyone",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-3 text-base">
+                      <div className="w-5 h-5 rounded-full bg-cyan-500/10 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-cyan-600" />
+                      </div>
+                      <span className="text-muted-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link to="/login">
+                  <motion.button 
+                    className="group flex items-center gap-3 px-6 py-3 text-base font-medium bg-gradient-to-r from-cyan-500 to-teal-600 text-white rounded-full hover:from-cyan-600 hover:to-teal-700 transition-all shadow-xl shadow-cyan-500/20"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Explore Library
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                  </motion.button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </RevealSection>
+
+        {/* REWARDS & POINTS SYSTEM */}
+        <RevealSection className="px-6 py-24 border-t border-border/10">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <motion.div 
+                  className="flex items-center gap-3 mb-6"
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                    <Gift className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-sm text-amber-600 font-medium tracking-wider uppercase">Rewards Hub</span>
+                </motion.div>
+                <h2 className="text-3xl sm:text-4xl font-extralight text-foreground mb-6 tracking-tight">
+                  Earn Points, <span className="text-amber-600 font-light">Get Real Cash</span>
+                </h2>
+                <p className="text-lg text-muted-foreground mb-8 font-light leading-relaxed">
+                  Every action earns you points. Share content, complete tasks, and engage with the platform 
+                  to accumulate points that convert to real money.
+                </p>
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
+                    <Coins className="w-6 h-6 text-amber-600 mb-2" />
+                    <p className="text-2xl font-light">100 pts</p>
+                    <p className="text-sm text-muted-foreground">= ₹1 Rupee</p>
+                  </div>
+                  <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/20">
+                    <Gift className="w-6 h-6 text-green-600 mb-2" />
+                    <p className="text-2xl font-light">₹100</p>
+                    <p className="text-sm text-muted-foreground">Min. Redemption</p>
+                  </div>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    "+5 points for every share",
+                    "+10 points for reviews",
+                    "+2 points daily login",
+                    "Redeem via UPI or Bank Transfer",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-3 text-base">
+                      <div className="w-5 h-5 rounded-full bg-amber-500/10 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-amber-600" />
+                      </div>
+                      <span className="text-muted-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <motion.div 
+                className="relative"
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+              >
+                <div className="absolute -inset-4 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-3xl blur-2xl" />
+                <div className="relative p-8 bg-card/80 backdrop-blur-sm border border-amber-500/20 rounded-2xl">
+                  <div className="text-center mb-6">
+                    <motion.div
+                      className="inline-block p-4 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full mb-4"
+                      animate={{ rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 4, repeat: Infinity }}
+                    >
+                      <Coins className="w-8 h-8 text-white" />
+                    </motion.div>
+                    <p className="text-3xl font-light">12,450</p>
+                    <p className="text-sm text-muted-foreground">Total Points Earned</p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 bg-muted/30 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <Share2 className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm">Shared PDF</span>
+                      </div>
+                      <span className="text-sm font-medium text-green-600">+5</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-muted/30 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <CheckSquare className="w-4 h-4 text-emerald-500" />
+                        <span className="text-sm">Completed Task</span>
+                      </div>
+                      <span className="text-sm font-medium text-green-600">+2</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-muted/30 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-violet-500" />
+                        <span className="text-sm">Referral Bonus</span>
+                      </div>
+                      <span className="text-sm font-medium text-green-600">+100</span>
+                    </div>
+                  </div>
+                  <div className="mt-6 p-4 bg-green-500/10 rounded-xl border border-green-500/20 text-center">
+                    <p className="text-lg font-medium text-green-600">₹124.50</p>
+                    <p className="text-xs text-muted-foreground">Available for redemption</p>
                   </div>
                 </div>
               </motion.div>
