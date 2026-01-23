@@ -1,6 +1,13 @@
 {
+  "compilerOptions": {
+    "lib": ["deno.window"],
+    "strict": false
+  },
+  "nodeModulesDir": "auto",
+  "lock": false,
   "imports": {
     "@supabase/supabase-js": "npm:@supabase/supabase-js@2",
-    "openai": "npm:openai@4"
+    "openai": "npm:openai@4.52.5",
+    "resend": "npm:resend@2.0.0"
   }
 }

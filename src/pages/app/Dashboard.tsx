@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import MetricCard from "@/components/dashboard/MetricCard";
 import LifespanBar from "@/components/dashboard/LifespanBar";
 import TrendChart from "@/components/dashboard/TrendChart";
@@ -16,11 +17,23 @@ import { DailyReflection } from "@/components/notes/DailyReflection";
 import { BioCard } from "@/components/dashboard/BioCard";
 import TodaySummary from "@/components/dashboard/TodaySummary";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
+import WealthDashboard from "@/components/dashboard/WealthDashboard";
+import { 
+  PremiumCard, 
+  PremiumCardHeader, 
+  PremiumCardTitle, 
+  PremiumCardContent,
+  SectionHeader 
+} from "@/components/ui/premium-card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Settings, User } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  RefreshCw, Settings, User, CheckCircle, BookOpen, 
+  CreditCard, Shield, LayoutDashboard, TrendingUp, Activity
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -39,6 +52,7 @@ const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { showOnboarding, isLoading: onboardingLoading, completeOnboarding } = useOnboarding();
+  const [activeTab, setActiveTab] = useState("overview");
   
   // State for EMI and Insurance metrics
   const [emiDueAmount, setEmiDueAmount] = useState<number | null>(null);
@@ -134,19 +148,17 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in px-1 sm:px-0">
-      {/* Bio Card - Health Profile */}
-      <BioCard />
-      
-      {/* Daily Reflection Widget */}
-      <DailyReflection />
-
-      {/* Header with User Menu */}
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-light text-foreground tracking-wide">
-            {profile?.display_name ? `Welcome back, ${profile.display_name.split(' ')[0]}` : 'Today'}
+      {/* Premium Header */}
+      <motion.header 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-start justify-between gap-4"
+      >
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">
+            {profile?.display_name ? `Welcome, ${profile.display_name.split(' ')[0]}` : 'Dashboard'}
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground">
             {new Date().toLocaleDateString('en-US', { 
               weekday: 'long', 
               year: 'numeric', 
@@ -157,37 +169,35 @@ const Dashboard = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Refresh Button */}
           <Button
             variant="outline"
             size="icon"
             onClick={() => refresh()}
             disabled={isRefreshing}
-            className="h-9 w-9"
+            className="h-10 w-10 rounded-xl border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
           
-          {/* User Dropdown Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                <Avatar className="h-9 w-9">
+              <Button variant="ghost" className="relative h-10 w-10 rounded-xl hover:bg-primary/5">
+                <Avatar className="h-10 w-10 ring-2 ring-border/50 ring-offset-2 ring-offset-background">
                   {profile?.avatar_url?.startsWith("emoji:") ? (
-                    <AvatarFallback className="bg-primary/10 text-lg">
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-lg">
                       {profile.avatar_url.replace("emoji:", "")}
                     </AvatarFallback>
                   ) : profile?.avatar_url ? (
                     <AvatarImage src={profile.avatar_url} alt="Profile" />
                   ) : (
-                    <AvatarFallback className="bg-primary/10">
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10">
                       <User className="h-4 w-4" />
                     </AvatarFallback>
                   )}
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-56 rounded-xl" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">{profile?.display_name || 'User'}</p>
@@ -196,13 +206,13 @@ const Dashboard = () => {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to="/app/profile" className="cursor-pointer">
+                <Link to="/app/profile" className="cursor-pointer rounded-lg">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile & Plan</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/app/settings" className="cursor-pointer">
+                <Link to="/app/settings" className="cursor-pointer rounded-lg">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </Link>
@@ -210,7 +220,7 @@ const Dashboard = () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="cursor-pointer"
+                className="cursor-pointer rounded-lg"
               >
                 {theme === 'dark' ? '☀️' : '🌙'} 
                 <span className="ml-2">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
@@ -218,117 +228,205 @@ const Dashboard = () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => signOut()} 
-                className="cursor-pointer text-destructive focus:text-destructive"
+                className="cursor-pointer text-destructive focus:text-destructive rounded-lg"
               >
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </header>
+      </motion.header>
 
-      {/* Pending Yesterday Tasks */}
-      <PendingYesterdayTasks />
+      {/* Dashboard Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="inline-flex h-11 items-center justify-center rounded-xl bg-muted/50 p-1 text-muted-foreground backdrop-blur-sm border border-border/50">
+          <TabsTrigger value="overview" className="rounded-lg px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+            <LayoutDashboard className="h-4 w-4 mr-2" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="wealth" className="rounded-lg px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Wealth
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="rounded-lg px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+            <Activity className="h-4 w-4 mr-2" />
+            Activity
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Metric Cards */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <MetricCard value={completionRate} suffix="%" label="Todo Completion" />
-        <MetricCard value={studyMinutes} suffix="min" label="Study Today" />
-        <MetricCard 
-          value={emiDueAmount !== null ? `₹${(emiDueAmount / 1000).toFixed(0)}K` : "—"} 
-          label="EMI Due" 
-        />
-        <MetricCard 
-          value={activePoliciesCount !== null ? activePoliciesCount : "—"} 
-          label="Active Policies" 
-        />
-      </section>
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6 mt-0">
+          {/* Bio Card & Reflection */}
+          <BioCard />
+          <DailyReflection />
+          
+          {/* Pending Yesterday Tasks */}
+          <PendingYesterdayTasks />
 
-      {/* Days Remaining Highlight */}
-      <section className="bg-card border border-border rounded-lg p-4 sm:p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs sm:text-sm text-muted-foreground uppercase tracking-wider">Days Until {targetAge}</p>
-            <p className="text-3xl sm:text-4xl md:text-5xl font-semibold text-foreground mt-2">
-              {daysRemaining.toLocaleString()}
-            </p>
+          {/* Premium Metric Cards */}
+          <motion.section 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            <MetricCard 
+              value={completionRate} 
+              suffix="%" 
+              label="Todo Completion" 
+              icon={CheckCircle}
+              accentColor={completionRate >= 70 ? "success" : completionRate >= 40 ? "warning" : "danger"}
+              trend={completionRate >= 50 ? "up" : "down"}
+              trendValue={`${todosStats.completed}/${todosStats.total}`}
+            />
+            <MetricCard 
+              value={studyMinutes} 
+              suffix="min" 
+              label="Study Today" 
+              icon={BookOpen}
+              accentColor="info"
+              trend={studyMinutes >= 30 ? "up" : "neutral"}
+              trendValue={studyMinutes >= 60 ? "Great!" : "Keep going"}
+            />
+            <MetricCard 
+              value={emiDueAmount !== null ? `₹${(emiDueAmount / 1000).toFixed(0)}K` : "—"} 
+              label="EMI Due"
+              icon={CreditCard}
+              accentColor={emiDueAmount && emiDueAmount > 0 ? "warning" : "success"}
+            />
+            <MetricCard 
+              value={activePoliciesCount !== null ? activePoliciesCount : "—"} 
+              label="Active Policies"
+              icon={Shield}
+              accentColor="default"
+            />
+          </motion.section>
+
+          {/* Days Remaining - Premium Style */}
+          <motion.section 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <PremiumCard variant="gradient" className="overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10" />
+              <div className="relative p-6 sm:p-8">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Days Until {targetAge}
+                    </p>
+                    <p className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+                      {daysRemaining.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Make every day count
+                    </p>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <p className="text-2xl font-semibold text-primary">
+                      ~{Math.floor(daysRemaining / 365)}
+                    </p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">years left</p>
+                  </div>
+                </div>
+              </div>
+            </PremiumCard>
+          </motion.section>
+
+          {/* Trends Section */}
+          <section className="space-y-4">
+            <SectionHeader title="Trends" subtitle="Your productivity at a glance" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <PremiumCard variant="glass">
+                <PremiumCardContent className="p-4">
+                  <Heatmap title="Productivity" data={heatmapData.length > 0 ? heatmapData : Array(84).fill(0)} />
+                </PremiumCardContent>
+              </PremiumCard>
+              <PremiumCard variant="glass">
+                <PremiumCardContent className="p-4">
+                  <TrendChart title="Study This Week" data={studyTrend.length > 0 ? studyTrend : []} />
+                </PremiumCardContent>
+              </PremiumCard>
+            </div>
+          </section>
+
+          {/* Life Section */}
+          <section className="space-y-4">
+            <SectionHeader title="Life" subtitle="Your journey visualized" />
+            <PremiumCard variant="elevated">
+              <PremiumCardContent className="p-4">
+                <LifespanBar daysLived={daysLived} daysRemaining={daysRemaining} />
+              </PremiumCardContent>
+            </PremiumCard>
+          </section>
+
+          {/* Financial Overview */}
+          <section className="space-y-4">
+            <SectionHeader title="Financial Overview" subtitle="Your money at a glance" />
+            <FinancialOverview />
+          </section>
+
+          {/* Loan & Insurance Widgets */}
+          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <LoanWidget />
+            <InsuranceWidget />
+            <UpcomingReminders />
+          </section>
+
+          {/* Today's Summary & Notifications */}
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <TodaySummary />
+            <NotificationCenter />
+          </section>
+        </TabsContent>
+
+        {/* Wealth Tab */}
+        <TabsContent value="wealth" className="mt-0">
+          <WealthDashboard />
+        </TabsContent>
+
+        {/* Activity Tab */}
+        <TabsContent value="activity" className="space-y-6 mt-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Recent Achievements */}
+            <PremiumCard variant="elevated">
+              <PremiumCardHeader>
+                <PremiumCardTitle>Recent Achievements</PremiumCardTitle>
+              </PremiumCardHeader>
+              <PremiumCardContent>
+                <div className="space-y-0">
+                  {recentAchievements.length > 0 ? (
+                    recentAchievements.map((achievement, i) => (
+                      <AchievementItem key={i} {...achievement} />
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground py-4">No achievements yet</p>
+                  )}
+                </div>
+              </PremiumCardContent>
+            </PremiumCard>
+
+            {/* Recent Activity */}
+            <PremiumCard variant="elevated">
+              <PremiumCardHeader>
+                <PremiumCardTitle>Recent Activity</PremiumCardTitle>
+              </PremiumCardHeader>
+              <PremiumCardContent>
+                <div>
+                  {recentActivity.length > 0 ? (
+                    recentActivity.map((activity, i) => (
+                      <ActivityItem key={i} {...activity} />
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground py-4">No recent activity</p>
+                  )}
+                </div>
+              </PremiumCardContent>
+            </PremiumCard>
           </div>
-          <div className="text-right">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              ~{Math.floor(daysRemaining / 365)} years
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Trends Section */}
-      <section>
-        <h2 className="text-base sm:text-lg font-light text-foreground mb-3 sm:mb-4">Trends</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-          <Heatmap title="Productivity" data={heatmapData.length > 0 ? heatmapData : Array(84).fill(0)} />
-          <TrendChart title="Study This Week" data={studyTrend.length > 0 ? studyTrend : []} />
-        </div>
-      </section>
-
-      {/* Life Section */}
-      <section>
-        <h2 className="text-base sm:text-lg font-light text-foreground mb-3 sm:mb-4">Life</h2>
-        <LifespanBar daysLived={daysLived} daysRemaining={daysRemaining} />
-      </section>
-
-      {/* Financial Overview */}
-      <section>
-        <h2 className="text-base sm:text-lg font-light text-foreground mb-3 sm:mb-4">Financial Overview</h2>
-        <FinancialOverview />
-      </section>
-
-      {/* Loan & Insurance Widgets */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <LoanWidget />
-        <InsuranceWidget />
-        <UpcomingReminders />
-      </section>
-
-      {/* Today's Summary & Notifications - Unified System View */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-        <TodaySummary />
-        <NotificationCenter />
-      </section>
-
-      {/* Bottom Grid */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-        {/* Recent Achievements */}
-        <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
-          <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6">
-            Recent Achievements
-          </h3>
-          <div className="space-y-0">
-            {recentAchievements.length > 0 ? (
-              recentAchievements.map((achievement, i) => (
-                <AchievementItem key={i} {...achievement} />
-              ))
-            ) : (
-              <p className="text-xs sm:text-sm text-muted-foreground">No achievements yet</p>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
-          <h3 className="text-xs sm:text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6">
-            Recent Activity
-          </h3>
-          <div>
-            {recentActivity.length > 0 ? (
-              recentActivity.map((activity, i) => (
-                <ActivityItem key={i} {...activity} />
-              ))
-            ) : (
-              <p className="text-xs sm:text-sm text-muted-foreground">No recent activity</p>
-            )}
-          </div>
-        </div>
-      </section>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
