@@ -12,6 +12,7 @@ interface FamilyTreeVisualizationProps {
   onMemberClick: (member: FamilyMember) => void;
   onAddChild: (parentId: string) => void;
   selectedMemberId?: string;
+  onLinkMembers?: (fromId: string, toId: string) => void;
 }
 
 interface TreeNode {
@@ -35,11 +36,14 @@ export const FamilyTreeVisualization = ({
   onMemberClick,
   onAddChild,
   selectedMemberId,
+  onLinkMembers,
 }: FamilyTreeVisualizationProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [pan, setPan] = useState({ x: 50, y: 50 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragFromMember, setDragFromMember] = useState<string | null>(null);
+  const [dragOverMember, setDragOverMember] = useState<string | null>(null);
 
   // Build tree structure with relationship-based linking
   const { rootNode, allNodes, connections, dimensions } = useMemo(() => {

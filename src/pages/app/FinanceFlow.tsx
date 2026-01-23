@@ -66,6 +66,8 @@ import FinanceFlowDashboard from "@/components/finance/FinanceFlowDashboard";
 import FinanceAnalytics from "@/components/finance/FinanceAnalytics";
 import AssetsDashboard from "@/components/assets/AssetsDashboard";
 import ReportSubscriptions from "@/components/finance/ReportSubscriptions";
+import { StockPortfolio } from "@/components/finance/StockPortfolio";
+import { FinancialGoalsTracker } from "@/components/finance/FinancialGoalsTracker";
 
 // Types
 interface FolderSettings {
@@ -782,7 +784,7 @@ const FinanceFlow = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 lg:w-auto lg:inline-grid overflow-x-auto">
+        <TabsList className="grid w-full grid-cols-5 sm:grid-cols-10 lg:w-auto lg:inline-grid overflow-x-auto">
           <TabsTrigger value="dashboard" className="gap-1">
             <Activity className="w-3 h-3" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -794,6 +796,14 @@ const FinanceFlow = () => {
           <TabsTrigger value="assets" className="gap-1">
             <Wallet className="w-3 h-3" />
             <span className="hidden sm:inline">Assets</span>
+          </TabsTrigger>
+          <TabsTrigger value="stocks" className="gap-1">
+            <TrendingUp className="w-3 h-3" />
+            <span className="hidden sm:inline">Stocks</span>
+          </TabsTrigger>
+          <TabsTrigger value="goals" className="gap-1">
+            <Sparkles className="w-3 h-3" />
+            <span className="hidden sm:inline">Goals</span>
           </TabsTrigger>
           <TabsTrigger value="folders" className="gap-1">
             <FolderOpen className="w-3 h-3" />
@@ -838,6 +848,16 @@ const FinanceFlow = () => {
         {/* Assets Tab */}
         <TabsContent value="assets" className="mt-4">
           <AssetsDashboard />
+        </TabsContent>
+
+        {/* Stocks Tab */}
+        <TabsContent value="stocks" className="mt-4">
+          <StockPortfolio />
+        </TabsContent>
+
+        {/* Goals Tab */}
+        <TabsContent value="goals" className="mt-4">
+          <FinancialGoalsTracker />
         </TabsContent>
 
         {/* Reports Tab */}

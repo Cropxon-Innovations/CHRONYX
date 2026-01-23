@@ -47,6 +47,7 @@ interface MemberDetailPanelProps {
   onClose: () => void;
   onUpdate: () => void;
   onVerify: () => void;
+  onDelete?: () => void;
 }
 
 export const MemberDetailPanel = ({
@@ -54,6 +55,7 @@ export const MemberDetailPanel = ({
   onClose,
   onUpdate,
   onVerify,
+  onDelete,
 }: MemberDetailPanelProps) => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -412,6 +414,26 @@ export const MemberDetailPanel = ({
                   Add at least one identity document to request verification
                 </p>
               )}
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Danger Zone - Delete */}
+          {onDelete && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-destructive">Danger Zone</h4>
+              <Button
+                variant="destructive"
+                onClick={onDelete}
+                className="w-full gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Member
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                This will permanently remove this member and all their documents
+              </p>
             </div>
           )}
         </div>
