@@ -70,6 +70,11 @@ interface DataCategory {
   encrypted: boolean;
 }
 
+interface TwoFactorStatus {
+  totpEnabled: boolean;
+  webauthnEnabled: boolean;
+}
+
 const PrivacyCenter = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -77,10 +82,71 @@ const PrivacyCenter = () => {
   const [connections, setConnections] = useState<DataConnection[]>([]);
   const [dataCategories, setDataCategories] = useState<DataCategory[]>([]);
   const [gmailSettings, setGmailSettings] = useState<any>(null);
+  const [twoFactorStatus, setTwoFactorStatus] = useState<TwoFactorStatus>({ totpEnabled: false, webauthnEnabled: false });
+  const [isDisabling2FA, setIsDisabling2FA] = useState(false);
 
   useEffect(() => {
-    if (user) fetchPrivacyData();
+    if (user) {
+      fetchPrivacyData();
+      fetch2FAStatus();
+    }
   }, [user]);
+
+  const fetch2FAStatus = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("totp-setup", {
+        body: { action: "status" },
+      });
+      if (!error && data) {
+        setTwoFactorStatus({
+          totpEnabled: data.totpEnabled || false,
+          webauthnEnabled: data.webauthnEnabled || false,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching 2FA status:", err);
+    }
+  };
+
+  const handleDisable2FA = async (type: "totp" | "webauthn") => {
+    setIsDisabling2FA(true);
+    try {
+      if (type === "totp") {
+        // For TOTP, we need verification code, so show a toast with instructions
+        toast({
+          title: "Disable Authenticator",
+          description: "Go to Settings → Security to disable authenticator app with verification.",
+        });
+      } else {
+        // For WebAuthn, delete all credentials
+        const { data: statusData } = await supabase.functions.invoke("totp-setup", {
+          body: { action: "status" },
+        });
+        
+        if (statusData?.webauthnCredentials?.length > 0) {
+          for (const cred of statusData.webauthnCredentials) {
+            await supabase.functions.invoke("webauthn-setup", {
+              body: { action: "delete-credential", credentialId: cred.id },
+            });
+          }
+          toast({
+            title: "Passkey Disabled",
+            description: "Biometric login has been disabled.",
+          });
+          await fetch2FAStatus();
+        }
+      }
+    } catch (error) {
+      console.error("Error disabling 2FA:", error);
+      toast({
+        title: "Error",
+        description: "Failed to disable security method.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDisabling2FA(false);
+    }
+  };
 
   const fetchPrivacyData = async () => {
     if (!user) return;
@@ -437,26 +503,88 @@ const PrivacyCenter = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+            {/* Two-Factor Authentication (TOTP) */}
+            <div className={cn(
+              "flex items-center justify-between p-3 rounded-lg transition-colors",
+              twoFactorStatus.totpEnabled 
+                ? "bg-emerald-500/10 border border-emerald-500/20" 
+                : "bg-muted/30"
+            )}>
               <div className="flex items-center gap-3">
-                <Lock className="w-4 h-4 text-emerald-500" />
+                <Lock className={cn(
+                  "w-4 h-4",
+                  twoFactorStatus.totpEnabled ? "text-emerald-500" : "text-muted-foreground"
+                )} />
                 <div>
                   <p className="text-sm font-medium">Two-Factor Authentication</p>
-                  <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
+                  <p className="text-xs text-muted-foreground">
+                    {twoFactorStatus.totpEnabled 
+                      ? "Authenticator app is active" 
+                      : "Add an extra layer of security with authenticator app"}
+                  </p>
                 </div>
               </div>
-              <Badge variant="secondary" className="text-[10px]">Coming Soon</Badge>
+              {twoFactorStatus.totpEnabled ? (
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    Enabled
+                  </Badge>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => handleDisable2FA("totp")}
+                    disabled={isDisabling2FA}
+                  >
+                    Disable
+                  </Button>
+                </div>
+              ) : (
+                <Switch checked={false} disabled />
+              )}
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+            {/* Biometric Login (WebAuthn) */}
+            <div className={cn(
+              "flex items-center justify-between p-3 rounded-lg transition-colors",
+              twoFactorStatus.webauthnEnabled 
+                ? "bg-emerald-500/10 border border-emerald-500/20" 
+                : "bg-muted/30"
+            )}>
               <div className="flex items-center gap-3">
-                <Smartphone className="w-4 h-4 text-muted-foreground" />
+                <Smartphone className={cn(
+                  "w-4 h-4",
+                  twoFactorStatus.webauthnEnabled ? "text-emerald-500" : "text-muted-foreground"
+                )} />
                 <div>
                   <p className="text-sm font-medium">Biometric Login</p>
-                  <p className="text-xs text-muted-foreground">Use fingerprint or face ID</p>
+                  <p className="text-xs text-muted-foreground">
+                    {twoFactorStatus.webauthnEnabled 
+                      ? "Passkey / Face ID / Touch ID is active" 
+                      : "Use fingerprint or face ID for secure login"}
+                  </p>
                 </div>
               </div>
-              <Badge variant="secondary" className="text-[10px]">Coming Soon</Badge>
+              {twoFactorStatus.webauthnEnabled ? (
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    Enabled
+                  </Badge>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => handleDisable2FA("webauthn")}
+                    disabled={isDisabling2FA}
+                  >
+                    Disable
+                  </Button>
+                </div>
+              ) : (
+                <Switch checked={false} disabled />
+              )}
             </div>
 
             <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
