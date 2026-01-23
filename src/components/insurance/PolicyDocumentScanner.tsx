@@ -49,6 +49,7 @@ interface ExtractedPolicyData {
 
 interface PolicyDocumentScannerProps {
   onDataExtracted: (data: ExtractedPolicyData & { document_url?: string }) => void;
+  insuranceId?: string; // If provided, will auto-link to insurance_documents table
 }
 
 type ProcessStep = 'idle' | 'uploading' | 'converting' | 'scanning' | 'extracting' | 'review' | 'complete';
@@ -61,13 +62,16 @@ const PROCESS_STEPS = [
   { id: 'review', label: 'Review' },
 ];
 
-const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) => {
+const PolicyDocumentScanner = ({ onDataExtracted, insuranceId }: PolicyDocumentScannerProps) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<ProcessStep>('idle');
   const [progress, setProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState<string | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [uploadedFileType, setUploadedFileType] = useState<string | null>(null);
+  const [uploadedFileSize, setUploadedFileSize] = useState<number | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractedPolicyData | null>(null);
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -464,6 +468,9 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
       
       const docUrl = await uploadDocument(file);
       setUploadedDocumentUrl(docUrl);
+      setUploadedFileName(file.name);
+      setUploadedFileType(file.type);
+      setUploadedFileSize(file.size);
       setProgress(100);
 
       let extractedText = '';
@@ -566,12 +573,47 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (extractedData) {
       onDataExtracted({
         ...extractedData,
         document_url: uploadedDocumentUrl || undefined,
       });
+      
+      // Auto-add to documents table for document vault integration
+      if (uploadedDocumentUrl && user) {
+        try {
+          await supabase.from("documents").insert({
+            user_id: user.id,
+            category: "insurance",
+            document_type: extractedData.policy_type || "Insurance Policy",
+            title: extractedData.policy_name || extractedData.provider || uploadedFileName || "Insurance Document",
+            file_url: uploadedDocumentUrl,
+            file_size: uploadedFileSize || 0,
+            file_type: uploadedFileType || "application/pdf",
+            notes: `Policy Number: ${extractedData.policy_number || 'N/A'} | Provider: ${extractedData.provider || 'N/A'} | Sum Assured: ₹${extractedData.sum_assured || 'N/A'}`,
+            issue_date: extractedData.start_date || null,
+            expiry_date: extractedData.renewal_date || null,
+          });
+          
+          // Also add to insurance_documents if insuranceId provided
+          if (insuranceId) {
+            await supabase.from("insurance_documents").insert({
+              insurance_id: insuranceId,
+              file_url: uploadedDocumentUrl,
+              file_name: uploadedFileName || "policy-document",
+              file_type: uploadedFileType || "application/pdf",
+              document_type: "policy",
+              year: new Date().getFullYear(),
+            });
+          }
+          
+          toast.success("Document saved to your vault");
+        } catch (error) {
+          console.error("Error saving to documents:", error);
+        }
+      }
+      
       setCurrentStep('complete');
       setTimeout(() => {
         setOpen(false);
@@ -589,6 +631,9 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     setExtractedData(null);
     setPreviewUrl(null);
     setUploadedDocumentUrl(null);
+    setUploadedFileName(null);
+    setUploadedFileType(null);
+    setUploadedFileSize(null);
     setCurrentStep('idle');
     setProgress(0);
     setErrorMessage(null);

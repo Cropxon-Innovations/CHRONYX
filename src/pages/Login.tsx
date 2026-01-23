@@ -119,6 +119,9 @@ const Login = () => {
   // Security Methods Modal State
   const [showSecurityMethodsModal, setShowSecurityMethodsModal] = useState(false);
 
+  // First-time 2FA Prompt State
+  const [showFirstTime2FAPrompt, setShowFirstTime2FAPrompt] = useState(false);
+
   const from = (location.state as { from?: string })?.from || "/app";
 
   useEffect(() => {
@@ -135,6 +138,40 @@ const Login = () => {
     }
   }, []);
 
+  // Record login history
+  const recordLoginHistory = async (userId: string, method: string, status: string) => {
+    try {
+      const userAgent = navigator.userAgent;
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+      const isTablet = /(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(userAgent);
+      
+      let browser = 'Unknown';
+      if (userAgent.includes('Chrome')) browser = 'Chrome';
+      else if (userAgent.includes('Firefox')) browser = 'Firefox';
+      else if (userAgent.includes('Safari')) browser = 'Safari';
+      else if (userAgent.includes('Edge')) browser = 'Edge';
+      
+      let os = 'Unknown';
+      if (userAgent.includes('Windows')) os = 'Windows';
+      else if (userAgent.includes('Mac')) os = 'macOS';
+      else if (userAgent.includes('Linux')) os = 'Linux';
+      else if (userAgent.includes('Android')) os = 'Android';
+      else if (userAgent.includes('iOS') || userAgent.includes('iPhone')) os = 'iOS';
+
+      await supabase.from("login_history").insert({
+        user_id: userId,
+        user_agent: userAgent.substring(0, 500),
+        device_type: isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop',
+        browser,
+        os,
+        login_method: method,
+        status,
+      });
+    } catch (error) {
+      console.error("Failed to record login history:", error);
+    }
+  };
+
   const check2FAAndProceed = async (userId: string, userEmail: string) => {
     try {
       const { data: twoFAData } = await supabase
@@ -150,6 +187,7 @@ const Login = () => {
           webauthn: twoFAData.webauthn_enabled || false,
         });
         setShow2FAVerification(true);
+        await recordLoginHistory(userId, 'email', '2fa_required');
         return true;
       }
       return false;
@@ -198,6 +236,7 @@ const Login = () => {
           if (!requires2FA) {
             if (rememberMe) localStorage.setItem("chronyx_remember_email", email);
             else localStorage.removeItem("chronyx_remember_email");
+            await recordLoginHistory(data.user.id, 'email', 'success');
             navigate(from, { replace: true });
           }
         }
@@ -207,8 +246,11 @@ const Login = () => {
     }
   };
 
-  const handle2FASuccess = () => {
+  const handle2FASuccess = async () => {
     setShow2FAVerification(false);
+    if (pending2FAUser) {
+      await recordLoginHistory(pending2FAUser.id, 'email', '2fa_verified');
+    }
     if (rememberMe) localStorage.setItem("chronyx_remember_email", email);
     else localStorage.removeItem("chronyx_remember_email");
     toast({ title: "Welcome back!", description: "Two-factor authentication verified." });
@@ -230,13 +272,23 @@ const Login = () => {
     }
   };
 
-  // Handle OAuth callback with 2FA check
+  // Handle OAuth callback with 2FA check and first-time 2FA prompt
   useEffect(() => {
     const handleOAuthCallback = async () => {
       // Check if user just logged in via OAuth and needs 2FA
       if (user && !loading) {
         const requires2FA = await check2FAAndProceed(user.id, user.email || "");
         if (!requires2FA) {
+          // Record OAuth login
+          await recordLoginHistory(user.id, 'google', 'success');
+          
+          // Check if first-time user should see 2FA setup prompt
+          const shouldShow = await shouldShow2FAPrompt(user.id);
+          if (shouldShow) {
+            setShowFirstTime2FAPrompt(true);
+            return; // Don't navigate yet, show the prompt first
+          }
+          
           navigate(from, { replace: true });
         }
       }
@@ -247,6 +299,21 @@ const Login = () => {
       handleOAuthCallback();
     }
   }, [user, loading]);
+
+  const handleFirstTime2FASkip = () => {
+    setShowFirstTime2FAPrompt(false);
+    navigate(from, { replace: true });
+  };
+
+  const handleFirstTime2FAPasskey = () => {
+    setShowFirstTime2FAPrompt(false);
+    setShowWebAuthnRegistration(true);
+  };
+
+  const handleFirstTime2FAAuthenticator = () => {
+    setShowFirstTime2FAPrompt(false);
+    handleTotpSetup();
+  };
 
   const handleSecurityMethodSelect = (method: "passkey" | "authenticator") => {
     if (!user) {
@@ -710,6 +777,15 @@ const Login = () => {
           onOpenChange={setShowSecurityMethodsModal}
           onSelectPasskey={() => handleSecurityMethodSelect("passkey")}
           onSelectAuthenticator={() => handleSecurityMethodSelect("authenticator")}
+        />
+
+        {/* First-Time 2FA Prompt (after OAuth login) */}
+        <FirstTime2FAPrompt
+          open={showFirstTime2FAPrompt}
+          onOpenChange={setShowFirstTime2FAPrompt}
+          onSelectPasskey={handleFirstTime2FAPasskey}
+          onSelectAuthenticator={handleFirstTime2FAAuthenticator}
+          onSkip={handleFirstTime2FASkip}
         />
       </main>
     </>
