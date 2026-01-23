@@ -9,6 +9,8 @@ import { BookReader } from "@/components/study/BookReader";
 import { HighlightsPanel } from "@/components/study/HighlightsPanel";
 import { VocabularyPanel } from "@/components/study/VocabularyPanel";
 import { ReadingAnalytics } from "@/components/study/ReadingAnalytics";
+import { SharePublishDialog } from "@/components/study/SharePublishDialog";
+import { KnowledgeHub } from "@/components/study/KnowledgeHub";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { 
@@ -37,12 +39,41 @@ const Library = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rightPanel, setRightPanel] = useState<"highlights" | "vocabulary" | "analytics" | null>(null);
   
+  // Share/Publish dialog state
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareItem, setShareItem] = useState<LibraryItem | null>(null);
+  
+  // Publications stats
+  const [publicationStats, setPublicationStats] = useState({ published: 0, earnings: 0, views: 0 });
+  
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) fetchLibraryItems();
+    if (user) {
+      fetchLibraryItems();
+      fetchPublicationStats();
+    }
   }, [user, activeTab]);
+
+  const fetchPublicationStats = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from("library_items")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("is_public", true);
+      
+      setPublicationStats({
+        published: data?.length || 0,
+        earnings: 0, // Would come from creator_payouts table
+        views: 0,
+      });
+    } catch (error) {
+      console.error("Error fetching publication stats:", error);
+    }
+  };
 
   const fetchLibraryItems = async () => {
     setLoading(true);
@@ -197,6 +228,11 @@ const Library = () => {
     }
   };
 
+  const handleShare = (item: LibraryItem) => {
+    setShareItem(item);
+    setShareDialogOpen(true);
+  };
+
   const handleCloseReader = () => {
     setReaderOpen(false);
     setSelectedItem(null);
@@ -347,6 +383,7 @@ const Library = () => {
             onItemClick={handleItemClick}
             onUpload={() => setUploadDialogOpen(true)}
             onDelete={handleDelete}
+            onShare={handleShare}
           />
         </TabsContent>
 
@@ -365,39 +402,54 @@ const Library = () => {
                 <BookOpen className="w-5 h-5 text-primary" />
                 <span className="text-sm text-muted-foreground">Published</span>
               </div>
-              <p className="text-2xl font-semibold text-foreground">0</p>
+              <p className="text-2xl font-semibold text-foreground">{publicationStats.published}</p>
             </div>
             <div className="p-4 rounded-xl bg-card border border-border">
               <div className="flex items-center gap-3 mb-2">
-                <DollarSign className="w-5 h-5 text-emerald-500" />
+                <DollarSign className="w-5 h-5 text-emerald-600" />
                 <span className="text-sm text-muted-foreground">Total Earnings</span>
               </div>
-              <p className="text-2xl font-semibold text-foreground">₹0</p>
+              <p className="text-2xl font-semibold text-foreground">₹{publicationStats.earnings}</p>
             </div>
             <div className="p-4 rounded-xl bg-card border border-border">
               <div className="flex items-center gap-3 mb-2">
-                <BarChart3 className="w-5 h-5 text-blue-500" />
+                <BarChart3 className="w-5 h-5 text-primary" />
                 <span className="text-sm text-muted-foreground">Total Views</span>
               </div>
-              <p className="text-2xl font-semibold text-foreground">0</p>
+              <p className="text-2xl font-semibold text-foreground">{publicationStats.views}</p>
             </div>
           </div>
           
-          <div className="text-center py-12">
-            <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Publish Your Work</h3>
-            <p className="text-sm text-muted-foreground mb-4">Share your books with the Chronyx community</p>
-            <Button variant="outline">Start Publishing</Button>
-          </div>
+          {/* Published books list */}
+          <LibraryGrid
+            items={items.filter(i => (i as any).is_public)}
+            isLoading={loading}
+            onItemClick={handleItemClick}
+            onUpload={() => setUploadDialogOpen(true)}
+            onDelete={handleDelete}
+            onShare={handleShare}
+          />
         </TabsContent>
 
         <TabsContent value="knowledge-hub" className="mt-6">
-          <div className="text-center py-16">
-            <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">Chronyx Knowledge Hub</h3>
-            <p className="text-sm text-muted-foreground mb-4">Discover and read books shared by the community</p>
-            <Button variant="outline">Explore Hub</Button>
-          </div>
+          <KnowledgeHub
+            onSelectBook={(book) => {
+              // Open in reader if possible
+              if (book.format === 'pdf') {
+                setSelectedItem({
+                  id: book.id,
+                  title: book.title,
+                  author: book.author || undefined,
+                  format: book.format,
+                  cover_url: book.cover_url || undefined,
+                  total_pages: book.total_pages || 0,
+                  created_at: book.created_at,
+                } as LibraryItem);
+                setCurrentPage(1);
+                setReaderOpen(true);
+              }
+            }}
+          />
         </TabsContent>
       </Tabs>
 
@@ -407,6 +459,19 @@ const Library = () => {
         onUpload={handleUpload}
         isUploading={isUploading}
       />
+
+      {/* Share/Publish Dialog */}
+      {shareItem && (
+        <SharePublishDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          item={shareItem}
+          onUpdate={() => {
+            fetchLibraryItems();
+            fetchPublicationStats();
+          }}
+        />
+      )}
     </div>
   );
 };
