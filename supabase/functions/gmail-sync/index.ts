@@ -548,16 +548,36 @@ serve(async (req) => {
       .eq('user_id', userId);
     
     // Build strict Gmail query
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const afterDate = settings.last_sync_at 
-      ? new Date(settings.last_sync_at) 
-      : thirtyDaysAgo;
+    // For first sync or manual resync, look back 90 days
+    // For subsequent syncs, use last_sync_at but cap at 90 days ago
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    
+    let afterDate = ninetyDaysAgo;
+    
+    // Only use last_sync_at if it's a valid past date and within 90 days
+    if (settings.last_sync_at) {
+      const lastSync = new Date(settings.last_sync_at);
+      const now = new Date();
+      // If last_sync_at is in the past and more recent than 90 days ago, use it
+      if (lastSync < now && lastSync > ninetyDaysAgo) {
+        afterDate = lastSync;
+      }
+    }
+    
+    // Format date as YYYY/MM/DD for Gmail query (more reliable than Unix timestamp)
+    const formatGmailDate = (d: Date) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}/${month}/${day}`;
+    };
     
     // Use strict query for receipts only
-    const query = `(${GMAIL_QUERY_PARTS[0]} OR ${GMAIL_QUERY_PARTS[1]}) after:${Math.floor(afterDate.getTime() / 1000)}`;
+    const query = `(${GMAIL_QUERY_PARTS[0]} OR ${GMAIL_QUERY_PARTS[1]}) after:${formatGmailDate(afterDate)}`;
     
     console.log('[Gmail Sync] Strict query:', query);
+    console.log('[Gmail Sync] Looking for emails after:', afterDate.toISOString());
     
     // Fetch messages from Gmail
     let messagesResponse;
