@@ -22,6 +22,8 @@ import { StudyProgressTracker } from "@/components/study/StudyProgressTracker";
 import { StudyLeaderboard } from "@/components/study/StudyLeaderboard";
 import { SpacedRepetitionReminders } from "@/components/study/SpacedRepetitionReminders";
 import { SyllabusAIParser } from "@/components/study/SyllabusAIParser";
+import { StudySubjectManager } from "@/components/study/StudySubjectManager";
+import { StudyTodosWidget } from "@/components/study/StudyTodosWidget";
 import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -386,11 +388,16 @@ const Study = () => {
         </TabsContent>
 
         <TabsContent value="progress">
-          <div className="space-y-4">
-            <div className="flex gap-2">
+          <div className="space-y-6">
+            {/* Today's Study Tasks from Todos */}
+            <StudyTodosWidget />
+            
+            <div className="flex gap-2 flex-wrap">
               <SyllabusAIParser onSuccess={() => queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] })} />
             </div>
-            <StudyProgressTracker />
+            
+            {/* Hierarchical Subject Manager */}
+            <StudySubjectManager />
           </div>
         </TabsContent>
 

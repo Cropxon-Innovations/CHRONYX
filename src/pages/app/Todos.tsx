@@ -42,7 +42,18 @@ interface Todo {
   duration_hours?: number | null;
   start_time?: string | null;
   end_time?: string | null;
+  category?: string | null;
+  linked_topic_id?: string | null;
 }
+
+const CATEGORIES = [
+  { value: "general", label: "General", icon: "📋" },
+  { value: "study", label: "Study", icon: "📚" },
+  { value: "work", label: "Work", icon: "💼" },
+  { value: "health", label: "Health", icon: "❤️" },
+  { value: "personal", label: "Personal", icon: "🏠" },
+  { value: "finance", label: "Finance", icon: "💰" },
+];
 
 const statusConfig = {
   pending: { label: "To Do", color: "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30" },
