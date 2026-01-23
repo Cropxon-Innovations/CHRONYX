@@ -65,8 +65,8 @@ const MERCHANT_SENDERS = [
   'ajio',
 ];
 
-// Build comprehensive Gmail query
-function buildGmailQuery(afterDate: Date): string {
+// Build comprehensive Gmail query with folder support
+function buildGmailQuery(afterDate: Date, folders?: Record<string, boolean>): string {
   const formatGmailDate = (d: Date) => {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -74,8 +74,14 @@ function buildGmailQuery(afterDate: Date): string {
     return `${year}/${month}/${day}`;
   };
 
-  // Subject patterns for transactions
-  const subjectQuery = 'subject:(UPI OR Payment OR Transaction OR debit OR credit OR debited OR credited OR "Transaction Alert" OR INR OR Rs OR ₹ OR receipt OR invoice)';
+  // Subject patterns for transactions - more comprehensive
+  const subjectPatterns = [
+    'UPI', 'Payment', 'Transaction', 'debit', 'credit', 'debited', 'credited',
+    '"Transaction Alert"', 'INR', 'Rs', '₹', 'receipt', 'invoice', 'order',
+    'purchase', 'subscription', 'renewal', 'bill', 'statement', 'reward',
+    'cashback', 'refund', 'transfer', 'sent', 'received', 'paid'
+  ];
+  const subjectQuery = `subject:(${subjectPatterns.join(' OR ')})`;
   
   // From patterns - combine all senders
   const fromPatterns = [
@@ -84,7 +90,28 @@ function buildGmailQuery(afterDate: Date): string {
     ...MERCHANT_SENDERS.map(s => `from:${s}`),
   ].join(' OR ');
   
-  return `(${subjectQuery}) (${fromPatterns}) after:${formatGmailDate(afterDate)}`;
+  // Folder/category filters - Gmail uses category: for tabs
+  const folderQueries: string[] = [];
+  if (folders) {
+    if (folders.inbox) folderQueries.push('in:inbox');
+    if (folders.promotions) folderQueries.push('category:promotions');
+    if (folders.updates) folderQueries.push('category:updates');
+    if (folders.social) folderQueries.push('category:social');
+    // Also search "Purchases" label which Gmail auto-creates
+    folderQueries.push('category:purchases');
+    folderQueries.push('label:purchases');
+  } else {
+    // Default: search all relevant categories
+    folderQueries.push('in:inbox');
+    folderQueries.push('category:promotions');
+    folderQueries.push('category:updates');
+    folderQueries.push('category:purchases');
+    folderQueries.push('label:purchases');
+  }
+  
+  const folderFilter = folderQueries.length > 0 ? `(${folderQueries.join(' OR ')})` : '';
+  
+  return `(${subjectQuery}) (${fromPatterns}) ${folderFilter} after:${formatGmailDate(afterDate)}`;
 }
 
 // ==========================================
@@ -697,10 +724,12 @@ serve(async (req) => {
       }
     }
     
-    // Build comprehensive Gmail query
-    const query = buildGmailQuery(afterDate);
-    console.log('[Gmail Sync] Query:', query.substring(0, 200) + '...');
+    // Build comprehensive Gmail query with folder settings
+    const scanFolders = (settings.scan_folders as Record<string, boolean> | null) || undefined;
+    const query = buildGmailQuery(afterDate, scanFolders);
+    console.log('[Gmail Sync] Query:', query.substring(0, 300) + '...');
     console.log('[Gmail Sync] Looking for emails after:', afterDate.toISOString());
+    console.log('[Gmail Sync] Scanning folders:', JSON.stringify(scanFolders));
     
     // Fetch messages from Gmail
     let messagesResponse;

@@ -52,12 +52,15 @@ import {
   Trash2,
   Play,
   Pause,
+  LayoutList,
+  Receipt,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, formatDistanceToNow, differenceInMinutes, differenceInSeconds } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import FinanceFlowDashboard from "@/components/finance/FinanceFlowDashboard";
 
 // Types
 interface FolderSettings {
@@ -566,28 +569,28 @@ const FinanceFlow = () => {
   }
 
   return (
-    <div className="space-y-6 pb-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-4 sm:space-y-6 pb-8">
+      {/* Header - Mobile Responsive */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             FinanceFlow
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
             Automatic transaction ingestion from Gmail
           </p>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Auto-sync toggle */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border">
+          <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-muted/50 border">
             {autoSyncEnabled ? (
               <Play className="w-3 h-3 text-emerald-500" />
             ) : (
               <Pause className="w-3 h-3 text-muted-foreground" />
             )}
-            <span className="text-xs text-muted-foreground">Auto</span>
+            <span className="text-xs text-muted-foreground hidden sm:inline">Auto</span>
             <Switch
               checked={autoSyncEnabled}
               onCheckedChange={setAutoSyncEnabled}
@@ -598,58 +601,54 @@ const FinanceFlow = () => {
           <Button
             onClick={() => handleSync(false)}
             disabled={syncing || !settings?.is_enabled}
-            className="gap-2"
+            size="sm"
+            className="gap-1 sm:gap-2"
           >
             {syncing ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
             ) : (
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
             )}
-            {syncing ? "Syncing..." : "Fetch Now"}
+            <span className="hidden xs:inline">{syncing ? "Syncing..." : "Fetch Now"}</span>
           </Button>
         </div>
       </div>
 
-      {/* Top Status Bar */}
+      {/* Top Status Bar - Mobile Responsive */}
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-        <CardContent className="py-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <CardContent className="py-3 sm:py-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* Connection Status */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center",
+                "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0",
                 settings?.is_enabled ? "bg-emerald-500/20" : "bg-muted"
               )}>
                 <Mail className={cn(
-                  "w-5 h-5",
+                  "w-4 h-4 sm:w-5 sm:h-5",
                   settings?.is_enabled ? "text-emerald-500" : "text-muted-foreground"
                 )} />
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Connection</p>
-                <p className="text-sm font-medium">
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Connection</p>
+                <p className="text-xs sm:text-sm font-medium truncate">
                   {settings?.is_enabled ? (
                     <span className="text-emerald-500">Connected</span>
                   ) : (
                     <span className="text-muted-foreground">Not Connected</span>
                   )}
                 </p>
-                {settings?.gmail_email && (
-                  <p className="text-[10px] text-muted-foreground truncate max-w-[120px]">
-                    {settings.gmail_email}
-                  </p>
-                )}
               </div>
             </div>
 
             {/* Last Sync */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                <Clock className="w-5 h-5 text-muted-foreground" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Last Sync</p>
-                <p className="text-sm font-medium">
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Last Sync</p>
+                <p className="text-xs sm:text-sm font-medium truncate">
                   {settings?.last_sync_at
                     ? formatDistanceToNow(new Date(settings.last_sync_at), { addSuffix: true })
                     : "Never"
@@ -659,19 +658,19 @@ const FinanceFlow = () => {
             </div>
 
             {/* Next Auto-Sync with countdown */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center",
+                "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0",
                 autoSyncEnabled && settings?.is_enabled ? "bg-primary/20" : "bg-muted"
               )}>
                 <Timer className={cn(
-                  "w-5 h-5",
+                  "w-4 h-4 sm:w-5 sm:h-5",
                   autoSyncEnabled && settings?.is_enabled ? "text-primary" : "text-muted-foreground"
                 )} />
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Next Auto-Sync</p>
-                <p className="text-sm font-medium font-mono">
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Next Sync</p>
+                <p className="text-xs sm:text-sm font-medium font-mono">
                   {autoSyncEnabled && settings?.is_enabled 
                     ? formatCountdown(nextSyncSeconds)
                     : "Paused"
@@ -681,27 +680,27 @@ const FinanceFlow = () => {
             </div>
 
             {/* Sync Frequency */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                <Activity className="w-5 h-5 text-muted-foreground" />
+            <div className="flex items-center gap-2 sm:gap-3 hidden sm:flex">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Frequency</p>
-                <p className="text-sm font-medium">
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Frequency</p>
+                <p className="text-xs sm:text-sm font-medium">
                   Every {settings?.sync_frequency_minutes || 30} min
                 </p>
               </div>
             </div>
 
             {/* Total Synced */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                <Database className="w-5 h-5 text-muted-foreground" />
+            <div className="flex items-center gap-2 sm:gap-3 hidden lg:flex">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <Database className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Total Synced</p>
-                <p className="text-sm font-medium">
-                  {settings?.total_synced_count || 0} transactions
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Total Synced</p>
+                <p className="text-xs sm:text-sm font-medium">
+                  {settings?.total_synced_count || 0} txns
                 </p>
               </div>
             </div>
@@ -806,223 +805,12 @@ const FinanceFlow = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* Dashboard Tab */}
-        <TabsContent value="dashboard" className="space-y-4 mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Transaction Summary */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  Transaction Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Total Detected</span>
-                    <span className="font-semibold">{stats.totalTransactions}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm flex items-center gap-1">
-                      <TrendingDown className="w-3 h-3 text-destructive" />
-                      Debits (Expenses)
-                    </span>
-                    <span className="font-medium text-destructive">
-                      {stats.totalDebits} (₹{stats.debitAmount.toLocaleString()})
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3 text-emerald-500" />
-                      Credits (Income)
-                    </span>
-                    <span className="font-medium text-emerald-500">
-                      {stats.totalCredits} (₹{stats.creditAmount.toLocaleString()})
-                    </span>
-                  </div>
-                  <Separator />
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="p-2 rounded-lg bg-muted/50">
-                      <Smartphone className="w-4 h-4 mx-auto mb-1 text-primary" />
-                      <p className="text-[10px] text-muted-foreground">UPI</p>
-                      <p className="text-sm font-semibold">{stats.upiCount}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-muted/50">
-                      <Building2 className="w-4 h-4 mx-auto mb-1 text-primary" />
-                      <p className="text-[10px] text-muted-foreground">Bank</p>
-                      <p className="text-sm font-semibold">{stats.bankCount}</p>
-                    </div>
-                    <div className="p-2 rounded-lg bg-muted/50">
-                      <CreditCard className="w-4 h-4 mx-auto mb-1 text-primary" />
-                      <p className="text-[10px] text-muted-foreground">Card</p>
-                      <p className="text-sm font-semibold">{stats.cardCount}</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Detection Quality */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  Detection Quality
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { label: "Reference ID", value: stats.withRefId, total: stats.totalTransactions },
-                    { label: "Date Extracted", value: stats.withDate, total: stats.totalTransactions },
-                    { label: "Amount Found", value: stats.withAmount, total: stats.totalTransactions },
-                    { label: "Account Identified", value: stats.withAccount, total: stats.totalTransactions },
-                  ].map((item) => {
-                    const percent = item.total > 0 ? Math.round((item.value / item.total) * 100) : 0;
-                    return (
-                      <div key={item.label} className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{item.label}</span>
-                          <span className="font-medium">{percent}%</span>
-                        </div>
-                        <Progress value={percent} className="h-1.5" />
-                      </div>
-                    );
-                  })}
-                  <Separator className="my-2" />
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">High Confidence</span>
-                    <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-500">
-                      {stats.highConfidence}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Needs Review</span>
-                    <Badge variant="secondary" className="bg-amber-500/10 text-amber-500">
-                      {stats.needsReview}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Data Freshness */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Data Freshness
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                    <Inbox className="w-5 h-5 text-emerald-500" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Active Data</p>
-                      <p className="text-xs text-muted-foreground">Last {settings?.scan_days || 90} days</p>
-                    </div>
-                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30">
-                      {transactions.filter(t => {
-                        const date = new Date(t.created_at);
-                        const daysAgo = new Date();
-                        daysAgo.setDate(daysAgo.getDate() - (settings?.scan_days || 90));
-                        return date > daysAgo;
-                      }).length}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                    <Archive className="w-5 h-5 text-muted-foreground" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Archived</p>
-                      <p className="text-xs text-muted-foreground">Older transactions</p>
-                    </div>
-                    <Badge variant="outline">
-                      {transactions.filter(t => {
-                        const date = new Date(t.created_at);
-                        const daysAgo = new Date();
-                        daysAgo.setDate(daysAgo.getDate() - (settings?.scan_days || 90));
-                        return date <= daysAgo;
-                      }).length}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Detection Coverage */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <FolderOpen className="w-4 h-4" />
-                Detection Coverage
-              </CardTitle>
-              <CardDescription>Sources detected in your transactions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Banks */}
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                    <Building2 className="w-3 h-3" /> Banks
-                  </p>
-                  <div className="space-y-1">
-                    {detectedSources.banks.length > 0 ? (
-                      detectedSources.banks.slice(0, 5).map(b => (
-                        <div key={b.name} className="flex justify-between text-sm py-1 px-2 rounded bg-muted/30">
-                          <span>{b.name}</span>
-                          <Badge variant="secondary" className="text-[10px] h-5">{b.count}</Badge>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-muted-foreground">No bank transactions yet</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* UPI Apps */}
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                    <Smartphone className="w-3 h-3" /> UPI Apps
-                  </p>
-                  <div className="space-y-1">
-                    {detectedSources.upiApps.length > 0 ? (
-                      detectedSources.upiApps.slice(0, 5).map(a => (
-                        <div key={a.name} className="flex justify-between text-sm py-1 px-2 rounded bg-muted/30">
-                          <span>{a.name}</span>
-                          <Badge variant="secondary" className="text-[10px] h-5">{a.count}</Badge>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-muted-foreground">No UPI transactions yet</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Cards */}
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                    <CreditCard className="w-3 h-3" /> Card Networks
-                  </p>
-                  <div className="space-y-1">
-                    {detectedSources.cards.length > 0 ? (
-                      detectedSources.cards.slice(0, 5).map(c => (
-                        <div key={c.name} className="flex justify-between text-sm py-1 px-2 rounded bg-muted/30">
-                          <span>{c.name}</span>
-                          <Badge variant="secondary" className="text-[10px] h-5">{c.count}</Badge>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-muted-foreground">No card transactions yet</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Dashboard Tab - Using New Component with Today Summary, Date Filters, Views */}
+        <TabsContent value="dashboard" className="mt-4">
+          <FinanceFlowDashboard 
+            transactions={transactions}
+            onRefresh={fetchData}
+          />
         </TabsContent>
 
         {/* Folders Tab - NEW */}
