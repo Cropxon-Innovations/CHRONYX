@@ -221,6 +221,16 @@ const Login = () => {
   };
 
   const handleTotpSetup = async () => {
+    // Setup requires an authenticated session (uses backend functions).
+    if (!user) {
+      toast({
+        title: "Sign in first",
+        description: "Please sign in to set up an authenticator for your account.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setShowTotpDialog(true);
     setTotpStep("qr");
     setIsTotpSetup(true);
@@ -246,8 +256,12 @@ const Login = () => {
         body: { action: "verify", token: totpCode, secret: totpSecret },
       });
       
-      if (error || !data.valid) {
-        toast({ title: "Invalid Code", description: "Please try again.", variant: "destructive" });
+      if (error || !data?.success) {
+        toast({
+          title: "Invalid Code",
+          description: data?.error || "Please try again.",
+          variant: "destructive",
+        });
         setTotpCode("");
         return;
       }
@@ -368,7 +382,17 @@ const Login = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setShowWebAuthnRegistration(true)}
+                onClick={() => {
+                  if (!user) {
+                    toast({
+                      title: "Sign in first",
+                      description: "Please sign in to register a passkey for your account.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  setShowWebAuthnRegistration(true);
+                }}
                 className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-all text-xs text-primary font-medium"
               >
                 <Fingerprint className="w-4 h-4" />

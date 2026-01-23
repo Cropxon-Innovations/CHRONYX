@@ -42,7 +42,10 @@ serve(async (req) => {
     }
 
     const { action, ...payload } = await req.json();
-    const rpId = new URL(Deno.env.get("SITE_URL") || "https://chronyx.app").hostname;
+    // IMPORTANT: WebAuthn RP ID must match the current site domain.
+    // Use request Origin when available so passkeys work on preview/custom domains.
+    const origin = req.headers.get("origin") || Deno.env.get("SITE_URL") || "https://chronyx.app";
+    const rpId = new URL(origin).hostname;
     const rpName = "CHRONYX";
 
     if (action === "register-options") {

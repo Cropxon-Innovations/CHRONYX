@@ -208,6 +208,24 @@ serve(async (req) => {
     const { action, token } = await req.json();
 
     if (action === "setup") {
+      // Enforce only one authenticator setup per account.
+      // If already enabled, do not overwrite the existing secret.
+      const { data: existing2fa } = await supabase
+        .from("user_2fa")
+        .select("totp_enabled")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existing2fa?.totp_enabled) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: "Authenticator already enabled for this account. Disable it in Settings to register a new one.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       // Generate new TOTP secret
       const secretBytes = generateSecret(20);
       const secret = base32Encode(secretBytes);
