@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { BillingAddress } from "@/components/checkout/BillingAddressForm";
 
 interface RazorpayOptions {
   key: string;
@@ -15,6 +16,7 @@ interface RazorpayOptions {
     email?: string;
     contact?: string;
   };
+  notes?: Record<string, string>;
   theme?: {
     color?: string;
   };
@@ -44,11 +46,11 @@ interface PlanConfig {
 
 const PLAN_CONFIG: PlanConfig = {
   pro: {
-    amount: 199, // INR per month (matching DB)
+    amount: 199,
     description: "CHRONYX Pro - Monthly Subscription",
   },
   premium: {
-    amount: 499, // INR per month (matching DB)
+    amount: 499,
     description: "CHRONYX Premium - Monthly Subscription",
   },
 };
@@ -73,11 +75,14 @@ export const useRazorpay = () => {
   }, []);
 
   const initiatePayment = useCallback(
-    async (plan: "pro" | "premium", userDetails?: { name?: string; email?: string; phone?: string }) => {
+    async (
+      plan: "pro" | "premium", 
+      userDetails?: { name?: string; email?: string; phone?: string },
+      billingAddress?: BillingAddress
+    ) => {
       setIsLoading(true);
 
       try {
-        // Load Razorpay script
         const scriptLoaded = await loadRazorpayScript();
         if (!scriptLoaded) {
           throw new Error("Failed to load payment gateway");
@@ -85,7 +90,6 @@ export const useRazorpay = () => {
 
         const planConfig = PLAN_CONFIG[plan];
 
-        // Create order via edge function
         const { data: orderData, error: orderError } = await supabase.functions.invoke(
           "create-razorpay-order",
           {
@@ -102,11 +106,16 @@ export const useRazorpay = () => {
         }
 
         const { orderId, keyId, amount, currency } = orderData;
-
-        // Get current user
         const { data: { user } } = await supabase.auth.getUser();
 
-        return new Promise<{ success: boolean; paymentId?: string; razorpay_order_id?: string; razorpay_payment_id?: string; razorpay_signature?: string }>((resolve) => {
+        return new Promise<{ 
+          success: boolean; 
+          paymentId?: string; 
+          razorpay_order_id?: string; 
+          razorpay_payment_id?: string; 
+          razorpay_signature?: string;
+          invoiceNumber?: string;
+        }>((resolve) => {
           const options: RazorpayOptions = {
             key: keyId,
             amount: amount,
@@ -140,27 +149,73 @@ export const useRazorpay = () => {
                   return;
                 }
 
-                toast({
-                  title: "Payment Successful!",
-                  description: `Welcome to CHRONYX ${plan === "pro" ? "Pro" : "Premium"}!`,
-                });
-                resolve({ 
-                  success: true, 
-                  paymentId: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature
-                });
+                // Send invoice email with billing address
+                if (billingAddress && user?.email) {
+                  try {
+                    const { data: invoiceData } = await supabase.functions.invoke(
+                      "send-invoice-email",
+                      {
+                        body: {
+                          paymentId: response.razorpay_payment_id,
+                          orderId: response.razorpay_order_id,
+                          plan,
+                          amount: planConfig.amount,
+                          billingAddress,
+                          email: user.email,
+                        },
+                      }
+                    );
+                    
+                    toast({
+                      title: "Payment Successful!",
+                      description: `Invoice sent to ${user.email}`,
+                    });
+
+                    resolve({ 
+                      success: true, 
+                      paymentId: response.razorpay_payment_id,
+                      razorpay_order_id: response.razorpay_order_id,
+                      razorpay_payment_id: response.razorpay_payment_id,
+                      razorpay_signature: response.razorpay_signature,
+                      invoiceNumber: invoiceData?.invoiceNumber,
+                    });
+                  } catch (invoiceError) {
+                    console.error("Invoice email error:", invoiceError);
+                    toast({
+                      title: "Payment Successful!",
+                      description: `Welcome to CHRONYX ${plan === "pro" ? "Pro" : "Premium"}!`,
+                    });
+                    resolve({ 
+                      success: true, 
+                      paymentId: response.razorpay_payment_id,
+                    });
+                  }
+                } else {
+                  toast({
+                    title: "Payment Successful!",
+                    description: `Welcome to CHRONYX ${plan === "pro" ? "Pro" : "Premium"}!`,
+                  });
+                  resolve({ 
+                    success: true, 
+                    paymentId: response.razorpay_payment_id,
+                  });
+                }
               } catch (error) {
                 console.error("Verification error:", error);
                 resolve({ success: false });
               }
             },
             prefill: {
-              name: userDetails?.name || "",
+              name: billingAddress?.full_name || userDetails?.name || "",
               email: userDetails?.email || user?.email || "",
               contact: userDetails?.phone || "",
             },
+            notes: billingAddress ? {
+              billing_name: billingAddress.full_name,
+              billing_city: billingAddress.city,
+              billing_state: billingAddress.state,
+              billing_gstin: billingAddress.gstin || "",
+            } : undefined,
             theme: {
               color: "#6366f1",
             },
