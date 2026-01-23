@@ -313,7 +313,7 @@ const Login = () => {
             </div>
 
             <p className="text-center text-[10px] text-muted-foreground mb-4">
-              Secure sign-in powered by <span className="font-semibold">CHRONYX</span> <span className="opacity-60">by CROPXON</span>
+              Secure sign-in powered by <span className="font-semibold">CHRONYX</span> <span className="opacity-60">by ORIGINX LABS</span>
             </p>
 
             <div className="relative mb-4 sm:mb-6">

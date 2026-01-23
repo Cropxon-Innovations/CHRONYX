@@ -170,14 +170,14 @@ const Security = () => {
               <h2 id="contact-heading" className="text-xl font-medium text-foreground mb-3">Security Questions?</h2>
               <p className="text-muted-foreground leading-relaxed">
                 If you have security concerns or want to report a vulnerability, please contact us at{" "}
-                <a href="mailto:security@cropxon.com" className="text-primary hover:underline">security@cropxon.com</a>
+                <a href="mailto:security@originxlabs.com" className="text-primary hover:underline">security@originxlabs.com</a>
               </p>
             </section>
           </div>
         </article>
 
         <footer className="mt-12 pt-6 border-t border-border text-center">
-          <p className="text-xs text-muted-foreground/60">CHRONYX by CROPXON INNOVATIONS PVT. LTD.</p>
+          <p className="text-xs text-muted-foreground/60">CHRONYX by ORIGINX LABS PVT. LTD.</p>
         </footer>
       </div>
     </motion.main>

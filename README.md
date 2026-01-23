@@ -4,7 +4,7 @@ A private, calm system to hold your life with continuity. Tasks, learning, money
 
 ## About
 
-CHRONYX by CROPXON is a comprehensive life management platform designed to help you organize every aspect of your life in one unified, peaceful interface.
+CHRONYX by ORIGINX LABS is a comprehensive life management platform designed to help you organize every aspect of your life in one unified, peaceful interface.
 
 ## Features
 
@@ -36,4 +36,4 @@ npm run dev
 
 ## License
 
-© 2026 CROPXON. All rights reserved.
+© 2026 ORIGINX LABS PVT. LTD. All rights reserved.

@@ -322,11 +322,15 @@ const Library = () => {
     <div className="space-y-6 animate-fade-in">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">📚</span>
-            <h1 className="text-2xl font-light text-foreground tracking-wide">Chronyx Library</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 flex items-center justify-center">
+              <span className="text-xl">📚</span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-medium text-foreground tracking-tight">Library</h1>
+              <p className="text-sm text-muted-foreground">Your personal reading collection</p>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">Your personal intelligent reading workspace</p>
         </div>
         
         {/* Quick Stats */}

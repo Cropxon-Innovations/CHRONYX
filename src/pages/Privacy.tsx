@@ -97,13 +97,13 @@ const Privacy = () => {
           <section>
             <h2 className="text-xl font-medium text-foreground mb-3">8. Contact Us</h2>
             <p className="text-muted-foreground leading-relaxed">
-              For privacy-related questions, contact us at privacy@cropxon.com
+              For privacy-related questions, contact us at privacy@originxlabs.com
             </p>
           </section>
         </div>
 
         <div className="mt-12 pt-6 border-t border-border text-center">
-          <p className="text-xs text-muted-foreground/60">CHRONYX by CROPXON</p>
+          <p className="text-xs text-muted-foreground/60">CHRONYX by ORIGINX LABS</p>
         </div>
       </div>
     </motion.main>

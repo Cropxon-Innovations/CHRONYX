@@ -254,7 +254,7 @@ const AppSidebar = () => {
                     CHRONYX
                   </span>
                   <span className="text-[8px] tracking-[0.1em] text-muted-foreground -mt-0.5">
-                    BY CROPXON
+                    BY ORIGINX LABS
                   </span>
                 </div>
               )}

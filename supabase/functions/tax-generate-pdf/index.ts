@@ -199,9 +199,9 @@ serve(async (req) => {
         effective_tax_rate: body.effective_rate,
         monthly_tax_equivalent: Math.round(body.total_tax / 12),
       },
-      disclaimer: 'This is a computer-generated tax estimate for informational purposes only. It does not constitute tax advice. Please consult a qualified Chartered Accountant or tax professional for accurate tax filing. CHRONYX and Cropxon Innovations Pvt. Ltd. are not responsible for any discrepancies or errors.',
+      disclaimer: 'This is a computer-generated tax estimate for informational purposes only. It does not constitute tax advice. Please consult a qualified Chartered Accountant or tax professional for accurate tax filing. CHRONYX and Originx Labs Pvt. Ltd. are not responsible for any discrepancies or errors.',
       footer: {
-        company_name: 'CHRONYX by Cropxon Innovations Pvt. Ltd.',
+        company_name: 'CHRONYX by Originx Labs Pvt. Ltd.',
         generated_by: 'CHRONYX Tax Calculator v1.0',
         support_email: 'support@chronyx.in',
       },

@@ -81,14 +81,14 @@ const AnimatedLetter = ({
 );
 
 const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenProps) => {
-  const [stage, setStage] = useState(0); // 0: logo, 1: CHRONYX, 2: BY, 3: CROPXON
+  const [stage, setStage] = useState(0); // 0: logo, 1: CHRONYX, 2: BY, 3: ORIGINX
 
   useEffect(() => {
     if (isVisible && !minimal) {
       const timers = [
         setTimeout(() => setStage(1), 400),   // Show CHRONYX
         setTimeout(() => setStage(2), 1200),  // Show BY
-        setTimeout(() => setStage(3), 1600),  // Show CROPXON
+        setTimeout(() => setStage(3), 1600),  // Show ORIGINX
         setTimeout(() => onComplete?.(), 3000), // Complete
       ];
       
@@ -100,7 +100,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
   }, [isVisible, minimal, onComplete]);
 
   const chronyx = "CHRONYX";
-  const cropxon = "CROPXON INNOVATIONS PVT LTD";
+  const originx = "ORIGINX LABS PVT LTD";
 
   return (
     <AnimatePresence>
@@ -221,11 +221,11 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
                 </motion.div>
               )}
 
-              {/* CROPXON INNOVATIONS PVT LTD - Company name with staggered reveal */}
+              {/* ORIGINX LABS PVT LTD - Company name with staggered reveal */}
               {stage >= 3 && (
                 <motion.div className="flex flex-col items-center gap-1">
                   <div className="text-lg sm:text-xl md:text-2xl font-light tracking-[0.2em] text-foreground/90">
-                    {cropxon.split("").map((letter, i) => (
+                    {originx.split("").map((letter, i) => (
                       <AnimatedLetter 
                         key={i} 
                         letter={letter} 
@@ -277,12 +277,12 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
             className="absolute bottom-6 flex flex-col items-center gap-2 sm:bottom-8 md:bottom-10"
           >
             <a 
-              href="https://www.cropxon.com" 
+              href="https://www.originxlabs.com" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-[10px] tracking-[0.15em] text-muted-foreground/60 hover:text-muted-foreground transition-colors sm:text-xs"
             >
-              www.cropxon.com
+              www.originxlabs.com
             </a>
           </motion.div>
         </motion.div>

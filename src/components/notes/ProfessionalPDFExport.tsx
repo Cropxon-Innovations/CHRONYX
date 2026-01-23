@@ -174,7 +174,7 @@ export const exportProfessionalPDF = (
     
     // Left side - Branding
     pdf.text("Created with CHRONYX", MARGINS.left, footerY);
-    pdf.text("A product by Cropxon Innovations Pvt. Ltd.", MARGINS.left, footerY + 4);
+    pdf.text("A product by Originx Labs Pvt. Ltd.", MARGINS.left, footerY + 4);
     
     // Right side - Page number and metadata
     pdf.text(`Page ${pageNumber}`, pageWidth - MARGINS.right - 15, footerY);
