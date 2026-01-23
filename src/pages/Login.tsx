@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { LeftSketchAnimation, RightSketchAnimation, FloatingParticles, GlowingOrbs } from "@/components/auth/LoginAnimations";
 import { motion, AnimatePresence } from "framer-motion";
-import { Github, Apple, Loader2, Shield, Smartphone, ArrowLeft, Fingerprint } from "lucide-react";
+import { Github, Apple, Loader2, Shield, Smartphone, ArrowLeft, Fingerprint, Sparkles } from "lucide-react";
 import { DomainAutoRedirect } from "@/components/auth/DomainCanonicalizer";
 import { OAuthErrorBanner } from "@/components/auth/OAuthErrorBanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -19,6 +19,7 @@ import { TwoFactorLoginVerification } from "@/components/auth/TwoFactorLoginVeri
 import { WebAuthnRegistration } from "@/components/auth/WebAuthnRegistration";
 import { SecurityMethodsModal } from "@/components/auth/SecurityMethodsModal";
 import { FirstTime2FAPrompt, shouldShow2FAPrompt } from "@/components/auth/FirstTime2FAPrompt";
+import { SmartSignIn, SmartSignInButton } from "@/components/auth/SmartSignIn";
 import originxOneLogo from "@/assets/originx-one-logo.png";
 
 // CHRONYX Logo - Clean minimal
@@ -121,6 +122,9 @@ const Login = () => {
 
   // First-time 2FA Prompt State
   const [showFirstTime2FAPrompt, setShowFirstTime2FAPrompt] = useState(false);
+
+  // Smart Sign-In State
+  const [showSmartSignIn, setShowSmartSignIn] = useState(false);
 
   const from = (location.state as { from?: string })?.from || "/app";
 
@@ -316,12 +320,13 @@ const Login = () => {
   };
 
   const handleSecurityMethodSelect = (method: "passkey" | "authenticator") => {
+    // Close the security methods modal first
+    setShowSecurityMethodsModal(false);
+    
+    // If user is not authenticated, redirect to Smart Sign-In instead
     if (!user) {
-      toast({
-        title: "Sign in first",
-        description: "Please sign in to set up security methods.",
-        variant: "destructive",
-      });
+      // Open Smart Sign-In for passwordless login with 2FA
+      setShowSmartSignIn(true);
       return;
     }
     
@@ -532,7 +537,7 @@ const Login = () => {
                 </div>
               </motion.div>
 
-              {/* Passkey / 2FA Quick Access */}
+              {/* Smart Sign-In Button */}
               <motion.div 
                 className="flex gap-2 mb-6"
                 initial={{ opacity: 0, y: 20 }}
@@ -541,11 +546,19 @@ const Login = () => {
               >
                 <button
                   type="button"
-                  onClick={() => setShowSecurityMethodsModal(true)}
-                  className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-all text-xs text-primary font-medium"
+                  onClick={() => setShowSmartSignIn(true)}
+                  className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl 
+                             bg-gradient-to-r from-primary/10 to-primary/5 
+                             border border-primary/30 hover:border-primary/60 hover:from-primary/20 hover:to-primary/10
+                             transition-all text-sm text-primary font-medium group relative overflow-hidden"
                 >
-                  <Shield className="w-4 h-4" />
-                  Security Options
+                  <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <span>Smart Sign-In</span>
+                  <motion.span
+                    className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"
+                    animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                  />
                 </button>
               </motion.div>
 
@@ -786,6 +799,13 @@ const Login = () => {
           onSelectPasskey={handleFirstTime2FAPasskey}
           onSelectAuthenticator={handleFirstTime2FAAuthenticator}
           onSkip={handleFirstTime2FASkip}
+        />
+
+        {/* Smart Sign-In Modal */}
+        <SmartSignIn
+          open={showSmartSignIn}
+          onOpenChange={setShowSmartSignIn}
+          redirectPath={from}
         />
       </main>
     </>
