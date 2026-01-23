@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { TwoFactorLoginVerification } from "@/components/auth/TwoFactorLoginVerification";
 import { WebAuthnRegistration } from "@/components/auth/WebAuthnRegistration";
+import { SecurityMethodsModal } from "@/components/auth/SecurityMethodsModal";
 import originxOneLogo from "@/assets/originx-one-logo.png";
 
 // CHRONYX Logo - Clean minimal
@@ -113,6 +114,9 @@ const Login = () => {
 
   // WebAuthn Registration State
   const [showWebAuthnRegistration, setShowWebAuthnRegistration] = useState(false);
+
+  // Security Methods Modal State
+  const [showSecurityMethodsModal, setShowSecurityMethodsModal] = useState(false);
 
   const from = (location.state as { from?: string })?.from || "/app";
 
@@ -214,9 +218,49 @@ const Login = () => {
     setIsGoogleLoading(true);
     try {
       const { error } = await signInWithGoogle();
-      if (error) toast({ title: "Google sign in failed", description: error.message, variant: "destructive" });
-    } finally {
+      if (error) {
+        toast({ title: "Google sign in failed", description: error.message, variant: "destructive" });
+        setIsGoogleLoading(false);
+        return;
+      }
+      // After OAuth redirect, the auth callback will handle 2FA check
+    } catch (err) {
       setIsGoogleLoading(false);
+    }
+  };
+
+  // Handle OAuth callback with 2FA check
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      // Check if user just logged in via OAuth and needs 2FA
+      if (user && !loading) {
+        const requires2FA = await check2FAAndProceed(user.id, user.email || "");
+        if (!requires2FA) {
+          navigate(from, { replace: true });
+        }
+      }
+    };
+
+    // Only run on OAuth redirects (when hash contains access_token)
+    if (window.location.hash.includes("access_token")) {
+      handleOAuthCallback();
+    }
+  }, [user, loading]);
+
+  const handleSecurityMethodSelect = (method: "passkey" | "authenticator") => {
+    if (!user) {
+      toast({
+        title: "Sign in first",
+        description: "Please sign in to set up security methods.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (method === "passkey") {
+      setShowWebAuthnRegistration(true);
+    } else {
+      handleTotpSetup();
     }
   };
 
@@ -374,29 +418,11 @@ const Login = () => {
             <div className="flex gap-2 mb-6">
               <button
                 type="button"
-                onClick={handleTotpSetup}
+                onClick={() => setShowSecurityMethodsModal(true)}
                 className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-all text-xs text-primary font-medium"
               >
-                <Smartphone className="w-4 h-4" />
-                Authenticator
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!user) {
-                    toast({
-                      title: "Sign in first",
-                      description: "Please sign in to register a passkey for your account.",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-                  setShowWebAuthnRegistration(true);
-                }}
-                className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border border-dashed border-primary/30 hover:border-primary/60 hover:bg-primary/5 transition-all text-xs text-primary font-medium"
-              >
-                <Fingerprint className="w-4 h-4" />
-                Passkey
+                <Shield className="w-4 h-4" />
+                Security Options
               </button>
             </div>
 
@@ -603,6 +629,14 @@ const Login = () => {
           open={showWebAuthnRegistration}
           onOpenChange={setShowWebAuthnRegistration}
           onSuccess={() => toast({ title: "Passkey registered!", description: "Use it for passwordless login." })}
+        />
+
+        {/* Security Methods Modal */}
+        <SecurityMethodsModal
+          open={showSecurityMethodsModal}
+          onOpenChange={setShowSecurityMethodsModal}
+          onSelectPasskey={() => handleSecurityMethodSelect("passkey")}
+          onSelectAuthenticator={() => handleSecurityMethodSelect("authenticator")}
         />
       </main>
     </>
