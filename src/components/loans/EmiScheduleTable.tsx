@@ -58,8 +58,18 @@ export const EmiScheduleTable = ({
 }: EmiScheduleTableProps) => {
   const [showAll, setShowAll] = useState(false);
   const [markPaidId, setMarkPaidId] = useState<string | null>(null);
+  const [selectedEmiDate, setSelectedEmiDate] = useState<string | null>(null);
   const [paidDate, setPaidDate] = useState(new Date().toISOString().split("T")[0]);
   const [paymentMethod, setPaymentMethod] = useState("Auto Debit");
+
+  // Open the mark paid dialog with the EMI's due date pre-populated
+  const openMarkPaidDialog = (emi: EmiEntry) => {
+    setMarkPaidId(emi.id);
+    setSelectedEmiDate(emi.emi_date);
+    // Pre-populate with EMI due date
+    setPaidDate(emi.emi_date.split("T")[0]);
+    setPaymentMethod("Auto Debit");
+  };
 
   const displaySchedule = showAll ? schedule : schedule.slice(0, 12);
   
@@ -160,7 +170,7 @@ export const EmiScheduleTable = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setMarkPaidId(emi.id)}
+                          onClick={() => openMarkPaidDialog(emi)}
                           className="h-7 text-xs"
                           disabled={isLoading}
                         >

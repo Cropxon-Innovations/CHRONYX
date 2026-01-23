@@ -125,7 +125,9 @@ const FloatingEmiCard = ({ loans, allEmis, onMarkPaid, isLoading, className }: F
 
   const openPaymentDialog = (emi: EmiScheduleItem) => {
     setSelectedEmi(emi);
-    setPaymentDate(new Date().toISOString().split('T')[0]);
+    // Pre-populate with EMI due date instead of current date
+    setPaymentDate(emi.emi_date.split('T')[0]);
+    setPaymentMethod("Bank Transfer");
     setShowPaymentDialog(true);
   };
 
