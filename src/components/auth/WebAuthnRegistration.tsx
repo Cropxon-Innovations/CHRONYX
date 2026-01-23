@@ -26,6 +26,13 @@ export const WebAuthnRegistration = ({
   const [pendingCredential, setPendingCredential] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const base64UrlToUint8Array = (base64url: string): Uint8Array => {
+    const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64 + "===".slice((base64.length + 3) % 4);
+    const str = atob(padded);
+    return Uint8Array.from(str, (c) => c.charCodeAt(0));
+  };
+
   // Detect device type for better naming suggestions
   const detectDeviceType = (): { type: string; suggestedName: string } => {
     const ua = navigator.userAgent;
@@ -58,21 +65,22 @@ export const WebAuthnRegistration = ({
         throw new Error(optionsData?.error || "Failed to get registration options");
       }
       
-      const { options, challenge } = optionsData;
+      const options = optionsData.options;
+
+      // Convert base64/base64url fields to Uint8Array as required by WebAuthn
+      options.challenge = base64UrlToUint8Array(options.challenge);
+      options.user.id = base64UrlToUint8Array(options.user.id);
+      if (Array.isArray(options.excludeCredentials)) {
+        options.excludeCredentials = options.excludeCredentials.map((cred: any) => ({
+          ...cred,
+          id: base64UrlToUint8Array(cred.id),
+        }));
+      }
       
       // Step 2: Create credential with WebAuthn API
       const credential = await navigator.credentials.create({
         publicKey: {
           ...options,
-          challenge: Uint8Array.from(atob(challenge), c => c.charCodeAt(0)),
-          user: {
-            ...options.user,
-            id: Uint8Array.from(atob(options.user.id), c => c.charCodeAt(0)),
-          },
-          excludeCredentials: options.excludeCredentials?.map((cred: any) => ({
-            ...cred,
-            id: Uint8Array.from(atob(cred.id), c => c.charCodeAt(0)),
-          })),
         },
       }) as PublicKeyCredential;
       
@@ -84,10 +92,10 @@ export const WebAuthnRegistration = ({
       
       // Store credential data for verification after naming
       setPendingCredential({
-        credentialId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+        id: credential.id,
         publicKey: btoa(String.fromCharCode(...new Uint8Array(response.getPublicKey()!))),
-        attestationObject: btoa(String.fromCharCode(...new Uint8Array(response.attestationObject))),
-        clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(response.clientDataJSON))),
+        authenticatorAttachment: (credential as any).authenticatorAttachment,
+        transports: response.getTransports?.() || [],
       });
       
       // Move to naming step
@@ -123,9 +131,11 @@ export const WebAuthnRegistration = ({
       const { data, error: verifyError } = await supabase.functions.invoke("webauthn-setup", {
         body: {
           action: "register-verify",
-          ...pendingCredential,
           deviceName: deviceName.trim(),
-          deviceType: type,
+          credential: {
+            ...pendingCredential,
+            authenticatorAttachment: pendingCredential.authenticatorAttachment || type,
+          },
         },
       });
       
@@ -157,19 +167,27 @@ export const WebAuthnRegistration = ({
     }
   };
 
-  const handleClose = () => {
-    onOpenChange(false);
-    // Reset state after animation
-    setTimeout(() => {
-      setStep("intro");
-      setPendingCredential(null);
-      setDeviceName("");
-      setError(null);
-    }, 200);
+  const resetState = () => {
+    setStep("intro");
+    setPendingCredential(null);
+    setDeviceName("");
+    setError(null);
+    setIsRegistering(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        // Only reset when closing; allow the dialog to actually open.
+        if (!nextOpen) {
+          onOpenChange(false);
+          setTimeout(resetState, 200);
+        } else {
+          onOpenChange(true);
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

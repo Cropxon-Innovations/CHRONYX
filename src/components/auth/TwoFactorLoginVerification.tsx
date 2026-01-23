@@ -37,6 +37,13 @@ export const TwoFactorLoginVerification = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const base64UrlToUint8Array = (base64url: string): Uint8Array => {
+    const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64 + "===".slice((base64.length + 3) % 4);
+    const str = atob(padded);
+    return Uint8Array.from(str, (c) => c.charCodeAt(0));
+  };
+
   const handleTotpVerify = async () => {
     if (code.length !== 6 && method !== "backup") return;
     
@@ -87,17 +94,19 @@ export const TwoFactorLoginVerification = ({
         throw new Error(optionsData?.error || "Failed to get authentication options");
       }
       
-      const { options, challenge } = optionsData;
+      const options = optionsData.options;
+      options.challenge = base64UrlToUint8Array(options.challenge);
+      if (Array.isArray(options.allowCredentials)) {
+        options.allowCredentials = options.allowCredentials.map((cred: any) => ({
+          ...cred,
+          id: base64UrlToUint8Array(cred.id),
+        }));
+      }
       
       // Step 2: Request credential from authenticator
       const credential = await navigator.credentials.get({
         publicKey: {
           ...options,
-          challenge: Uint8Array.from(atob(challenge), c => c.charCodeAt(0)),
-          allowCredentials: options.allowCredentials?.map((cred: any) => ({
-            ...cred,
-            id: Uint8Array.from(atob(cred.id), c => c.charCodeAt(0)),
-          })),
         },
       }) as PublicKeyCredential;
       
@@ -105,16 +114,13 @@ export const TwoFactorLoginVerification = ({
         throw new Error("No credential received");
       }
       
-      const response = credential.response as AuthenticatorAssertionResponse;
-      
       // Step 3: Verify with backend
       const { data: verifyData, error: verifyError } = await supabase.functions.invoke("webauthn-setup", {
         body: {
           action: "authenticate-verify",
-          credentialId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
-          authenticatorData: btoa(String.fromCharCode(...new Uint8Array(response.authenticatorData))),
-          clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(response.clientDataJSON))),
-          signature: btoa(String.fromCharCode(...new Uint8Array(response.signature))),
+          credential: {
+            id: credential.id,
+          },
         },
       });
       
@@ -215,6 +221,7 @@ export const TwoFactorLoginVerification = ({
                   </p>
                 </div>
                 <Button
+                  type="button"
                   onClick={handleVerify}
                   disabled={isVerifying}
                   className="w-full gap-2"
@@ -267,6 +274,7 @@ export const TwoFactorLoginVerification = ({
                 </div>
 
                 <Button
+                  type="button"
                   onClick={handleVerify}
                   disabled={code.length !== 6 || isVerifying}
                   className="w-full"
@@ -319,6 +327,7 @@ export const TwoFactorLoginVerification = ({
                 </div>
 
                 <Button
+                  type="button"
                   onClick={handleVerify}
                   disabled={code.length < 8 || isVerifying}
                   className="w-full"
