@@ -50,6 +50,7 @@ const Notes = lazy(() => import("./pages/app/Notes"));
 const Vault = lazy(() => import("./pages/app/Vault"));
 const Tax = lazy(() => import("./pages/app/Tax"));
 const EAuthor = lazy(() => import("./pages/app/EAuthor"));
+const Library = lazy(() => import("./pages/app/Library"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -262,6 +263,7 @@ const AnimatedRoutes = () => {
           <Route path="vault" element={<Suspense fallback={<PageLoader />}><Vault /></Suspense>} />
           <Route path="tax" element={<Suspense fallback={<PageLoader />}><Tax /></Suspense>} />
           <Route path="eauthor" element={<Suspense fallback={<PageLoader />}><EAuthor /></Suspense>} />
+          <Route path="library" element={<Suspense fallback={<PageLoader />}><Library /></Suspense>} />
           <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         </Route>
         <Route 
