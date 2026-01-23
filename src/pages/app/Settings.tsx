@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useNavigate } from "react-router-dom";
 import { EnhancedCalendar } from "@/components/ui/date-picker-enhanced";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, differenceInYears, differenceInMonths, differenceInDays } from "date-fns";
@@ -75,7 +76,8 @@ const Settings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
-  const { resetOnboarding } = useOnboarding();
+  const { resetOnboarding, requestOnboardingReplay } = useOnboarding();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -321,13 +323,17 @@ const Settings = () => {
     setUploadingAvatar(false);
   };
 
-  const handleReplayOnboarding = () => {
-    resetOnboarding();
+  const handleReplayOnboarding = async () => {
+    requestOnboardingReplay();
     toast({
-      title: "Onboarding Reset",
-      description: "The onboarding flow will appear on your next dashboard visit.",
+      title: "Onboarding Scheduled",
+      description: "You'll see the onboarding when you sign back in.",
     });
-    logActivity("Reset onboarding flow", "Settings");
+    logActivity("Scheduled onboarding replay", "Settings");
+    
+    // Sign out user so they see onboarding on next login
+    await supabase.auth.signOut();
+    navigate("/login");
   };
 
   const handleDownloadAllData = async () => {
@@ -1055,11 +1061,11 @@ const Settings = () => {
           Onboarding
         </h2>
         <p className="text-sm text-muted-foreground">
-          Want to see the app introduction again? Replay the onboarding flow to learn about VYOM's features.
+          Want to see the app introduction again? You'll be signed out and shown the onboarding when you sign back in.
         </p>
         <Button variant="outline" onClick={handleReplayOnboarding}>
           <RotateCcw className="w-4 h-4 mr-2" />
-          Replay Onboarding
+          Replay Onboarding on Next Login
         </Button>
       </section>
 
