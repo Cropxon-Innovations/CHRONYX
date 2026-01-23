@@ -37,7 +37,7 @@ import { format } from "date-fns";
 interface FamilyMember {
   id: string;
   full_name: string;
-  relation: string;
+  relationship: string;
   date_of_birth: string | null;
   notes: string | null;
   policy_count?: number;
@@ -56,7 +56,7 @@ const FamilyMembers = () => {
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null);
   const [formData, setFormData] = useState({
     full_name: "",
-    relation: "",
+    relationship: "",
     date_of_birth: "",
     notes: "",
   });
@@ -107,8 +107,8 @@ const FamilyMembers = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.full_name || !formData.relation) {
-      toast.error("Name and relation are required");
+    if (!formData.full_name || !formData.relationship) {
+      toast.error("Name and relationship are required");
       return;
     }
 
@@ -118,7 +118,7 @@ const FamilyMembers = () => {
           .from("family_members")
           .update({
             full_name: formData.full_name,
-            relation: formData.relation,
+            relationship: formData.relationship,
             date_of_birth: formData.date_of_birth || null,
             notes: formData.notes || null,
           })
@@ -133,7 +133,7 @@ const FamilyMembers = () => {
           .insert({
             user_id: user!.id,
             full_name: formData.full_name,
-            relation: formData.relation,
+            relationship: formData.relationship,
             date_of_birth: formData.date_of_birth || null,
             notes: formData.notes || null,
           });
@@ -177,7 +177,7 @@ const FamilyMembers = () => {
     setSelectedMember(member);
     setFormData({
       full_name: member.full_name,
-      relation: member.relation,
+      relationship: member.relationship,
       date_of_birth: member.date_of_birth || "",
       notes: member.notes || "",
     });
@@ -193,7 +193,7 @@ const FamilyMembers = () => {
     setSelectedMember(null);
     setFormData({
       full_name: "",
-      relation: "",
+      relationship: "",
       date_of_birth: "",
       notes: "",
     });
@@ -245,13 +245,13 @@ const FamilyMembers = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Relation *</Label>
+                <Label>Relationship *</Label>
                 <Select
-                  value={formData.relation}
-                  onValueChange={(value) => setFormData({ ...formData, relation: value })}
+                  value={formData.relationship}
+                  onValueChange={(value) => setFormData({ ...formData, relationship: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select relation" />
+                    <SelectValue placeholder="Select relationship" />
                   </SelectTrigger>
                   <SelectContent>
                     {RELATIONS.map((rel) => (
@@ -308,7 +308,7 @@ const FamilyMembers = () => {
                 <div className="flex items-center gap-3">
                   <h3 className="font-medium text-foreground">{member.full_name}</h3>
                   <span className="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground">
-                    {member.relation}
+                    {member.relationship}
                   </span>
                 </div>
                 <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">

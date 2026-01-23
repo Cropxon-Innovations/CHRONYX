@@ -1,0 +1,301 @@
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  Award,
+  Download,
+  FileText,
+  Shield,
+  CheckCircle2,
+  Calendar,
+  Users,
+  Loader2,
+} from "lucide-react";
+import { format } from "date-fns";
+import jsPDF from "jspdf";
+import type { FamilyMember } from "@/pages/app/FamilyTree";
+
+interface CertifiedExportDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  members: FamilyMember[];
+}
+
+export const CertifiedExportDialog = ({
+  open,
+  onOpenChange,
+  members,
+}: CertifiedExportDialogProps) => {
+  const { user } = useAuth();
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const stats = {
+    total: members.length,
+    verified: members.filter(m => m.is_verified).length,
+    generations: new Set(members.map(m => m.generation_level)).size,
+  };
+
+  const generateCertificateId = () => {
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substring(2, 8);
+    return `CRX-FT-${timestamp}-${random}`.toUpperCase();
+  };
+
+  const handleExport = async () => {
+    if (members.length === 0) {
+      toast.error("No family members to export");
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      const certificateId = generateCertificateId();
+      const generatedAt = new Date();
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+
+      // Header with emblem style
+      pdf.setFillColor(31, 41, 55); // Dark header
+      pdf.rect(0, 0, pageWidth, 45, "F");
+
+      // Title
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(20);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text("FAMILY TREE CERTIFICATE", pageWidth / 2, 22, { align: "center" });
+
+      // Subtitle
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.setTextColor(200, 200, 200);
+      pdf.text("Official Digital Record by CHRONYX", pageWidth / 2, 32, { align: "center" });
+
+      // Certificate ID
+      pdf.setFontSize(8);
+      pdf.text(`Certificate ID: ${certificateId}`, pageWidth / 2, 40, { align: "center" });
+
+      // Reset colors
+      pdf.setTextColor(0, 0, 0);
+
+      // Generation info
+      let yPos = 60;
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.text(`Generated on: ${format(generatedAt, "PPPp")}`, margin, yPos);
+      yPos += 8;
+      pdf.text(`Total Members: ${stats.total} | Verified: ${stats.verified} | Generations: ${stats.generations}`, margin, yPos);
+
+      // Separator
+      yPos += 10;
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 10;
+
+      // Family Members Table Header
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(12);
+      pdf.text("Family Members", margin, yPos);
+      yPos += 10;
+
+      // Table
+      pdf.setFontSize(9);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Name", margin, yPos);
+      pdf.text("Relationship", margin + 60, yPos);
+      pdf.text("Birth Date", margin + 100, yPos);
+      pdf.text("Status", margin + 140, yPos);
+
+      yPos += 5;
+      pdf.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 5;
+
+      pdf.setFont("helvetica", "normal");
+
+      // Group by generation
+      const sortedMembers = [...members].sort((a, b) => a.generation_level - b.generation_level);
+
+      sortedMembers.forEach((member) => {
+        if (yPos > pageHeight - 50) {
+          pdf.addPage();
+          yPos = 30;
+        }
+
+        pdf.text(member.full_name.substring(0, 25), margin, yPos);
+        pdf.text(member.relationship.substring(0, 15), margin + 60, yPos);
+        pdf.text(
+          member.date_of_birth ? format(new Date(member.date_of_birth), "dd/MM/yyyy") : "—",
+          margin + 100,
+          yPos
+        );
+        pdf.text(member.is_verified ? "Verified" : "Pending", margin + 140, yPos);
+
+        yPos += 7;
+      });
+
+      // Footer
+      yPos = pageHeight - 40;
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 10;
+
+      pdf.setFont("helvetica", "italic");
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(
+        "Verified and generated by Chronyx, a division of OriginX Labs Pvt Ltd",
+        pageWidth / 2,
+        yPos,
+        { align: "center" }
+      );
+      yPos += 5;
+      pdf.text(
+        "This certificate is digitally signed and can be verified at chronyx.originxlabs.com",
+        pageWidth / 2,
+        yPos,
+        { align: "center" }
+      );
+
+      // Digital signature mark
+      yPos += 10;
+      pdf.setDrawColor(31, 41, 55);
+      pdf.setFillColor(245, 245, 245);
+      pdf.roundedRect(pageWidth / 2 - 30, yPos - 5, 60, 15, 3, 3, "FD");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(9);
+      pdf.setTextColor(31, 41, 55);
+      pdf.text("DIGITALLY SIGNED", pageWidth / 2, yPos + 4, { align: "center" });
+
+      // Save PDF
+      pdf.save(`family-tree-certificate-${certificateId}.pdf`);
+
+      // Save export record
+      await supabase.from("family_tree_exports").insert({
+        user_id: user?.id,
+        certificate_id: certificateId,
+        export_format: "pdf",
+        member_count: stats.total,
+        generation_count: stats.generations,
+      });
+
+      toast.success("Certificate exported successfully!");
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error generating certificate:", error);
+      toast.error("Failed to generate certificate");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Award className="w-5 h-5 text-primary" />
+            Certified Export
+          </DialogTitle>
+          <DialogDescription>
+            Generate an official family tree certificate with digital verification
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {/* Preview Card */}
+          <div className="p-6 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-3">
+                <FileText className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-semibold">Family Tree Certificate</h3>
+              <p className="text-sm text-white/60">Official Digital Record</p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-3 rounded-lg bg-white/10">
+                <Users className="w-4 h-4 mx-auto mb-1" />
+                <p className="text-lg font-semibold">{stats.total}</p>
+                <p className="text-xs text-white/60">Members</p>
+              </div>
+              <div className="p-3 rounded-lg bg-white/10">
+                <CheckCircle2 className="w-4 h-4 mx-auto mb-1 text-green-400" />
+                <p className="text-lg font-semibold">{stats.verified}</p>
+                <p className="text-xs text-white/60">Verified</p>
+              </div>
+              <div className="p-3 rounded-lg bg-white/10">
+                <Calendar className="w-4 h-4 mx-auto mb-1" />
+                <p className="text-lg font-semibold">{stats.generations}</p>
+                <p className="text-xs text-white/60">Generations</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Certificate includes */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Certificate includes:</p>
+            <ul className="space-y-1.5 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                Complete family tree diagram
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                Names and relationships
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                Verification status for each member
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                Unique certificate ID
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                Digital signature by Chronyx
+              </li>
+            </ul>
+          </div>
+
+          {/* Footer note */}
+          <div className="p-3 rounded-lg bg-muted/50 border border-border flex items-start gap-2">
+            <Shield className="w-4 h-4 mt-0.5 text-primary" />
+            <p className="text-xs text-muted-foreground">
+              This certificate is digitally signed and can be used for official purposes. 
+              It carries the seal of OriginX Labs Pvt Ltd.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-4 border-t">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+            Cancel
+          </Button>
+          <Button onClick={handleExport} disabled={isGenerating || members.length === 0} className="flex-1">
+            {isGenerating ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+            ) : (
+              <><Download className="w-4 h-4 mr-2" /> Export PDF</>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

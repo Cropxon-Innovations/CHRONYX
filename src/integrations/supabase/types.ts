@@ -1410,35 +1410,232 @@ export type Database = {
           },
         ]
       }
+      family_audit_log: {
+        Row: {
+          action: string
+          action_details: Json | null
+          created_at: string
+          document_id: string | null
+          id: string
+          ip_address: string | null
+          member_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          action_details?: Json | null
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          ip_address?: string | null
+          member_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          action_details?: Json | null
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          ip_address?: string | null
+          member_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_audit_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "family_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_audit_log_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_documents: {
+        Row: {
+          created_at: string
+          document_number: string | null
+          document_type: string
+          file_name: string | null
+          file_url: string | null
+          id: string
+          member_id: string
+          notes: string | null
+          updated_at: string
+          upload_date: string | null
+          user_id: string
+          verification_status: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_number?: string | null
+          document_type: string
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          member_id: string
+          notes?: string | null
+          updated_at?: string
+          upload_date?: string | null
+          user_id: string
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_number?: string | null
+          document_type?: string
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          member_id?: string
+          notes?: string | null
+          updated_at?: string
+          upload_date?: string | null
+          user_id?: string
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_documents_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_members: {
         Row: {
           created_at: string
           date_of_birth: string | null
+          date_of_death: string | null
           full_name: string
+          gender: string | null
+          generation_level: number | null
           id: string
+          is_root: boolean | null
+          is_verified: boolean | null
           notes: string | null
-          relation: string
+          parent_id: string | null
+          photo_url: string | null
+          place_of_birth: string | null
+          place_of_death: string | null
+          position_x: number | null
+          position_y: number | null
+          relationship: string
+          spouse_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           date_of_birth?: string | null
+          date_of_death?: string | null
           full_name: string
+          gender?: string | null
+          generation_level?: number | null
           id?: string
+          is_root?: boolean | null
+          is_verified?: boolean | null
           notes?: string | null
-          relation: string
+          parent_id?: string | null
+          photo_url?: string | null
+          place_of_birth?: string | null
+          place_of_death?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          relationship: string
+          spouse_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           date_of_birth?: string | null
+          date_of_death?: string | null
           full_name?: string
+          gender?: string | null
+          generation_level?: number | null
           id?: string
+          is_root?: boolean | null
+          is_verified?: boolean | null
           notes?: string | null
-          relation?: string
+          parent_id?: string | null
+          photo_url?: string | null
+          place_of_birth?: string | null
+          place_of_death?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          relationship?: string
+          spouse_id?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_members_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_members_spouse_id_fkey"
+            columns: ["spouse_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_tree_exports: {
+        Row: {
+          certificate_id: string
+          created_at: string
+          export_format: string
+          file_url: string | null
+          generated_at: string
+          generation_count: number | null
+          id: string
+          member_count: number | null
+          user_id: string
+        }
+        Insert: {
+          certificate_id: string
+          created_at?: string
+          export_format?: string
+          file_url?: string | null
+          generated_at?: string
+          generation_count?: number | null
+          id?: string
+          member_count?: number | null
+          user_id: string
+        }
+        Update: {
+          certificate_id?: string
+          created_at?: string
+          export_format?: string
+          file_url?: string | null
+          generated_at?: string
+          generation_count?: number | null
+          id?: string
+          member_count?: number | null
           user_id?: string
         }
         Relationships: []

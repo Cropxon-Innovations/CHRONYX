@@ -107,6 +107,7 @@ const navSections: NavSection[] = [
     items: [
       { path: "/app/memory", label: "Memory", icon: Images },
       { path: "/app/documents", label: "Documents", icon: FileText },
+      { path: "/app/family-tree", label: "Family Tree", icon: Users, badge: "NEW" },
       { path: "/app/social", label: "Social", icon: Users, badge: "BETA" },
       { path: "/app/lifespan", label: "Lifespan", icon: Hourglass },
     ],
@@ -246,7 +247,15 @@ const AppSidebar = () => {
         {/* Header */}
         <div className={cn("border-b border-sidebar-border", collapsed ? "p-2" : "p-4")}>
           <div className="flex items-center justify-between mb-3">
-            <Link to="/app" className="flex items-center gap-2 group" onClick={closeMobile}>
+            <Link 
+              to="/app" 
+              className="flex items-center gap-2 group" 
+              onClick={() => {
+                closeMobile();
+                // Refresh all queries to get latest data
+                window.location.reload();
+              }}
+            >
               <ChronyxMiniLogo size={collapsed ? "sm" : "md"} />
               {!collapsed && (
                 <div className="flex flex-col">
@@ -425,14 +434,14 @@ const AppSidebar = () => {
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-[9px] text-sidebar-foreground/40 cursor-default">v1</span>
+                <span className="text-[9px] text-sidebar-foreground/40 cursor-default">v1.0.1</span>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Version 1.0.0</p>
+                <p>Version 1.0.1</p>
               </TooltipContent>
             </Tooltip>
           ) : (
-            <p className="text-[10px] text-sidebar-foreground/40">Version 1.0.0</p>
+            <p className="text-[10px] text-sidebar-foreground/40">Version 1.0.1</p>
           )}
         </div>
       </>
