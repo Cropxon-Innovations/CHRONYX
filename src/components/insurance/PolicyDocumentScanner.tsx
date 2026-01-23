@@ -10,7 +10,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { 
-  Scan, 
   Loader2, 
   Upload, 
   Check, 
@@ -86,9 +85,29 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
+  // Read file as ArrayBuffer safely (clone to avoid detached buffer issues)
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result instanceof ArrayBuffer) {
+          // Clone the ArrayBuffer to prevent "detached" issues
+          const cloned = reader.result.slice(0);
+          resolve(cloned);
+        } else {
+          reject(new Error("Failed to read file as ArrayBuffer"));
+        }
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
   // Convert PDF page to image using canvas
   const convertPdfPageToImage = async (pdfData: ArrayBuffer, pageNum: number = 1): Promise<Blob> => {
-    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    // Clone the buffer to prevent detached issues
+    const dataClone = pdfData.slice(0);
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(dataClone) }).promise;
     const page = await pdf.getPage(pageNum);
     
     // Use higher scale for better OCR quality
@@ -119,7 +138,9 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
 
   // Extract text from all PDF pages
   const extractTextFromPdf = async (pdfData: ArrayBuffer): Promise<string> => {
-    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    // Clone the buffer to prevent detached issues
+    const dataClone = pdfData.slice(0);
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(dataClone) }).promise;
     let fullText = '';
     
     // Extract text from first 5 pages (usually enough for policy details)
@@ -161,10 +182,8 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
 
     // Enhanced Provider/Company patterns - especially for Care Health
     const providerPatterns = [
-      // Care Health Insurance specific
       /(Care\s*Health\s*Insurance)/i,
-      /(Religare\s*Health\s*Insurance)/i, // Care was previously Religare
-      // Other major Indian insurers
+      /(Religare\s*Health\s*Insurance)/i,
       /(?:insurer|company|provider|underwritten\s*by)[:\s]*([A-Za-z\s]+(?:Insurance|Assurance|Life|Health))/i,
       /(ICICI\s*(?:Prudential|Lombard)[\s\w]*(?:Insurance|Life|Health)?)/i,
       /(HDFC\s*(?:Life|Ergo)[\s\w]*(?:Insurance)?)/i,
@@ -206,7 +225,6 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
       const match = text.match(pattern);
       if (match) {
         let amount = match[1].replace(/,/g, '');
-        // Check if it mentions lakhs
         if (/lakhs?|lacs?/i.test(match[0])) {
           amount = String(parseFloat(amount) * 100000);
         }
@@ -241,13 +259,6 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
       data.premium_frequency = 'Monthly';
     }
 
-    // Enhanced Date patterns
-    const dateFormats = [
-      /(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/g,
-      /(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s,]+\d{2,4})/gi,
-      /(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/g,
-    ];
-    
     // Start date patterns
     const startPatterns = [
       /(?:commencement|start|effective|policy\s*(?:start|from)|risk\s*start|inception)\s*date[:\s]*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,
@@ -340,7 +351,6 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
 
   const parseDate = (dateStr: string): string => {
     try {
-      // Handle different date formats
       let parts: string[] = [];
       
       if (dateStr.includes('/')) {
@@ -354,14 +364,12 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
         let month = parts[1];
         let year = parts[2];
         
-        // Check if year is first (YYYY-MM-DD format)
         if (parts[0].length === 4) {
           year = parts[0];
           month = parts[1];
           day = parts[2];
         }
         
-        // Handle 2-digit year
         if (year.length === 2) {
           year = parseInt(year) > 50 ? `19${year}` : `20${year}`;
         }
@@ -402,8 +410,15 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("File too large (max 15MB)");
+    // Support PDF, JPG, PNG, WEBP up to 20MB
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (!validTypes.includes(file.type) && !file.name.toLowerCase().match(/\.(pdf|jpg|jpeg|png|webp)$/)) {
+      toast.error("Unsupported file type. Use PDF, JPG, PNG, or WEBP.");
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("File too large (max 20MB)");
       return;
     }
 
@@ -432,7 +447,8 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
         setCurrentStep('converting');
         setProgress(0);
 
-        const arrayBuffer = await file.arrayBuffer();
+        // Read file safely
+        const arrayBuffer = await readFileAsArrayBuffer(file);
         
         // First try to extract text directly from PDF
         try {
@@ -445,15 +461,15 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
             
             // Still convert first page for preview
             previewBlob = await convertPdfPageToImage(arrayBuffer, 1);
-            const previewUrl = URL.createObjectURL(previewBlob);
-            setPreviewUrl(previewUrl);
+            const previewUrlStr = URL.createObjectURL(previewBlob);
+            setPreviewUrl(previewUrlStr);
             setProgress(100);
           } else {
             // Text extraction didn't work well, need OCR
             console.log("PDF text extraction insufficient, using OCR...");
             previewBlob = await convertPdfPageToImage(arrayBuffer, 1);
-            const previewUrl = URL.createObjectURL(previewBlob);
-            setPreviewUrl(previewUrl);
+            const previewUrlStr = URL.createObjectURL(previewBlob);
+            setPreviewUrl(previewUrlStr);
             setProgress(100);
             extractedText = ''; // Reset to trigger OCR
           }
@@ -461,14 +477,14 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
           console.error("PDF text extraction error:", pdfError);
           // Try converting to image for OCR
           previewBlob = await convertPdfPageToImage(arrayBuffer, 1);
-          const previewUrl = URL.createObjectURL(previewBlob);
-          setPreviewUrl(previewUrl);
+          const previewUrlStr = URL.createObjectURL(previewBlob);
+          setPreviewUrl(previewUrlStr);
           setProgress(100);
         }
       } else {
         // For images, create preview directly
-        const previewUrl = URL.createObjectURL(file);
-        setPreviewUrl(previewUrl);
+        const previewUrlStr = URL.createObjectURL(file);
+        setPreviewUrl(previewUrlStr);
         previewBlob = file;
       }
 
@@ -610,7 +626,7 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
               Scan Policy Document
             </DialogTitle>
             <DialogDescription>
-              Upload a policy document (PDF or image) to auto-extract details using AI
+              Upload a policy document (PDF, JPG, PNG, WEBP - max 20MB) to auto-extract details
             </DialogDescription>
           </DialogHeader>
 
@@ -624,7 +640,7 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
                     <div key={step.id} className="flex items-center flex-1">
                       <div className="flex flex-col items-center">
                         <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
-                          status === 'complete' ? 'bg-green-500 text-white' :
+                          status === 'complete' ? 'bg-emerald-500 text-white' :
                           status === 'active' ? 'bg-primary text-primary-foreground animate-pulse' :
                           'bg-muted text-muted-foreground'
                         }`}>
@@ -645,7 +661,7 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
                       {index < PROCESS_STEPS.length - 1 && (
                         <div className={`flex-1 h-0.5 mx-1 ${
                           getStepStatus(PROCESS_STEPS[index + 1].id) !== 'pending' 
-                            ? 'bg-green-500' 
+                            ? 'bg-emerald-500' 
                             : 'bg-muted'
                         }`} />
                       )}
@@ -689,7 +705,7 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,.pdf,application/pdf"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
                   onChange={handleFileChange}
                   className="hidden"
                 />
@@ -714,7 +730,7 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Supports PDF, JPG, PNG, WEBP (max 15MB)
+                  Supports PDF, JPG, PNG, WEBP (max 20MB)
                 </p>
               </div>
             )}
@@ -754,7 +770,7 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
                 {extractedData && Object.keys(extractedData).length > 0 && (
                   <div className="space-y-3">
                     <h4 className="text-sm font-medium flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                       Extracted Details (Editable)
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
