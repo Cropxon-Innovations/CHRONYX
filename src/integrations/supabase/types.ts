@@ -149,6 +149,36 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_challenges: {
+        Row: {
+          challenge: string
+          challenge_type: string
+          created_at: string
+          expires_at: string
+          id: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          challenge: string
+          challenge_type: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          challenge?: string
+          challenge_type?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       auto_imported_transactions: {
         Row: {
           amount: number
@@ -2360,6 +2390,9 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          billing_address: string | null
+          billing_email: string | null
+          billing_name: string | null
           company_address: string | null
           company_gstin: string | null
           company_name: string
@@ -2370,11 +2403,14 @@ export type Database = {
           customer_name: string | null
           customer_phone: string | null
           due_date: string | null
+          gstin: string | null
           id: string
           invoice_date: string
           invoice_number: string
+          invoice_pdf_url: string | null
           metadata: Json | null
           notes: string | null
+          paid_at: string | null
           paid_date: string | null
           payment_history_id: string | null
           pdf_url: string | null
@@ -2388,6 +2424,9 @@ export type Database = {
         }
         Insert: {
           amount: number
+          billing_address?: string | null
+          billing_email?: string | null
+          billing_name?: string | null
           company_address?: string | null
           company_gstin?: string | null
           company_name?: string
@@ -2398,11 +2437,14 @@ export type Database = {
           customer_name?: string | null
           customer_phone?: string | null
           due_date?: string | null
+          gstin?: string | null
           id?: string
           invoice_date?: string
           invoice_number: string
+          invoice_pdf_url?: string | null
           metadata?: Json | null
           notes?: string | null
+          paid_at?: string | null
           paid_date?: string | null
           payment_history_id?: string | null
           pdf_url?: string | null
@@ -2416,6 +2458,9 @@ export type Database = {
         }
         Update: {
           amount?: number
+          billing_address?: string | null
+          billing_email?: string | null
+          billing_name?: string | null
           company_address?: string | null
           company_gstin?: string | null
           company_name?: string
@@ -2426,11 +2471,14 @@ export type Database = {
           customer_name?: string | null
           customer_phone?: string | null
           due_date?: string | null
+          gstin?: string | null
           id?: string
           invoice_date?: string
           invoice_number?: string
+          invoice_pdf_url?: string | null
           metadata?: Json | null
           notes?: string | null
+          paid_at?: string | null
           paid_date?: string | null
           payment_history_id?: string | null
           pdf_url?: string | null
@@ -4847,6 +4895,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_2fa: {
+        Row: {
+          backup_codes_hash: string[] | null
+          backup_codes_used: number
+          created_at: string
+          id: string
+          last_2fa_at: string | null
+          totp_enabled: boolean
+          totp_secret_encrypted: string | null
+          totp_verified_at: string | null
+          updated_at: string
+          user_id: string
+          webauthn_enabled: boolean
+        }
+        Insert: {
+          backup_codes_hash?: string[] | null
+          backup_codes_used?: number
+          created_at?: string
+          id?: string
+          last_2fa_at?: string | null
+          totp_enabled?: boolean
+          totp_secret_encrypted?: string | null
+          totp_verified_at?: string | null
+          updated_at?: string
+          user_id: string
+          webauthn_enabled?: boolean
+        }
+        Update: {
+          backup_codes_hash?: string[] | null
+          backup_codes_used?: number
+          created_at?: string
+          id?: string
+          last_2fa_at?: string | null
+          totp_enabled?: boolean
+          totp_secret_encrypted?: string | null
+          totp_verified_at?: string | null
+          updated_at?: string
+          user_id?: string
+          webauthn_enabled?: boolean
+        }
+        Relationships: []
+      }
       user_action_logs: {
         Row: {
           action: string
@@ -5122,6 +5212,60 @@ export type Database = {
           word?: string
         }
         Relationships: []
+      }
+      webauthn_credentials: {
+        Row: {
+          counter: number
+          created_at: string
+          credential_id: string
+          device_name: string | null
+          device_type: string | null
+          id: string
+          last_used_at: string | null
+          public_key: string
+          transports: string[] | null
+          user_id: string
+        }
+        Insert: {
+          counter?: number
+          created_at?: string
+          credential_id: string
+          device_name?: string | null
+          device_type?: string | null
+          id?: string
+          last_used_at?: string | null
+          public_key: string
+          transports?: string[] | null
+          user_id: string
+        }
+        Update: {
+          counter?: number
+          created_at?: string
+          credential_id?: string
+          device_name?: string | null
+          device_type?: string | null
+          id?: string
+          last_used_at?: string | null
+          public_key?: string
+          transports?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "study_leaderboard"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       weekly_study_schedule: {
         Row: {
