@@ -49,7 +49,7 @@ serve(async (req) => {
     const rpName = "CHRONYX";
 
     if (action === "register-options") {
-      // Get existing credentials
+      // Get existing credentials (for excludeCredentials)
       const { data: existingCreds } = await supabase
         .from("webauthn_credentials")
         .select("credential_id")
@@ -130,7 +130,22 @@ serve(async (req) => {
         .update({ used: true })
         .eq("id", challengeData.id);
 
-      // Store credential
+      // ENFORCE SINGLE PASSKEY PER ACCOUNT:
+      // Delete all existing passkeys for this user before storing the new one
+      const { data: oldCreds } = await supabase
+        .from("webauthn_credentials")
+        .select("id")
+        .eq("user_id", user.id);
+
+      if (oldCreds && oldCreds.length > 0) {
+        await supabase
+          .from("webauthn_credentials")
+          .delete()
+          .eq("user_id", user.id);
+        console.log(`Revoked ${oldCreds.length} old passkey(s) for user ${user.id}`);
+      }
+
+      // Store new credential
       const { error: insertError } = await supabase
         .from("webauthn_credentials")
         .insert({
@@ -160,7 +175,7 @@ serve(async (req) => {
         }, { onConflict: "user_id" });
 
       return new Response(
-        JSON.stringify({ success: true, message: "WebAuthn credential registered" }),
+        JSON.stringify({ success: true, message: "Passkey registered (old passkeys revoked)" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
