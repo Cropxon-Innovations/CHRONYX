@@ -72,11 +72,12 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
     if (!user) return;
 
     try {
-      const [incomeResult, expensesResult, loansResult, insurancesResult] = await Promise.all([
+      // Fetch from new user_assets table + income + expenses + loans
+      const [assetsResult, incomeResult, expensesResult, loansResult] = await Promise.all([
+        supabase.from("user_assets").select("category_code, current_value").eq("user_id", user.id).eq("is_active", true),
         supabase.from("income_entries").select("amount, income_date").eq("user_id", user.id),
         supabase.from("expenses").select("amount, expense_date").eq("user_id", user.id),
         supabase.from("loans").select("id, principal_amount, status").eq("user_id", user.id),
-        supabase.from("insurances").select("sum_assured, status").eq("user_id", user.id).eq("status", "active"),
       ]);
 
       const totalIncome = incomeResult.data?.reduce((sum, entry) => sum + Number(entry.amount), 0) || 0;
@@ -164,12 +165,20 @@ const CollapsibleNetWorth = ({ isPinned, onTogglePin, isCollapsed, onToggleColla
         }
       }
 
-      const insuranceValue = insurancesResult.data?.reduce((sum, ins) => sum + Number(ins.sum_assured), 0) || 0;
+      // Calculate total assets from user_assets table (excluding INSURANCE_ASSET which is just coverage info)
+      const totalUserAssets = (assetsResult.data || [])
+        .filter(a => a.category_code !== 'INSURANCE_ASSET')
+        .reduce((sum, asset) => sum + Number(asset.current_value || 0), 0);
+
+      // Insurance coverage is informational, not counted as asset value
+      const insuranceValue = (assetsResult.data || [])
+        .filter(a => a.category_code === 'INSURANCE_ASSET')
+        .reduce((sum, asset) => sum + Number(asset.current_value || 0), 0);
 
       const monthlyDelta = monthlyIncome - expensesThisMonth;
       
-      // Assets = Total Income + Insurance Coverage
-      const assets = totalIncome + insuranceValue;
+      // Assets = Total Income + User Assets (from assets table)
+      const assets = totalIncome + totalUserAssets;
       
       // Liabilities = Only Outstanding Loans (NOT expenses)
       const liabilities = outstandingLoans;

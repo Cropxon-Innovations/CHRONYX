@@ -54,6 +54,8 @@ import {
   Pause,
   LayoutList,
   Receipt,
+  PieChart,
+  Wallet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,6 +63,9 @@ import { format, formatDistanceToNow, differenceInMinutes, differenceInSeconds }
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import FinanceFlowDashboard from "@/components/finance/FinanceFlowDashboard";
+import FinanceAnalytics from "@/components/finance/FinanceAnalytics";
+import AssetsDashboard from "@/components/assets/AssetsDashboard";
+import ReportSubscriptions from "@/components/finance/ReportSubscriptions";
 
 // Types
 interface FolderSettings {
@@ -777,10 +782,18 @@ const FinanceFlow = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 lg:w-auto lg:inline-grid overflow-x-auto">
           <TabsTrigger value="dashboard" className="gap-1">
             <Activity className="w-3 h-3" />
             <span className="hidden sm:inline">Dashboard</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1">
+            <PieChart className="w-3 h-3" />
+            <span className="hidden sm:inline">Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger value="assets" className="gap-1">
+            <Wallet className="w-3 h-3" />
+            <span className="hidden sm:inline">Assets</span>
           </TabsTrigger>
           <TabsTrigger value="folders" className="gap-1">
             <FolderOpen className="w-3 h-3" />
@@ -799,6 +812,10 @@ const FinanceFlow = () => {
             <History className="w-3 h-3" />
             <span className="hidden sm:inline">History</span>
           </TabsTrigger>
+          <TabsTrigger value="reports" className="gap-1">
+            <Mail className="w-3 h-3" />
+            <span className="hidden sm:inline">Reports</span>
+          </TabsTrigger>
           <TabsTrigger value="logs" className="gap-1">
             <FileSearch className="w-3 h-3" />
             <span className="hidden sm:inline">Logs</span>
@@ -811,6 +828,21 @@ const FinanceFlow = () => {
             transactions={transactions}
             onRefresh={fetchData}
           />
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="mt-4">
+          <FinanceAnalytics />
+        </TabsContent>
+
+        {/* Assets Tab */}
+        <TabsContent value="assets" className="mt-4">
+          <AssetsDashboard />
+        </TabsContent>
+
+        {/* Reports Tab */}
+        <TabsContent value="reports" className="mt-4">
+          <ReportSubscriptions />
         </TabsContent>
 
         {/* Folders Tab - NEW */}
