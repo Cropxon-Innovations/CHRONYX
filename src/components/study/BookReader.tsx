@@ -199,19 +199,31 @@ export const BookReader = ({
 
     const loadPdf = async () => {
       try {
-        // Use conservative settings to avoid CORS/range issues on storage URLs
+        // Fetch the PDF as ArrayBuffer first to avoid CORS/range request issues
+        // This is more reliable for cross-origin storage URLs
+        const response = await fetch(actualFileUrl, {
+          mode: 'cors',
+          credentials: 'omit',
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        
+        // Load PDF from ArrayBuffer - this bypasses range request issues
         const loadingTask = pdfjsLib.getDocument({
-          url: actualFileUrl,
-          disableRange: true,
-          disableStream: true,
-        } as any);
+          data: arrayBuffer,
+        });
         const pdf = await loadingTask.promise;
         setPdfDoc(pdf);
         setTotalPages(pdf.numPages);
         setIsLoading(false);
       } catch (error) {
         console.error("Error loading PDF:", error);
-        setRenderError("Failed to load PDF. The file may be corrupted or inaccessible.");
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        setRenderError(`Failed to load PDF: ${errorMessage}`);
         setIsLoading(false);
       }
     };
