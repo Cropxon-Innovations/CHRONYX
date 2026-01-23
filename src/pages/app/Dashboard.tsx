@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import MetricCard from "@/components/dashboard/MetricCard";
 import LifespanBar from "@/components/dashboard/LifespanBar";
