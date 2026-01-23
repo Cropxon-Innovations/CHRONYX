@@ -2445,6 +2445,7 @@ export type Database = {
           file_url: string
           format: string
           id: string
+          is_archived: boolean | null
           is_locked: boolean | null
           is_paid: boolean | null
           is_public: boolean | null
@@ -2468,6 +2469,7 @@ export type Database = {
           file_url: string
           format?: string
           id?: string
+          is_archived?: boolean | null
           is_locked?: boolean | null
           is_paid?: boolean | null
           is_public?: boolean | null
@@ -2491,6 +2493,7 @@ export type Database = {
           file_url?: string
           format?: string
           id?: string
+          is_archived?: boolean | null
           is_locked?: boolean | null
           is_paid?: boolean | null
           is_public?: boolean | null

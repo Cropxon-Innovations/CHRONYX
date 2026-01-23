@@ -88,7 +88,6 @@ const navSections: NavSection[] = [
       { path: "/app/notes", label: "Notes", icon: StickyNote },
       { path: "/app/study", label: "Study", icon: GraduationCap },
       { path: "/app/library", label: "Library", icon: BookMarked, badge: "NEW" },
-      { path: "/app/eauthor", label: "eAuthor", icon: FileText },
       { path: "/app/achievements", label: "Achievements", icon: Trophy },
     ],
   },
