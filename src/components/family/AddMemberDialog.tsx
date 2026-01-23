@@ -13,22 +13,62 @@ import type { FamilyMember } from "@/pages/app/FamilyTree";
 
 const RELATIONSHIPS = [
   "Self",
+  // Parents
   "Father",
   "Mother",
+  "Stepfather",
+  "Stepmother",
+  // Spouse & Partners
   "Spouse",
+  "Husband",
+  "Wife",
+  "Partner",
+  "Ex-Spouse",
+  // Children
   "Son",
   "Daughter",
+  "Stepson",
+  "Stepdaughter",
+  "Adopted Son",
+  "Adopted Daughter",
+  // Siblings
   "Brother",
   "Sister",
+  "Half-Brother",
+  "Half-Sister",
+  "Stepbrother",
+  "Stepsister",
+  // Grandparents
   "Grandfather (Paternal)",
   "Grandmother (Paternal)",
   "Grandfather (Maternal)",
   "Grandmother (Maternal)",
-  "Uncle",
-  "Aunt",
+  // In-Laws
+  "Father-in-law",
+  "Mother-in-law",
+  "Brother-in-law",
+  "Sister-in-law",
+  "Son-in-law",
+  "Daughter-in-law",
+  // Extended Family
+  "Uncle (Paternal)",
+  "Uncle (Maternal)",
+  "Aunt (Paternal)",
+  "Aunt (Maternal)",
   "Nephew",
   "Niece",
   "Cousin",
+  "Grandchild",
+  "Grandson",
+  "Granddaughter",
+  "Great-Grandfather",
+  "Great-Grandmother",
+  "Great-Grandchild",
+  // Other
+  "Guardian",
+  "Ward",
+  "Godfather",
+  "Godmother",
   "Other",
 ];
 

@@ -132,6 +132,33 @@ const FamilyTree = () => {
     },
   });
 
+  // Delete member
+  const deleteMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      // First delete associated documents
+      await supabase
+        .from("family_documents")
+        .delete()
+        .eq("member_id", memberId);
+      
+      // Then delete the member
+      const { error } = await supabase
+        .from("family_members")
+        .delete()
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: (_, memberId) => {
+      queryClient.invalidateQueries({ queryKey: ["family-members"] });
+      toast.success("Member deleted successfully");
+      setSelectedMember(null);
+      logActivity("Deleted member", memberId);
+    },
+    onError: () => {
+      toast.error("Failed to delete member");
+    },
+  });
+
   // Stats
   const stats = useMemo(() => {
     const totalMembers = members.length;
@@ -292,6 +319,11 @@ const FamilyTree = () => {
               logActivity("Updated member", selectedMember.id);
             }}
             onVerify={() => verifyMutation.mutate(selectedMember.id)}
+            onDelete={() => {
+              if (window.confirm(`Are you sure you want to delete ${selectedMember.full_name}? This action cannot be undone.`)) {
+                deleteMutation.mutate(selectedMember.id);
+              }
+            }}
           />
         )}
       </AnimatePresence>
