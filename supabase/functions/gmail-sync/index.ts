@@ -11,10 +11,12 @@ const corsHeaders = {
 // Rule-based first, Gemini 1.5 Flash fallback
 // ========================================
 
-// Strict Gmail query for receipts/invoices only
+// Gmail query for transaction emails - includes receipts AND bank alerts
 const GMAIL_QUERY_PARTS = [
-  'subject:(receipt OR invoice OR payment OR "order confirmation" OR "payment successful")',
-  'from:(razorpay OR stripe OR amazon OR flipkart OR swiggy OR zomato OR uber OR ola OR netflix OR spotify OR airtel OR jio OR google OR apple OR phonepe OR paytm OR gpay OR bigbasket OR blinkit OR myntra OR ajio)',
+  // Receipt/invoice subjects
+  'subject:(receipt OR invoice OR payment OR "order confirmation" OR "payment successful" OR "UPI" OR "debited" OR "credited" OR "transaction" OR "txn")',
+  // Merchant and bank alert senders
+  'from:(razorpay OR stripe OR amazon OR flipkart OR swiggy OR zomato OR uber OR ola OR netflix OR spotify OR airtel OR jio OR google OR apple OR phonepe OR paytm OR gpay OR bigbasket OR blinkit OR myntra OR ajio OR hdfcbank OR icicibank OR sbi OR axisbank OR kotakbank OR yesbank OR idfcbank OR rbl OR federalbank OR indusind OR pnb OR bob OR canarabank OR unionbank)',
 ];
 
 // Transaction keywords for filtering
@@ -23,7 +25,9 @@ const TRANSACTION_KEYWORDS = [
   'payment received', 'transaction', 'purchase', 'bill', 'razorpay',
   'stripe', 'amazon', 'flipkart', 'swiggy', 'zomato', 'uber', 'ola',
   'gpay', 'phonepe', 'paytm', 'google pay', 'upi', 'debit', 'credit',
-  'bank statement', 'payment confirmation', 'order placed'
+  'bank statement', 'payment confirmation', 'order placed', 'debited',
+  'credited', 'txn', 'VPA', 'IMPS', 'NEFT', 'RTGS', 'has been debited',
+  'has been credited', 'account ending'
 ];
 
 // Merchant patterns for rule-based extraction
@@ -67,6 +71,48 @@ const MERCHANT_PATTERNS = [
   { regex: /icici\s*lombard/i, name: 'ICICI Lombard', category: 'Insurance' },
 ];
 
+// Bank UPI/Transaction patterns - extract merchant from VPA or beneficiary
+const BANK_UPI_PATTERNS = [
+  // "debited...to VPA xxx@bank BENEFICIARY_NAME" pattern (HDFC style)
+  { regex: /(?:debited|paid|sent).*?(?:to\s+VPA\s+[\w.@-]+\s+)?([A-Z][A-Z\s]{2,40}?)(?:\s+on\s|\.\s*Your)/i, extract: 1 },
+  // "credited from VPA xxx@bank SENDER_NAME" pattern  
+  { regex: /credited.*?(?:from\s+VPA\s+[\w.@-]+\s+)?([A-Z][A-Z\s]{2,40}?)(?:\s+on\s|\.\s*Your)/i, extract: 1 },
+  // "to BENEFICIARY" or "from SENDER"
+  { regex: /(?:to|from)\s+([A-Z][A-Z\s]{3,30})(?:\s+on\s|\s+ref|\s*\.)/i, extract: 1 },
+  // VPA with name after @ 
+  { regex: /VPA\s+[\w.]+@([a-z]+)/i, extract: 1 },
+];
+
+// Helper to extract merchant from bank alerts
+function extractMerchantFromBankAlert(text: string): { name: string; category: string; confidence: number } | null {
+  // First check if it's a bank alert
+  const isBankAlert = /hdfcbank|icicibank|sbi|axisbank|kotakbank|yesbank|idfcbank|rbl|federalbank|indusind|pnb|bob|canarabank|unionbank/i.test(text);
+  
+  if (!isBankAlert) return null;
+  
+  // Try to extract beneficiary/merchant name from UPI patterns
+  for (const pattern of BANK_UPI_PATTERNS) {
+    const match = text.match(pattern.regex);
+    if (match && match[pattern.extract]) {
+      let name = match[pattern.extract].trim();
+      // Clean up the name
+      name = name.replace(/\s+/g, ' ').trim();
+      // Skip if too short or looks like a reference number
+      if (name.length > 2 && !/^\d+$/.test(name)) {
+        return { name, category: 'Other', confidence: 0.75 };
+      }
+    }
+  }
+  
+  // Fallback: Use bank name as merchant with "UPI Transfer" suffix
+  const bankMatch = text.match(/(hdfc|icici|sbi|axis|kotak|yes|idfc|rbl|federal|indusind|pnb|bob|canara|union)\s*bank/i);
+  if (bankMatch) {
+    return { name: `UPI via ${bankMatch[1].toUpperCase()} Bank`, category: 'Other', confidence: 0.6 };
+  }
+  
+  return null;
+}
+
 // Amount extraction patterns (INR focused)
 const AMOUNT_PATTERNS = [
   /(?:₹|Rs\.?|INR)\s*([\d,]+(?:\.\d{2})?)/gi,
@@ -103,11 +149,19 @@ function extractAmountRuleBased(text: string): { amount: number | null; confiden
 }
 
 function extractMerchantRuleBased(text: string): { name: string; category: string; confidence: number } | null {
+  // First try standard merchant patterns
   for (const pattern of MERCHANT_PATTERNS) {
     if (pattern.regex.test(text)) {
       return { name: pattern.name, category: pattern.category, confidence: 0.9 };
     }
   }
+  
+  // Then try bank UPI patterns for bank alert emails
+  const bankMerchant = extractMerchantFromBankAlert(text);
+  if (bankMerchant) {
+    return bankMerchant;
+  }
+  
   return null;
 }
 

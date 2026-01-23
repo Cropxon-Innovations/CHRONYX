@@ -91,8 +91,10 @@ export const BookReader = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   // AI Features state
   const [selectedText, setSelectedText] = useState("");
@@ -178,6 +180,11 @@ export const BookReader = ({
   // Determine actual file URL
   const actualFileUrl = fileUrl || (item as any).file_url;
 
+  // Retry PDF loading
+  const retryLoadPdf = useCallback(() => {
+    setRetryCount(prev => prev + 1);
+  }, []);
+
   // Load PDF document
   useEffect(() => {
     if (!actualFileUrl) {
@@ -196,11 +203,11 @@ export const BookReader = ({
 
     setIsLoading(true);
     setRenderError(null);
+    setDownloadProgress(0);
 
     const loadPdf = async () => {
       try {
-        // Fetch the PDF as ArrayBuffer first to avoid CORS/range request issues
-        // This is more reliable for cross-origin storage URLs
+        // Fetch the PDF with progress tracking
         const response = await fetch(actualFileUrl, {
           mode: 'cors',
           credentials: 'omit',
@@ -210,15 +217,55 @@ export const BookReader = ({
           throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
         }
         
-        const arrayBuffer = await response.arrayBuffer();
+        // Get content length for progress calculation
+        const contentLength = response.headers.get('content-length');
+        const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+        
+        // Read the response with progress
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('Unable to read PDF stream');
+        }
+        
+        const chunks: Uint8Array[] = [];
+        let receivedBytes = 0;
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) break;
+          
+          chunks.push(value);
+          receivedBytes += value.length;
+          
+          // Update progress (cap at 95% until PDF is fully parsed)
+          if (totalBytes > 0) {
+            const progress = Math.min(95, Math.round((receivedBytes / totalBytes) * 100));
+            setDownloadProgress(progress);
+          } else {
+            // If no content length, show indeterminate progress
+            setDownloadProgress(Math.min(90, receivedBytes / 1024 / 10)); // Rough estimate
+          }
+        }
+        
+        // Combine chunks into single array buffer
+        const allChunks = new Uint8Array(receivedBytes);
+        let position = 0;
+        for (const chunk of chunks) {
+          allChunks.set(chunk, position);
+          position += chunk.length;
+        }
+        
+        setDownloadProgress(98);
         
         // Load PDF from ArrayBuffer - this bypasses range request issues
         const loadingTask = pdfjsLib.getDocument({
-          data: arrayBuffer,
+          data: allChunks.buffer,
         });
         const pdf = await loadingTask.promise;
         setPdfDoc(pdf);
         setTotalPages(pdf.numPages);
+        setDownloadProgress(100);
         setIsLoading(false);
       } catch (error) {
         console.error("Error loading PDF:", error);
@@ -229,7 +276,7 @@ export const BookReader = ({
     };
 
     loadPdf();
-  }, [actualFileUrl, item.format]);
+  }, [actualFileUrl, item.format, retryCount]);
 
   // Render current page
   useEffect(() => {
@@ -591,15 +638,33 @@ export const BookReader = ({
         {isLoading ? (
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 opacity-60" />
-            <p className="text-sm opacity-60">Loading document...</p>
+            <p className="text-sm opacity-60 mb-2">Loading document...</p>
+            {downloadProgress > 0 && downloadProgress < 100 && (
+              <div className="w-48 mx-auto mt-3">
+                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary rounded-full transition-all duration-300"
+                    style={{ width: `${downloadProgress}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {downloadProgress < 95 ? `Downloading... ${downloadProgress}%` : 'Processing PDF...'}
+                </p>
+              </div>
+            )}
           </div>
         ) : renderError ? (
           <div className="text-center max-w-md">
             <FileText className="w-12 h-12 mx-auto mb-4 opacity-40" />
             <p className="text-sm opacity-60 mb-4">{renderError}</p>
-            <Button variant="outline" onClick={onClose} className="rounded-xl">
-              Back to Library
-            </Button>
+            <div className="flex gap-3 justify-center">
+              <Button variant="default" onClick={retryLoadPdf} className="rounded-xl">
+                Try Again
+              </Button>
+              <Button variant="outline" onClick={onClose} className="rounded-xl">
+                Back to Library
+              </Button>
+            </div>
           </div>
         ) : (
           <div className={cn("relative transition-transform duration-200", getPageAnimationClass())}>
