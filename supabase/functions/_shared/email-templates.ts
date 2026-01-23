@@ -19,7 +19,7 @@ export const EMAIL_CONFIG = {
   // URLs
   APP_URL: "https://chronyx.lovable.app",
   WEBSITE_URL: "https://getchronyx.com",
-  CROPXON_URL: "https://www.cropxon.com",
+  ORIGINX_URL: "https://www.originxlabs.com",
   SUPPORT_EMAIL: "support@getchronyx.com",
 };
 
@@ -34,10 +34,10 @@ export const getEmailFooter = () => `
     </p>
     <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e8e6e3;">
       <p style="margin: 0 0 4px; font-size: 11px; color: #94a3b8; font-weight: 500;">
-        CHRONYX by CROPXON INNOVATIONS PVT. LTD.
+        CHRONYX by ORIGINX LABS PVT. LTD.
       </p>
       <p style="margin: 0; font-size: 10px; color: #94a3b8;">
-        <a href="${EMAIL_CONFIG.CROPXON_URL}" style="color: #94a3b8; text-decoration: underline;">www.cropxon.com</a>
+        <a href="${EMAIL_CONFIG.ORIGINX_URL}" style="color: #94a3b8; text-decoration: underline;">www.originxlabs.com</a>
       </p>
     </div>
   </div>
@@ -54,10 +54,10 @@ export const getDarkEmailFooter = () => `
     </p>
     <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #2d2d44;">
       <p style="margin: 0 0 4px; font-size: 10px; color: #4b5563; font-weight: 500;">
-        CHRONYX by CROPXON INNOVATIONS PVT. LTD.
+        CHRONYX by ORIGINX LABS PVT. LTD.
       </p>
       <p style="margin: 0; font-size: 9px; color: #374151;">
-        <a href="${EMAIL_CONFIG.CROPXON_URL}" style="color: #4b5563; text-decoration: underline;">www.cropxon.com</a>
+        <a href="${EMAIL_CONFIG.ORIGINX_URL}" style="color: #4b5563; text-decoration: underline;">www.originxlabs.com</a>
       </p>
     </div>
   </div>
@@ -75,7 +75,7 @@ export const getEmailHeader = (title: string = "CHRONYX") => `
 export const getCompactEmailHeader = () => `
   <div style="background: #0f172a; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
     <h1 style="color: white; margin: 0; font-size: 20px; letter-spacing: 4px; font-weight: 300;">CHRONYX</h1>
-    <p style="color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 4px;">BY CROPXON</p>
+    <p style="color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 4px;">BY ORIGINX LABS</p>
   </div>
 `;
 

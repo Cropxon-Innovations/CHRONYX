@@ -1,7 +1,7 @@
 # =========================================
 # CHRONYX - Personal System of Record
 # https://chronyx.lovable.app
-# by CROPXON INNOVATIONS PVT. LTD.
+# by ORIGINX LABS PVT. LTD.
 # =========================================
 
 # Allow all major search engines

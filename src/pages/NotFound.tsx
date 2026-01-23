@@ -161,16 +161,16 @@ const NotFound = () => {
         className="absolute bottom-6 flex flex-col items-center gap-1 text-center"
       >
         <p className="text-[10px] tracking-[0.2em] text-muted-foreground sm:text-xs">
-          CHRONYX BY CROPXON<br />
-          INNOVATIONS PVT. LTD.
+          CHRONYX BY ORIGINX<br />
+          LABS PVT. LTD.
         </p>
         <a 
-          href="https://www.cropxon.com" 
+          href="https://www.originxlabs.com" 
           target="_blank" 
           rel="noopener noreferrer"
           className="text-[9px] tracking-[0.1em] text-muted-foreground/60 hover:text-muted-foreground transition-colors sm:text-[10px]"
         >
-          www.cropxon.com
+          www.originxlabs.com
         </a>
       </motion.div>
     </div>

@@ -189,7 +189,7 @@ const ResetPassword = () => {
           <p className="mt-6 text-center text-[10px] text-muted-foreground">
             Secure password reset by{" "}
             <span className="font-semibold">CHRONYX</span>{" "}
-            <span className="opacity-60">by CROPXON</span>
+            <span className="opacity-60">by ORIGINX LABS</span>
           </p>
         </motion.div>
       </div>

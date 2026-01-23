@@ -624,7 +624,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
           </span>
           <span className="text-[8px] text-muted-foreground/30">BY</span>
           <span className="text-xs tracking-[0.1em] text-muted-foreground/50">
-            CROPXON
+            ORIGINX LABS
           </span>
         </motion.div>
       </div>

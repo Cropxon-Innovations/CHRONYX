@@ -140,7 +140,7 @@ const Contact = () => {
               animate={{ opacity: 1, x: 0 }}
             >
               <span className="text-xl font-extralight tracking-[0.2em]">CHRONYX</span>
-              <span className="text-xs text-muted-foreground">by CROPXON</span>
+              <span className="text-xs text-muted-foreground">by ORIGINX LABS</span>
             </motion.div>
             <ThemeToggle />
           </div>
@@ -242,7 +242,7 @@ const Contact = () => {
                     <h3 className="font-semibold">Our Office</h3>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                    <strong className="text-foreground">CROPXON INNOVATIONS PVT. LTD.</strong><br />
+                    <strong className="text-foreground">ORIGINX LABS PVT. LTD.</strong><br />
                     Bangalore, Karnataka<br />
                     India - 560001
                   </p>
@@ -635,10 +635,10 @@ const Contact = () => {
       {/* Footer */}
       <footer className="border-t border-border/40 mt-16 py-8">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p className="mb-2">© {new Date().getFullYear()} CHRONYX by CROPXON INNOVATIONS PVT. LTD.</p>
+          <p className="mb-2">© {new Date().getFullYear()} CHRONYX by ORIGINX LABS PVT. LTD.</p>
           <p>
-            <a href="https://www.cropxon.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-              www.cropxon.com
+            <a href="https://www.originxlabs.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+              www.originxlabs.com
             </a>
           </p>
         </div>

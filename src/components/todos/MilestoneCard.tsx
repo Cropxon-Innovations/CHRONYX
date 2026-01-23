@@ -88,7 +88,7 @@ const MilestoneCard = ({ badges, totalTasks, streak, onClose }: MilestoneCardPro
       `🔥 ${streak} Day Streak\n` +
       `🎖️ ${yearBadges.length} Badges Earned\n` +
       `⭐ ${totalPoints} Total Points\n\n` +
-      `Track your life with CHRONYX by CROPXON`;
+      `Track your life with CHRONYX by ORIGINX LABS`;
     
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
@@ -133,7 +133,7 @@ const MilestoneCard = ({ badges, totalTasks, streak, onClose }: MilestoneCardPro
               <img src={chronyxLogo} alt="CHRONYX" className="w-10 h-10" />
               <div>
                 <h2 className="text-lg font-bold tracking-wider">CHRONYX</h2>
-                <p className="text-xs text-white/60 uppercase tracking-widest">by CROPXON</p>
+                <p className="text-xs text-white/60 uppercase tracking-widest">by ORIGINX LABS</p>
               </div>
             </div>
             <div className="text-right">
@@ -211,7 +211,7 @@ const MilestoneCard = ({ badges, totalTasks, streak, onClose }: MilestoneCardPro
               Generated on {format(new Date(), "MMMM d, yyyy")}
             </p>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-white/40">chronyx.cropxon.com</span>
+              <span className="text-xs text-white/40">chronyx.originxlabs.com</span>
             </div>
           </div>
         </div>

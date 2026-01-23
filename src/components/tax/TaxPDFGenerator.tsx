@@ -129,7 +129,7 @@ export const generateTaxPDF = async (data: TaxPDFData): Promise<Blob> => {
   addText("TAX COMPUTATION STATEMENT", pageWidth - margin, yPos, { fontSize: 10, color: mediumGray, align: "right" });
   
   yPos += 6;
-  addText("Cropxon Innovations Pvt. Ltd.", margin, yPos, { fontSize: 8, color: mediumGray });
+  addText("ORIGINX LABS PVT. LTD.", margin, yPos, { fontSize: 8, color: mediumGray });
   addText(`Assessment Year: ${data.calculation.financial_year.replace("FY", "AY ").replace("_", "-")}`, pageWidth - margin, yPos, { fontSize: 9, color: darkGray, fontStyle: "bold", align: "right" });
 
   yPos += 8;
@@ -483,7 +483,7 @@ export const generateTaxPDF = async (data: TaxPDFData): Promise<Blob> => {
     "2. This document does not constitute professional tax advice or legal opinion.",
     "3. The computation is based on information provided and may not reflect actual tax liability.",
     "4. Users are advised to consult a qualified Chartered Accountant for accurate tax filing.",
-    "5. CHRONYX and Cropxon Innovations Pvt. Ltd. shall not be liable for any discrepancies.",
+    "5. CHRONYX and ORIGINX LABS PVT. LTD. shall not be liable for any discrepancies.",
     "6. Tax laws are subject to change; verify with latest provisions before filing.",
   ];
 
@@ -516,8 +516,8 @@ export const generateTaxPDF = async (data: TaxPDFData): Promise<Blob> => {
   doc.setFillColor(...accentBlue);
   doc.rect(0, footerY, pageWidth, 12, "F");
   
-  addText("CHRONYX - A Product of Cropxon Innovations Pvt. Ltd.", pageWidth / 2, footerY + 5, { fontSize: 7, color: [255, 255, 255], align: "center" });
-  addText("Abhishek Panda | CEO & Director | www.chronyx.in", pageWidth / 2, footerY + 9, { fontSize: 6, color: [200, 200, 200], align: "center" });
+  addText("CHRONYX - A Product of ORIGINX LABS PVT. LTD.", pageWidth / 2, footerY + 5, { fontSize: 7, color: [255, 255, 255], align: "center" });
+  addText("www.originxlabs.com | www.getchronyx.com", pageWidth / 2, footerY + 9, { fontSize: 6, color: [200, 200, 200], align: "center" });
 
   // Add page numbers
   const totalPages = doc.getNumberOfPages();
