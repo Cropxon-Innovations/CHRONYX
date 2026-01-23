@@ -18,7 +18,8 @@ import { EditBookDialog } from "@/components/study/EditBookDialog";
 import { StudyGoals } from "@/components/study/StudyGoals";
 import { VocabularyScreen } from "@/components/study/VocabularyScreen";
 import { StudyAnalytics } from "@/components/study/StudyAnalytics";
-import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3 } from "lucide-react";
+import { StudyProgressTracker } from "@/components/study/StudyProgressTracker";
+import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import {
   AlertDialog,
@@ -192,15 +193,31 @@ const Study = () => {
 
   // Edit book mutation
   const editBookMutation = useMutation({
-    mutationFn: async (data: { id: string; title: string; author: string; totalPages?: number; notes?: string; tags?: string[] }) => {
-      const { error } = await supabase.from("library_items").update({
+    mutationFn: async (data: { 
+      id: string; 
+      title: string; 
+      author: string; 
+      totalPages?: number; 
+      notes?: string; 
+      tags?: string[];
+      coverFile?: File;
+      coverUrl?: string;
+    }) => {
+      const updateData: any = {
         title: data.title,
         author: data.author,
         total_pages: data.totalPages || null,
         notes: data.notes || null,
         tags: data.tags || null,
         updated_at: new Date().toISOString(),
-      }).eq("id", data.id);
+      };
+      
+      // Add cover URL if provided (already uploaded in dialog)
+      if (data.coverUrl) {
+        updateData.cover_url = data.coverUrl;
+      }
+      
+      const { error } = await supabase.from("library_items").update(updateData).eq("id", data.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -337,28 +354,36 @@ const Study = () => {
         <TabsList className="bg-muted/30 border border-border p-1 h-auto flex-wrap">
           <TabsTrigger value="timeline" className="data-[state=active]:bg-card gap-2">
             <Clock className="w-4 h-4" />
-            Timeline
+            <span className="hidden sm:inline">Timeline</span>
+          </TabsTrigger>
+          <TabsTrigger value="progress" className="data-[state=active]:bg-card gap-2">
+            <CheckSquare className="w-4 h-4" />
+            <span className="hidden sm:inline">Progress</span>
           </TabsTrigger>
           <TabsTrigger value="library" className="data-[state=active]:bg-card gap-2">
             <BookOpen className="w-4 h-4" />
-            Library
+            <span className="hidden sm:inline">Library</span>
           </TabsTrigger>
           <TabsTrigger value="vocabulary" className="data-[state=active]:bg-card gap-2">
             <BookMarked className="w-4 h-4" />
-            Vocabulary
+            <span className="hidden sm:inline">Vocabulary</span>
           </TabsTrigger>
           <TabsTrigger value="goals" className="data-[state=active]:bg-card gap-2">
             <Target className="w-4 h-4" />
-            Goals
+            <span className="hidden sm:inline">Goals</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="data-[state=active]:bg-card gap-2">
             <BarChart3 className="w-4 h-4" />
-            Analytics
+            <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="timeline">
           <StudyTimeline sessions={studyLogs} />
+        </TabsContent>
+
+        <TabsContent value="progress">
+          <StudyProgressTracker />
         </TabsContent>
 
         <TabsContent value="library">
