@@ -133,7 +133,7 @@ export const FinancialGoalsTracker = () => {
   });
 
   const createGoalMutation = useMutation({
-    mutationFn: async (goalData: Omit<FinancialGoal, 'id' | 'created_at' | 'currency' | 'color' | 'icon'>) => {
+    mutationFn: async (goalData: Omit<FinancialGoal, 'id' | 'created_at' | 'currency' | 'color' | 'icon' | 'status'>) => {
       const { data: goal, error } = await supabase
         .from("financial_goals")
         .insert({
@@ -145,7 +145,7 @@ export const FinancialGoalsTracker = () => {
           category: goalData.category,
           target_date: goalData.target_date,
           priority: goalData.priority,
-          status: goalData.status,
+          status: "active", // Default status for new goals
         })
         .select()
         .single();
