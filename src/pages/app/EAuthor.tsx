@@ -37,6 +37,8 @@ import BookAuthoringStudio from "@/components/eauthor/BookAuthoringStudio";
 import BookReader from "@/components/eauthor/BookReader";
 import { format } from "date-fns";
 
+type BookStatus = "draft" | "writing" | "editing" | "review" | "published";
+
 interface Book {
   id: string;
   title: string;
@@ -44,8 +46,8 @@ interface Book {
   author_name: string | null;
   description: string | null;
   cover_url: string | null;
-  status: string;
-  settings?: any;
+  status: BookStatus;
+  settings: any;
   genre: string | null;
   word_count: number;
   reading_time_minutes: number;
@@ -53,7 +55,23 @@ interface Book {
   updated_at: string;
 }
 
-const statusConfig = {
+const castBook = (data: any): Book => ({
+  id: data.id,
+  title: data.title,
+  subtitle: data.subtitle,
+  author_name: data.author_name,
+  description: data.description,
+  cover_url: data.cover_url,
+  status: (data.status || 'draft') as BookStatus,
+  settings: data.settings || {},
+  genre: data.genre,
+  word_count: data.word_count || 0,
+  reading_time_minutes: data.reading_time_minutes || 0,
+  created_at: data.created_at,
+  updated_at: data.updated_at,
+});
+
+const statusConfig: Record<BookStatus, { label: string; color: string }> = {
   draft: { label: "Draft", color: "bg-slate-500/20 text-slate-600 dark:text-slate-400" },
   writing: { label: "Writing", color: "bg-blue-500/20 text-blue-600 dark:text-blue-400" },
   editing: { label: "Editing", color: "bg-amber-500/20 text-amber-600 dark:text-amber-400" },
@@ -86,7 +104,7 @@ const EAuthor = () => {
     if (error) {
       console.error("Error fetching books:", error);
     } else {
-      setBooks(data || []);
+      setBooks((data || []).map(castBook));
     }
     setLoading(false);
   };
@@ -109,12 +127,13 @@ const EAuthor = () => {
     if (error) {
       toast({ title: "Error", description: "Failed to create book", variant: "destructive" });
     } else if (data) {
-      setBooks([data, ...books]);
+      const castedBook = castBook(data);
+      setBooks([castedBook, ...books]);
       setCreateDialogOpen(false);
       setNewBook({ title: "", subtitle: "", author_name: "", description: "" });
       toast({ title: "Book created!", description: "Start writing your masterpiece" });
       // Open the book for editing
-      setSelectedBook(data);
+      setSelectedBook(castedBook);
       setActiveView("authoring");
     }
   };
@@ -401,7 +420,7 @@ const EAuthor = () => {
                   .select()
                   .single();
                 if (data) {
-                  setBooks([data, ...books]);
+                  setBooks([castBook(data), ...books]);
                   toast({ title: "Template book created!" });
                 }
               }}
@@ -433,7 +452,7 @@ const EAuthor = () => {
                   .select()
                   .single();
                 if (data) {
-                  setBooks([data, ...books]);
+                  setBooks([castBook(data), ...books]);
                   toast({ title: "Template book created!" });
                 }
               }}

@@ -779,6 +779,39 @@ export type Database = {
           },
         ]
       }
+      creator_payouts: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          payout_details: Json | null
+          payout_method: string | null
+          processed_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          payout_details?: Json | null
+          payout_method?: string | null
+          processed_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          payout_details?: Json | null
+          payout_method?: string | null
+          processed_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_banks: {
         Row: {
           color: string
@@ -2078,9 +2111,95 @@ export type Database = {
           },
         ]
       }
+      library_bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          library_item_id: string
+          page_number: number
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          library_item_id: string
+          page_number: number
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          library_item_id?: string
+          page_number?: number
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_bookmarks_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_highlights: {
+        Row: {
+          color: string | null
+          created_at: string
+          end_offset: number | null
+          id: string
+          library_item_id: string
+          note: string | null
+          page_number: number | null
+          start_offset: number | null
+          text_content: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          end_offset?: number | null
+          id?: string
+          library_item_id: string
+          note?: string | null
+          page_number?: number | null
+          start_offset?: number | null
+          text_content: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          end_offset?: number | null
+          id?: string
+          library_item_id?: string
+          note?: string | null
+          page_number?: number | null
+          start_offset?: number | null
+          text_content?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_highlights_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       library_items: {
         Row: {
           author: string | null
+          category: string | null
           cover_url: string | null
           created_at: string
           file_size: number | null
@@ -2088,9 +2207,12 @@ export type Database = {
           format: string
           id: string
           is_locked: boolean | null
+          is_paid: boolean | null
+          is_public: boolean | null
           is_shared: boolean | null
           lock_hash: string | null
           notes: string | null
+          price: number | null
           share_token: string | null
           tags: string[] | null
           title: string
@@ -2100,6 +2222,7 @@ export type Database = {
         }
         Insert: {
           author?: string | null
+          category?: string | null
           cover_url?: string | null
           created_at?: string
           file_size?: number | null
@@ -2107,9 +2230,12 @@ export type Database = {
           format?: string
           id?: string
           is_locked?: boolean | null
+          is_paid?: boolean | null
+          is_public?: boolean | null
           is_shared?: boolean | null
           lock_hash?: string | null
           notes?: string | null
+          price?: number | null
           share_token?: string | null
           tags?: string[] | null
           title: string
@@ -2119,6 +2245,7 @@ export type Database = {
         }
         Update: {
           author?: string | null
+          category?: string | null
           cover_url?: string | null
           created_at?: string
           file_size?: number | null
@@ -2126,9 +2253,12 @@ export type Database = {
           format?: string
           id?: string
           is_locked?: boolean | null
+          is_paid?: boolean | null
+          is_public?: boolean | null
           is_shared?: boolean | null
           lock_hash?: string | null
           notes?: string | null
+          price?: number | null
           share_token?: string | null
           tags?: string[] | null
           title?: string
@@ -2137,6 +2267,91 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      library_purchases: {
+        Row: {
+          amount: number
+          buyer_id: string
+          created_at: string
+          id: string
+          library_item_id: string
+          payment_reference: string | null
+          payment_status: string | null
+          seller_id: string
+        }
+        Insert: {
+          amount: number
+          buyer_id: string
+          created_at?: string
+          id?: string
+          library_item_id: string
+          payment_reference?: string | null
+          payment_status?: string | null
+          seller_id: string
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          library_item_id?: string
+          payment_reference?: string | null
+          payment_status?: string | null
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_purchases_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_shares: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          library_item_id: string
+          permission: string | null
+          shared_by: string
+          shared_with_email: string | null
+          shared_with_user_id: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          library_item_id: string
+          permission?: string | null
+          shared_by: string
+          shared_with_email?: string | null
+          shared_with_user_id?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          library_item_id?: string
+          permission?: string | null
+          shared_by?: string
+          shared_with_email?: string | null
+          shared_with_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_shares_library_item_id_fkey"
+            columns: ["library_item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       loan_documents: {
         Row: {
@@ -2770,6 +2985,44 @@ export type Database = {
           {
             foreignKeyName: "reading_highlights_item_id_fkey"
             columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reading_sessions: {
+        Row: {
+          duration_minutes: number | null
+          end_time: string | null
+          id: string
+          library_item_id: string
+          pages_read: number | null
+          start_time: string
+          user_id: string
+        }
+        Insert: {
+          duration_minutes?: number | null
+          end_time?: string | null
+          id?: string
+          library_item_id: string
+          pages_read?: number | null
+          start_time?: string
+          user_id: string
+        }
+        Update: {
+          duration_minutes?: number | null
+          end_time?: string | null
+          id?: string
+          library_item_id?: string
+          pages_read?: number | null
+          start_time?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_sessions_library_item_id_fkey"
+            columns: ["library_item_id"]
             isOneToOne: false
             referencedRelation: "library_items"
             referencedColumns: ["id"]
