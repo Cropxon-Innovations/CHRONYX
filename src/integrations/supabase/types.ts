@@ -804,6 +804,211 @@ export type Database = {
         }
         Relationships: []
       }
+      business_documents: {
+        Row: {
+          business_id: string
+          created_at: string
+          description: string | null
+          document_type: string
+          expiry_date: string | null
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          is_verified: boolean | null
+          issue_date: string | null
+          issuing_authority: string | null
+          metadata: Json | null
+          reference_number: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          description?: string | null
+          document_type: string
+          expiry_date?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_verified?: boolean | null
+          issue_date?: string | null
+          issuing_authority?: string | null
+          metadata?: Json | null
+          reference_number?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          expiry_date?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_verified?: boolean | null
+          issue_date?: string | null
+          issuing_authority?: string | null
+          metadata?: Json | null
+          reference_number?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_documents_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_links: {
+        Row: {
+          business_id: string
+          created_at: string
+          icon: string | null
+          id: string
+          label: string | null
+          platform: string
+          url: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          label?: string | null
+          platform: string
+          url: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          label?: string | null
+          platform?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_links_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_profiles: {
+        Row: {
+          annual_revenue: number | null
+          business_address: string | null
+          business_name: string
+          business_type: string
+          cin: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          employee_count: number | null
+          gstin: string | null
+          huminex_workspace_id: string | null
+          id: string
+          incorporation_date: string | null
+          industry: string | null
+          legal_name: string | null
+          logo_url: string | null
+          pan: string | null
+          phone: string | null
+          pincode: string | null
+          registered_address: string | null
+          registration_number: string | null
+          state: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          annual_revenue?: number | null
+          business_address?: string | null
+          business_name: string
+          business_type: string
+          cin?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          employee_count?: number | null
+          gstin?: string | null
+          huminex_workspace_id?: string | null
+          id?: string
+          incorporation_date?: string | null
+          industry?: string | null
+          legal_name?: string | null
+          logo_url?: string | null
+          pan?: string | null
+          phone?: string | null
+          pincode?: string | null
+          registered_address?: string | null
+          registration_number?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          annual_revenue?: number | null
+          business_address?: string | null
+          business_name?: string
+          business_type?: string
+          cin?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          employee_count?: number | null
+          gstin?: string | null
+          huminex_workspace_id?: string | null
+          id?: string
+          incorporation_date?: string | null
+          industry?: string | null
+          legal_name?: string | null
+          logo_url?: string | null
+          pan?: string | null
+          phone?: string | null
+          pincode?: string | null
+          registered_address?: string | null
+          registration_number?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       chapter_summaries: {
         Row: {
           chapter_index: number
@@ -1864,6 +2069,69 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_goals: {
+        Row: {
+          auto_track: boolean
+          category: string
+          color: string | null
+          completed_at: string | null
+          created_at: string
+          currency: string
+          current_amount: number
+          description: string | null
+          icon: string | null
+          id: string
+          linked_accounts: string[] | null
+          priority: string
+          status: string
+          target_amount: number
+          target_date: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_track?: boolean
+          category: string
+          color?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          current_amount?: number
+          description?: string | null
+          icon?: string | null
+          id?: string
+          linked_accounts?: string[] | null
+          priority?: string
+          status?: string
+          target_amount: number
+          target_date?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_track?: boolean
+          category?: string
+          color?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          current_amount?: number
+          description?: string | null
+          icon?: string | null
+          id?: string
+          linked_accounts?: string[] | null
+          priority?: string
+          status?: string
+          target_amount?: number
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gmail_import_logs: {
         Row: {
           action: string
@@ -1977,6 +2245,76 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      goal_contributions: {
+        Row: {
+          amount: number
+          created_at: string
+          goal_id: string
+          id: string
+          note: string | null
+          source: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          goal_id: string
+          id?: string
+          note?: string | null
+          source?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          goal_id?: string
+          id?: string
+          note?: string | null
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_contributions_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "financial_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_milestones: {
+        Row: {
+          achieved_at: string | null
+          created_at: string
+          goal_id: string
+          id: string
+          target_percentage: number
+          title: string
+        }
+        Insert: {
+          achieved_at?: string | null
+          created_at?: string
+          goal_id: string
+          id?: string
+          target_percentage: number
+          title: string
+        }
+        Update: {
+          achieved_at?: string | null
+          created_at?: string
+          goal_id?: string
+          id?: string
+          target_percentage?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_milestones_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "financial_goals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       income_entries: {
         Row: {
@@ -4172,6 +4510,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stock_holdings: {
+        Row: {
+          average_price: number
+          created_at: string
+          current_price: number | null
+          exchange: string
+          id: string
+          last_price_update: string | null
+          name: string | null
+          quantity: number
+          sector: string | null
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          average_price: number
+          created_at?: string
+          current_price?: number | null
+          exchange?: string
+          id?: string
+          last_price_update?: string | null
+          name?: string | null
+          quantity: number
+          sector?: string | null
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          average_price?: number
+          created_at?: string
+          current_price?: number | null
+          exchange?: string
+          id?: string
+          last_price_update?: string | null
+          name?: string | null
+          quantity?: number
+          sector?: string | null
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       study_chapters: {
         Row: {
