@@ -103,7 +103,7 @@ const navSections: NavSection[] = [
       { path: "/app/reports", label: "Reports & Budget", icon: PieChart },
       { path: "/app/loans", label: "Loans & EMI", icon: Wallet },
       { path: "/app/insurance", label: "Insurance", icon: Heart },
-      { path: "/app/tax", label: "Tax & FY", icon: FileText },
+      { path: "/app/tax", label: "TAXYN", icon: FileText, badge: "PRO" },
     ],
   },
   {
