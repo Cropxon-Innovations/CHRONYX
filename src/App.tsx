@@ -52,6 +52,7 @@ const Library = lazy(() => import("./pages/app/Library"));
 const FamilyTree = lazy(() => import("./pages/app/FamilyTree"));
 const FinanceFlow = lazy(() => import("./pages/app/FinanceFlow"));
 const PrivacyCenter = lazy(() => import("./pages/app/PrivacyCenter"));
+const SecurityDashboard = lazy(() => import("./pages/app/SecurityDashboard"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -267,6 +268,7 @@ const AnimatedRoutes = () => {
           <Route path="family-tree" element={<Suspense fallback={<PageLoader />}><FamilyTree /></Suspense>} />
           <Route path="financeflow" element={<Suspense fallback={<PageLoader />}><FinanceFlow /></Suspense>} />
           <Route path="privacy" element={<Suspense fallback={<PageLoader />}><PrivacyCenter /></Suspense>} />
+          <Route path="security" element={<Suspense fallback={<PageLoader />}><SecurityDashboard /></Suspense>} />
           <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         </Route>
         <Route 

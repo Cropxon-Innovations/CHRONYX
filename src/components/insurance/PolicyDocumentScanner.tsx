@@ -136,23 +136,50 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
     });
   };
 
-  // Extract text from all PDF pages
+  // Extract text from ALL PDF pages (not just first 5)
   const extractTextFromPdf = async (pdfData: ArrayBuffer): Promise<string> => {
     // Clone the buffer to prevent detached issues
     const dataClone = pdfData.slice(0);
     const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(dataClone) }).promise;
     let fullText = '';
     
-    // Extract text from first 5 pages (usually enough for policy details)
-    const maxPages = Math.min(pdf.numPages, 5);
+    // Process ALL pages - insurance docs can have important info on any page
+    const totalPages = pdf.numPages;
+    console.log(`Processing ${totalPages} PDF pages...`);
     
-    for (let i = 1; i <= maxPages; i++) {
+    for (let i = 1; i <= totalPages; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
       const pageText = textContent.items
         .map((item: any) => item.str)
         .join(' ');
-      fullText += pageText + '\n';
+      fullText += `--- Page ${i} ---\n` + pageText + '\n\n';
+    }
+    
+    console.log(`Extracted ${fullText.length} characters from ${totalPages} pages`);
+    return fullText;
+  };
+
+  // OCR all PDF pages for better extraction
+  const ocrAllPdfPages = async (pdfData: ArrayBuffer, onProgress: (progress: number) => void): Promise<string> => {
+    const dataClone = pdfData.slice(0);
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(dataClone) }).promise;
+    const totalPages = Math.min(pdf.numPages, 8); // Limit to first 8 pages for performance
+    let fullText = '';
+    
+    for (let i = 1; i <= totalPages; i++) {
+      const pageBlob = await convertPdfPageToImage(pdfData, i);
+      
+      const result = await Tesseract.recognize(pageBlob, 'eng', {
+        logger: (m) => {
+          if (m.status === 'recognizing text') {
+            const pageProgress = ((i - 1) / totalPages + m.progress / totalPages) * 100;
+            onProgress(Math.round(pageProgress));
+          }
+        },
+      });
+      
+      fullText += `--- Page ${i} ---\n` + result.data.text + '\n\n';
     }
     
     return fullText;
@@ -488,22 +515,26 @@ const PolicyDocumentScanner = ({ onDataExtracted }: PolicyDocumentScannerProps) 
         previewBlob = file;
       }
 
-      // Step 3: OCR Scanning (if needed)
+      // Step 3: OCR Scanning (if needed) - now scans ALL pages
       if (!extractedText || extractedText.length < 200) {
         setCurrentStep('scanning');
         setProgress(0);
         
-        const fileToScan = isPdf && previewBlob ? previewBlob : file;
-        
-        const result = await Tesseract.recognize(fileToScan, 'eng', {
-          logger: (m) => {
-            if (m.status === 'recognizing text') {
-              setProgress(Math.round(m.progress * 100));
-            }
-          },
-        });
-        
-        extractedText = result.data.text;
+        if (isPdf && previewBlob) {
+          // For PDFs, OCR all pages
+          const arrayBuffer = await readFileAsArrayBuffer(file);
+          extractedText = await ocrAllPdfPages(arrayBuffer, setProgress);
+        } else {
+          // For images, single OCR
+          const result = await Tesseract.recognize(file, 'eng', {
+            logger: (m) => {
+              if (m.status === 'recognizing text') {
+                setProgress(Math.round(m.progress * 100));
+              }
+            },
+          });
+          extractedText = result.data.text;
+        }
       }
 
       // Step 4: Extracting
