@@ -244,10 +244,10 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Parse syllabus error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to parse syllabus" }),
+      JSON.stringify({ error: error?.message || "Failed to parse syllabus" }),
       {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

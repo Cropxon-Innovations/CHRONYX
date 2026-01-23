@@ -68,6 +68,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_category_patterns: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          id: string
+          last_used_at: string | null
+          merchant_pattern: string
+          suggested_category: string
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          merchant_pattern: string
+          suggested_category: string
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          merchant_pattern?: string
+          suggested_category?: string
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_parsing_logs: {
         Row: {
           confidence_score: number | null
@@ -1681,6 +1714,42 @@ export type Database = {
           generation_count?: number | null
           id?: string
           member_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_report_subscriptions: {
+        Row: {
+          created_at: string
+          delivery_method: string
+          id: string
+          is_enabled: boolean | null
+          last_sent_at: string | null
+          next_scheduled_at: string | null
+          report_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_method: string
+          id?: string
+          is_enabled?: boolean | null
+          last_sent_at?: string | null
+          next_scheduled_at?: string | null
+          report_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_method?: string
+          id?: string
+          is_enabled?: boolean | null
+          last_sent_at?: string | null
+          next_scheduled_at?: string | null
+          report_type?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -4819,6 +4888,105 @@ export type Database = {
           target_id?: string | null
           target_type?: string | null
           user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_assets: {
+        Row: {
+          account_number_mask: string | null
+          address: string | null
+          asset_name: string
+          bank_name: string | null
+          broker_platform: string | null
+          category_code: string
+          created_at: string
+          currency: string | null
+          current_value: number | null
+          description: string | null
+          id: string
+          interest_rate: number | null
+          is_active: boolean | null
+          isin: string | null
+          last_valuation_date: string | null
+          maturity_date: string | null
+          metadata: Json | null
+          notes: string | null
+          ownership_percent: number | null
+          policy_number: string | null
+          premium_amount: number | null
+          purchase_date: string | null
+          purchase_value: number | null
+          quantity: number | null
+          rental_income: number | null
+          subcategory: string
+          sum_assured: number | null
+          symbol: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_number_mask?: string | null
+          address?: string | null
+          asset_name: string
+          bank_name?: string | null
+          broker_platform?: string | null
+          category_code: string
+          created_at?: string
+          currency?: string | null
+          current_value?: number | null
+          description?: string | null
+          id?: string
+          interest_rate?: number | null
+          is_active?: boolean | null
+          isin?: string | null
+          last_valuation_date?: string | null
+          maturity_date?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          ownership_percent?: number | null
+          policy_number?: string | null
+          premium_amount?: number | null
+          purchase_date?: string | null
+          purchase_value?: number | null
+          quantity?: number | null
+          rental_income?: number | null
+          subcategory: string
+          sum_assured?: number | null
+          symbol?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_number_mask?: string | null
+          address?: string | null
+          asset_name?: string
+          bank_name?: string | null
+          broker_platform?: string | null
+          category_code?: string
+          created_at?: string
+          currency?: string | null
+          current_value?: number | null
+          description?: string | null
+          id?: string
+          interest_rate?: number | null
+          is_active?: boolean | null
+          isin?: string | null
+          last_valuation_date?: string | null
+          maturity_date?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          ownership_percent?: number | null
+          policy_number?: string | null
+          premium_amount?: number | null
+          purchase_date?: string | null
+          purchase_value?: number | null
+          quantity?: number | null
+          rental_income?: number | null
+          subcategory?: string
+          sum_assured?: number | null
+          symbol?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
