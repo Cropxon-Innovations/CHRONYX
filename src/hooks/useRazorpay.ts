@@ -125,7 +125,7 @@ export const useRazorpay = () => {
             order_id: orderId,
             handler: async (response: RazorpayResponse) => {
               try {
-                // Verify payment
+                // Verify payment and create subscription
                 const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
                   "verify-razorpay-payment",
                   {
@@ -135,11 +135,14 @@ export const useRazorpay = () => {
                       razorpay_signature: response.razorpay_signature,
                       plan,
                       userId: user?.id,
+                      billingAddress,
+                      email: userDetails?.email || user?.email,
                     },
                   }
                 );
 
                 if (verifyError || !verifyData?.verified) {
+                  console.error("Verification failed:", verifyError, verifyData);
                   toast({
                     title: "Payment Verification Failed",
                     description: "Please contact support if amount was deducted.",

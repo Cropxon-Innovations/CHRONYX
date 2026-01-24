@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Crown, Sparkles, User, CreditCard, Calendar, CheckCircle2, XCircle, Clock, RefreshCw, Download, FileText, Smartphone, Building2, Wallet, Info, Key, Loader2, Shield } from "lucide-react";
+import { Crown, Sparkles, User, CreditCard, Calendar, CheckCircle2, XCircle, Clock, RefreshCw, Download, FileText, Smartphone, Building2, Wallet, Info, Key, Loader2, Shield, Mail, Eye } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -27,6 +29,8 @@ const Profile = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [isSendingInvoice, setIsSendingInvoice] = useState<string | null>(null);
+  const [invoicePreview, setInvoicePreview] = useState<PaymentHistory | null>(null);
   
   // Check if user signed up with OAuth (no password set)
   const isOAuthUser = user?.app_metadata?.provider === 'google' || 
@@ -186,6 +190,50 @@ const Profile = () => {
     } catch (error) {
       console.error("Error generating invoice:", error);
       toast.error("Failed to generate invoice");
+    }
+  };
+
+  const resendInvoiceEmail = async (payment: PaymentHistory) => {
+    if (!user?.email) {
+      toast.error("No email address found");
+      return;
+    }
+
+    setIsSendingInvoice(payment.id);
+    try {
+      // Get billing address
+      const { data: billingAddress } = await supabase
+        .from('billing_addresses')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_default', true)
+        .maybeSingle();
+
+      const { error } = await supabase.functions.invoke('send-invoice-email', {
+        body: {
+          paymentId: payment.razorpay_payment_id,
+          orderId: payment.razorpay_order_id,
+          plan: payment.plan_type,
+          amount: payment.amount,
+          billingAddress: billingAddress || {
+            full_name: user.email?.split('@')[0] || 'Customer',
+            address_line1: 'N/A',
+            city: 'N/A',
+            state: 'N/A',
+            pincode: '000000',
+          },
+          email: user.email,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success(`Invoice sent to ${user.email}`);
+    } catch (error) {
+      console.error("Error sending invoice:", error);
+      toast.error("Failed to send invoice email");
+    } finally {
+      setIsSendingInvoice(null);
     }
   };
 
@@ -531,15 +579,39 @@ const Profile = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => generateInvoice(payment)}
-                          className="h-8 px-2"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Invoice
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2"
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              Invoice
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setInvoicePreview(payment)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Preview
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => generateInvoice(payment)}>
+                              <Download className="h-4 w-4 mr-2" />
+                              Download PDF
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => resendInvoiceEmail(payment)}
+                              disabled={isSendingInvoice === payment.id}
+                            >
+                              {isSendingInvoice === payment.id ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <Mail className="h-4 w-4 mr-2" />
+                              )}
+                              Send to Email
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -549,6 +621,97 @@ const Profile = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Invoice Preview Dialog */}
+      <Dialog open={!!invoicePreview} onOpenChange={(open) => !open && setInvoicePreview(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Invoice Preview
+            </DialogTitle>
+          </DialogHeader>
+          {invoicePreview && (
+            <div className="space-y-4">
+              <div className="p-6 bg-muted/30 rounded-lg space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold tracking-wider">CHRONYX</h3>
+                    <p className="text-xs text-muted-foreground">by ORIGINX LABS</p>
+                  </div>
+                  <Badge variant="outline">
+                    INV-{invoicePreview.razorpay_order_id?.slice(-8).toUpperCase()}
+                  </Badge>
+                </div>
+                
+                <Separator />
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Date</p>
+                    <p className="font-medium">{format(new Date(invoicePreview.created_at), 'MMMM d, yyyy')}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Payment ID</p>
+                    <p className="font-mono text-xs">{invoicePreview.razorpay_payment_id}</p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>CHRONYX {invoicePreview.plan_type.charAt(0).toUpperCase() + invoicePreview.plan_type.slice(1)} Plan</span>
+                    <span className="font-medium">{formatAmount(invoicePreview.amount, invoicePreview.currency)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Includes GST (18%)</span>
+                    <span>₹{Math.round(invoicePreview.amount - invoicePreview.amount / 1.18)}</span>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex justify-between font-semibold">
+                  <span>Total Paid</span>
+                  <span className="text-lg">{formatAmount(invoicePreview.amount, invoicePreview.currency)}</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-emerald-600">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Payment Successful
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => generateInvoice(invoicePreview)}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Button>
+                <Button 
+                  className="flex-1"
+                  onClick={() => {
+                    resendInvoiceEmail(invoicePreview);
+                    setInvoicePreview(null);
+                  }}
+                  disabled={isSendingInvoice === invoicePreview.id}
+                >
+                  {isSendingInvoice === invoicePreview.id ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4 mr-2" />
+                  )}
+                  Send to Email
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
