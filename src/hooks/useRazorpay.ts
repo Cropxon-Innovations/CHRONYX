@@ -39,19 +39,24 @@ declare global {
   }
 }
 
-interface PlanConfig {
-  pro: { amount: number; description: string };
-  premium: { amount: number; description: string };
+interface PlanPricing {
+  monthly: number;
+  annual: number;
 }
 
-const PLAN_CONFIG: PlanConfig = {
+interface PlanConfig {
+  pro: PlanPricing;
+  premium: PlanPricing;
+}
+
+const PLAN_PRICES: PlanConfig = {
   pro: {
-    amount: 199,
-    description: "CHRONYX Pro - Monthly Subscription",
+    monthly: 199,
+    annual: 1999,
   },
   premium: {
-    amount: 499,
-    description: "CHRONYX Premium - Monthly Subscription",
+    monthly: 499,
+    annual: 4999,
   },
 };
 
@@ -78,7 +83,8 @@ export const useRazorpay = () => {
     async (
       plan: "pro" | "premium", 
       userDetails?: { name?: string; email?: string; phone?: string },
-      billingAddress?: BillingAddress
+      billingAddress?: BillingAddress,
+      billingCycle: "monthly" | "annual" = "monthly"
     ) => {
       setIsLoading(true);
 
@@ -88,15 +94,18 @@ export const useRazorpay = () => {
           throw new Error("Failed to load payment gateway");
         }
 
-        const planConfig = PLAN_CONFIG[plan];
+        const amount = PLAN_PRICES[plan][billingCycle];
+        const cycleLabel = billingCycle === "annual" ? "Annual" : "Monthly";
+        const planDescription = `CHRONYX ${plan === "pro" ? "Pro" : "Premium"} - ${cycleLabel} Subscription`;
 
         const { data: orderData, error: orderError } = await supabase.functions.invoke(
           "create-razorpay-order",
           {
             body: {
-              amount: planConfig.amount,
+              amount,
               plan,
               currency: "INR",
+              billingCycle,
             },
           }
         );
@@ -105,7 +114,7 @@ export const useRazorpay = () => {
           throw new Error(orderError?.message || "Failed to create order");
         }
 
-        const { orderId, keyId, amount, currency } = orderData;
+        const { orderId, keyId, amount: orderAmount, currency } = orderData;
         const { data: { user } } = await supabase.auth.getUser();
 
         return new Promise<{ 
@@ -118,10 +127,10 @@ export const useRazorpay = () => {
         }>((resolve) => {
           const options: RazorpayOptions = {
             key: keyId,
-            amount: amount,
+            amount: orderAmount,
             currency: currency,
             name: "CHRONYX by ORIGINX LABS",
-            description: planConfig.description,
+            description: planDescription,
             order_id: orderId,
             handler: async (response: RazorpayResponse) => {
               try {
@@ -137,6 +146,7 @@ export const useRazorpay = () => {
                       userId: user?.id,
                       billingAddress,
                       email: userDetails?.email || user?.email,
+                      billingCycle,
                     },
                   }
                 );
@@ -162,7 +172,8 @@ export const useRazorpay = () => {
                           paymentId: response.razorpay_payment_id,
                           orderId: response.razorpay_order_id,
                           plan,
-                          amount: planConfig.amount,
+                          amount,
+                          billingCycle,
                           billingAddress,
                           email: user.email,
                         },
@@ -218,6 +229,7 @@ export const useRazorpay = () => {
               billing_city: billingAddress.city,
               billing_state: billingAddress.state,
               billing_gstin: billingAddress.gstin || "",
+              billing_cycle: billingCycle,
             } : undefined,
             theme: {
               color: "#6366f1",
@@ -253,6 +265,10 @@ export const useRazorpay = () => {
   return {
     initiatePayment,
     isLoading,
-    planConfig: PLAN_CONFIG,
+    planConfig: {
+      pro: { amount: PLAN_PRICES.pro.monthly, description: "CHRONYX Pro" },
+      premium: { amount: PLAN_PRICES.premium.monthly, description: "CHRONYX Premium" },
+    },
+    planPrices: PLAN_PRICES,
   };
 };

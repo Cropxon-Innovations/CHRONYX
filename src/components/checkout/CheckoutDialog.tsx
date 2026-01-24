@@ -10,29 +10,36 @@ interface CheckoutDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   plan: "pro" | "premium";
+  billingCycle?: "monthly" | "annual";
   onSuccess?: () => void;
 }
 
-export const CheckoutDialog = ({ open, onOpenChange, plan, onSuccess }: CheckoutDialogProps) => {
+export const CheckoutDialog = ({ open, onOpenChange, plan, billingCycle = "monthly", onSuccess }: CheckoutDialogProps) => {
   const { user } = useAuth();
   const { initiatePayment, isLoading, planConfig } = useRazorpay();
   const [step, setStep] = useState<"billing" | "processing" | "success">("billing");
   const [invoiceNumber, setInvoiceNumber] = useState<string>("");
 
+  // Calculate prices based on billing cycle
+  const monthlyPrices = { pro: 199, premium: 499 };
+  const annualPrices = { pro: 1999, premium: 4999 };
+  
+  const currentPrice = billingCycle === "annual" ? annualPrices[plan] : monthlyPrices[plan];
+
   const planDetails = {
     pro: {
       name: "Pro",
-      price: planConfig.pro.amount,
+      price: currentPrice,
       icon: Sparkles,
       color: "from-blue-500 to-indigo-600",
-      features: ["Unlimited Tasks", "Finance Tracking", "Cloud Sync", "Priority Support"],
+      features: ["10GB Storage", "Unlimited Tax Calc", "FinanceFlow AI", "Priority Support"],
     },
     premium: {
       name: "Premium",
-      price: planConfig.premium.amount,
+      price: currentPrice,
       icon: Crown,
       color: "from-amber-500 to-orange-600",
-      features: ["All Pro Features", "AI Assistant", "Advanced Analytics", "Family Sharing", "Vault Access"],
+      features: ["100GB Storage", "All Pro Features", "Family Profiles", "Founder Support"],
     },
   };
 
@@ -42,11 +49,7 @@ export const CheckoutDialog = ({ open, onOpenChange, plan, onSuccess }: Checkout
   const handleBillingSubmit = async (billingAddress: BillingAddress) => {
     setStep("processing");
     
-    const result = await initiatePayment(
-      plan,
-      { email: user?.email || "" },
-      billingAddress
-    );
+    const result = await initiatePayment(plan, { email: user?.email || "" }, billingAddress, billingCycle);
 
     if (result.success) {
       setInvoiceNumber(result.invoiceNumber || "");
@@ -65,6 +68,14 @@ export const CheckoutDialog = ({ open, onOpenChange, plan, onSuccess }: Checkout
     }
   };
 
+  const getPeriodText = () => {
+    if (billingCycle === "annual") {
+      const monthlyEquiv = Math.round(currentPrice / 12);
+      return `₹${currentPrice.toLocaleString('en-IN')}/year (₹${monthlyEquiv}/mo)`;
+    }
+    return `₹${currentPrice}/month`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden">
@@ -80,7 +91,7 @@ export const CheckoutDialog = ({ open, onOpenChange, plan, onSuccess }: Checkout
                   CHRONYX {currentPlan.name}
                 </DialogTitle>
                 <DialogDescription className="text-white/80 mt-0.5">
-                  ₹{currentPlan.price}/month
+                  {getPeriodText()}
                 </DialogDescription>
               </div>
             </div>
@@ -97,6 +108,12 @@ export const CheckoutDialog = ({ open, onOpenChange, plan, onSuccess }: Checkout
               </span>
             ))}
           </div>
+
+          {billingCycle === "annual" && (
+            <div className="mt-4 px-3 py-2 bg-white/10 rounded-lg inline-block">
+              <span className="text-xs font-medium">✨ Annual billing - Save up to 17%</span>
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -156,6 +173,9 @@ export const CheckoutDialog = ({ open, onOpenChange, plan, onSuccess }: Checkout
                     Invoice: {invoiceNumber}
                   </p>
                 )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Subscription: {billingCycle === "annual" ? "1 Year" : "1 Month"}
+                </p>
                 <button
                   onClick={handleClose}
                   className="mt-6 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm"
