@@ -1,25 +1,26 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Check, Sparkles, Crown, Zap, Loader2, Calculator, Bot } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { useRazorpay } from "@/hooks/useRazorpay";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckoutDialog } from "@/components/checkout/CheckoutDialog";
 
 const Pricing = () => {
-  const { initiatePayment, isLoading } = useRazorpay();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { createSubscription, getCurrentPlan, refetch, paymentHistory } = useSubscription();
+  const { getCurrentPlan, refetch } = useSubscription();
+  const [checkoutPlan, setCheckoutPlan] = useState<"pro" | "premium" | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const currentPlan = getCurrentPlan();
 
-  const handlePlanSelect = async (planType: "free" | "pro" | "premium") => {
+  const handlePlanSelect = (planType: "free" | "pro" | "premium") => {
     if (planType === "free") {
       navigate("/login");
       return;
@@ -41,59 +42,15 @@ const Pricing = () => {
       return;
     }
 
-    const amountPaisa = planType === 'pro' ? 19900 : 49900; // ₹199 or ₹499 in paisa
-    const result = await initiatePayment(planType);
-    
-    if (result?.success && result.razorpay_order_id && result.razorpay_payment_id && result.razorpay_signature) {
-      // Payment was successful, create subscription record
-      const subscription = await createSubscription(
-        planType,
-        result.razorpay_order_id,
-        result.razorpay_payment_id,
-        result.razorpay_signature,
-        amountPaisa
-      );
-      
-      // Send payment receipt email
-      if (subscription) {
-        try {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("display_name")
-            .eq("id", user.id)
-            .single();
+    // Open checkout dialog
+    setCheckoutPlan(planType);
+  };
 
-          // Find the payment history record
-          const { data: latestPayment } = await supabase
-            .from("payment_history")
-            .select("id")
-            .eq("razorpay_payment_id", result.razorpay_payment_id)
-            .single();
-
-          if (latestPayment) {
-            await supabase.functions.invoke("send-payment-receipt", {
-              body: {
-                email: user.email,
-                display_name: profile?.display_name,
-                plan_type: planType,
-                amount: amountPaisa / 100,
-                currency: "INR",
-                razorpay_payment_id: result.razorpay_payment_id,
-                razorpay_order_id: result.razorpay_order_id,
-                payment_history_id: latestPayment.id,
-              },
-            });
-          }
-        } catch (emailError) {
-          console.error("Failed to send receipt email:", emailError);
-          // Don't fail the whole flow if email fails
-        }
-      }
-      
-      refetch();
-      toast.success(`Welcome to ${planType === 'pro' ? 'Pro' : 'Premium'}! Receipt sent to your email.`);
-      navigate('/app/profile');
-    }
+  const handleCheckoutSuccess = () => {
+    refetch();
+    toast.success(`Welcome to ${checkoutPlan === 'pro' ? 'Pro' : 'Premium'}! Check your email for the invoice.`);
+    setCheckoutPlan(null);
+    navigate('/app/profile');
   };
 
   const plans = [
@@ -362,6 +319,16 @@ const Pricing = () => {
           <p className="text-xs text-muted-foreground/60">CHRONYX by ORIGINX LABS</p>
         </div>
       </div>
+
+      {/* Checkout Dialog */}
+      {checkoutPlan && (
+        <CheckoutDialog
+          open={!!checkoutPlan}
+          onOpenChange={(open) => !open && setCheckoutPlan(null)}
+          plan={checkoutPlan}
+          onSuccess={handleCheckoutSuccess}
+        />
+      )}
     </motion.main>
   );
 };
