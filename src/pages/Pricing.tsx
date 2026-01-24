@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Check, Sparkles, Crown, Zap, Loader2, Calculator, Bot } from "lucide-react";
+import { ArrowLeft, Check, Sparkles, Crown, Zap, Loader2, Calculator, Bot, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,12 +10,15 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutDialog } from "@/components/checkout/CheckoutDialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const Pricing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { getCurrentPlan, refetch } = useSubscription();
   const [checkoutPlan, setCheckoutPlan] = useState<"pro" | "premium" | null>(null);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
   const [isLoading, setIsLoading] = useState(false);
 
   const currentPlan = getCurrentPlan();
@@ -38,7 +41,7 @@ const Pricing = () => {
     }
 
     if (currentPlan === 'premium') {
-      toast.info("You already have lifetime Premium access!");
+      toast.info("You already have Premium access!");
       return;
     }
 
@@ -56,7 +59,8 @@ const Pricing = () => {
   const plans = [
     {
       name: "Free",
-      price: "₹0",
+      monthlyPrice: 0,
+      annualPrice: 0,
       period: "forever",
       description: "Everything you need to get started",
       icon: Zap,
@@ -78,9 +82,10 @@ const Pricing = () => {
     },
     {
       name: "Pro",
-      price: "₹199",
-      period: "/month",
-      yearlyPrice: "₹1,999/year",
+      monthlyPrice: 199,
+      annualPrice: 1999,
+      period: billingCycle === "monthly" ? "/month" : "/year",
+      savings: billingCycle === "annual" ? "Save ₹389" : null,
       description: "Enhanced features for power users",
       icon: Sparkles,
       highlight: true,
@@ -102,9 +107,10 @@ const Pricing = () => {
     },
     {
       name: "Premium",
-      price: "₹499",
-      period: "/month",
-      yearlyPrice: "₹4,999/year",
+      monthlyPrice: 499,
+      annualPrice: 4999,
+      period: billingCycle === "monthly" ? "/month" : "/year",
+      savings: billingCycle === "annual" ? "Save ₹989" : null,
       description: "Full access with all premium features",
       icon: Crown,
       highlight: false,
@@ -141,6 +147,19 @@ const Pricing = () => {
     ],
   };
 
+  const getDisplayPrice = (plan: typeof plans[0]) => {
+    const price = billingCycle === "monthly" ? plan.monthlyPrice : plan.annualPrice;
+    return `₹${price.toLocaleString('en-IN')}`;
+  };
+
+  const getMonthlyEquivalent = (plan: typeof plans[0]) => {
+    if (billingCycle === "annual" && plan.annualPrice > 0) {
+      const monthlyEquiv = Math.round(plan.annualPrice / 12);
+      return `₹${monthlyEquiv}/mo`;
+    }
+    return null;
+  };
+
   return (
     <motion.main
       className="min-h-screen bg-background"
@@ -154,7 +173,7 @@ const Pricing = () => {
           Back to Home
         </Link>
 
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-light tracking-wide text-foreground mb-3">
             Simple, Honest Pricing
           </h1>
@@ -168,10 +187,37 @@ const Pricing = () => {
           )}
         </div>
 
+        {/* Billing Toggle */}
+        <div className="flex items-center justify-center gap-4 mb-10">
+          <span className={`text-sm font-medium transition-colors ${billingCycle === "monthly" ? "text-foreground" : "text-muted-foreground"}`}>
+            Monthly
+          </span>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={billingCycle === "annual"}
+              onCheckedChange={(checked) => setBillingCycle(checked ? "annual" : "monthly")}
+              id="billing-toggle"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-sm font-medium transition-colors ${billingCycle === "annual" ? "text-foreground" : "text-muted-foreground"}`}>
+              Annual
+            </span>
+            {billingCycle === "annual" && (
+              <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] px-1.5 py-0">
+                <Star className="w-2.5 h-2.5 mr-0.5 fill-current" />
+                Best Value
+              </Badge>
+            )}
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-6">
           {plans.map((plan, index) => {
             const Icon = plan.icon;
             const isCurrentPlan = currentPlan === plan.planType;
+            const monthlyEquiv = getMonthlyEquivalent(plan);
+            
             return (
               <motion.div
                 key={plan.name}
@@ -207,15 +253,29 @@ const Pricing = () => {
                   <h2 className="text-xl font-medium text-foreground">{plan.name}</h2>
                 </div>
 
-                <div className="mb-2">
-                  <span className="text-3xl font-light text-foreground">{plan.price}</span>
+                <div className="mb-1">
+                  <span className="text-3xl font-light text-foreground">{getDisplayPrice(plan)}</span>
                   <span className="text-muted-foreground text-sm ml-1">{plan.period}</span>
                 </div>
                 
-                {plan.yearlyPrice && (
-                  <p className="text-xs text-muted-foreground mb-4">or {plan.yearlyPrice} (save 17%)</p>
+                {plan.savings && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-xs">
+                      {plan.savings}
+                    </Badge>
+                    {monthlyEquiv && (
+                      <span className="text-xs text-muted-foreground">({monthlyEquiv})</span>
+                    )}
+                  </div>
                 )}
-                {!plan.yearlyPrice && <div className="mb-4" />}
+                
+                {!plan.savings && plan.monthlyPrice > 0 && billingCycle === "monthly" && (
+                  <p className="text-xs text-muted-foreground mb-2">
+                    or ₹{plan.annualPrice.toLocaleString('en-IN')}/year (save {Math.round((1 - plan.annualPrice / (plan.monthlyPrice * 12)) * 100)}%)
+                  </p>
+                )}
+                
+                {plan.monthlyPrice === 0 && <div className="mb-2" />}
 
                 <p className="text-sm text-muted-foreground mb-6">{plan.description}</p>
 
@@ -301,6 +361,10 @@ const Pricing = () => {
               <p className="text-sm text-muted-foreground">Yes, you can upgrade anytime. Your new features will be available immediately after payment.</p>
             </div>
             <div className="p-4 rounded-lg bg-card/50 border border-border">
+              <h4 className="font-medium text-foreground mb-1">What's the difference between monthly and annual billing?</h4>
+              <p className="text-sm text-muted-foreground">Annual billing saves you up to 17% compared to monthly. You pay once for the entire year and get uninterrupted access.</p>
+            </div>
+            <div className="p-4 rounded-lg bg-card/50 border border-border">
               <h4 className="font-medium text-foreground mb-1">Is my data safe?</h4>
               <p className="text-sm text-muted-foreground">Absolutely. We use end-to-end encryption and your data is never shared with third parties.</p>
             </div>
@@ -310,13 +374,13 @@ const Pricing = () => {
             </div>
             <div className="p-4 rounded-lg bg-card/50 border border-border">
               <h4 className="font-medium text-foreground mb-1">Will I get an invoice?</h4>
-              <p className="text-sm text-muted-foreground">Yes! A detailed invoice will be sent to your registered email immediately after successful payment.</p>
+              <p className="text-sm text-muted-foreground">Yes! A detailed GST invoice will be sent to your registered email immediately after successful payment.</p>
             </div>
           </div>
         </div>
 
         <div className="mt-12 pt-6 border-t border-border text-center">
-          <p className="text-xs text-muted-foreground/60">CHRONYX by ORIGINX LABS</p>
+          <p className="text-xs text-muted-foreground/60">CHRONYX by ORIGINX LABS PVT. LTD.</p>
         </div>
       </div>
 
@@ -326,6 +390,7 @@ const Pricing = () => {
           open={!!checkoutPlan}
           onOpenChange={(open) => !open && setCheckoutPlan(null)}
           plan={checkoutPlan}
+          billingCycle={billingCycle}
           onSuccess={handleCheckoutSuccess}
         />
       )}
