@@ -314,7 +314,7 @@ const AdminPayments = () => {
                       <TableCell>
                         <div className="flex items-center gap-1 font-medium">
                           <IndianRupee className="w-3 h-3" />
-                          {(Number(payment.amount) / 100).toLocaleString()}
+                          {Number(payment.amount).toLocaleString()}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -392,7 +392,7 @@ const AdminPayments = () => {
                   <p className="text-xs text-muted-foreground mb-1">Amount</p>
                   <p className="text-xl font-bold flex items-center gap-1">
                     <IndianRupee className="w-4 h-4" />
-                    {(Number(selectedPayment.amount) / 100).toLocaleString()}
+                    {Number(selectedPayment.amount).toLocaleString()}
                   </p>
                 </div>
                 <div>
