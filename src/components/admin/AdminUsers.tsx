@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Table, TableBody, TableCell, TableHead, 
   TableHeader, TableRow 
@@ -15,11 +16,12 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { 
   Users, Search, Shield, User, MoreHorizontal, Mail,
-  Ban, UserCheck, Eye, Crown, AlertTriangle
+  Crown, Send, UserPlus, RefreshCw, Eye, MessageSquare
 } from "lucide-react";
 import { useAdminUsers, useGrantAdminRole, useLogAdminActivity, useCreateNotification } from "@/hooks/useAdmin";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import UserDetailModal from "./UserDetailModal";
 
 const AdminUsers = () => {
   const { data: users, isLoading, refetch } = useAdminUsers();
@@ -27,11 +29,10 @@ const AdminUsers = () => {
   const logActivity = useLogAdminActivity();
   const createNotification = useCreateNotification();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [actionDialog, setActionDialog] = useState<{
-    type: "view" | "suspend" | "notify" | "upgrade" | null;
-    user: any;
-  }>({ type: null, user: null });
+  const [selectedUser, setSelectedUser] = useState<{ id: string; email: string } | null>(null);
+  const [broadcastDialog, setBroadcastDialog] = useState(false);
+  const [broadcastSubject, setBroadcastSubject] = useState("");
+  const [broadcastMessage, setBroadcastMessage] = useState("");
 
   const filteredUsers = users?.filter(user => 
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -55,22 +56,33 @@ const AdminUsers = () => {
     });
   };
 
-  const handleSendNotification = (userId: string, email: string) => {
-    createNotification.mutate({
-      title: "Message from Admin",
-      message: `Hello! This is a personalized message for ${email?.split('@')[0] || 'you'}.`,
-      notification_type: "info",
-      target_audience: "specific",
-    }, {
-      onSuccess: () => {
-        toast.success("Notification sent to user");
-        setActionDialog({ type: null, user: null });
-      }
-    });
+  const handleViewDetails = (userId: string, email: string) => {
+    setSelectedUser({ id: userId, email });
   };
 
-  const handleViewDetails = (user: any) => {
-    setActionDialog({ type: "view", user });
+  const handleBroadcastToAll = () => {
+    if (!broadcastSubject.trim() || !broadcastMessage.trim()) {
+      toast.error("Please enter both subject and message");
+      return;
+    }
+
+    createNotification.mutate({
+      title: broadcastSubject,
+      message: broadcastMessage,
+      notification_type: "info",
+      target_audience: "all",
+    }, {
+      onSuccess: () => {
+        logActivity.mutate({
+          action: `Broadcast message to all users: ${broadcastSubject}`,
+          target_type: "broadcast",
+        });
+        toast.success(`Message sent to all ${totalUsers} users`);
+        setBroadcastDialog(false);
+        setBroadcastSubject("");
+        setBroadcastMessage("");
+      }
+    });
   };
 
   if (isLoading) {
@@ -152,14 +164,23 @@ const AdminUsers = () => {
                 View and manage all registered users
               </CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search users..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex items-center gap-3">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search users..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Button variant="outline" size="icon" onClick={() => refetch()}>
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+              <Button onClick={() => setBroadcastDialog(true)} className="gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Message All
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -170,6 +191,7 @@ const AdminUsers = () => {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>User ID</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead>Subscription</TableHead>
                   <TableHead>Role</TableHead>
@@ -179,7 +201,11 @@ const AdminUsers = () => {
               <TableBody>
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow 
+                      key={user.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleViewDetails(user.id, user.email)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="w-8 h-8">
@@ -195,6 +221,11 @@ const AdminUsers = () => {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {user.email}
+                      </TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
+                          {user.id.slice(0, 8)}...
+                        </code>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {user.created_at ? format(new Date(user.created_at), "MMM d, yyyy") : "N/A"}
@@ -224,7 +255,7 @@ const AdminUsers = () => {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -234,13 +265,9 @@ const AdminUsers = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleViewDetails(user)}>
+                            <DropdownMenuItem onClick={() => handleViewDetails(user.id, user.email)}>
                               <Eye className="w-4 h-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleSendNotification(user.id, user.email)}>
-                              <Mail className="w-4 h-4 mr-2" />
-                              Send Notification
+                              View Full Details
                             </DropdownMenuItem>
                             {!user.roles?.includes("admin") && (
                               <>
@@ -261,7 +288,7 @@ const AdminUsers = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                       <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="font-medium">
                         {searchQuery ? "No users match your search" : "No users found"}
@@ -275,68 +302,56 @@ const AdminUsers = () => {
         </CardContent>
       </Card>
 
-      {/* View User Dialog */}
-      <Dialog open={actionDialog.type === "view"} onOpenChange={() => setActionDialog({ type: null, user: null })}>
+      {/* User Detail Modal */}
+      <UserDetailModal
+        userId={selectedUser?.id || null}
+        userEmail={selectedUser?.email || null}
+        open={!!selectedUser}
+        onOpenChange={(open) => !open && setSelectedUser(null)}
+      />
+
+      {/* Broadcast Dialog */}
+      <Dialog open={broadcastDialog} onOpenChange={setBroadcastDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>User Details</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              Message All Users
+            </DialogTitle>
             <DialogDescription>
-              Viewing information for this user
+              Send a notification to all {totalUsers} registered users
             </DialogDescription>
           </DialogHeader>
-          {actionDialog.user && (
-            <div className="space-y-4 py-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="w-16 h-16">
-                  <AvatarImage src={actionDialog.user.avatar_url} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xl">
-                    {actionDialog.user.display_name?.[0] || actionDialog.user.email?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{actionDialog.user.display_name || "No name"}</p>
-                  <p className="text-sm text-muted-foreground">{actionDialog.user.email}</p>
-                </div>
-              </div>
-              
-              <div className="grid gap-3 text-sm">
-                <div className="flex justify-between p-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">User ID</span>
-                  <span className="font-mono text-xs">{actionDialog.user.id.slice(0, 16)}...</span>
-                </div>
-                <div className="flex justify-between p-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Joined</span>
-                  <span>{actionDialog.user.created_at ? format(new Date(actionDialog.user.created_at), "PPP") : "N/A"}</span>
-                </div>
-                <div className="flex justify-between p-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Subscription</span>
-                  <Badge variant="outline">
-                    {actionDialog.user.subscription?.plan_type || "Free"}
-                  </Badge>
-                </div>
-                <div className="flex justify-between p-3 rounded-lg bg-muted/30">
-                  <span className="text-muted-foreground">Role</span>
-                  <Badge variant="outline">
-                    {actionDialog.user.roles?.includes("admin") ? "Admin" : "User"}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
-                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  Privacy Notice
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  As per CHRONYX privacy policy, admin cannot view personal finance data, 
-                  documents, or other sensitive user information.
-                </p>
-              </div>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Subject</label>
+              <Input
+                placeholder="Notification subject..."
+                value={broadcastSubject}
+                onChange={(e) => setBroadcastSubject(e.target.value)}
+              />
             </div>
-          )}
+            <div>
+              <label className="text-sm font-medium mb-2 block">Message</label>
+              <Textarea
+                placeholder="Write your message..."
+                value={broadcastMessage}
+                onChange={(e) => setBroadcastMessage(e.target.value)}
+                rows={5}
+              />
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setActionDialog({ type: null, user: null })}>
-              Close
+            <Button variant="outline" onClick={() => setBroadcastDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleBroadcastToAll}
+              disabled={createNotification.isPending}
+              className="gap-2"
+            >
+              <Send className="w-4 h-4" />
+              Send to All Users
             </Button>
           </DialogFooter>
         </DialogContent>
