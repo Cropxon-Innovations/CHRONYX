@@ -1098,6 +1098,74 @@ export type Database = {
           },
         ]
       }
+      content_purchases: {
+        Row: {
+          amount: number
+          buyer_id: string
+          commission_amount: number | null
+          commission_percent: number | null
+          content_id: string
+          content_type: string
+          created_at: string | null
+          creator_id: string | null
+          creator_payout_amount: number | null
+          id: string
+          payout_id: string | null
+          payout_status: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_signature: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          buyer_id: string
+          commission_amount?: number | null
+          commission_percent?: number | null
+          content_id: string
+          content_type?: string
+          created_at?: string | null
+          creator_id?: string | null
+          creator_payout_amount?: number | null
+          id?: string
+          payout_id?: string | null
+          payout_status?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          buyer_id?: string
+          commission_amount?: number | null
+          commission_percent?: number | null
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          creator_id?: string | null
+          creator_payout_amount?: number | null
+          id?: string
+          payout_id?: string | null
+          payout_status?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_purchases_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "creator_payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_shares: {
         Row: {
           access_count: number
@@ -1137,6 +1205,51 @@ export type Database = {
           share_method?: string
           share_token?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      creator_payment_settings: {
+        Row: {
+          account_holder_name: string | null
+          account_number: string | null
+          bank_name: string | null
+          created_at: string | null
+          id: string
+          ifsc_code: string | null
+          is_verified: boolean | null
+          payment_method: string
+          updated_at: string | null
+          upi_id: string | null
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          account_holder_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          created_at?: string | null
+          id?: string
+          ifsc_code?: string | null
+          is_verified?: boolean | null
+          payment_method?: string
+          updated_at?: string | null
+          upi_id?: string | null
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          account_holder_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          created_at?: string | null
+          id?: string
+          ifsc_code?: string | null
+          is_verified?: boolean | null
+          payment_method?: string
+          updated_at?: string | null
+          upi_id?: string | null
+          user_id?: string
+          verified_at?: string | null
         }
         Relationships: []
       }
@@ -3707,6 +3820,8 @@ export type Database = {
           category: string | null
           cover_url: string | null
           created_at: string
+          creator_avatar: string | null
+          creator_name: string | null
           file_size: number | null
           file_url: string
           format: string
@@ -3719,18 +3834,23 @@ export type Database = {
           lock_hash: string | null
           notes: string | null
           price: number | null
+          purchase_count: number | null
           share_token: string | null
           tags: string[] | null
           title: string
+          total_earnings: number | null
           total_pages: number | null
           updated_at: string
           user_id: string
+          view_count: number | null
         }
         Insert: {
           author?: string | null
           category?: string | null
           cover_url?: string | null
           created_at?: string
+          creator_avatar?: string | null
+          creator_name?: string | null
           file_size?: number | null
           file_url: string
           format?: string
@@ -3743,18 +3863,23 @@ export type Database = {
           lock_hash?: string | null
           notes?: string | null
           price?: number | null
+          purchase_count?: number | null
           share_token?: string | null
           tags?: string[] | null
           title: string
+          total_earnings?: number | null
           total_pages?: number | null
           updated_at?: string
           user_id: string
+          view_count?: number | null
         }
         Update: {
           author?: string | null
           category?: string | null
           cover_url?: string | null
           created_at?: string
+          creator_avatar?: string | null
+          creator_name?: string | null
           file_size?: number | null
           file_url?: string
           format?: string
@@ -3767,12 +3892,15 @@ export type Database = {
           lock_hash?: string | null
           notes?: string | null
           price?: number | null
+          purchase_count?: number | null
           share_token?: string | null
           tags?: string[] | null
           title?: string
+          total_earnings?: number | null
           total_pages?: number | null
           updated_at?: string
           user_id?: string
+          view_count?: number | null
         }
         Relationships: []
       }
