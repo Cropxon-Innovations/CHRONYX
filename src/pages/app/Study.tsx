@@ -24,8 +24,9 @@ import { SpacedRepetitionReminders } from "@/components/study/SpacedRepetitionRe
 import { SyllabusAIParser } from "@/components/study/SyllabusAIParser";
 import { StudySubjectManager } from "@/components/study/StudySubjectManager";
 import { StudyTodosWidget } from "@/components/study/StudyTodosWidget";
-import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain } from "lucide-react";
+import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, GraduationCap } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
+import { OPSCExamDashboard } from "@/components/exam/opsc/OPSCExamDashboard";
 import {
   AlertDialog,
   AlertDialogAction,
