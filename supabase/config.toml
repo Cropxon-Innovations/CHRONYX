@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.send-financial-report]
 verify_jwt = false
+
+[functions.send-admin-message]
+verify_jwt = false
