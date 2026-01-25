@@ -4,6 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
 
+// Super Admin email - only this user can revoke admin access
+const SUPER_ADMIN_EMAIL = "originxlabs@gmail.com";
+
 export const useIsAdmin = () => {
   const { user } = useAuth();
 
@@ -29,6 +32,11 @@ export const useIsAdmin = () => {
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
+};
+
+export const useIsSuperAdmin = () => {
+  const { user } = useAuth();
+  return user?.email === SUPER_ADMIN_EMAIL;
 };
 
 export const useAdminUsers = () => {
@@ -71,7 +79,8 @@ export const useAdminTemplates = () => {
       const { data, error } = await supabase
         .from("admin_templates")
         .select("*")
-        .order("published_at", { ascending: false });
+        .order("category")
+        .order("title");
 
       if (error) throw error;
       return data || [];
@@ -88,6 +97,7 @@ export const usePublicTemplates = () => {
         .from("admin_templates")
         .select("*")
         .eq("is_active", true)
+        .not("published_at", "is", null)
         .order("usage_count", { ascending: false });
 
       if (error) throw error;
@@ -131,11 +141,11 @@ export const useCreateTemplate = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-templates"] });
       queryClient.invalidateQueries({ queryKey: ["public-templates"] });
-      toast.success("Template published successfully");
+      toast.success("Template created successfully");
     },
     onError: (error) => {
       console.error("Failed to create template:", error);
-      toast.error("Failed to publish template");
+      toast.error("Failed to create template");
     },
   });
 };
@@ -398,6 +408,54 @@ export const useGrantAdminRole = () => {
   });
 };
 
+export const useRevokeAdminRole = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (targetUserId: string) => {
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", targetUserId)
+        .eq("role", "admin");
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success("Admin role revoked");
+    },
+    onError: (error) => {
+      console.error("Failed to revoke admin role:", error);
+      toast.error("Failed to revoke admin role");
+    },
+  });
+};
+
+export const useSuspendUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, suspend }: { userId: string; suspend: boolean }) => {
+      // Update profile with suspended status
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_suspended: suspend } as Record<string, boolean>)
+        .eq("id", userId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { suspend }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(suspend ? "User suspended" : "User unsuspended");
+    },
+    onError: (error) => {
+      console.error("Failed to update user status:", error);
+      toast.error("Failed to update user status");
+    },
+  });
+};
+
 export const useLogAdminActivity = () => {
   const { user } = useAuth();
 
@@ -439,5 +497,27 @@ export const useActivityLogs = () => {
       return data || [];
     },
     enabled: isAdmin === true,
+  });
+};
+
+// Get user payments for the payments popup
+export const useUserPayments = (userId: string | null) => {
+  const { data: isAdmin } = useIsAdmin();
+
+  return useQuery({
+    queryKey: ["user-payments", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      
+      const { data, error } = await supabase
+        .from("payment_records")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: isAdmin === true && !!userId,
   });
 };
