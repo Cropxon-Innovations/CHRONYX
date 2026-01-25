@@ -524,13 +524,9 @@ const Study = () => {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-muted/30 border border-border p-1 h-auto flex-wrap">
-          <TabsTrigger value="templates" className="data-[state=active]:bg-card gap-2">
-            <LayoutTemplate className="w-4 h-4" />
-            <span className="hidden sm:inline">Templates</span>
-          </TabsTrigger>
           <TabsTrigger value="progress" className="data-[state=active]:bg-card gap-2">
             <CheckSquare className="w-4 h-4" />
-            <span className="hidden sm:inline">Progress</span>
+            <span className="hidden sm:inline">Study Timetable</span>
           </TabsTrigger>
           <TabsTrigger value="reviews" className="data-[state=active]:bg-card gap-2">
             <Brain className="w-4 h-4" />
