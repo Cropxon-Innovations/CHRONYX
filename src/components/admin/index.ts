@@ -8,5 +8,8 @@ export { default as AdminPricing } from "./AdminPricing";
 export { default as AdminServiceHealth } from "./AdminServiceHealth";
 export { default as AdminDatabase } from "./AdminDatabase";
 export { default as AdminActivityLogs } from "./AdminActivityLogs";
+export { default as AdminEdgeFunctions } from "./AdminEdgeFunctions";
+export { default as AdminStorageBuckets } from "./AdminStorageBuckets";
+export { default as AdminDatabaseTables } from "./AdminDatabaseTables";
 export { default as UserDetailModal } from "./UserDetailModal";
 export { default as NewUserAlerts } from "./NewUserAlerts";
