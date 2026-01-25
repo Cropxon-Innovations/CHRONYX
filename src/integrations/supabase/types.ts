@@ -1098,6 +1098,54 @@ export type Database = {
           },
         ]
       }
+      content_comments: {
+        Row: {
+          content: string
+          content_id: string
+          created_at: string
+          id: string
+          is_edited: boolean | null
+          parent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          content_id: string
+          created_at?: string
+          id?: string
+          is_edited?: boolean | null
+          parent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          content_id?: string
+          created_at?: string
+          id?: string
+          is_edited?: boolean | null
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_comments_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "content_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_purchases: {
         Row: {
           amount: number
@@ -1162,6 +1210,41 @@ export type Database = {
             columns: ["payout_id"]
             isOneToOne: false
             referencedRelation: "creator_payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_ratings: {
+        Row: {
+          content_id: string
+          created_at: string
+          id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_ratings_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "library_items"
             referencedColumns: ["id"]
           },
         ]
@@ -3816,7 +3899,9 @@ export type Database = {
       }
       library_items: {
         Row: {
+          allow_download: boolean | null
           author: string | null
+          average_rating: number | null
           category: string | null
           cover_url: string | null
           created_at: string
@@ -3835,6 +3920,8 @@ export type Database = {
           notes: string | null
           price: number | null
           purchase_count: number | null
+          rating_count: number | null
+          sample_pages: number | null
           share_token: string | null
           tags: string[] | null
           title: string
@@ -3845,7 +3932,9 @@ export type Database = {
           view_count: number | null
         }
         Insert: {
+          allow_download?: boolean | null
           author?: string | null
+          average_rating?: number | null
           category?: string | null
           cover_url?: string | null
           created_at?: string
@@ -3864,6 +3953,8 @@ export type Database = {
           notes?: string | null
           price?: number | null
           purchase_count?: number | null
+          rating_count?: number | null
+          sample_pages?: number | null
           share_token?: string | null
           tags?: string[] | null
           title: string
@@ -3874,7 +3965,9 @@ export type Database = {
           view_count?: number | null
         }
         Update: {
+          allow_download?: boolean | null
           author?: string | null
+          average_rating?: number | null
           category?: string | null
           cover_url?: string | null
           created_at?: string
@@ -3893,6 +3986,8 @@ export type Database = {
           notes?: string | null
           price?: number | null
           purchase_count?: number | null
+          rating_count?: number | null
+          sample_pages?: number | null
           share_token?: string | null
           tags?: string[] | null
           title?: string
