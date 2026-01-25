@@ -431,7 +431,8 @@ export const StudySubjectManager = () => {
     mutationFn: async (data: { module_id?: string; chapter_id?: string; subject_id?: string; subject: string; chapter_name: string; topic_name: string; estimated_hours: number; notes?: string }) => {
       if (!user?.id) throw new Error("User not authenticated");
       
-      const { error } = await supabase.from("syllabus_topics").insert({
+      // Build insert object with proper typing
+      const insertData = {
         user_id: user.id,
         subject: data.subject,
         chapter_name: data.chapter_name,
@@ -439,11 +440,14 @@ export const StudySubjectManager = () => {
         estimated_hours: data.estimated_hours,
         priority: 5,
         is_completed: false,
-        module_id: data.module_id || null,
-        chapter_id: data.chapter_id || null,
-        subject_id: data.subject_id || null,
         notes: data.notes || null,
-      });
+        // Only include foreign keys if they have valid UUID values
+        subject_id: data.subject_id && data.subject_id.length > 10 ? data.subject_id : null,
+        chapter_id: data.chapter_id && data.chapter_id.length > 10 ? data.chapter_id : null,
+        module_id: data.module_id && data.module_id.length > 10 ? data.module_id : null,
+      };
+      
+      const { error } = await supabase.from("syllabus_topics").insert(insertData);
       if (error) {
         console.error("Error adding topic:", error);
         throw error;
