@@ -1742,6 +1742,559 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_cutoffs: {
+        Row: {
+          category: string
+          created_at: string | null
+          cutoff_marks: number
+          exam_id: string | null
+          id: string
+          stage: Database["public"]["Enums"]["exam_stage"]
+          year: number
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          cutoff_marks: number
+          exam_id?: string | null
+          id?: string
+          stage: Database["public"]["Enums"]["exam_stage"]
+          year: number
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          cutoff_marks?: number
+          exam_id?: string | null
+          id?: string
+          stage?: Database["public"]["Enums"]["exam_stage"]
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_cutoffs_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_master: {
+        Row: {
+          application_end: string | null
+          application_start: string | null
+          conducting_body: string | null
+          created_at: string | null
+          exam_name: string
+          exam_type: Database["public"]["Enums"]["exam_type"]
+          exam_year: string
+          id: string
+          interview_end: string | null
+          interview_start: string | null
+          is_active: boolean | null
+          mains_date: string | null
+          notification_date: string | null
+          prelims_date: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          application_end?: string | null
+          application_start?: string | null
+          conducting_body?: string | null
+          created_at?: string | null
+          exam_name: string
+          exam_type: Database["public"]["Enums"]["exam_type"]
+          exam_year: string
+          id?: string
+          interview_end?: string | null
+          interview_start?: string | null
+          is_active?: boolean | null
+          mains_date?: string | null
+          notification_date?: string | null
+          prelims_date?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          application_end?: string | null
+          application_start?: string | null
+          conducting_body?: string | null
+          created_at?: string | null
+          exam_name?: string
+          exam_type?: Database["public"]["Enums"]["exam_type"]
+          exam_year?: string
+          id?: string
+          interview_end?: string | null
+          interview_start?: string | null
+          is_active?: boolean | null
+          mains_date?: string | null
+          notification_date?: string | null
+          prelims_date?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      exam_notes: {
+        Row: {
+          content: string | null
+          content_json: Json | null
+          created_at: string | null
+          exam_id: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          is_core_note: boolean | null
+          is_final_note: boolean | null
+          is_revision_note: boolean | null
+          note_category: string | null
+          syllabus_id: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          content_json?: Json | null
+          created_at?: string | null
+          exam_id?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_core_note?: boolean | null
+          is_final_note?: boolean | null
+          is_revision_note?: boolean | null
+          note_category?: string | null
+          syllabus_id?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          content_json?: Json | null
+          created_at?: string | null
+          exam_id?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_core_note?: boolean | null
+          is_final_note?: boolean | null
+          is_revision_note?: boolean | null
+          note_category?: string | null
+          syllabus_id?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_notes_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_master"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_notes_syllabus_id_fkey"
+            columns: ["syllabus_id"]
+            isOneToOne: false
+            referencedRelation: "exam_syllabus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_pattern: {
+        Row: {
+          created_at: string | null
+          duration_minutes: number | null
+          exam_id: string | null
+          id: string
+          is_qualifying: boolean | null
+          negative_marking: boolean | null
+          negative_marking_value: number | null
+          num_questions: number | null
+          order_index: number | null
+          paper_code: string | null
+          paper_name: string
+          passing_marks: number | null
+          stage: Database["public"]["Enums"]["exam_stage"]
+          total_marks: number
+        }
+        Insert: {
+          created_at?: string | null
+          duration_minutes?: number | null
+          exam_id?: string | null
+          id?: string
+          is_qualifying?: boolean | null
+          negative_marking?: boolean | null
+          negative_marking_value?: number | null
+          num_questions?: number | null
+          order_index?: number | null
+          paper_code?: string | null
+          paper_name: string
+          passing_marks?: number | null
+          stage: Database["public"]["Enums"]["exam_stage"]
+          total_marks: number
+        }
+        Update: {
+          created_at?: string | null
+          duration_minutes?: number | null
+          exam_id?: string | null
+          id?: string
+          is_qualifying?: boolean | null
+          negative_marking?: boolean | null
+          negative_marking_value?: number | null
+          num_questions?: number | null
+          order_index?: number | null
+          paper_code?: string | null
+          paper_name?: string
+          passing_marks?: number | null
+          stage?: Database["public"]["Enums"]["exam_stage"]
+          total_marks?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_pattern_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_pyq: {
+        Row: {
+          correct_answer: string | null
+          created_at: string | null
+          difficulty: Database["public"]["Enums"]["pyq_difficulty"] | null
+          exam_id: string | null
+          explanation: string | null
+          id: string
+          is_frequently_asked: boolean | null
+          marks: number | null
+          options: Json | null
+          paper_name: string | null
+          question_number: number | null
+          question_text: string
+          related_syllabus_ids: string[] | null
+          stage: Database["public"]["Enums"]["exam_stage"]
+          tags: string[] | null
+          year: number
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string | null
+          difficulty?: Database["public"]["Enums"]["pyq_difficulty"] | null
+          exam_id?: string | null
+          explanation?: string | null
+          id?: string
+          is_frequently_asked?: boolean | null
+          marks?: number | null
+          options?: Json | null
+          paper_name?: string | null
+          question_number?: number | null
+          question_text: string
+          related_syllabus_ids?: string[] | null
+          stage: Database["public"]["Enums"]["exam_stage"]
+          tags?: string[] | null
+          year: number
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string | null
+          difficulty?: Database["public"]["Enums"]["pyq_difficulty"] | null
+          exam_id?: string | null
+          explanation?: string | null
+          id?: string
+          is_frequently_asked?: boolean | null
+          marks?: number | null
+          options?: Json | null
+          paper_name?: string | null
+          question_number?: number | null
+          question_text?: string
+          related_syllabus_ids?: string[] | null
+          stage?: Database["public"]["Enums"]["exam_stage"]
+          tags?: string[] | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_pyq_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_pyq_attempts: {
+        Row: {
+          attempted_at: string | null
+          id: string
+          is_correct: boolean | null
+          is_weak_area: boolean | null
+          notes: string | null
+          pyq_id: string | null
+          time_taken_seconds: number | null
+          user_answer: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempted_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          is_weak_area?: boolean | null
+          notes?: string | null
+          pyq_id?: string | null
+          time_taken_seconds?: number | null
+          user_answer?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempted_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          is_weak_area?: boolean | null
+          notes?: string | null
+          pyq_id?: string | null
+          time_taken_seconds?: number | null
+          user_answer?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_pyq_attempts_pyq_id_fkey"
+            columns: ["pyq_id"]
+            isOneToOne: false
+            referencedRelation: "exam_pyq"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_study_schedule: {
+        Row: {
+          actual_hours: number | null
+          created_at: string | null
+          description: string | null
+          end_time: string | null
+          estimated_hours: number | null
+          exam_id: string | null
+          id: string
+          is_recurring: boolean | null
+          priority: Database["public"]["Enums"]["priority_level"] | null
+          recurrence_pattern: string | null
+          schedule_date: string
+          start_time: string | null
+          status: Database["public"]["Enums"]["content_status"] | null
+          syllabus_id: string | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          actual_hours?: number | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          estimated_hours?: number | null
+          exam_id?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          priority?: Database["public"]["Enums"]["priority_level"] | null
+          recurrence_pattern?: string | null
+          schedule_date: string
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["content_status"] | null
+          syllabus_id?: string | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          actual_hours?: number | null
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          estimated_hours?: number | null
+          exam_id?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          priority?: Database["public"]["Enums"]["priority_level"] | null
+          recurrence_pattern?: string | null
+          schedule_date?: string
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["content_status"] | null
+          syllabus_id?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_study_schedule_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_master"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_study_schedule_syllabus_id_fkey"
+            columns: ["syllabus_id"]
+            isOneToOne: false
+            referencedRelation: "exam_syllabus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_syllabus: {
+        Row: {
+          actual_hours: number | null
+          created_at: string | null
+          estimated_hours: number | null
+          exam_id: string | null
+          id: string
+          last_revised_at: string | null
+          level: number | null
+          notes: string | null
+          order_index: number | null
+          paper_name: string | null
+          parent_id: string | null
+          progress_percent: number | null
+          revision_count: number | null
+          stage: Database["public"]["Enums"]["exam_stage"]
+          status: Database["public"]["Enums"]["content_status"] | null
+          subject: string
+          subtopic: string | null
+          topic: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          actual_hours?: number | null
+          created_at?: string | null
+          estimated_hours?: number | null
+          exam_id?: string | null
+          id?: string
+          last_revised_at?: string | null
+          level?: number | null
+          notes?: string | null
+          order_index?: number | null
+          paper_name?: string | null
+          parent_id?: string | null
+          progress_percent?: number | null
+          revision_count?: number | null
+          stage: Database["public"]["Enums"]["exam_stage"]
+          status?: Database["public"]["Enums"]["content_status"] | null
+          subject: string
+          subtopic?: string | null
+          topic: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          actual_hours?: number | null
+          created_at?: string | null
+          estimated_hours?: number | null
+          exam_id?: string | null
+          id?: string
+          last_revised_at?: string | null
+          level?: number | null
+          notes?: string | null
+          order_index?: number | null
+          paper_name?: string | null
+          parent_id?: string | null
+          progress_percent?: number | null
+          revision_count?: number | null
+          stage?: Database["public"]["Enums"]["exam_stage"]
+          status?: Database["public"]["Enums"]["content_status"] | null
+          subject?: string
+          subtopic?: string | null
+          topic?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_syllabus_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_master"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_syllabus_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "exam_syllabus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_toppers: {
+        Row: {
+          attempt_number: number | null
+          created_at: string | null
+          exam_id: string | null
+          id: string
+          interview_score: number | null
+          mains_score: number | null
+          name: string
+          optional_subject: string | null
+          photo_url: string | null
+          prelims_score: number | null
+          rank: number
+          strategy_notes: string | null
+          total_score: number | null
+          year: number
+        }
+        Insert: {
+          attempt_number?: number | null
+          created_at?: string | null
+          exam_id?: string | null
+          id?: string
+          interview_score?: number | null
+          mains_score?: number | null
+          name: string
+          optional_subject?: string | null
+          photo_url?: string | null
+          prelims_score?: number | null
+          rank: number
+          strategy_notes?: string | null
+          total_score?: number | null
+          year: number
+        }
+        Update: {
+          attempt_number?: number | null
+          created_at?: string | null
+          exam_id?: string | null
+          id?: string
+          interview_score?: number | null
+          mains_score?: number | null
+          name?: string
+          optional_subject?: string | null
+          photo_url?: string | null
+          prelims_score?: number | null
+          rank?: number
+          strategy_notes?: string | null
+          total_score?: number | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_toppers_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_master"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exemption_rules: {
         Row: {
           assessment_year: string
@@ -3684,6 +4237,54 @@ export type Database = {
         }
         Relationships: []
       }
+      nyaya_chat_history: {
+        Row: {
+          content: string
+          context_data: Json | null
+          created_at: string | null
+          exam_id: string | null
+          id: string
+          role: string
+          syllabus_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          context_data?: Json | null
+          created_at?: string | null
+          exam_id?: string | null
+          id?: string
+          role: string
+          syllabus_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          context_data?: Json | null
+          created_at?: string | null
+          exam_id?: string | null
+          id?: string
+          role?: string
+          syllabus_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nyaya_chat_history_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_master"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nyaya_chat_history_syllabus_id_fkey"
+            columns: ["syllabus_id"]
+            isOneToOne: false
+            referencedRelation: "exam_syllabus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       password_reset_tokens: {
         Row: {
           created_at: string
@@ -5220,6 +5821,65 @@ export type Database = {
         }
         Relationships: []
       }
+      syllabus_attachments: {
+        Row: {
+          attachment_type: string
+          content: string | null
+          created_at: string | null
+          external_url: string | null
+          file_url: string | null
+          id: string
+          is_core_note: boolean | null
+          is_final_note: boolean | null
+          is_revision_note: boolean | null
+          syllabus_id: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attachment_type: string
+          content?: string | null
+          created_at?: string | null
+          external_url?: string | null
+          file_url?: string | null
+          id?: string
+          is_core_note?: boolean | null
+          is_final_note?: boolean | null
+          is_revision_note?: boolean | null
+          syllabus_id?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attachment_type?: string
+          content?: string | null
+          created_at?: string | null
+          external_url?: string | null
+          file_url?: string | null
+          id?: string
+          is_core_note?: boolean | null
+          is_final_note?: boolean | null
+          is_revision_note?: boolean | null
+          syllabus_id?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "syllabus_attachments_syllabus_id_fkey"
+            columns: ["syllabus_id"]
+            isOneToOne: false
+            referencedRelation: "exam_syllabus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       syllabus_documents: {
         Row: {
           created_at: string
@@ -6594,7 +7254,11 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      content_status: "not_started" | "in_progress" | "completed" | "revised"
+      exam_stage: "prelims" | "mains" | "interview"
+      exam_type: "opsc" | "upsc" | "state_psc"
+      priority_level: "high" | "medium" | "low"
+      pyq_difficulty: "easy" | "medium" | "hard"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6721,6 +7385,12 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      content_status: ["not_started", "in_progress", "completed", "revised"],
+      exam_stage: ["prelims", "mains", "interview"],
+      exam_type: ["opsc", "upsc", "state_psc"],
+      priority_level: ["high", "medium", "low"],
+      pyq_difficulty: ["easy", "medium", "hard"],
+    },
   },
 } as const
