@@ -1,20 +1,29 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Users, CreditCard, TrendingUp, Activity,
-  Server, FileText, Zap
+  Server, FileText, Zap, Database, HardDrive,
+  FileCode, RefreshCw, FolderOpen
 } from "lucide-react";
 import { useAdminUsers, usePlatformAnalytics, usePaymentRecords, useServiceHealth } from "@/hooks/useAdmin";
+import { useInfrastructureStats } from "@/hooks/useAdminData";
 import { format } from "date-fns";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import NewUserAlerts from "./NewUserAlerts";
+import UserDetailModal from "./UserDetailModal";
 
 const AdminOverview = () => {
-  const { data: users } = useAdminUsers();
+  const { data: users, refetch: refetchUsers } = useAdminUsers();
   const { data: analytics } = usePlatformAnalytics();
   const { data: payments } = usePaymentRecords();
   const { data: serviceHealth } = useServiceHealth();
+  const { data: infraStats, refetch: refetchInfra, isRefetching } = useInfrastructureStats();
 
-  const totalUsers = users?.length || 0;
+  const [selectedUser, setSelectedUser] = useState<{ id: string; email: string } | null>(null);
+
+  const totalUsers = infraStats?.totalUsers || users?.length || 0;
   const proUsers = users?.filter(u => u.subscription?.plan_type === "pro" && u.subscription?.status === "active")?.length || 0;
   const premiumUsers = users?.filter(u => u.subscription?.plan_type === "premium" && u.subscription?.status === "active")?.length || 0;
   
@@ -28,15 +37,52 @@ const AdminOverview = () => {
   const healthyServices = serviceHealth?.filter(s => s.status === "healthy")?.length || 0;
   const totalServices = serviceHealth?.length || 0;
 
-  const statsCards = [
+  const handleRefresh = () => {
+    refetchUsers();
+    refetchInfra();
+  };
+
+  const handleViewUser = (userId: string, email: string) => {
+    setSelectedUser({ id: userId, email });
+  };
+
+  // Infrastructure stats cards
+  const infraCards = [
     {
-      title: "Total Users",
-      value: totalUsers,
-      icon: Users,
-      description: "Registered accounts",
+      title: "Edge Functions",
+      value: infraStats?.edgeFunctions || 47,
+      icon: FileCode,
+      description: "Deployed functions",
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
+    {
+      title: "Storage Buckets",
+      value: infraStats?.storageBuckets || 11,
+      icon: FolderOpen,
+      description: "File storage buckets",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      title: "Database Tables",
+      value: infraStats?.databaseTables || 179,
+      icon: Database,
+      description: "Public schema tables",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      title: "Registered Users",
+      value: totalUsers,
+      icon: Users,
+      description: infraStats?.todayNewUsers ? `+${infraStats.todayNewUsers} today` : "Total accounts",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+  ];
+
+  const statsCards = [
     {
       title: "Pro Subscribers",
       value: proUsers,
@@ -61,27 +107,86 @@ const AdminOverview = () => {
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
+    {
+      title: "Service Health",
+      value: `${healthyServices}/${totalServices || 0}`,
+      icon: Server,
+      description: "Services healthy",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statsCards.map((stat) => (
-          <Card key={stat.title} className="border-border/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+      {/* Header with Refresh */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Platform Overview</h2>
+          <p className="text-sm text-muted-foreground">Real-time infrastructure & user metrics</p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefresh}
+          disabled={isRefetching}
+          className="gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${isRefetching ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+
+      {/* New User Alerts */}
+      <NewUserAlerts 
+        onViewUser={handleViewUser} 
+        onMessageUser={handleViewUser}
+      />
+
+      {/* Infrastructure Stats */}
+      <div>
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">Infrastructure</h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {infraCards.map((stat) => (
+            <Card key={stat.title} className="border-border/50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{stat.title}</p>
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground">{stat.description}</p>
+                  </div>
+                  <div className={`p-3 rounded-xl ${stat.bgColor}`}>
+                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                  </div>
                 </div>
-                <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Business Stats */}
+      <div>
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">Business Metrics</h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {statsCards.map((stat) => (
+            <Card key={stat.title} className="border-border/50">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{stat.title}</p>
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground">{stat.description}</p>
+                  </div>
+                  <div className={`p-3 rounded-xl ${stat.bgColor}`}>
+                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -206,6 +311,14 @@ const AdminOverview = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* User Detail Modal */}
+      <UserDetailModal
+        userId={selectedUser?.id || null}
+        userEmail={selectedUser?.email || null}
+        open={!!selectedUser}
+        onOpenChange={(open) => !open && setSelectedUser(null)}
+      />
     </div>
   );
 };
