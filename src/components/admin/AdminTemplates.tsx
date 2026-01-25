@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { 
   Layout, Plus, Star, Eye, Trash2, Send, Check, 
   BookOpen, Target, Award, Clock, Users, FileText,
-  ChevronRight, CheckCircle2
+  ChevronRight, CheckCircle2, Briefcase, Code, Globe
 } from "lucide-react";
 import { useAdminTemplates, useCreateTemplate, useCreateNotification, useLogAdminActivity } from "@/hooks/useAdmin";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -47,6 +47,17 @@ const syllabusPreviewData: Record<string, any> = {
     resources: 8,
     estimatedTime: "20 hours",
   },
+};
+
+// Category configuration for organization
+const categoryConfig: Record<string, { icon: any; label: string; color: string }> = {
+  government: { icon: Briefcase, label: "Government Exams", color: "bg-amber-500/10 text-amber-600 border-amber-500/30" },
+  technical: { icon: Code, label: "Technical Careers", color: "bg-blue-500/10 text-blue-600 border-blue-500/30" },
+  international: { icon: Globe, label: "International Exams", color: "bg-purple-500/10 text-purple-600 border-purple-500/30" },
+  study: { icon: BookOpen, label: "Study Plans", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" },
+  exam: { icon: Target, label: "Exam Prep", color: "bg-rose-500/10 text-rose-600 border-rose-500/30" },
+  finance: { icon: Layout, label: "Finance", color: "bg-cyan-500/10 text-cyan-600 border-cyan-500/30" },
+  library: { icon: BookOpen, label: "Library", color: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30" },
 };
 
 const AdminTemplates = () => {
@@ -179,8 +190,9 @@ const AdminTemplates = () => {
     );
   }
 
-  const activeTemplates = templates?.filter(t => t.is_active)?.length || 0;
-  const draftTemplates = templates?.filter(t => !t.is_active)?.length || 0;
+  // Count published as those with published_at set (not just is_active)
+  const publishedTemplates = templates?.filter(t => t.published_at !== null)?.length || 0;
+  const draftTemplates = templates?.filter(t => t.published_at === null)?.length || 0;
 
   return (
     <div className="space-y-6">
@@ -206,7 +218,7 @@ const AdminTemplates = () => {
                 <Check className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{activeTemplates}</p>
+                <p className="text-2xl font-bold">{publishedTemplates}</p>
                 <p className="text-xs text-muted-foreground">Published</p>
               </div>
             </div>
@@ -385,79 +397,104 @@ const AdminTemplates = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {templates && templates.length > 0 ? (
-              templates.map((template) => (
-                <Card key={template.id} className="border-border/50 overflow-hidden">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-sm">{template.title}</h3>
-                          {template.is_featured && (
-                            <Star className="w-3 h-3 text-primary fill-primary" />
+          {/* Organized by Category */}
+          {Object.entries(categoryConfig).map(([categoryKey, config]) => {
+            const categoryTemplates = templates?.filter(t => t.category === categoryKey) || [];
+            if (categoryTemplates.length === 0) return null;
+            
+            const Icon = config.icon;
+            const publishedCount = categoryTemplates.filter(t => t.published_at !== null).length;
+            
+            return (
+              <div key={categoryKey} className="mb-8 last:mb-0">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className={`p-2 rounded-lg border ${config.color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-semibold">{config.label}</h3>
+                  <Badge variant="secondary" className="text-xs">
+                    {categoryTemplates.length} total
+                  </Badge>
+                  <Badge variant="outline" className="text-xs text-primary">
+                    {publishedCount} published
+                  </Badge>
+                </div>
+                
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {categoryTemplates.map((template) => (
+                    <Card key={template.id} className="border-border/50 overflow-hidden hover:border-primary/30 transition-colors">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium text-sm">{template.title}</h3>
+                              {template.is_featured && (
+                                <Star className="w-3 h-3 text-primary fill-primary" />
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                              {template.description || "No description"}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mb-3 flex-wrap">
+                          <Badge variant="secondary" className="text-[10px]">{template.template_type}</Badge>
+                          {template.published_at ? (
+                            <Badge className="bg-primary/10 text-primary text-[10px] border-0">Published</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px]">Draft</Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                          {template.description || "No description"}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline" className="text-[10px]">{template.category}</Badge>
-                      <Badge variant="secondary" className="text-[10px]">{template.template_type}</Badge>
-                      {template.is_active ? (
-                        <Badge className="bg-primary/10 text-primary text-[10px]">Published</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-[10px]">Draft</Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {template.usage_count || 0} uses
-                      </div>
-                      <span>
-                        {template.published_at ? format(new Date(template.published_at), "MMM d, yyyy") : "Not published"}
-                      </span>
-                    </div>
+                        
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
+                          <div className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            {template.usage_count || 0} uses
+                          </div>
+                          <span>
+                            {template.published_at ? format(new Date(template.published_at), "MMM d, yyyy") : "Not published"}
+                          </span>
+                        </div>
 
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => handlePreview(template)}
-                      >
-                        <Eye className="w-3 h-3 mr-1" />
-                        Preview
-                      </Button>
-                      {!template.is_active && (
-                        <Button 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => {
-                            setPreviewTemplate(template);
-                          }}
-                        >
-                          <Send className="w-3 h-3 mr-1" />
-                          Publish
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12 text-muted-foreground">
-                <Layout className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p className="font-medium">No templates created yet</p>
-                <p className="text-sm">Create your first template to share with all users</p>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => handlePreview(template)}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            Preview
+                          </Button>
+                          {!template.published_at && (
+                            <Button 
+                              size="sm" 
+                              className="flex-1"
+                              onClick={() => {
+                                setPreviewTemplate(template);
+                              }}
+                            >
+                              <Send className="w-3 h-3 mr-1" />
+                              Publish
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
+            );
+          })}
+          
+          {(!templates || templates.length === 0) && (
+            <div className="text-center py-12 text-muted-foreground">
+              <Layout className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p className="font-medium">No templates created yet</p>
+              <p className="text-sm">Create your first template to share with all users</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -593,7 +630,7 @@ const AdminTemplates = () => {
             <Button variant="outline" onClick={() => setPreviewTemplate(null)}>
               Close
             </Button>
-            {previewTemplate && !previewTemplate.is_active && (
+            {previewTemplate && !previewTemplate.published_at && (
               <Button onClick={handlePublish} disabled={isPublishing}>
                 {isPublishing ? (
                   <>Publishing...</>

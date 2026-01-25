@@ -26,7 +26,8 @@ import { StudyTodosWidget } from "@/components/study/StudyTodosWidget";
 import { StudyTemplatesLibrary } from "@/components/study/templates/StudyTemplatesLibrary";
 import { GenericExamWorkspace, StudyWorkspaceBreadcrumb } from "@/components/study/workspaces";
 import { OPSCExamDashboard } from "@/components/exam/opsc/OPSCExamDashboard";
-import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, LayoutTemplate } from "lucide-react";
+import TemplatesGallery from "@/components/study/TemplatesGallery";
+import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, LayoutTemplate, Layout } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { StudyOnboardingFlow, StudyGuidedTour } from "@/components/study/onboarding";
 import { useStudyOnboarding, STUDY_TEMPLATES } from "@/hooks/useStudyOnboarding";
@@ -495,13 +496,15 @@ const Study = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-4xl">
+    <div className="space-y-8 animate-fade-in w-full">
       {/* Header */}
-      <header>
-        <h1 className="text-2xl font-light text-foreground tracking-wide">Study</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          A quiet record of time and attention
-        </p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-light text-foreground tracking-wide">Study</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            A quiet record of time and attention
+          </p>
+        </div>
       </header>
 
       {/* Focus Context Card */}
@@ -523,10 +526,14 @@ const Study = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/30 border border-border p-1 h-auto flex-wrap">
+        <TabsList className="bg-muted/30 border border-border p-1 h-auto flex-wrap w-full sm:w-auto">
           <TabsTrigger value="progress" className="data-[state=active]:bg-card gap-2">
             <CheckSquare className="w-4 h-4" />
             <span className="hidden sm:inline">Study Timetable</span>
+          </TabsTrigger>
+          <TabsTrigger value="gallery" className="data-[state=active]:bg-card gap-2">
+            <Layout className="w-4 h-4" />
+            <span className="hidden sm:inline">Templates Gallery</span>
           </TabsTrigger>
           <TabsTrigger value="reviews" className="data-[state=active]:bg-card gap-2">
             <Brain className="w-4 h-4" />
@@ -585,6 +592,10 @@ const Study = () => {
             }}
             activeTemplateId={activeUserTemplate?.id}
           />
+        </TabsContent>
+
+        <TabsContent value="gallery">
+          <TemplatesGallery />
         </TabsContent>
 
         <TabsContent value="reviews">

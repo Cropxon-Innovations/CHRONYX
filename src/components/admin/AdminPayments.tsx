@@ -153,7 +153,7 @@ const AdminPayments = () => {
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">₹{(totalRevenue / 100).toLocaleString()}</p>
+                <p className="text-2xl font-bold">₹{totalRevenue.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">Total Revenue</p>
               </div>
             </div>
