@@ -20,6 +20,7 @@ import { WebAuthnRegistration } from "@/components/auth/WebAuthnRegistration";
 import { SecurityMethodsModal } from "@/components/auth/SecurityMethodsModal";
 import { FirstTime2FAPrompt, shouldShow2FAPrompt } from "@/components/auth/FirstTime2FAPrompt";
 import { SmartSignIn, SmartSignInButton } from "@/components/auth/SmartSignIn";
+import { checkIsAdmin, ADMIN_ROUTE } from "@/hooks/useAdminCheck";
 import originxOneLogo from "@/assets/originx-one-logo.png";
 
 // CHRONYX Logo - Clean minimal
@@ -241,7 +242,14 @@ const Login = () => {
             if (rememberMe) localStorage.setItem("chronyx_remember_email", email);
             else localStorage.removeItem("chronyx_remember_email");
             await recordLoginHistory(data.user.id, 'email', 'success');
-            navigate(from, { replace: true });
+            
+            // Check if user is admin and redirect accordingly
+            const isAdmin = await checkIsAdmin(data.user.id);
+            if (isAdmin) {
+              navigate(ADMIN_ROUTE, { replace: true });
+            } else {
+              navigate(from, { replace: true });
+            }
           }
         }
       }
@@ -254,6 +262,13 @@ const Login = () => {
     setShow2FAVerification(false);
     if (pending2FAUser) {
       await recordLoginHistory(pending2FAUser.id, 'email', '2fa_verified');
+      
+      // Check if user is admin and redirect accordingly
+      const isAdmin = await checkIsAdmin(pending2FAUser.id);
+      if (isAdmin) {
+        navigate(ADMIN_ROUTE, { replace: true });
+        return;
+      }
     }
     if (rememberMe) localStorage.setItem("chronyx_remember_email", email);
     else localStorage.removeItem("chronyx_remember_email");
