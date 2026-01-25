@@ -24,7 +24,7 @@ import { SyllabusAIParser } from "@/components/study/SyllabusAIParser";
 import { StudySubjectManager } from "@/components/study/StudySubjectManager";
 import { StudyTodosWidget } from "@/components/study/StudyTodosWidget";
 import { StudyTemplatesLibrary } from "@/components/study/templates/StudyTemplatesLibrary";
-import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, LayoutTemplate } from "lucide-react";
+import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, LayoutTemplate, ArrowLeft } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { OPSCExamDashboard } from "@/components/exam/opsc/OPSCExamDashboard";
 import { StudyOnboardingFlow, StudyGuidedTour } from "@/components/study/onboarding";
@@ -39,6 +39,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+// Template to workspace mapping
+const TEMPLATE_WORKSPACES: Record<string, React.FC<{ onBack: () => void }>> = {
+  "opsc-oas-2026": ({ onBack }) => (
+    <div className="space-y-4">
+      <Button variant="ghost" onClick={onBack} className="gap-2 -ml-2">
+        <ArrowLeft className="w-4 h-4" />
+        Back to Templates
+      </Button>
+      <OPSCExamDashboard />
+    </div>
+  ),
+  "opsc-ofs-2026": ({ onBack }) => (
+    <div className="space-y-4">
+      <Button variant="ghost" onClick={onBack} className="gap-2 -ml-2">
+        <ArrowLeft className="w-4 h-4" />
+        Back to Templates
+      </Button>
+      <OPSCExamDashboard />
+    </div>
+  ),
+};
 
 interface UserTemplate {
   id: string;
@@ -85,6 +107,7 @@ const Study = () => {
   const [editingItem, setEditingItem] = useState<LibraryItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<LibraryItem | null>(null);
   const [activeUserTemplate, setActiveUserTemplate] = useState<UserTemplate | null>(null);
+  const [showWorkspace, setShowWorkspace] = useState(false);
 
   // Fetch user's active templates
   const { data: userTemplates = [] } = useQuery({
@@ -457,14 +480,25 @@ const Study = () => {
         </TabsContent>
 
         <TabsContent value="templates">
-          <StudyTemplatesLibrary 
-            onSelectTemplate={(template) => {
-              setActiveUserTemplate(template);
-              setActiveTab("progress");
-              toast({ title: `Switched to ${template.template_name}` });
-            }}
-            activeTemplateId={activeUserTemplate?.id}
-          />
+          {showWorkspace && activeUserTemplate && TEMPLATE_WORKSPACES[activeUserTemplate.template_id] ? (
+            React.createElement(TEMPLATE_WORKSPACES[activeUserTemplate.template_id], {
+              onBack: () => setShowWorkspace(false)
+            })
+          ) : (
+            <StudyTemplatesLibrary 
+              onSelectTemplate={(template) => {
+                setActiveUserTemplate(template);
+                // Check if template has a dedicated workspace
+                if (TEMPLATE_WORKSPACES[template.template_id]) {
+                  setShowWorkspace(true);
+                } else {
+                  setActiveTab("progress");
+                }
+                toast({ title: `Opened ${template.template_name}` });
+              }}
+              activeTemplateId={activeUserTemplate?.id}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="progress">
