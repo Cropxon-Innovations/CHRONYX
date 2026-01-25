@@ -4460,6 +4460,82 @@ export type Database = {
         }
         Relationships: []
       }
+      nova_study_chats: {
+        Row: {
+          cleared_at: string | null
+          created_at: string | null
+          id: string
+          is_retained: boolean | null
+          subscription_id: string | null
+          topic_context: string | null
+          user_id: string
+        }
+        Insert: {
+          cleared_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_retained?: boolean | null
+          subscription_id?: string | null
+          topic_context?: string | null
+          user_id: string
+        }
+        Update: {
+          cleared_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_retained?: boolean | null
+          subscription_id?: string | null
+          topic_context?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nova_study_chats_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "study_user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nova_study_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          context_data: Json | null
+          created_at: string | null
+          id: string
+          is_external_query: boolean | null
+          role: string
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          context_data?: Json | null
+          created_at?: string | null
+          id?: string
+          is_external_query?: boolean | null
+          role: string
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          context_data?: Json | null
+          created_at?: string | null
+          id?: string
+          is_external_query?: boolean | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nova_study_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "nova_study_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nyaya_chat_history: {
         Row: {
           content: string
@@ -5803,6 +5879,131 @@ export type Database = {
           },
         ]
       }
+      study_exam_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      study_exam_templates: {
+        Row: {
+          average_rating: number | null
+          category_id: string | null
+          conducting_body: string | null
+          cover_image: string | null
+          created_at: string | null
+          creator_id: string | null
+          description: string | null
+          eligibility: Json | null
+          exam_pattern: Json | null
+          icon: string | null
+          id: string
+          is_official: boolean | null
+          is_premium: boolean | null
+          is_published: boolean | null
+          key_dates: Json | null
+          name: string
+          price: number | null
+          rating_count: number | null
+          short_name: string | null
+          slug: string
+          stages: Json | null
+          subscribers_count: number | null
+          updated_at: string | null
+          useful_links: Json | null
+        }
+        Insert: {
+          average_rating?: number | null
+          category_id?: string | null
+          conducting_body?: string | null
+          cover_image?: string | null
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          eligibility?: Json | null
+          exam_pattern?: Json | null
+          icon?: string | null
+          id?: string
+          is_official?: boolean | null
+          is_premium?: boolean | null
+          is_published?: boolean | null
+          key_dates?: Json | null
+          name: string
+          price?: number | null
+          rating_count?: number | null
+          short_name?: string | null
+          slug: string
+          stages?: Json | null
+          subscribers_count?: number | null
+          updated_at?: string | null
+          useful_links?: Json | null
+        }
+        Update: {
+          average_rating?: number | null
+          category_id?: string | null
+          conducting_body?: string | null
+          cover_image?: string | null
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          eligibility?: Json | null
+          exam_pattern?: Json | null
+          icon?: string | null
+          id?: string
+          is_official?: boolean | null
+          is_premium?: boolean | null
+          is_published?: boolean | null
+          key_dates?: Json | null
+          name?: string
+          price?: number | null
+          rating_count?: number | null
+          short_name?: string | null
+          slug?: string
+          stages?: Json | null
+          subscribers_count?: number | null
+          updated_at?: string | null
+          useful_links?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_exam_templates_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "study_exam_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_explanations: {
         Row: {
           chapter_index: number | null
@@ -6012,6 +6213,236 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      study_template_drafts: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          data: Json
+          id: string
+          name: string
+          review_notes: string | null
+          reviewed_at: string | null
+          status: string | null
+          submitted_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          data?: Json
+          id?: string
+          name: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          data?: Json
+          id?: string
+          name?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_template_drafts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "study_exam_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_template_stages: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          duration_hours: number | null
+          id: string
+          is_qualifying: boolean | null
+          name: string
+          papers: Json | null
+          slug: string
+          stage_type: string
+          template_id: string
+          total_marks: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_hours?: number | null
+          id?: string
+          is_qualifying?: boolean | null
+          name: string
+          papers?: Json | null
+          slug: string
+          stage_type: string
+          template_id: string
+          total_marks?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          duration_hours?: number | null
+          id?: string
+          is_qualifying?: boolean | null
+          name?: string
+          papers?: Json | null
+          slug?: string
+          stage_type?: string
+          template_id?: string
+          total_marks?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_template_stages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "study_exam_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_user_subscriptions: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          optional_subject: string | null
+          preferences: Json | null
+          start_date: string | null
+          target_date: string | null
+          template_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          optional_subject?: string | null
+          preferences?: Json | null
+          start_date?: string | null
+          target_date?: string | null
+          template_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          optional_subject?: string | null
+          preferences?: Json | null
+          start_date?: string | null
+          target_date?: string | null
+          template_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_user_subscriptions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "study_exam_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_user_topic_progress: {
+        Row: {
+          actual_hours: number | null
+          chapter_id: string | null
+          created_at: string | null
+          id: string
+          last_studied_at: string | null
+          module_id: string | null
+          notes: string | null
+          progress_percent: number | null
+          revision_count: number | null
+          status: string
+          subject_id: string | null
+          subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          actual_hours?: number | null
+          chapter_id?: string | null
+          created_at?: string | null
+          id?: string
+          last_studied_at?: string | null
+          module_id?: string | null
+          notes?: string | null
+          progress_percent?: number | null
+          revision_count?: number | null
+          status?: string
+          subject_id?: string | null
+          subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          actual_hours?: number | null
+          chapter_id?: string | null
+          created_at?: string | null
+          id?: string
+          last_studied_at?: string | null
+          module_id?: string | null
+          notes?: string | null
+          progress_percent?: number | null
+          revision_count?: number | null
+          status?: string
+          subject_id?: string | null
+          subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_user_topic_progress_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "study_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_user_topic_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "study_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_user_topic_progress_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "study_subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_user_topic_progress_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "study_user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subject_colors: {
         Row: {

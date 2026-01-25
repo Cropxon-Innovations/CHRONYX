@@ -7,13 +7,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   MessageSquare, Sparkles, Send, BookOpen, Brain, 
   Lightbulb, HelpCircle, FileText, RotateCcw, 
-  Loader2, Bot, User, ChevronRight, Zap, Globe, AlertCircle
+  Loader2, Bot, User, ChevronRight, Zap, Globe, AlertCircle,
+  Trash2, Lock
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface ChatMessage {
   id: string;
@@ -21,11 +23,6 @@ interface ChatMessage {
   content: string;
   timestamp: Date;
   isExternal?: boolean;
-  context?: {
-    topic?: string;
-    subject?: string;
-    type?: "explanation" | "mcq" | "answer_structure" | "summary" | "general" | "external";
-  };
 }
 
 interface NovaStudyBotProps {
@@ -44,42 +41,16 @@ const QUICK_PROMPTS = [
   { icon: BookOpen, label: "Key points", prompt: "List the most important points for revision" },
 ];
 
-const OPSC_TOPICS = [
-  "Indian Polity", "Fundamental Rights", "Directive Principles", "Constitutional Bodies",
-  "Indian History", "Ancient India", "Medieval India", "Modern India", "Freedom Movement",
-  "Indian Geography", "Physical Geography", "Monsoon System", "Rivers", "Agriculture",
-  "Indian Economy", "Fiscal Policy", "Monetary Policy", "Five Year Plans",
-  "Odisha History", "Odisha Geography", "Odisha Economy", "Odisha Culture",
-  "Ethics", "Aptitude", "Public Administration", "Current Affairs",
-  "Science & Technology", "Environment", "Disaster Management"
+const STUDY_KEYWORDS = [
+  "exam", "syllabus", "mains", "prelims", "preparation", "study", "revision",
+  "mcq", "question", "answer", "explain", "concept", "important", "topics",
+  "history", "geography", "polity", "economy", "science", "ethics", "odisha",
+  "upsc", "opsc", "psc", "civil services", "ias", "oas"
 ];
 
-// Simple topic relevance check
-const isTopicRelevant = (query: string, allowedTopics: string[]): boolean => {
+const isTopicRelevant = (query: string): boolean => {
   const queryLower = query.toLowerCase();
-  
-  // Check against OPSC topics
-  const allTopics = [...allowedTopics, ...OPSC_TOPICS];
-  for (const topic of allTopics) {
-    if (queryLower.includes(topic.toLowerCase())) {
-      return true;
-    }
-  }
-  
-  // Keywords that indicate study-related queries
-  const studyKeywords = [
-    "exam", "syllabus", "mains", "prelims", "preparation", "study", "revision",
-    "mcq", "question", "answer", "explain", "concept", "important", "topics",
-    "history", "geography", "polity", "economy", "science", "ethics", "odisha"
-  ];
-  
-  for (const keyword of studyKeywords) {
-    if (queryLower.includes(keyword)) {
-      return true;
-    }
-  }
-  
-  return false;
+  return STUDY_KEYWORDS.some(keyword => queryLower.includes(keyword));
 };
 
 export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
@@ -91,37 +62,18 @@ export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
   onClose,
 }) => {
   const { user } = useAuth();
+  const { getCurrentPlan } = useSubscription();
+  const planType = getCurrentPlan();
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const [activeTopic, setActiveTopic] = useState<string | null>(currentTopic || null);
   const [isTyping, setIsTyping] = useState(false);
   const [isExternalMode, setIsExternalMode] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch chat history
-  const { data: messages = [], isLoading } = useQuery({
-    queryKey: ["nova-study-chat", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("nyaya_chat_history")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: true })
-        .limit(50);
-      
-      if (error) throw error;
-      return data.map((msg: any) => ({
-        id: msg.id,
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
-        timestamp: new Date(msg.created_at),
-        isExternal: msg.context_data?.type === "external",
-        context: msg.context_data,
-      })) as ChatMessage[];
-    },
-    enabled: !!user?.id,
-  });
+  const canRetainChat = planType === 'pro' || planType === 'premium';
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -130,207 +82,165 @@ export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
     }
   }, [messages, isTyping]);
 
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async (userMessage: string) => {
-      // Check if query is within syllabus scope
-      const isRelevant = isTopicRelevant(userMessage, allowedTopics);
-      const willUseExternal = !isRelevant;
-      
-      setIsExternalMode(willUseExternal);
-      
-      // Save user message
-      const { error: userError } = await supabase
-        .from("nyaya_chat_history")
-        .insert({
-          user_id: user!.id,
-          role: "user",
-          content: userMessage,
-          context_data: { 
-            topic: activeTopic,
-            type: willUseExternal ? "external" : "general"
-          },
-        });
-      
-      if (userError) throw userError;
+  // Send message
+  const handleSend = async () => {
+    if (!input.trim() || isTyping) return;
 
-      setIsTyping(true);
-      
-      // Build system prompt based on context
-      const systemPrompt = willUseExternal
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: "user",
+      content: input.trim(),
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    setIsTyping(true);
+
+    const isRelevant = isTopicRelevant(input);
+    setIsExternalMode(!isRelevant);
+
+    try {
+      const systemPrompt = !isRelevant
         ? `You are NOVA, Chronyx's intelligent AI assistant. The user is asking about something outside their exam syllabus. 
-           Provide a helpful, accurate response but remind them this is a general query outside their ${examType} preparation.
-           Keep responses concise and helpful.`
+           Provide a helpful, accurate response but remind them this is a general query outside their ${examType} preparation.`
         : `You are NOVA Study, an expert AI assistant for ${examType} exam preparation within Chronyx.
            User's subjects: ${subjects.join(", ") || "General Studies"}
            Current topic focus: ${activeTopic || "General"}
            
-           You provide accurate, concise answers about Indian Polity, History, Geography, Economy, Science, Ethics, 
-           and ${examType === "OPSC" ? "Odisha-specific topics" : "state-specific topics"}.
-           
-           Always:
-           - Be structured and use bullet points
-           - Cite relevant articles/provisions when applicable
-           - Keep language clear and exam-focused
-           - Provide answer frameworks for Mains questions`;
-      
-      // Call the AI endpoint
+           Always be structured, use bullet points, cite relevant articles when applicable.`;
+
       const response = await supabase.functions.invoke("chronyx-bot", {
         body: {
-          message: userMessage,
+          message: input.trim(),
           context: {
             examType,
             currentTopic: activeTopic,
             botName: "NOVA Study",
-            isExternal: willUseExternal,
+            isExternal: !isRelevant,
             systemPrompt
           }
         }
       });
 
-      setIsTyping(false);
+      const aiContent = response.data?.response || "I'm here to help with your exam preparation. Could you please rephrase your question?";
 
-      let aiResponse = response.data?.response;
-      
-      if (!aiResponse) {
-        if (willUseExternal) {
-          aiResponse = `🌐 **Using NOVA General Agent**\n\nI'll help you with this query outside your ${examType} syllabus.\n\nPlease note: This is a general knowledge query. For best results on your exam preparation, focus on syllabus-specific topics.\n\n---\n\nI'd be happy to help with your question. Could you provide more details or context?`;
-        } else {
-          aiResponse = "I understand your question. Let me provide you with a structured answer based on your exam syllabus...";
-        }
-      }
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: aiContent,
+        timestamp: new Date(),
+        isExternal: !isRelevant,
+      };
 
-      // Save AI response
-      const { error: aiError } = await supabase
-        .from("nyaya_chat_history")
-        .insert({
-          user_id: user!.id,
-          role: "assistant",
-          content: aiResponse,
-          context_data: { 
-            topic: activeTopic,
-            type: willUseExternal ? "external" : "general"
-          },
-        });
-
-      if (aiError) throw aiError;
-      setIsExternalMode(false);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["nova-study-chat"] });
-      setInput("");
-    },
-    onError: (error) => {
-      setIsTyping(false);
-      setIsExternalMode(false);
-      toast.error("Failed to send message");
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      toast.error("Failed to get response");
       console.error(error);
-    },
-  });
+    } finally {
+      setIsTyping(false);
+      setIsExternalMode(false);
+    }
+  };
 
-  const handleSend = () => {
-    if (!input.trim() || sendMessageMutation.isPending) return;
-    sendMessageMutation.mutate(input.trim());
+  const clearChat = () => {
+    setMessages([]);
+    toast.success("Chat cleared");
   };
 
   const handleQuickPrompt = (prompt: string) => {
-    const fullPrompt = activeTopic 
-      ? `${prompt} about "${activeTopic}"`
-      : prompt;
+    const fullPrompt = activeTopic ? `${prompt} about "${activeTopic}"` : prompt;
     setInput(fullPrompt);
     inputRef.current?.focus();
   };
 
-  const handleTopicSelect = (topic: string) => {
-    setActiveTopic(topic);
-    setInput(`Tell me about ${topic}`);
-    inputRef.current?.focus();
-  };
-
-  const clearHistory = async () => {
-    const { error } = await supabase
-      .from("nyaya_chat_history")
-      .delete()
-      .eq("user_id", user?.id);
-    
-    if (!error) {
-      queryClient.invalidateQueries({ queryKey: ["nova-study-chat"] });
-      toast.success("Chat history cleared");
-    }
-  };
-
   const SUGGESTED_TOPICS = subjects.length > 0 
     ? subjects.slice(0, 5)
-    : [
-        "Indian Polity - Fundamental Rights",
-        "Geography - Monsoon System",
-        "History - Quit India Movement",
-        "Economics - Fiscal Policy",
-        "Odisha GK - Rivers & Dams",
-      ];
+    : ["Indian Polity", "Geography", "History", "Economics", "Current Affairs"];
 
-  // Inline mode - compact view
+  // Inline compact mode
   if (inline) {
     return (
-      <Card className="border-primary/20 bg-card/95 backdrop-blur shadow-lg">
-        <CardHeader className="pb-2 pt-3 px-4">
+      <Card className="border-zinc-700 bg-zinc-900 shadow-lg">
+        <CardHeader className="pb-2 pt-3 px-4 border-b border-zinc-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-primary/10">
+              <div className="p-1.5 rounded-lg bg-primary/20">
                 <Sparkles className="w-4 h-4 text-primary" />
               </div>
-              <span className="font-medium text-sm">NOVA Study</span>
-              {activeTopic && (
-                <Badge variant="outline" className="text-xs">
-                  {activeTopic}
-                </Badge>
+              <span className="font-medium text-sm text-white">NOVA Study</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 text-zinc-400 hover:text-white hover:bg-zinc-700"
+                onClick={clearChat}
+                title="Clear chat"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+              {onClose && (
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-400 hover:text-white" onClick={onClose}>
+                  ×
+                </Button>
               )}
             </div>
-            {onClose && (
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-                ×
-              </Button>
-            )}
           </div>
         </CardHeader>
         
-        <CardContent className="p-3 pt-0">
-          {/* Compact message history */}
+        <CardContent className="p-3 pt-0 bg-zinc-900">
+          {/* Messages */}
           {messages.length > 0 && (
-            <ScrollArea className="h-32 mb-2">
-              <div className="space-y-2">
-                {messages.slice(-3).map((msg) => (
+            <ScrollArea className="h-40 my-2">
+              <div className="space-y-2 pr-2">
+                {messages.slice(-5).map((msg) => (
                   <div
                     key={msg.id}
                     className={cn(
                       "text-xs p-2 rounded-lg",
                       msg.role === "user" 
-                        ? "bg-primary/10 ml-8" 
+                        ? "bg-primary/20 ml-8 text-white" 
                         : msg.isExternal 
-                          ? "bg-amber-500/10 border border-amber-500/20"
-                          : "bg-muted"
+                          ? "bg-amber-500/10 border border-amber-500/20 text-amber-100"
+                          : "bg-zinc-800 text-zinc-200"
                     )}
                   >
                     {msg.isExternal && (
-                      <span className="text-amber-600 text-[10px] flex items-center gap-1 mb-1">
+                      <span className="text-amber-500 text-[10px] flex items-center gap-1 mb-1">
                         <Globe className="w-3 h-3" /> General Agent
                       </span>
                     )}
-                    <p className="line-clamp-2">{msg.content}</p>
+                    <p className="line-clamp-3 whitespace-pre-wrap">{msg.content}</p>
                   </div>
                 ))}
               </div>
             </ScrollArea>
           )}
           
+          {/* Empty state */}
+          {messages.length === 0 && (
+            <div className="py-4 text-center">
+              <p className="text-xs text-zinc-400">Ask any doubt about your exam preparation</p>
+            </div>
+          )}
+
           {/* Typing indicator */}
           {isTyping && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+            <div className="flex items-center gap-2 text-xs text-zinc-400 my-2">
               <Loader2 className="w-3 h-3 animate-spin" />
               {isExternalMode ? "Searching with NOVA General..." : "NOVA is thinking..."}
             </div>
           )}
           
+          {/* Retention notice */}
+          {!canRetainChat && messages.length > 0 && (
+            <div className="flex items-center gap-1 text-[10px] text-zinc-500 mb-2">
+              <Lock className="w-3 h-3" />
+              Chat not retained. Upgrade to Pro to save conversations.
+            </div>
+          )}
+
           {/* Input */}
           <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
             <Input
@@ -338,10 +248,15 @@ export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a doubt..."
-              className="flex-1 h-8 text-sm"
-              disabled={sendMessageMutation.isPending}
+              className="flex-1 h-8 text-sm bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+              disabled={isTyping}
             />
-            <Button type="submit" size="icon" className="h-8 w-8" disabled={!input.trim() || sendMessageMutation.isPending}>
+            <Button 
+              type="submit" 
+              size="icon" 
+              className="h-8 w-8 bg-primary hover:bg-primary/90" 
+              disabled={!input.trim() || isTyping}
+            >
               <Send className="w-3.5 h-3.5" />
             </Button>
           </form>
@@ -354,17 +269,17 @@ export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <Card className="border-border/50 bg-gradient-to-br from-primary/5 via-background to-background">
+      <Card className="border-border/50 bg-gradient-to-br from-zinc-900/50 via-background to-background">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10 ring-2 ring-primary/20">
+              <div className="p-2.5 rounded-xl bg-zinc-800 ring-2 ring-zinc-700">
                 <Sparkles className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <CardTitle className="text-lg flex items-center gap-2">
                   NOVA Study
-                  <Badge variant="secondary" className="text-xs font-normal">
+                  <Badge variant="secondary" className="text-xs font-normal bg-zinc-800">
                     AI Study Assistant
                   </Badge>
                 </CardTitle>
@@ -373,28 +288,32 @@ export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
                 </p>
               </div>
             </div>
-            {messages.length > 0 && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={clearHistory}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <RotateCcw className="w-4 h-4 mr-1" />
-                Clear
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {messages.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={clearChat}
+                  className="text-muted-foreground hover:text-foreground gap-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Clear Chat
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Context Alert */}
-      {isExternalMode && (
+      {/* Retention Notice */}
+      {!canRetainChat && (
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardContent className="py-3 px-4">
             <div className="flex items-center gap-2 text-sm">
-              <Globe className="w-4 h-4 text-amber-600" />
-              <span className="text-amber-600">Using NOVA General Agent for this query</span>
+              <Lock className="w-4 h-4 text-amber-600" />
+              <span className="text-amber-600">
+                Chat history is not retained. <span className="font-medium">Upgrade to Pro</span> to save conversations.
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -427,20 +346,16 @@ export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
       <Card className="border-border/50">
         <ScrollArea className="h-[400px] md:h-[450px]" ref={scrollRef}>
           <CardContent className="p-4 space-y-4">
-            {messages.length === 0 && !isLoading ? (
+            {messages.length === 0 ? (
               <div className="text-center py-8 space-y-6">
                 <div className="space-y-2">
-                  <div className="mx-auto w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <div className="mx-auto w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center">
                     <Bot className="w-6 h-6 text-primary" />
                   </div>
                   <h3 className="font-medium">Start a Conversation</h3>
                   <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                     Ask me about any {examType} topic. I can explain concepts, generate MCQs, 
                     and help structure your Mains answers.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    <Globe className="w-3 h-3 inline mr-1" />
-                    For questions outside your syllabus, I'll use NOVA General Agent
                   </p>
                 </div>
 
@@ -453,7 +368,11 @@ export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
                         key={topic}
                         variant="outline"
                         size="sm"
-                        onClick={() => handleTopicSelect(topic)}
+                        onClick={() => {
+                          setActiveTopic(topic);
+                          setInput(`Tell me about ${topic}`);
+                          inputRef.current?.focus();
+                        }}
                         className="text-xs h-8"
                       >
                         <ChevronRight className="w-3 h-3 mr-1" />
@@ -476,7 +395,7 @@ export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
                     {msg.role === "assistant" && (
                       <div className={cn(
                         "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
-                        msg.isExternal ? "bg-amber-500/10" : "bg-primary/10"
+                        msg.isExternal ? "bg-amber-500/10" : "bg-zinc-800"
                       )}>
                         {msg.isExternal ? (
                           <Globe className="w-4 h-4 text-amber-600" />
@@ -521,7 +440,7 @@ export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
                   <div className="flex gap-3">
                     <div className={cn(
                       "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
-                      isExternalMode ? "bg-amber-500/10" : "bg-primary/10"
+                      isExternalMode ? "bg-amber-500/10" : "bg-zinc-800"
                     )}>
                       {isExternalMode ? (
                         <Globe className="w-4 h-4 text-amber-600" />
@@ -577,16 +496,16 @@ export const NovaStudyBot: React.FC<NovaStudyBotProps> = ({
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={`Ask about ${examType} topics or anything else...`}
+              placeholder={`Ask about ${examType} topics...`}
               className="flex-1"
-              disabled={sendMessageMutation.isPending}
+              disabled={isTyping}
             />
             <Button 
               type="submit" 
               size="icon"
-              disabled={!input.trim() || sendMessageMutation.isPending}
+              disabled={!input.trim() || isTyping}
             >
-              {sendMessageMutation.isPending ? (
+              {isTyping ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Send className="w-4 h-4" />
