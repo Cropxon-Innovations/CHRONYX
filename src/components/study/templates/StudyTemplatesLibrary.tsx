@@ -39,8 +39,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { TemplatePreviewModal } from "./TemplatePreviewModal";
 
 interface UserTemplate {
   id: string;
@@ -89,9 +98,32 @@ export const StudyTemplatesLibrary = ({ onSelectTemplate, activeTemplateId }: Pr
     enabled: !!user,
   });
 
-  // Delete user template
+  // Fetch sections for preview
+  const { data: previewSections = [] } = useQuery({
+    queryKey: ["template-sections-preview", previewTemplate?.id],
+    queryFn: async () => {
+      if (!previewTemplate) return [];
+      const { data, error } = await supabase
+        .from("user_template_sections")
+        .select("*")
+        .eq("user_template_id", previewTemplate.id)
+        .order("order_index");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!previewTemplate,
+  });
+
+  // Delete user template (also deletes related sections, notes, schedules via cascade or manual)
   const deleteTemplateMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Delete related data first
+      await supabase.from("user_template_sections").delete().eq("user_template_id", id);
+      await supabase.from("user_template_data").delete().eq("user_template_id", id);
+      await supabase.from("study_section_notes").delete().eq("user_template_id", id);
+      await supabase.from("user_study_schedule").delete().eq("user_template_id", id);
+      
+      // Then delete the template
       const { error } = await supabase
         .from("user_study_templates")
         .delete()
@@ -100,15 +132,20 @@ export const StudyTemplatesLibrary = ({ onSelectTemplate, activeTemplateId }: Pr
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-study-templates"] });
-      toast({ title: "Template removed" });
+      toast({ title: "Template removed successfully" });
       setDeletingTemplate(null);
+    },
+    onError: (error) => {
+      console.error("Delete error:", error);
+      toast({ title: "Failed to remove template", variant: "destructive" });
     },
   });
 
-  // Duplicate template
+  // Duplicate template with all sections
   const duplicateTemplateMutation = useMutation({
     mutationFn: async (template: UserTemplate) => {
-      const { error } = await supabase
+      // Create the duplicated template
+      const { data: newTemplate, error } = await supabase
         .from("user_study_templates")
         .insert({
           user_id: user!.id,
@@ -121,12 +158,43 @@ export const StudyTemplatesLibrary = ({ onSelectTemplate, activeTemplateId }: Pr
           template_icon: template.template_icon,
           total_subjects: template.total_subjects,
           total_topics: template.total_topics,
-        });
+          progress_percent: 0,
+        })
+        .select()
+        .single();
+      
       if (error) throw error;
+
+      // Fetch and duplicate sections
+      const { data: originalSections } = await supabase
+        .from("user_template_sections")
+        .select("*")
+        .eq("user_template_id", template.id)
+        .order("order_index");
+
+      if (originalSections && originalSections.length > 0) {
+        const sectionsToInsert = originalSections.map(section => ({
+          user_id: user!.id,
+          user_template_id: newTemplate.id,
+          title: section.title,
+          section_type: section.section_type,
+          order_index: section.order_index,
+          is_completed: false,
+          status: "not_started",
+        }));
+
+        await supabase.from("user_template_sections").insert(sectionsToInsert);
+      }
+
+      return newTemplate;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-study-templates"] });
-      toast({ title: "Template duplicated" });
+      toast({ title: "Template duplicated successfully" });
+    },
+    onError: (error) => {
+      console.error("Duplicate error:", error);
+      toast({ title: "Failed to duplicate template", variant: "destructive" });
     },
   });
 
@@ -306,7 +374,7 @@ export const StudyTemplatesLibrary = ({ onSelectTemplate, activeTemplateId }: Pr
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Template?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove "{deletingTemplate?.template_name}" from your collection. Your progress will be lost.
+              This will remove "{deletingTemplate?.template_name}" from your collection. Your progress, notes, and schedules will be permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -315,11 +383,144 @@ export const StudyTemplatesLibrary = ({ onSelectTemplate, activeTemplateId }: Pr
               onClick={() => deletingTemplate && deleteTemplateMutation.mutate(deletingTemplate.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remove
+              {deleteTemplateMutation.isPending ? "Removing..." : "Remove"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview Modal */}
+      <Dialog open={!!previewTemplate} onOpenChange={(open) => !open && setPreviewTemplate(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <span className="text-2xl">{previewTemplate?.template_icon}</span>
+              {previewTemplate?.template_name}
+            </DialogTitle>
+            <DialogDescription>
+              Preview your template structure and progress
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewTemplate && (
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="syllabus">Syllabus ({previewSections.length})</TabsTrigger>
+              </TabsList>
+
+              <ScrollArea className="h-[400px] mt-4">
+                <TabsContent value="overview" className="space-y-4 mt-0">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 rounded-lg bg-muted/30 flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <BookOpen className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Category</p>
+                        <p className="font-medium text-sm capitalize">{previewTemplate.template_category}</p>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-muted/30 flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <FolderOpen className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Subjects</p>
+                        <p className="font-medium text-sm">{previewTemplate.total_subjects}</p>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-muted/30 flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Check className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Topics</p>
+                        <p className="font-medium text-sm">{previewTemplate.total_topics}</p>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-muted/30 flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Award className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Progress</p>
+                        <p className="font-medium text-sm">{previewTemplate.progress_percent}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {previewTemplate.template_year && (
+                    <div className="p-3 rounded-lg bg-muted/30">
+                      <p className="text-xs text-muted-foreground mb-1">Year</p>
+                      <p className="font-medium">{previewTemplate.template_year}</p>
+                    </div>
+                  )}
+
+                  <div className="space-y-1 pt-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Overall Progress</span>
+                      <span className="font-semibold">{previewTemplate.progress_percent}%</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary transition-all duration-300" 
+                        style={{ width: `${previewTemplate.progress_percent}%` }}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="syllabus" className="space-y-2 mt-0">
+                  {previewSections.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No sections added yet</p>
+                      <p className="text-xs">Open the template to add subjects and topics</p>
+                    </div>
+                  ) : (
+                    previewSections.map((section, idx) => (
+                      <div 
+                        key={section.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-medium text-primary">{idx + 1}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-sm">{section.title}</span>
+                            <Badge variant="outline" className="ml-2 text-[10px]">
+                              {section.section_type}
+                            </Badge>
+                          </div>
+                        </div>
+                        {section.is_completed && (
+                          <Check className="w-4 h-4 text-emerald-500" />
+                        )}
+                      </div>
+                    ))
+                  )}
+                </TabsContent>
+              </ScrollArea>
+            </Tabs>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPreviewTemplate(null)}>
+              Close
+            </Button>
+            <Button onClick={() => {
+              if (previewTemplate) {
+                onSelectTemplate(previewTemplate);
+                setPreviewTemplate(null);
+              }
+            }}>
+              Open Template
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -25,6 +25,7 @@ import { StudySubjectManager } from "@/components/study/StudySubjectManager";
 import { StudyTodosWidget } from "@/components/study/StudyTodosWidget";
 import { StudyTemplatesLibrary } from "@/components/study/templates/StudyTemplatesLibrary";
 import { GenericExamWorkspace, StudyWorkspaceBreadcrumb } from "@/components/study/workspaces";
+import { StudyWorkspace } from "@/components/study/workspace";
 import { OPSCExamDashboard } from "@/components/exam/opsc/OPSCExamDashboard";
 import TemplatesGallery from "@/components/study/TemplatesGallery";
 import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, LayoutTemplate, Layout } from "lucide-react";
@@ -111,18 +112,35 @@ const TEMPLATE_CONFIG: Record<string, {
   },
 };
 
+// User template interface
+interface UserTemplate {
+  id: string;
+  template_id: string;
+  template_name: string;
+  template_category: string;
+  template_subcategory: string | null;
+  template_level: string;
+  template_year: number | null;
+  template_icon: string;
+  total_subjects: number;
+  total_topics: number;
+  is_active: boolean;
+  progress_percent: number;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
 // Workspace navigation component
 const WorkspaceNavigation = ({ 
-  activeTemplate, 
+  templateName,
+  templateIcon,
   onBack 
 }: { 
-  activeTemplate: string;
+  templateName: string;
+  templateIcon: string;
   onBack: () => void;
 }) => {
-  const templateInfo = STUDY_TEMPLATES.find(t => t.id === activeTemplate);
-  const templateName = templateInfo?.name || activeTemplate;
-  const templateIcon = templateInfo?.icon || "📚";
-  
   return (
     <StudyWorkspaceBreadcrumb
       templateName={templateName}
@@ -141,7 +159,8 @@ const Study = () => {
   
   // Tab and view state
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "gallery");
-  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [activeUserTemplate, setActiveUserTemplate] = useState<UserTemplate | null>(null);
   const [showTemplatesLibrary, setShowTemplatesLibrary] = useState(false);
   
   // Reader states
@@ -258,12 +277,20 @@ const Study = () => {
   };
 
   const handleTemplateSelect = (templateId: string) => {
-    setActiveTemplate(templateId);
+    setActiveTemplateId(templateId);
+    setActiveUserTemplate(null);
     logActivity?.("study", `Started ${templateId} template`);
   };
 
+  const handleUserTemplateSelect = (template: UserTemplate) => {
+    setActiveUserTemplate(template);
+    setActiveTemplateId(null);
+    logActivity?.("study", `Started ${template.template_name} template`);
+  };
+
   const handleBackToDashboard = () => {
-    setActiveTemplate(null);
+    setActiveTemplateId(null);
+    setActiveUserTemplate(null);
   };
 
   const handleOnboardingComplete = () => {
@@ -276,16 +303,37 @@ const Study = () => {
     setSearchParams({ tab: activeTab }, { replace: true });
   }, [activeTab, setSearchParams]);
 
-  // Render template workspace if a template is active
-  if (activeTemplate) {
-    const config = TEMPLATE_CONFIG[activeTemplate];
-    const templateInfo = STUDY_TEMPLATES.find(t => t.id === activeTemplate);
+  // Render user template workspace (from My Templates)
+  if (activeUserTemplate) {
+    return (
+      <div className="w-full">
+        <WorkspaceNavigation 
+          templateName={activeUserTemplate.template_name} 
+          templateIcon={activeUserTemplate.template_icon}
+          onBack={handleBackToDashboard} 
+        />
+        <StudyWorkspace 
+          template={activeUserTemplate}
+          onBack={handleBackToDashboard}
+        />
+      </div>
+    );
+  }
+
+  // Render static template workspace (from gallery)
+  if (activeTemplateId) {
+    const config = TEMPLATE_CONFIG[activeTemplateId];
+    const templateInfo = STUDY_TEMPLATES.find(t => t.id === activeTemplateId);
     
     // Use OPSC dashboard for OPSC templates
-    if (config?.hasCustomWorkspace && activeTemplate.startsWith("opsc")) {
+    if (config?.hasCustomWorkspace && activeTemplateId.startsWith("opsc")) {
       return (
         <div className="w-full">
-          <WorkspaceNavigation activeTemplate={activeTemplate} onBack={handleBackToDashboard} />
+          <WorkspaceNavigation 
+            templateName={templateInfo?.name || activeTemplateId}
+            templateIcon={templateInfo?.icon || "📚"}
+            onBack={handleBackToDashboard} 
+          />
           <OPSCExamDashboard />
         </div>
       );
@@ -294,10 +342,14 @@ const Study = () => {
     // Use generic workspace for other templates
     return (
       <div className="w-full">
-        <WorkspaceNavigation activeTemplate={activeTemplate} onBack={handleBackToDashboard} />
+        <WorkspaceNavigation 
+          templateName={templateInfo?.name || activeTemplateId}
+          templateIcon={templateInfo?.icon || "📚"}
+          onBack={handleBackToDashboard} 
+        />
         <GenericExamWorkspace
-          templateId={activeTemplate}
-          templateName={templateInfo?.name || activeTemplate}
+          templateId={activeTemplateId}
+          templateName={templateInfo?.name || activeTemplateId}
           templateIcon={templateInfo?.icon || "📚"}
           templateCategory={templateInfo?.category || "study"}
           templateSubcategory={templateInfo?.subcategory || ""}
@@ -338,7 +390,7 @@ const Study = () => {
         <StudyTemplatesLibrary
           onSelectTemplate={(template) => {
             setShowTemplatesLibrary(false);
-            handleTemplateSelect(template.template_id);
+            handleUserTemplateSelect(template);
           }}
         />
       </div>
