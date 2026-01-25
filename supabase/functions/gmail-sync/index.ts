@@ -119,13 +119,17 @@ function buildGmailQuery(afterDate: Date, folders?: Record<string, boolean>): st
 // ==========================================
 
 // Amount extraction - handles ₹, Rs, INR with commas and decimals
+// CRITICAL: Use [0-9]+ FIRST to capture full numbers without commas (like 4599.73)
+// before trying comma-formatted patterns
 const AMOUNT_PATTERNS = [
-  // ₹1,250 or Rs. 500 or INR 12,345.67
-  /(?:₹|rs\.?|inr)\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)/gi,
-  // Amount with label: "Amount: ₹500" or "debited: 1000"
-  /(?:amount|total|paid|charged|debited|credited)\s*:?\s*(?:₹|rs\.?|inr)?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)/gi,
-  // Reverse format: 1000 INR
-  /([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)\s*(?:₹|rs\.?|inr)/gi,
+  // ₹4599.73 or Rs.4599.73 or Rs. 12,345.67 - prioritize full number capture
+  /(?:₹|rs\.?|inr)\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)/gi,
+  // Comma-formatted: ₹1,250.50 or Rs. 12,34,567.89 (Indian format with lakhs)
+  /(?:₹|rs\.?|inr)\s*([0-9]{1,2}(?:,[0-9]{2})*,[0-9]{3}(?:\.[0-9]{1,2})?)/gi,
+  // Amount with label: "Amount: ₹500" or "debited: 1000.50"
+  /(?:amount|total|paid|charged|debited|credited)\s*:?\s*(?:₹|rs\.?|inr)?\s*([0-9]+(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)/gi,
+  // Reverse format: 1000.50 INR or 4599.73 rs
+  /([0-9]+(?:,[0-9]{3})*(?:\.[0-9]{1,2})?)\s*(?:₹|rs\.?|inr)/gi,
 ];
 
 // Reference ID / Transaction ID patterns
