@@ -69,19 +69,26 @@ export const OPSCExamOverview: React.FC = () => {
 
   const updateDatesMutation = useMutation({
     mutationFn: async (dates: ExamDates) => {
+      // Convert empty strings to null for DATE columns
+      const cleanedDates: Record<string, string | null> = {};
+      Object.entries(dates).forEach(([key, value]) => {
+        cleanedDates[key] = value && value.trim() !== '' ? value : null;
+      });
+      
       const { error } = await supabase
         .from("exam_master")
-        .update(dates)
+        .update(cleanedDates)
         .eq("id", examMaster?.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["opsc-exam-master"] });
-      toast.success("Exam dates updated");
+      toast.success("Exam dates updated successfully");
       setIsEditing(false);
     },
-    onError: () => {
-      toast.error("Failed to update dates");
+    onError: (error) => {
+      console.error("Failed to update dates:", error);
+      toast.error("Failed to update dates. Please try again.");
     },
   });
 

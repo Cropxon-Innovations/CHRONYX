@@ -54,6 +54,7 @@ const FinanceFlow = lazy(() => import("./pages/app/FinanceFlow"));
 const PrivacyCenter = lazy(() => import("./pages/app/PrivacyCenter"));
 const SecurityDashboard = lazy(() => import("./pages/app/SecurityDashboard"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -219,6 +220,16 @@ const AnimatedRoutes = () => {
             <motion.div {...pageTransition}>
               <Suspense fallback={<PageLoader />}>
                 <Contact />
+              </Suspense>
+            </motion.div>
+          } 
+        />
+        <Route 
+          path="/chronyx-control-8x9k2m" 
+          element={
+            <motion.div {...pageTransition}>
+              <Suspense fallback={<PageLoader />}>
+                <AdminPanel />
               </Suspense>
             </motion.div>
           } 
