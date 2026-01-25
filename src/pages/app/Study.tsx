@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -24,11 +24,12 @@ import { SyllabusAIParser } from "@/components/study/SyllabusAIParser";
 import { StudySubjectManager } from "@/components/study/StudySubjectManager";
 import { StudyTodosWidget } from "@/components/study/StudyTodosWidget";
 import { StudyTemplatesLibrary } from "@/components/study/templates/StudyTemplatesLibrary";
-import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, LayoutTemplate, ArrowLeft } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { GenericExamWorkspace, StudyWorkspaceBreadcrumb } from "@/components/study/workspaces";
 import { OPSCExamDashboard } from "@/components/exam/opsc/OPSCExamDashboard";
+import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, LayoutTemplate } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { StudyOnboardingFlow, StudyGuidedTour } from "@/components/study/onboarding";
-import { useStudyOnboarding } from "@/hooks/useStudyOnboarding";
+import { useStudyOnboarding, STUDY_TEMPLATES } from "@/hooks/useStudyOnboarding";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,26 +41,70 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Template to workspace mapping
-const TEMPLATE_WORKSPACES: Record<string, React.FC<{ onBack: () => void }>> = {
-  "opsc-oas-2026": ({ onBack }) => (
-    <div className="space-y-4">
-      <Button variant="ghost" onClick={onBack} className="gap-2 -ml-2">
-        <ArrowLeft className="w-4 h-4" />
-        Back to Templates
-      </Button>
-      <OPSCExamDashboard />
-    </div>
-  ),
-  "opsc-ofs-2026": ({ onBack }) => (
-    <div className="space-y-4">
-      <Button variant="ghost" onClick={onBack} className="gap-2 -ml-2">
-        <ArrowLeft className="w-4 h-4" />
-        Back to Templates
-      </Button>
-      <OPSCExamDashboard />
-    </div>
-  ),
+// Template metadata for workspace configuration
+const TEMPLATE_CONFIG: Record<string, {
+  subjects: string[];
+  hasCustomWorkspace?: boolean;
+}> = {
+  "opsc-oas-2026": {
+    subjects: ["Indian Polity", "History", "Geography", "Economy", "Odisha GK", "Ethics", "Science", "Current Affairs"],
+    hasCustomWorkspace: true,
+  },
+  "opsc-ofs-2026": {
+    subjects: ["Indian Polity", "History", "Geography", "Economy", "Odisha GK", "Ethics", "Forestry", "Current Affairs"],
+    hasCustomWorkspace: true,
+  },
+  "upsc-prelims-2026": {
+    subjects: ["Indian Polity", "History", "Geography", "Economy", "Environment", "Science & Tech", "Current Affairs", "CSAT"],
+  },
+  "upsc-mains-2026": {
+    subjects: ["Essay", "GS I", "GS II", "GS III", "GS IV", "Optional Paper I", "Optional Paper II", "English", "Hindi"],
+  },
+  "ssc-cgl-2026": {
+    subjects: ["Quantitative Aptitude", "English", "General Intelligence", "General Awareness"],
+  },
+  "go-backend-master": {
+    subjects: ["Go Fundamentals", "Concurrency", "Web Frameworks", "Database", "Testing", "Microservices", "gRPC", "Docker", "Kubernetes", "CI/CD", "Monitoring", "Best Practices"],
+  },
+  "java-backend-master": {
+    subjects: ["Core Java", "Spring Boot", "Spring Security", "JPA/Hibernate", "Microservices", "REST APIs", "Testing", "Docker", "Kubernetes", "Kafka", "CI/CD", "Performance", "Design Patterns", "System Design", "Interview Prep"],
+  },
+  "kubernetes-architect": {
+    subjects: ["K8s Fundamentals", "Pods & Workloads", "Services & Networking", "Storage", "Security", "Helm", "Operators", "Production"],
+  },
+  "aws-solutions-architect": {
+    subjects: ["Compute", "Storage", "Database", "Networking", "Security", "IAM", "Serverless", "Containers", "CDN", "Migration", "Cost Optimization", "High Availability", "Disaster Recovery", "Best Practices"],
+  },
+  "azure-architect": {
+    subjects: ["Compute", "Storage", "Database", "Networking", "Security", "Identity", "Serverless", "Containers", "DevOps", "Monitoring", "Cost Management", "Governance"],
+  },
+  "ml-engineer": {
+    subjects: ["Mathematics", "Python", "Data Processing", "Classical ML", "Deep Learning", "NLP", "Computer Vision", "MLOps", "Deployment", "Ethics"],
+  },
+  "rag-agentic-ai": {
+    subjects: ["LLM Fundamentals", "Vector Databases", "RAG Architecture", "Agents", "Tool Use", "Evaluation"],
+  },
+  "nextjs-fullstack": {
+    subjects: ["React Fundamentals", "Next.js Basics", "App Router", "Server Components", "Data Fetching", "Authentication", "Database", "Deployment"],
+  },
+  "docker-mastery": {
+    subjects: ["Docker Basics", "Images", "Containers", "Networking", "Volumes"],
+  },
+  "kafka-streaming": {
+    subjects: ["Kafka Basics", "Producers", "Consumers", "Streams", "Connect", "Schema Registry", "Monitoring"],
+  },
+  "gmat-full-prep": {
+    subjects: ["Quantitative", "Verbal", "Integrated Reasoning", "Analytical Writing"],
+  },
+  "gre-complete": {
+    subjects: ["Quantitative", "Verbal", "Analytical Writing"],
+  },
+  "ielts-academic": {
+    subjects: ["Listening", "Reading", "Writing", "Speaking"],
+  },
+  "toefl-ibt": {
+    subjects: ["Listening", "Reading", "Writing", "Speaking"],
+  },
 };
 
 interface UserTemplate {
@@ -108,6 +153,13 @@ const Study = () => {
   const [deletingItem, setDeletingItem] = useState<LibraryItem | null>(null);
   const [activeUserTemplate, setActiveUserTemplate] = useState<UserTemplate | null>(null);
   const [showWorkspace, setShowWorkspace] = useState(false);
+
+  // Scroll to top when workspace opens
+  useEffect(() => {
+    if (showWorkspace) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [showWorkspace]);
 
   // Fetch user's active templates
   const { data: userTemplates = [] } = useQuery({
@@ -209,7 +261,6 @@ const Study = () => {
       const timestamp = Date.now();
       const filePath = `${user!.id}/${timestamp}.${fileExt}`;
       
-      // Upload main file
       const { error: uploadError } = await supabase.storage
         .from("library")
         .upload(filePath, data.file);
@@ -219,7 +270,6 @@ const Study = () => {
         .from("library")
         .getPublicUrl(filePath);
 
-      // Upload cover image if provided
       let coverUrl: string | null = null;
       if (data.cover) {
         const coverPath = `${user!.id}/covers/${timestamp}.jpg`;
@@ -235,7 +285,6 @@ const Study = () => {
         }
       }
 
-      // Determine format based on extension
       let format: string = 'pdf';
       if (['epub'].includes(fileExt)) format = 'epub';
       else if (['doc', 'docx'].includes(fileExt)) format = fileExt;
@@ -286,7 +335,6 @@ const Study = () => {
         updated_at: new Date().toISOString(),
       };
       
-      // Add cover URL if provided (already uploaded in dialog)
       if (data.coverUrl) {
         updateData.cover_url = data.coverUrl;
       }
@@ -307,7 +355,6 @@ const Study = () => {
   // Delete book mutation
   const deleteBookMutation = useMutation({
     mutationFn: async (item: LibraryItem) => {
-      // Delete from storage if file_url exists
       if (item.file_url) {
         const pathMatch = item.file_url.match(/library\/(.+)$/);
         if (pathMatch) {
@@ -331,7 +378,7 @@ const Study = () => {
   const toggleArchiveMutation = useMutation({
     mutationFn: async (item: LibraryItem) => {
       const { error } = await supabase.from("library_items").update({
-        is_shared: !item.is_archived, // Using is_shared as archive flag since no is_archived column
+        is_shared: !item.is_archived,
         updated_at: new Date().toISOString(),
       }).eq("id", item.id);
       if (error) throw error;
@@ -382,6 +429,12 @@ const Study = () => {
     setShowTimer(false);
   };
 
+  const handleBackFromWorkspace = () => {
+    setShowWorkspace(false);
+    setActiveUserTemplate(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Show onboarding for new users
   if (showOnboarding && !onboardingLoading) {
     return <StudyOnboardingFlow onComplete={completeOnboarding} />;
@@ -392,12 +445,52 @@ const Study = () => {
     return (
       <BookReader
         item={readingItem}
-        fileUrl="" // Would come from library item
+        fileUrl=""
         onClose={() => setReadingItem(null)}
-        onProgressUpdate={(page, progress) => {
-          // Update reading state in database
-        }}
+        onProgressUpdate={(page, progress) => {}}
       />
+    );
+  }
+
+  // Dedicated workspace view - clean full page with breadcrumb
+  if (showWorkspace && activeUserTemplate) {
+    const templateConfig = TEMPLATE_CONFIG[activeUserTemplate.template_id];
+    const templateMeta = STUDY_TEMPLATES.find(t => t.id === activeUserTemplate.template_id);
+    
+    // Check for custom workspaces (OPSC)
+    if (templateConfig?.hasCustomWorkspace && (activeUserTemplate.template_id === "opsc-oas-2026" || activeUserTemplate.template_id === "opsc-ofs-2026")) {
+      return (
+        <div className="animate-fade-in">
+          <StudyWorkspaceBreadcrumb 
+            templateName={activeUserTemplate.template_name}
+            templateIcon={activeUserTemplate.template_icon}
+            onBack={handleBackFromWorkspace}
+          />
+          <OPSCExamDashboard />
+        </div>
+      );
+    }
+    
+    // Generic workspace for all other templates
+    return (
+      <div className="animate-fade-in">
+        <StudyWorkspaceBreadcrumb 
+          templateName={activeUserTemplate.template_name}
+          templateIcon={activeUserTemplate.template_icon}
+          onBack={handleBackFromWorkspace}
+        />
+        <GenericExamWorkspace
+          templateId={activeUserTemplate.template_id}
+          templateName={activeUserTemplate.template_name}
+          templateIcon={activeUserTemplate.template_icon}
+          templateCategory={activeUserTemplate.template_category}
+          templateSubcategory={activeUserTemplate.template_subcategory || "General"}
+          examYear={activeUserTemplate.template_year || 2026}
+          subjects={templateConfig?.subjects || ["General Topics"]}
+          totalTopics={activeUserTemplate.total_topics}
+          description={templateMeta?.description}
+        />
+      </div>
     );
   }
 
@@ -421,14 +514,14 @@ const Study = () => {
         onStartSession={() => setShowTimer(true)}
       />
 
-      {/* Today's summary - subtle */}
+      {/* Today's summary */}
       {metrics.todayMinutes > 0 && (
         <p className="text-sm text-muted-foreground">
           {metrics.todayMinutes} minutes studied today
         </p>
       )}
 
-      {/* Tabs - Calm, minimal */}
+      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-muted/30 border border-border p-1 h-auto flex-wrap">
           <TabsTrigger value="templates" className="data-[state=active]:bg-card gap-2">
@@ -467,43 +560,6 @@ const Study = () => {
 
         <TabsContent value="progress">
           <div className="space-y-6">
-            {/* Today's Study Tasks from Todos */}
-            <StudyTodosWidget />
-            
-            <div className="flex gap-2 flex-wrap">
-              <SyllabusAIParser onSuccess={() => queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] })} />
-            </div>
-            
-            {/* Hierarchical Subject Manager */}
-            <StudySubjectManager />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="templates">
-          {showWorkspace && activeUserTemplate && TEMPLATE_WORKSPACES[activeUserTemplate.template_id] ? (
-            React.createElement(TEMPLATE_WORKSPACES[activeUserTemplate.template_id], {
-              onBack: () => setShowWorkspace(false)
-            })
-          ) : (
-            <StudyTemplatesLibrary 
-              onSelectTemplate={(template) => {
-                setActiveUserTemplate(template);
-                // Check if template has a dedicated workspace
-                if (TEMPLATE_WORKSPACES[template.template_id]) {
-                  setShowWorkspace(true);
-                } else {
-                  setActiveTab("progress");
-                }
-                toast({ title: `Opened ${template.template_name}` });
-              }}
-              activeTemplateId={activeUserTemplate?.id}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="progress">
-          <div className="space-y-6">
-            {/* Active Template Context */}
             {activeUserTemplate && (
               <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
                 <span className="text-2xl">{activeUserTemplate.template_icon}</span>
@@ -514,16 +570,25 @@ const Study = () => {
               </div>
             )}
             
-            {/* Today's Study Tasks from Todos */}
             <StudyTodosWidget />
             
             <div className="flex gap-2 flex-wrap">
               <SyllabusAIParser onSuccess={() => queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] })} />
             </div>
             
-            {/* Hierarchical Subject Manager */}
             <StudySubjectManager />
           </div>
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <StudyTemplatesLibrary 
+            onSelectTemplate={(template) => {
+              setActiveUserTemplate(template);
+              setShowWorkspace(true);
+              toast({ title: `Opened ${template.template_name}` });
+            }}
+            activeTemplateId={activeUserTemplate?.id}
+          />
         </TabsContent>
 
         <TabsContent value="reviews">
