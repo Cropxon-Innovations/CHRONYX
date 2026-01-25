@@ -39,13 +39,13 @@ const categories = [
 
 export default function TechDSAPractice() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProblem, setSelectedProblem] = useState<TechDSAProblem | null>(null);
 
   const { data: problems, isLoading } = useTechDSAProblems({
     category: selectedCategory || undefined,
-    difficulty: selectedDifficulty || undefined,
+    difficulty: selectedDifficulty === "all" ? undefined : selectedDifficulty || undefined,
   });
   const { data: userProgress } = useTechDSAProgress();
 
@@ -194,7 +194,7 @@ export default function TechDSAPractice() {
                 <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 <SelectItem value="easy">Easy</SelectItem>
                 <SelectItem value="medium">Medium</SelectItem>
                 <SelectItem value="hard">Hard</SelectItem>

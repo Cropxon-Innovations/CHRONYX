@@ -123,7 +123,7 @@ export const StudyScheduleView = ({ templateId, sections }: Props) => {
         end_time: data.end_time,
         duration_minutes: data.duration_minutes,
         color: data.color,
-        section_id: data.section_id || null,
+        section_id: data.section_id === "none" || !data.section_id ? null : data.section_id,
       };
 
       if (data.id) {
@@ -189,7 +189,7 @@ export const StudyScheduleView = ({ templateId, sections }: Props) => {
       end_time: "10:00",
       duration_minutes: 60,
       color: "#3b82f6",
-      section_id: "",
+      section_id: "none",
     });
   };
 
@@ -209,7 +209,7 @@ export const StudyScheduleView = ({ templateId, sections }: Props) => {
       end_time: item.end_time || "10:00",
       duration_minutes: item.duration_minutes,
       color: item.color,
-      section_id: item.section_id || "",
+      section_id: item.section_id || "none",
     });
     setShowAddDialog(true);
   };
@@ -409,7 +409,7 @@ export const StudyScheduleView = ({ templateId, sections }: Props) => {
                     <SelectValue placeholder="Optional..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {rootSections.map((section) => (
                       <SelectItem key={section.id} value={section.id}>
                         {section.title}
