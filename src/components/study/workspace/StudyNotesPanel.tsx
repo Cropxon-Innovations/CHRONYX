@@ -97,7 +97,7 @@ export const StudyNotesPanel = ({ templateId, sections, notes }: Props) => {
         title: data.title,
         content: data.content ? JSON.parse(data.content) : {},
         note_type: data.note_type,
-        section_id: data.section_id || null,
+        section_id: data.section_id === "none" || !data.section_id ? null : data.section_id,
         tags: data.tags,
       };
 
@@ -160,7 +160,7 @@ export const StudyNotesPanel = ({ templateId, sections, notes }: Props) => {
       title: "",
       content: "",
       note_type: "general",
-      section_id: "",
+      section_id: "none",
       tags: [],
     });
   };
@@ -179,7 +179,7 @@ export const StudyNotesPanel = ({ templateId, sections, notes }: Props) => {
       title: note.title,
       content: JSON.stringify(note.content),
       note_type: note.note_type,
-      section_id: note.section_id || "",
+      section_id: note.section_id || "none",
       tags: note.tags || [],
     });
     setShowEditor(true);
@@ -353,7 +353,7 @@ export const StudyNotesPanel = ({ templateId, sections, notes }: Props) => {
                       <SelectValue placeholder="Link to section..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No link</SelectItem>
+                      <SelectItem value="none">No link</SelectItem>
                       {rootSections.map((section) => (
                         <SelectItem key={section.id} value={section.id}>
                           {section.title}

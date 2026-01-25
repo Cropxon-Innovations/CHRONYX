@@ -46,8 +46,8 @@ const difficultyColors: Record<string, string> = {
 
 export default function TechInterviewPrep() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("");
-  const [selectedTrack, setSelectedTrack] = useState<string>("");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
+  const [selectedTrack, setSelectedTrack] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [showAnswers, setShowAnswers] = useState<Record<string, boolean>>({});
@@ -62,8 +62,8 @@ export default function TechInterviewPrep() {
   });
 
   const { data: questions, isLoading } = useTechInterviewQuestions({
-    trackId: selectedTrack || undefined,
-    difficulty: selectedDifficulty || undefined,
+    trackId: selectedTrack === "all" ? undefined : selectedTrack || undefined,
+    difficulty: selectedDifficulty === "all" ? undefined : selectedDifficulty || undefined,
   });
   const { data: tracks } = useTechTracks();
   const createQuestion = useCreateInterviewQuestion();
@@ -208,7 +208,7 @@ export default function TechInterviewPrep() {
             <SelectValue placeholder="All Tracks" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Tracks</SelectItem>
+            <SelectItem value="all">All Tracks</SelectItem>
             {tracks?.map(track => (
               <SelectItem key={track.id} value={track.id}>{track.name}</SelectItem>
             ))}
@@ -219,7 +219,7 @@ export default function TechInterviewPrep() {
             <SelectValue placeholder="Difficulty" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value="all">All</SelectItem>
             <SelectItem value="easy">Easy</SelectItem>
             <SelectItem value="medium">Medium</SelectItem>
             <SelectItem value="hard">Hard</SelectItem>

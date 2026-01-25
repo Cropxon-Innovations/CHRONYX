@@ -87,7 +87,7 @@ const AddClaimForm = ({ open, onOpenChange, claim, onSuccess }: AddClaimFormProp
     if (claim) {
       setFormData({
         insurance_id: claim.insurance_id,
-        insured_member_id: claim.insured_member_id || "",
+        insured_member_id: claim.insured_member_id || "self",
         claim_reference_no: claim.claim_reference_no || "",
         claim_type: claim.claim_type,
         claim_date: claim.claim_date,
@@ -118,7 +118,7 @@ const AddClaimForm = ({ open, onOpenChange, claim, onSuccess }: AddClaimFormProp
   const resetForm = () => {
     setFormData({
       insurance_id: "",
-      insured_member_id: "",
+      insured_member_id: "self",
       claim_reference_no: "",
       claim_type: "",
       claim_date: new Date().toISOString().split('T')[0],
@@ -134,7 +134,7 @@ const AddClaimForm = ({ open, onOpenChange, claim, onSuccess }: AddClaimFormProp
     setFormData({ ...formData, insurance_id: insuranceId });
     const selectedInsurance = insurances.find(i => i.id === insuranceId);
     if (selectedInsurance?.insured_member_id) {
-      setFormData(prev => ({ ...prev, insurance_id: insuranceId, insured_member_id: selectedInsurance.insured_member_id || "" }));
+      setFormData(prev => ({ ...prev, insurance_id: insuranceId, insured_member_id: selectedInsurance.insured_member_id || "self" }));
     }
   };
 
@@ -148,7 +148,7 @@ const AddClaimForm = ({ open, onOpenChange, claim, onSuccess }: AddClaimFormProp
     try {
       const payload = {
         insurance_id: formData.insurance_id,
-        insured_member_id: formData.insured_member_id || null,
+        insured_member_id: formData.insured_member_id === "self" || !formData.insured_member_id ? null : formData.insured_member_id,
         claim_reference_no: formData.claim_reference_no || null,
         claim_type: formData.claim_type,
         claim_date: formData.claim_date,
@@ -219,7 +219,7 @@ const AddClaimForm = ({ open, onOpenChange, claim, onSuccess }: AddClaimFormProp
                 <SelectValue placeholder="Self or select member" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Self</SelectItem>
+                <SelectItem value="self">Self</SelectItem>
                 {familyMembers.map((member) => (
                   <SelectItem key={member.id} value={member.id}>
                     {member.full_name}
