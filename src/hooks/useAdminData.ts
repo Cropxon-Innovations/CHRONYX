@@ -95,7 +95,7 @@ export const useUserDetails = (userId: string | null) => {
         .from("login_history")
         .select("*")
         .eq("user_id", userId)
-        .order("login_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(10);
 
       return {

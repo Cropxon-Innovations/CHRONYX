@@ -384,19 +384,19 @@ const UserDetailModal = ({
                           <div className="text-right">
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {format(new Date(login.login_at), "PPp")}
+                              {login.created_at ? format(new Date(login.created_at), "PPp") : "N/A"}
                             </p>
                             <Badge
                               variant={
-                                login.login_successful ? "default" : "destructive"
+                                login.status === "success" ? "default" : "destructive"
                               }
                               className={
-                                login.login_successful
+                                login.status === "success"
                                   ? "bg-green-500/10 text-green-500"
                                   : ""
                               }
                             >
-                              {login.login_successful ? "Success" : "Failed"}
+                              {login.status || "Unknown"}
                             </Badge>
                           </div>
                         </div>

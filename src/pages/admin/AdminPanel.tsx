@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, Users, CreditCard, Layout, Bell, BarChart3, 
   Settings, Heart, ChevronLeft, ChevronRight, LogOut, Database,
-  Activity, Megaphone, FileText
+  Activity, Megaphone, Zap, HardDrive, Table2
 } from "lucide-react";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminUsers from "@/components/admin/AdminUsers";
@@ -16,25 +16,43 @@ import AdminNotifications from "@/components/admin/AdminNotifications";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import AdminPricing from "@/components/admin/AdminPricing";
 import AdminServiceHealth from "@/components/admin/AdminServiceHealth";
-import AdminDatabase from "@/components/admin/AdminDatabase";
 import AdminActivityLogs from "@/components/admin/AdminActivityLogs";
+import AdminEdgeFunctions from "@/components/admin/AdminEdgeFunctions";
+import AdminStorageBuckets from "@/components/admin/AdminStorageBuckets";
+import AdminDatabaseTables from "@/components/admin/AdminDatabaseTables";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
-const menuItems = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard, description: "Dashboard overview" },
-  { id: "users", label: "Users", icon: Users, description: "User management" },
-  { id: "payments", label: "Payments", icon: CreditCard, description: "Payment records" },
-  { id: "templates", label: "Templates", icon: Layout, description: "Template library" },
-  { id: "notifications", label: "Notifications", icon: Megaphone, description: "System notifications" },
-  { id: "analytics", label: "Analytics", icon: BarChart3, description: "Platform analytics" },
-  { id: "pricing", label: "Pricing", icon: Settings, description: "Pricing configuration" },
-  { id: "database", label: "Database", icon: Database, description: "Tables & schema" },
-  { id: "activity", label: "Activity Logs", icon: Activity, description: "User activity" },
-  { id: "health", label: "Service Health", icon: Heart, description: "System status" },
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: any;
+  description: string;
+  section?: string;
+}
+
+const menuItems: MenuItem[] = [
+  // Main
+  { id: "overview", label: "Overview", icon: LayoutDashboard, description: "Dashboard overview", section: "Main" },
+  { id: "users", label: "Users", icon: Users, description: "User management", section: "Main" },
+  { id: "payments", label: "Payments", icon: CreditCard, description: "Payment records", section: "Main" },
+  { id: "activity", label: "Activity Logs", icon: Activity, description: "User activity", section: "Main" },
+  
+  // Infrastructure
+  { id: "edge-functions", label: "Edge Functions", icon: Zap, description: "47 serverless functions", section: "Infrastructure" },
+  { id: "database", label: "Database Tables", icon: Table2, description: "179 database tables", section: "Infrastructure" },
+  { id: "storage", label: "Storage Buckets", icon: HardDrive, description: "11 storage buckets", section: "Infrastructure" },
+  
+  // Content
+  { id: "templates", label: "Templates", icon: Layout, description: "Template library", section: "Content" },
+  { id: "notifications", label: "Notifications", icon: Megaphone, description: "System notifications", section: "Content" },
+  
+  // Analytics & Config
+  { id: "analytics", label: "Analytics", icon: BarChart3, description: "Platform analytics", section: "Analytics" },
+  { id: "pricing", label: "Pricing", icon: Settings, description: "Pricing configuration", section: "Analytics" },
+  { id: "health", label: "Service Health", icon: Heart, description: "System status", section: "Analytics" },
 ];
 
 const AdminPanel = () => {
@@ -45,7 +63,6 @@ const AdminPanel = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    // Redirect non-admins after auth check is complete
     if (!authLoading && !adminLoading) {
       if (!user) {
         navigate("/login", { replace: true });
@@ -91,16 +108,27 @@ const AdminPanel = () => {
         return <AdminAnalytics />;
       case "pricing":
         return <AdminPricing />;
-      case "database":
-        return <AdminDatabase />;
       case "activity":
         return <AdminActivityLogs />;
       case "health":
         return <AdminServiceHealth />;
+      case "edge-functions":
+        return <AdminEdgeFunctions />;
+      case "database":
+        return <AdminDatabaseTables />;
+      case "storage":
+        return <AdminStorageBuckets />;
       default:
         return <AdminOverview />;
     }
   };
+
+  // Group menu items by section
+  const sections = ["Main", "Infrastructure", "Content", "Analytics"];
+  const groupedItems = sections.map(section => ({
+    section,
+    items: menuItems.filter(item => item.section === section)
+  }));
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -126,25 +154,36 @@ const AdminPanel = () => {
 
         {/* Navigation */}
         <ScrollArea className="flex-1 py-2">
-          <nav className="px-2 space-y-1">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
-                  "hover:bg-muted/50",
-                  activeTab === item.id 
-                    ? "bg-primary/10 text-primary font-medium" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                title={isSidebarCollapsed ? item.label : undefined}
-              >
-                <item.icon className={cn("w-4 h-4 flex-shrink-0", activeTab === item.id && "text-primary")} />
+          <nav className="px-2 space-y-4">
+            {groupedItems.map(({ section, items }) => (
+              <div key={section}>
                 {!isSidebarCollapsed && (
-                  <span className="truncate">{item.label}</span>
+                  <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    {section}
+                  </p>
                 )}
-              </button>
+                <div className="space-y-1">
+                  {items.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200",
+                        "hover:bg-muted/50",
+                        activeTab === item.id 
+                          ? "bg-primary/10 text-primary font-medium" 
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      title={isSidebarCollapsed ? item.label : undefined}
+                    >
+                      <item.icon className={cn("w-4 h-4 flex-shrink-0", activeTab === item.id && "text-primary")} />
+                      {!isSidebarCollapsed && (
+                        <span className="truncate">{item.label}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
         </ScrollArea>
