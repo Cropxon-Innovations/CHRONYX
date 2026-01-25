@@ -6418,6 +6418,73 @@ export type Database = {
           },
         ]
       }
+      study_section_notes: {
+        Row: {
+          content: Json | null
+          created_at: string
+          id: string
+          is_pinned: boolean | null
+          note_type: string | null
+          schedule_id: string | null
+          section_id: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+          user_template_id: string | null
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          note_type?: string | null
+          schedule_id?: string | null
+          section_id?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+          user_template_id?: string | null
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          note_type?: string | null
+          schedule_id?: string | null
+          section_id?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          user_template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_section_notes_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "user_study_schedule"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_section_notes_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "user_template_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_section_notes_user_template_id_fkey"
+            columns: ["user_template_id"]
+            isOneToOne: false
+            referencedRelation: "user_study_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_subjects: {
         Row: {
           color: string
@@ -8869,6 +8936,78 @@ export type Database = {
         }
         Relationships: []
       }
+      user_study_schedule: {
+        Row: {
+          color: string | null
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          end_time: string | null
+          id: string
+          is_completed: boolean | null
+          recurrence_rule: string | null
+          scheduled_date: string
+          section_id: string | null
+          start_time: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          user_template_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          id?: string
+          is_completed?: boolean | null
+          recurrence_rule?: string | null
+          scheduled_date: string
+          section_id?: string | null
+          start_time?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          user_template_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          id?: string
+          is_completed?: boolean | null
+          recurrence_rule?: string | null
+          scheduled_date?: string
+          section_id?: string | null
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          user_template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_study_schedule_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "user_template_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_study_schedule_user_template_id_fkey"
+            columns: ["user_template_id"]
+            isOneToOne: false
+            referencedRelation: "user_study_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_study_templates: {
         Row: {
           completed_at: string | null
@@ -8925,6 +9064,119 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_template_data: {
+        Row: {
+          created_at: string
+          custom_outcomes: Json | null
+          custom_subjects: Json | null
+          id: string
+          is_customized: boolean | null
+          template_data: Json
+          updated_at: string
+          user_id: string
+          user_template_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_outcomes?: Json | null
+          custom_subjects?: Json | null
+          id?: string
+          is_customized?: boolean | null
+          template_data?: Json
+          updated_at?: string
+          user_id: string
+          user_template_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_outcomes?: Json | null
+          custom_subjects?: Json | null
+          id?: string
+          is_customized?: boolean | null
+          template_data?: Json
+          updated_at?: string
+          user_id?: string
+          user_template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_template_data_user_template_id_fkey"
+            columns: ["user_template_id"]
+            isOneToOne: true
+            referencedRelation: "user_study_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_template_sections: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_completed: boolean | null
+          linked_note_id: string | null
+          order_index: number | null
+          parent_section_id: string | null
+          section_type: string
+          status: string | null
+          time_spent_minutes: number | null
+          title: string
+          updated_at: string
+          user_id: string
+          user_template_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_completed?: boolean | null
+          linked_note_id?: string | null
+          order_index?: number | null
+          parent_section_id?: string | null
+          section_type?: string
+          status?: string | null
+          time_spent_minutes?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+          user_template_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_completed?: boolean | null
+          linked_note_id?: string | null
+          order_index?: number | null
+          parent_section_id?: string | null
+          section_type?: string
+          status?: string | null
+          time_spent_minutes?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          user_template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_template_sections_parent_section_id_fkey"
+            columns: ["parent_section_id"]
+            isOneToOne: false
+            referencedRelation: "user_template_sections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_template_sections_user_template_id_fkey"
+            columns: ["user_template_id"]
+            isOneToOne: false
+            referencedRelation: "user_study_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vault_items: {
         Row: {
