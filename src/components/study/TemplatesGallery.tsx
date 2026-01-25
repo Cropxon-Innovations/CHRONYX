@@ -9,16 +9,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { 
   Layout, Star, Eye, Clock, Users, FileText, BookOpen, Target, 
   Search, Briefcase, Globe, GraduationCap, Code, ChevronRight,
-  CheckCircle2, Sparkles
+  CheckCircle2, Sparkles, Plus
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 interface TemplateData {
   subjects?: string[];
   topics_count?: number;
   estimated_hours?: number;
+  outcomes?: string[];
 }
 
 interface Template {
@@ -43,6 +45,8 @@ const categoryConfig: Record<string, { icon: React.ElementType; label: string; c
 };
 
 const TemplatesGallery = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
@@ -64,6 +68,87 @@ const TemplatesGallery = () => {
     },
   });
 
+  // Check which templates user already has
+  const { data: userTemplates = [] } = useQuery({
+    queryKey: ["user-study-templates", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("user_study_templates")
+        .select("template_id")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return data.map(t => t.template_id);
+    },
+    enabled: !!user,
+  });
+
+  // Add template to user collection
+  const addTemplateMutation = useMutation({
+    mutationFn: async (template: Template) => {
+      if (!user) throw new Error("Not authenticated");
+      
+      const subjects = template.template_data?.subjects || [];
+      const topicsCount = template.template_data?.topics_count || subjects.length * 5;
+      
+      // Insert into user_study_templates
+      const { data: userTemplate, error } = await supabase
+        .from("user_study_templates")
+        .insert({
+          user_id: user.id,
+          template_id: template.id,
+          template_name: template.title,
+          template_category: template.category,
+          template_subcategory: template.template_type,
+          template_icon: categoryConfig[template.category]?.icon === Briefcase ? "💼" : 
+                        categoryConfig[template.category]?.icon === Code ? "💻" : 
+                        categoryConfig[template.category]?.icon === Globe ? "🌍" : "📚",
+          total_subjects: subjects.length,
+          total_topics: topicsCount,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create initial sections from subjects
+      if (subjects.length > 0 && userTemplate) {
+        const sectionsToInsert = subjects.map((subject: string, index: number) => ({
+          user_id: user.id,
+          user_template_id: userTemplate.id,
+          section_type: "subject",
+          title: subject,
+          order_index: index,
+        }));
+
+        await supabase
+          .from("user_template_sections")
+          .insert(sectionsToInsert);
+      }
+
+      // Increment usage count on the template
+      await supabase
+        .from("admin_templates")
+        .update({ usage_count: (template.usage_count || 0) + 1 })
+        .eq("id", template.id);
+
+      return userTemplate;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-study-templates"] });
+      toast.success("Template added to My Templates!");
+      setPreviewTemplate(null);
+    },
+    onError: (error: any) => {
+      console.error("Error adding template:", error);
+      if (error.code === "23505") {
+        toast.error("You already have this template in your collection");
+      } else {
+        toast.error("Failed to add template");
+      }
+    },
+  });
+
   // Filter templates
   const filteredTemplates = templates.filter((template) => {
     const matchesSearch = template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -73,7 +158,7 @@ const TemplatesGallery = () => {
   });
 
   // Group templates by category
-  const groupedTemplates = Object.entries(categoryConfig).reduce((acc, [key, config]) => {
+  const groupedTemplates = Object.entries(categoryConfig).reduce((acc, [key]) => {
     const categoryTemplates = filteredTemplates.filter(t => t.category === key);
     if (categoryTemplates.length > 0) {
       acc[key] = categoryTemplates;
@@ -87,15 +172,17 @@ const TemplatesGallery = () => {
     return acc;
   }, {} as Record<string, number>);
 
-  const handleUseTemplate = async (template: Template) => {
-    // Increment usage count
-    await supabase
-      .from("admin_templates")
-      .update({ usage_count: (template.usage_count || 0) + 1 })
-      .eq("id", template.id);
-    
-    toast.success(`Template "${template.title}" added to your study plan!`);
-    setPreviewTemplate(null);
+  const handleUseTemplate = (template: Template) => {
+    if (!user) {
+      toast.error("Please log in to use templates");
+      return;
+    }
+    if (userTemplates.includes(template.id)) {
+      toast.info("Template already in your collection");
+      setPreviewTemplate(null);
+      return;
+    }
+    addTemplateMutation.mutate(template);
   };
 
   if (isLoading) {
