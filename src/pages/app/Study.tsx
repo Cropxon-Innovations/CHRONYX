@@ -98,596 +98,413 @@ const TEMPLATE_CONFIG: Record<string, {
     subjects: ["Quantitative", "Verbal", "Integrated Reasoning", "Analytical Writing"],
   },
   "gre-complete": {
-    subjects: ["Quantitative", "Verbal", "Analytical Writing"],
+    subjects: ["Quantitative Reasoning", "Verbal Reasoning", "Analytical Writing"],
   },
   "ielts-academic": {
     subjects: ["Listening", "Reading", "Writing", "Speaking"],
   },
   "toefl-ibt": {
-    subjects: ["Listening", "Reading", "Writing", "Speaking"],
+    subjects: ["Reading", "Listening", "Speaking", "Writing"],
+  },
+  "cat-mba-prep": {
+    subjects: ["Quantitative Aptitude", "Verbal Ability", "Data Interpretation", "Logical Reasoning"],
   },
 };
 
-interface UserTemplate {
-  id: string;
-  template_id: string;
-  template_name: string;
-  template_category: string;
-  template_subcategory: string | null;
-  template_level: string;
-  template_year: number | null;
-  template_icon: string;
-  total_subjects: number;
-  total_topics: number;
-  is_active: boolean;
-  progress_percent: number;
-  created_at: string;
-  updated_at: string;
-  completed_at: string | null;
-}
-
-const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
+// Workspace navigation component
+const WorkspaceNavigation = ({ 
+  activeTemplate, 
+  onBack 
+}: { 
+  activeTemplate: string;
+  onBack: () => void;
+}) => {
+  const templateLabel = STUDY_TEMPLATES.find(t => t.id === activeTemplate)?.label || activeTemplate;
+  
+  return (
+    <StudyWorkspaceBreadcrumb
+      templateId={activeTemplate}
+      templateLabel={templateLabel}
+      onBack={onBack}
+    />
+  );
+};
 
 const Study = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { logActivity } = useActivityLog();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   
-  // Study onboarding
+  // Tab and view state
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "gallery");
+  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+  const [showTemplatesLibrary, setShowTemplatesLibrary] = useState(false);
+  
+  // Reader states
+  const [selectedBook, setSelectedBook] = useState<LibraryItem | null>(null);
+  const [editingBook, setEditingBook] = useState<LibraryItem | null>(null);
+  const [showAddBook, setShowAddBook] = useState(false);
+  
+  // Onboarding states
   const { 
     showOnboarding, 
-    showTour, 
-    isLoading: onboardingLoading,
-    completeOnboarding,
-    completeTour 
+    hasCompletedOnboarding, 
+    completeOnboarding 
   } = useStudyOnboarding();
+  const [showGuidedTour, setShowGuidedTour] = useState(false);
   
-  const initialTab = searchParams.get('tab') || "progress";
-  const [activeTab, setActiveTab] = useState(initialTab);
-  const [showTimer, setShowTimer] = useState(false);
-  const [showAddBook, setShowAddBook] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
-  const [readingItem, setReadingItem] = useState<LibraryItem | null>(null);
-  const [editingItem, setEditingItem] = useState<LibraryItem | null>(null);
-  const [deletingItem, setDeletingItem] = useState<LibraryItem | null>(null);
-  const [activeUserTemplate, setActiveUserTemplate] = useState<UserTemplate | null>(null);
-  const [showWorkspace, setShowWorkspace] = useState(false);
-
-  // Scroll to top when workspace opens
-  useEffect(() => {
-    if (showWorkspace) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [showWorkspace]);
-
-  // Fetch user's active templates
-  const { data: userTemplates = [] } = useQuery({
-    queryKey: ["user-study-templates", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_study_templates")
-        .select("*")
-        .eq("user_id", user!.id)
-        .order("updated_at", { ascending: false });
-      if (error) throw error;
-      return data as UserTemplate[];
-    },
-    enabled: !!user,
-  });
-
-  // Fetch study logs
-  const { data: studyLogs = [], isLoading } = useQuery({
-    queryKey: ["study-logs", user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("study_logs")
-        .select("*")
-        .order("date", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
+  // Delete confirmation
+  const [bookToDelete, setBookToDelete] = useState<LibraryItem | null>(null);
 
   // Fetch library items
-  const { data: libraryItems = [], isLoading: libraryLoading } = useQuery({
+  const { data: libraryItems = [], isLoading: libraryLoading, refetch: refetchLibrary } = useQuery({
     queryKey: ["library-items", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("library_items")
-        .select("*, reading_state(*)")
-        .order("updated_at", { ascending: false });
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data.map((item: any) => ({
-        ...item,
-        current_page: item.reading_state?.[0]?.last_page || 1,
-        progress_percent: item.reading_state?.[0]?.progress_percent || 0,
-      })) as LibraryItem[];
+      return data as LibraryItem[];
     },
     enabled: !!user,
   });
 
-  // Calculate metrics
-  const metrics = useMemo(() => {
-    const today = format(new Date(), "yyyy-MM-dd");
-    const todayMinutes = studyLogs
-      .filter(log => log.date === today)
-      .reduce((acc, log) => acc + log.duration, 0);
-    return { todayMinutes };
-  }, [studyLogs]);
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      const { error } = await supabase
+        .from("library_items")
+        .delete()
+        .eq("id", itemId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["library-items"] });
+      toast({
+        title: "Item deleted",
+        description: "The item has been removed from your library.",
+      });
+      setBookToDelete(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete item. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
-  // Current reading item
-  const currentReading = useMemo(() => {
-    const recent = libraryItems.find(item => 
-      item.progress_percent && item.progress_percent > 0 && item.progress_percent < 100
-    );
-    if (recent) {
-      return {
-        id: recent.id,
-        title: recent.title,
-        author: recent.author,
-        type: "book" as const,
-        currentPage: recent.current_page,
-        totalPages: recent.total_pages,
-      };
-    }
-    return null;
+  // Stats
+  const stats = useMemo(() => {
+    const books = libraryItems.filter(item => item.item_type === "epub" || item.item_type === "pdf");
+    const notes = libraryItems.filter(item => item.item_type === "note");
+    const archived = libraryItems.filter(item => item.is_archived);
+    return { books: books.length, notes: notes.length, archived: archived.length };
   }, [libraryItems]);
 
-  // Add study log mutation
-  const addLogMutation = useMutation({
-    mutationFn: async (params: { duration: number; subject: string }) => {
-      const { error } = await supabase.from("study_logs").insert({
-        user_id: user!.id,
-        subject: params.subject,
-        duration: params.duration,
-        date: format(new Date(), "yyyy-MM-dd"),
-        focus_level: "medium",
-        is_timer_session: true,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["study-logs"] });
-      toast({ title: "Study session logged" });
-    },
-  });
-
-  // Upload book mutation
-  const uploadBookMutation = useMutation({
-    mutationFn: async (data: { file: File; title: string; author: string; cover?: File; totalPages?: number }) => {
-      const fileExt = data.file.name.split('.').pop()?.toLowerCase() || 'pdf';
-      const timestamp = Date.now();
-      const filePath = `${user!.id}/${timestamp}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from("library")
-        .upload(filePath, data.file);
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("library")
-        .getPublicUrl(filePath);
-
-      let coverUrl: string | null = null;
-      if (data.cover) {
-        const coverPath = `${user!.id}/covers/${timestamp}.jpg`;
-        const { error: coverError } = await supabase.storage
-          .from("library")
-          .upload(coverPath, data.cover);
-        
-        if (!coverError) {
-          const { data: { publicUrl: coverPublicUrl } } = supabase.storage
-            .from("library")
-            .getPublicUrl(coverPath);
-          coverUrl = coverPublicUrl;
-        }
-      }
-
-      let format: string = 'pdf';
-      if (['epub'].includes(fileExt)) format = 'epub';
-      else if (['doc', 'docx'].includes(fileExt)) format = fileExt;
-      else if (['ppt', 'pptx'].includes(fileExt)) format = fileExt;
-      else if (['xls', 'xlsx'].includes(fileExt)) format = fileExt;
-      else if (['txt', 'rtf'].includes(fileExt)) format = 'txt';
-
-      const { error } = await supabase.from("library_items").insert({
-        user_id: user!.id,
-        title: data.title,
-        author: data.author,
-        format,
-        file_url: publicUrl,
-        cover_url: coverUrl,
-        total_pages: data.totalPages || null,
-        file_size: data.file.size,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["library-items"] });
-      toast({ title: "Added to library" });
-      setShowAddBook(false);
-    },
-    onError: () => {
-      toast({ title: "Failed to upload", variant: "destructive" });
-    },
-  });
-
-  // Edit book mutation
-  const editBookMutation = useMutation({
-    mutationFn: async (data: { 
-      id: string; 
-      title: string; 
-      author: string; 
-      totalPages?: number; 
-      notes?: string; 
-      tags?: string[];
-      coverFile?: File;
-      coverUrl?: string;
-    }) => {
-      const updateData: any = {
-        title: data.title,
-        author: data.author,
-        total_pages: data.totalPages || null,
-        notes: data.notes || null,
-        tags: data.tags || null,
-        updated_at: new Date().toISOString(),
-      };
-      
-      if (data.coverUrl) {
-        updateData.cover_url = data.coverUrl;
-      }
-      
-      const { error } = await supabase.from("library_items").update(updateData).eq("id", data.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["library-items"] });
-      toast({ title: "Changes saved" });
-      setEditingItem(null);
-    },
-    onError: () => {
-      toast({ title: "Failed to save", variant: "destructive" });
-    },
-  });
-
-  // Delete book mutation
-  const deleteBookMutation = useMutation({
-    mutationFn: async (item: LibraryItem) => {
-      if (item.file_url) {
-        const pathMatch = item.file_url.match(/library\/(.+)$/);
-        if (pathMatch) {
-          await supabase.storage.from("library").remove([pathMatch[1]]);
-        }
-      }
-      const { error } = await supabase.from("library_items").delete().eq("id", item.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["library-items"] });
-      toast({ title: "Deleted from library" });
-      setDeletingItem(null);
-    },
-    onError: () => {
-      toast({ title: "Failed to delete", variant: "destructive" });
-    },
-  });
-
-  // Archive/Restore mutation
-  const toggleArchiveMutation = useMutation({
-    mutationFn: async (item: LibraryItem) => {
-      const { error } = await supabase.from("library_items").update({
-        is_shared: !item.is_archived,
-        updated_at: new Date().toISOString(),
-      }).eq("id", item.id);
-      if (error) throw error;
-      return !item.is_archived;
-    },
-    onSuccess: (wasArchived) => {
-      queryClient.invalidateQueries({ queryKey: ["library-items"] });
-      toast({ title: wasArchived ? "Archived" : "Restored" });
-    },
-  });
-
-  // Lock/Unlock mutation
-  const toggleLockMutation = useMutation({
-    mutationFn: async (item: LibraryItem) => {
-      const { error } = await supabase.from("library_items").update({
-        is_locked: !item.is_locked,
-        updated_at: new Date().toISOString(),
-      }).eq("id", item.id);
-      if (error) throw error;
-      return !item.is_locked;
-    },
-    onSuccess: (isNowLocked) => {
-      queryClient.invalidateQueries({ queryKey: ["library-items"] });
-      toast({ title: isNowLocked ? "Locked" : "Unlocked" });
-    },
-  });
-
-  const handleDownload = (item: LibraryItem) => {
-    if (item.file_url) {
-      const link = document.createElement('a');
-      link.href = item.file_url;
-      link.download = item.title || 'download';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+  // Handlers
+  const handleOpenBook = (item: LibraryItem) => {
+    setSelectedBook(item);
+    logActivity?.("library", `Opened "${item.title}"`);
   };
 
-  const handleShare = (item: LibraryItem) => {
-    if (item.file_url) {
-      navigator.clipboard.writeText(item.file_url);
-      toast({ title: "Link copied to clipboard" });
-    }
+  const handleCloseReader = () => {
+    setSelectedBook(null);
   };
 
-  const handleTimerComplete = (duration: number, subject: string) => {
-    addLogMutation.mutate({ duration, subject });
-    setShowTimer(false);
+  const handleBookAdded = () => {
+    setShowAddBook(false);
+    refetchLibrary();
+    toast({
+      title: "Book added",
+      description: "Your book has been added to the library.",
+    });
   };
 
-  const handleBackFromWorkspace = () => {
-    setShowWorkspace(false);
-    setActiveUserTemplate(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleBookEdited = () => {
+    setEditingBook(null);
+    refetchLibrary();
+    toast({
+      title: "Book updated",
+      description: "Your book has been updated successfully.",
+    });
   };
 
-  // Show onboarding for new users
-  if (showOnboarding && !onboardingLoading) {
-    return <StudyOnboardingFlow onComplete={completeOnboarding} />;
-  }
+  const handleDeleteBook = (item: LibraryItem) => {
+    setBookToDelete(item);
+  };
 
-  // Reading view
-  if (readingItem) {
-    return (
-      <BookReader
-        item={readingItem}
-        fileUrl=""
-        onClose={() => setReadingItem(null)}
-        onProgressUpdate={(page, progress) => {}}
-      />
-    );
-  }
-
-  // Dedicated workspace view - clean full page with breadcrumb
-  if (showWorkspace && activeUserTemplate) {
-    const templateConfig = TEMPLATE_CONFIG[activeUserTemplate.template_id];
-    const templateMeta = STUDY_TEMPLATES.find(t => t.id === activeUserTemplate.template_id);
+  const handleToggleArchive = async (item: LibraryItem) => {
+    const { error } = await supabase
+      .from("library_items")
+      .update({ is_archived: !item.is_archived })
+      .eq("id", item.id);
     
-    // Check for custom workspaces (OPSC)
-    if (templateConfig?.hasCustomWorkspace && (activeUserTemplate.template_id === "opsc-oas-2026" || activeUserTemplate.template_id === "opsc-ofs-2026")) {
+    if (!error) {
+      refetchLibrary();
+      toast({
+        title: item.is_archived ? "Unarchived" : "Archived",
+        description: `"${item.title}" has been ${item.is_archived ? "restored" : "archived"}.`,
+      });
+    }
+  };
+
+  const handleTemplateSelect = (templateId: string) => {
+    setActiveTemplate(templateId);
+    logActivity?.("study", `Started ${templateId} template`);
+  };
+
+  const handleBackToDashboard = () => {
+    setActiveTemplate(null);
+  };
+
+  const handleOnboardingComplete = (selectedTemplate: string | null) => {
+    completeOnboarding();
+    if (selectedTemplate) {
+      setActiveTemplate(selectedTemplate);
+    }
+    setShowGuidedTour(true);
+  };
+
+  // Update URL when tab changes
+  useEffect(() => {
+    setSearchParams({ tab: activeTab }, { replace: true });
+  }, [activeTab, setSearchParams]);
+
+  // Render template workspace if a template is active
+  if (activeTemplate) {
+    const config = TEMPLATE_CONFIG[activeTemplate];
+    const templateInfo = STUDY_TEMPLATES.find(t => t.id === activeTemplate);
+    
+    // Use OPSC dashboard for OPSC templates
+    if (config?.hasCustomWorkspace && activeTemplate.startsWith("opsc")) {
       return (
-        <div className="animate-fade-in">
-          <StudyWorkspaceBreadcrumb 
-            templateName={activeUserTemplate.template_name}
-            templateIcon={activeUserTemplate.template_icon}
-            onBack={handleBackFromWorkspace}
+        <div className="w-full">
+          <WorkspaceNavigation activeTemplate={activeTemplate} onBack={handleBackToDashboard} />
+          <OPSCExamDashboard 
+            examType={activeTemplate === "opsc-oas-2026" ? "OAS" : "OFS"}
+            onBack={handleBackToDashboard}
           />
-          <OPSCExamDashboard />
         </div>
       );
     }
     
-    // Generic workspace for all other templates
+    // Use generic workspace for other templates
     return (
-      <div className="animate-fade-in">
-        <StudyWorkspaceBreadcrumb 
-          templateName={activeUserTemplate.template_name}
-          templateIcon={activeUserTemplate.template_icon}
-          onBack={handleBackFromWorkspace}
-        />
+      <div className="w-full">
+        <WorkspaceNavigation activeTemplate={activeTemplate} onBack={handleBackToDashboard} />
         <GenericExamWorkspace
-          templateId={activeUserTemplate.template_id}
-          templateName={activeUserTemplate.template_name}
-          templateIcon={activeUserTemplate.template_icon}
-          templateCategory={activeUserTemplate.template_category}
-          templateSubcategory={activeUserTemplate.template_subcategory || "General"}
-          examYear={activeUserTemplate.template_year || 2026}
-          subjects={templateConfig?.subjects || ["General Topics"]}
-          totalTopics={activeUserTemplate.total_topics}
-          description={templateMeta?.description}
+          templateId={activeTemplate}
+          templateName={templateInfo?.label || activeTemplate}
+          subjects={config?.subjects || ["General"]}
+          onBack={handleBackToDashboard}
+        />
+      </div>
+    );
+  }
+
+  // Show onboarding if needed
+  if (showOnboarding && !hasCompletedOnboarding) {
+    return (
+      <div className="w-full">
+        <StudyOnboardingFlow 
+          onComplete={handleOnboardingComplete}
+          onSkip={() => completeOnboarding()}
+        />
+      </div>
+    );
+  }
+
+  // Show book reader if a book is selected
+  if (selectedBook) {
+    return (
+      <BookReader 
+        item={selectedBook} 
+        onClose={handleCloseReader} 
+      />
+    );
+  }
+
+  // Show templates library modal
+  if (showTemplatesLibrary) {
+    return (
+      <div className="w-full">
+        <StudyTemplatesLibrary
+          onSelect={(templateId) => {
+            setShowTemplatesLibrary(false);
+            handleTemplateSelect(templateId);
+          }}
+          onClose={() => setShowTemplatesLibrary(false)}
         />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in w-full">
-      {/* Header */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="w-full max-w-full overflow-x-hidden">
+      {/* Top Header with Templates Gallery Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-light text-foreground tracking-wide">Study</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            A quiet record of time and attention
+          <h1 className="text-2xl sm:text-3xl font-bold">Study</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Your personal learning workspace
           </p>
         </div>
-      </header>
-
-      {/* Focus Context Card */}
-      <FocusContextCard
-        currentItem={currentReading}
-        onContinue={() => {
-          const item = libraryItems.find(i => i.id === currentReading?.id);
-          if (item) setReadingItem(item);
-        }}
-        onStartSession={() => setShowTimer(true)}
-      />
-
-      {/* Today's summary */}
-      {metrics.todayMinutes > 0 && (
-        <p className="text-sm text-muted-foreground">
-          {metrics.todayMinutes} minutes studied today
-        </p>
-      )}
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/30 border border-border p-1 h-auto flex-wrap w-full sm:w-auto">
-          <TabsTrigger value="progress" className="data-[state=active]:bg-card gap-2">
-            <CheckSquare className="w-4 h-4" />
-            <span className="hidden sm:inline">Study Timetable</span>
-          </TabsTrigger>
-          <TabsTrigger value="gallery" className="data-[state=active]:bg-card gap-2">
+        <div className="flex items-center gap-2">
+          <Button
+            variant={activeTab === "gallery" ? "default" : "outline"}
+            onClick={() => setActiveTab("gallery")}
+            className="gap-2"
+          >
             <Layout className="w-4 h-4" />
-            <span className="hidden sm:inline">Templates Gallery</span>
-          </TabsTrigger>
-          <TabsTrigger value="reviews" className="data-[state=active]:bg-card gap-2">
-            <Brain className="w-4 h-4" />
-            <span className="hidden sm:inline">Reviews</span>
-          </TabsTrigger>
-          <TabsTrigger value="leaderboard" className="data-[state=active]:bg-card gap-2">
-            <Trophy className="w-4 h-4" />
-            <span className="hidden sm:inline">Leaderboard</span>
-          </TabsTrigger>
-          <TabsTrigger value="library" className="data-[state=active]:bg-card gap-2">
-            <BookOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">Library</span>
-          </TabsTrigger>
-          <TabsTrigger value="vocabulary" className="data-[state=active]:bg-card gap-2">
-            <BookMarked className="w-4 h-4" />
-            <span className="hidden sm:inline">Vocabulary</span>
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-card gap-2">
-            <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Analytics</span>
-          </TabsTrigger>
-        </TabsList>
+            Templates Gallery
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowTemplatesLibrary(true)}
+            className="gap-2"
+          >
+            <LayoutTemplate className="w-4 h-4" />
+            My Templates
+          </Button>
+        </div>
+      </div>
 
-        <TabsContent value="timeline">
-          <StudyTimeline sessions={studyLogs} />
-        </TabsContent>
+      {/* Main Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="overflow-x-auto pb-2 -mx-1 px-1">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 gap-1 bg-muted/50 p-1">
+            <TabsTrigger value="gallery" className="data-[state=active]:bg-card gap-2">
+              <Layout className="w-4 h-4" />
+              <span className="hidden sm:inline">Templates</span>
+            </TabsTrigger>
+            <TabsTrigger value="timetable" className="data-[state=active]:bg-card gap-2">
+              <CheckSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">Study Timetable</span>
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="data-[state=active]:bg-card gap-2">
+              <Brain className="w-4 h-4" />
+              <span className="hidden sm:inline">Reviews</span>
+            </TabsTrigger>
+            <TabsTrigger value="focus" className="data-[state=active]:bg-card gap-2">
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline">Focus</span>
+            </TabsTrigger>
+            <TabsTrigger value="library" className="data-[state=active]:bg-card gap-2">
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Library</span>
+            </TabsTrigger>
+            <TabsTrigger value="goals" className="data-[state=active]:bg-card gap-2">
+              <Target className="w-4 h-4" />
+              <span className="hidden sm:inline">Goals</span>
+            </TabsTrigger>
+            <TabsTrigger value="vocabulary" className="data-[state=active]:bg-card gap-2">
+              <BookMarked className="w-4 h-4" />
+              <span className="hidden sm:inline">Vocabulary</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="data-[state=active]:bg-card gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="leaderboard" className="data-[state=active]:bg-card gap-2">
+              <Trophy className="w-4 h-4" />
+              <span className="hidden sm:inline">Leaderboard</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="progress">
-          <div className="space-y-6">
-            {activeUserTemplate && (
-              <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
-                <span className="text-2xl">{activeUserTemplate.template_icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{activeUserTemplate.template_name}</p>
-                  <p className="text-xs text-muted-foreground">{activeUserTemplate.progress_percent.toFixed(0)}% complete</p>
-                </div>
-              </div>
-            )}
-            
-            <StudyTodosWidget />
-            
-            <div className="flex gap-2 flex-wrap">
-              <SyllabusAIParser onSuccess={() => queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] })} />
-            </div>
-            
-            <StudySubjectManager />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="templates">
-          <StudyTemplatesLibrary 
-            onSelectTemplate={(template) => {
-              setActiveUserTemplate(template);
-              setShowWorkspace(true);
-              toast({ title: `Opened ${template.template_name}` });
-            }}
-            activeTemplateId={activeUserTemplate?.id}
-          />
-        </TabsContent>
-
-        <TabsContent value="gallery">
+        {/* Templates Gallery Tab */}
+        <TabsContent value="gallery" className="mt-6">
           <TemplatesGallery />
         </TabsContent>
 
-        <TabsContent value="reviews">
-          <SpacedRepetitionReminders />
-        </TabsContent>
-
-        <TabsContent value="leaderboard">
-          <StudyLeaderboard />
-        </TabsContent>
-
-        <TabsContent value="library">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Button
-                variant={showArchived ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setShowArchived(!showArchived)}
-                className="gap-2"
-              >
-                <Archive className="w-4 h-4" />
-                {showArchived ? "Show Active" : "Show Archived"}
-              </Button>
+        {/* Study Timetable Tab */}
+        <TabsContent value="timetable" className="mt-6">
+          <div className="grid gap-6 xl:grid-cols-3">
+            <div className="xl:col-span-2 space-y-6">
+              <StudyTimeline />
+              <StudySubjectManager />
             </div>
-            <LibraryGrid
-              items={libraryItems}
-              onItemClick={(item) => setReadingItem(item)}
-              onUpload={() => setShowAddBook(true)}
-              onEdit={(item) => setEditingItem(item)}
-              onDelete={(item) => setDeletingItem(item)}
-              onArchive={(item) => toggleArchiveMutation.mutate(item)}
-              onLock={(item) => toggleLockMutation.mutate(item)}
-              onDownload={handleDownload}
-              onShare={handleShare}
-              showArchived={showArchived}
-              isLoading={libraryLoading}
-            />
+            <div className="space-y-6">
+              <StudyTodosWidget />
+              <SyllabusAIParser />
+            </div>
           </div>
         </TabsContent>
 
-        <TabsContent value="vocabulary">
+        <TabsContent value="reviews" className="mt-6">
+          <SpacedRepetitionReminders />
+        </TabsContent>
+
+        <TabsContent value="focus" className="mt-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <CalmFocusTimer />
+            <FocusContextCard />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="library" className="mt-6">
+          <LibraryGrid
+            items={libraryItems}
+            isLoading={libraryLoading}
+            onOpenBook={handleOpenBook}
+            onEditBook={setEditingBook}
+            onDeleteBook={handleDeleteBook}
+            onToggleArchive={handleToggleArchive}
+            onAddBook={() => setShowAddBook(true)}
+          />
+        </TabsContent>
+
+        <TabsContent value="goals" className="mt-6">
+          <StudyGoals />
+        </TabsContent>
+
+        <TabsContent value="vocabulary" className="mt-6">
           <VocabularyScreen />
         </TabsContent>
 
-        <TabsContent value="goals">
-          <StudyGoals studyLogs={studyLogs} />
+        <TabsContent value="analytics" className="mt-6">
+          <StudyAnalytics />
         </TabsContent>
 
-        <TabsContent value="analytics">
-          <StudyAnalytics />
+        <TabsContent value="leaderboard" className="mt-6">
+          <StudyLeaderboard />
         </TabsContent>
       </Tabs>
 
-      {/* Calm Focus Timer */}
-      {showTimer && (
-        <CalmFocusTimer
-          onComplete={handleTimerComplete}
-          onClose={() => setShowTimer(false)}
-          subjects={subjects}
-          isOpen={showTimer}
-        />
-      )}
-
-      {/* Add Book Dialog */}
+      {/* Dialogs */}
       <AddBookDialog
         open={showAddBook}
         onOpenChange={setShowAddBook}
-        onUpload={(data) => uploadBookMutation.mutate(data)}
-        isUploading={uploadBookMutation.isPending}
+        onSuccess={handleBookAdded}
       />
 
-      {/* Edit Book Dialog */}
-      <EditBookDialog
-        open={!!editingItem}
-        onOpenChange={(open) => !open && setEditingItem(null)}
-        item={editingItem}
-        onSave={(data) => editBookMutation.mutate(data)}
-        isSaving={editBookMutation.isPending}
-      />
+      {editingBook && (
+        <EditBookDialog
+          open={!!editingBook}
+          onOpenChange={(open) => !open && setEditingBook(null)}
+          book={editingBook}
+          onSuccess={handleBookEdited}
+        />
+      )}
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deletingItem} onOpenChange={(open) => !open && setDeletingItem(null)}>
+      <AlertDialog open={!!bookToDelete} onOpenChange={(open) => !open && setBookToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete "{deletingItem?.title}"?</AlertDialogTitle>
+            <AlertDialogTitle>Delete "{bookToDelete?.title}"?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove this item from your library. This action cannot be undone.
+              This action cannot be undone. This will permanently delete this item from your library.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletingItem && deleteBookMutation.mutate(deletingItem)}
+              onClick={() => bookToDelete && deleteMutation.mutate(bookToDelete.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
@@ -695,6 +512,11 @@ const Study = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Guided Tour */}
+      {showGuidedTour && (
+        <StudyGuidedTour onComplete={() => setShowGuidedTour(false)} />
+      )}
     </div>
   );
 };

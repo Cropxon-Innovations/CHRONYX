@@ -5072,6 +5072,7 @@ export type Database = {
           email_verified: boolean | null
           height_cm: number | null
           id: string
+          is_suspended: boolean | null
           phone_number: string | null
           phone_verified: boolean | null
           primary_contact: string | null
@@ -5093,6 +5094,7 @@ export type Database = {
           email_verified?: boolean | null
           height_cm?: number | null
           id: string
+          is_suspended?: boolean | null
           phone_number?: string | null
           phone_verified?: boolean | null
           primary_contact?: string | null
@@ -5114,6 +5116,7 @@ export type Database = {
           email_verified?: boolean | null
           height_cm?: number | null
           id?: string
+          is_suspended?: boolean | null
           phone_number?: string | null
           phone_verified?: boolean | null
           primary_contact?: string | null
