@@ -7324,6 +7324,880 @@ export type Database = {
         }
         Relationships: []
       }
+      tech_career_readiness: {
+        Row: {
+          architecture_score: number | null
+          backend_score: number | null
+          calculated_at: string | null
+          cloud_score: number | null
+          created_at: string | null
+          devops_score: number | null
+          dsa_score: number | null
+          frontend_score: number | null
+          id: string
+          interview_score: number | null
+          overall_score: number | null
+          recommendations: Json | null
+          updated_at: string | null
+          user_id: string
+          weak_areas: string[] | null
+        }
+        Insert: {
+          architecture_score?: number | null
+          backend_score?: number | null
+          calculated_at?: string | null
+          cloud_score?: number | null
+          created_at?: string | null
+          devops_score?: number | null
+          dsa_score?: number | null
+          frontend_score?: number | null
+          id?: string
+          interview_score?: number | null
+          overall_score?: number | null
+          recommendations?: Json | null
+          updated_at?: string | null
+          user_id: string
+          weak_areas?: string[] | null
+        }
+        Update: {
+          architecture_score?: number | null
+          backend_score?: number | null
+          calculated_at?: string | null
+          cloud_score?: number | null
+          created_at?: string | null
+          devops_score?: number | null
+          dsa_score?: number | null
+          frontend_score?: number | null
+          id?: string
+          interview_score?: number | null
+          overall_score?: number | null
+          recommendations?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          weak_areas?: string[] | null
+        }
+        Relationships: []
+      }
+      tech_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tech_dsa_problems: {
+        Row: {
+          category: string
+          company_tags: string[] | null
+          constraints: string | null
+          created_at: string | null
+          description: string
+          difficulty: string | null
+          display_order: number | null
+          examples: Json | null
+          hints: string[] | null
+          id: string
+          input_format: string | null
+          is_premium: boolean | null
+          output_format: string | null
+          slug: string
+          solution: string | null
+          space_complexity: string | null
+          subcategory: string | null
+          time_complexity: string | null
+          title: string
+          topic_tags: string[] | null
+        }
+        Insert: {
+          category: string
+          company_tags?: string[] | null
+          constraints?: string | null
+          created_at?: string | null
+          description: string
+          difficulty?: string | null
+          display_order?: number | null
+          examples?: Json | null
+          hints?: string[] | null
+          id?: string
+          input_format?: string | null
+          is_premium?: boolean | null
+          output_format?: string | null
+          slug: string
+          solution?: string | null
+          space_complexity?: string | null
+          subcategory?: string | null
+          time_complexity?: string | null
+          title: string
+          topic_tags?: string[] | null
+        }
+        Update: {
+          category?: string
+          company_tags?: string[] | null
+          constraints?: string | null
+          created_at?: string | null
+          description?: string
+          difficulty?: string | null
+          display_order?: number | null
+          examples?: Json | null
+          hints?: string[] | null
+          id?: string
+          input_format?: string | null
+          is_premium?: boolean | null
+          output_format?: string | null
+          slug?: string
+          solution?: string | null
+          space_complexity?: string | null
+          subcategory?: string | null
+          time_complexity?: string | null
+          title?: string
+          topic_tags?: string[] | null
+        }
+        Relationships: []
+      }
+      tech_dsa_progress: {
+        Row: {
+          attempt_count: number | null
+          best_status: string | null
+          created_at: string | null
+          id: string
+          is_bookmarked: boolean | null
+          last_attempted_at: string | null
+          problem_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          attempt_count?: number | null
+          best_status?: string | null
+          created_at?: string | null
+          id?: string
+          is_bookmarked?: boolean | null
+          last_attempted_at?: string | null
+          problem_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          attempt_count?: number | null
+          best_status?: string | null
+          created_at?: string | null
+          id?: string
+          is_bookmarked?: boolean | null
+          last_attempted_at?: string | null
+          problem_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_dsa_progress_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "tech_dsa_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_dsa_submissions: {
+        Row: {
+          code: string | null
+          created_at: string | null
+          id: string
+          language: string | null
+          notes: string | null
+          problem_id: string
+          status: string | null
+          submitted_at: string | null
+          time_taken_minutes: number | null
+          user_id: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          notes?: string | null
+          problem_id: string
+          status?: string | null
+          submitted_at?: string | null
+          time_taken_minutes?: number | null
+          user_id: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          notes?: string | null
+          problem_id?: string
+          status?: string | null
+          submitted_at?: string | null
+          time_taken_minutes?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_dsa_submissions_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "tech_dsa_problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_interview_practice: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          id: string
+          last_practiced_at: string | null
+          practice_count: number | null
+          question_id: string
+          status: string | null
+          updated_at: string | null
+          user_answer: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          last_practiced_at?: string | null
+          practice_count?: number | null
+          question_id: string
+          status?: string | null
+          updated_at?: string | null
+          user_answer?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          last_practiced_at?: string | null
+          practice_count?: number | null
+          question_id?: string
+          status?: string | null
+          updated_at?: string | null
+          user_answer?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_interview_practice_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "tech_interview_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_interview_questions: {
+        Row: {
+          answer: string | null
+          company_tags: string[] | null
+          created_at: string | null
+          custom_tags: string[] | null
+          difficulty: string | null
+          frequency: string | null
+          hint: string | null
+          id: string
+          is_public: boolean | null
+          is_system: boolean | null
+          module_id: string | null
+          question: string
+          topic_id: string | null
+          track_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          answer?: string | null
+          company_tags?: string[] | null
+          created_at?: string | null
+          custom_tags?: string[] | null
+          difficulty?: string | null
+          frequency?: string | null
+          hint?: string | null
+          id?: string
+          is_public?: boolean | null
+          is_system?: boolean | null
+          module_id?: string | null
+          question: string
+          topic_id?: string | null
+          track_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          answer?: string | null
+          company_tags?: string[] | null
+          created_at?: string | null
+          custom_tags?: string[] | null
+          difficulty?: string | null
+          frequency?: string | null
+          hint?: string | null
+          id?: string
+          is_public?: boolean | null
+          is_system?: boolean | null
+          module_id?: string | null
+          question?: string
+          topic_id?: string | null
+          track_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_interview_questions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "tech_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tech_interview_questions_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "tech_topics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tech_interview_questions_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tech_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_modules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          importance_weight: number | null
+          interview_frequency: string | null
+          level_id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          importance_weight?: number | null
+          interview_frequency?: string | null
+          level_id: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          importance_weight?: number | null
+          interview_frequency?: string | null
+          level_id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_modules_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "tech_track_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_project_documents: {
+        Row: {
+          created_at: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          name: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          name: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          name?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "tech_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_project_links: {
+        Row: {
+          created_at: string | null
+          id: string
+          module_id: string | null
+          project_id: string
+          topic_id: string | null
+          track_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          project_id: string
+          topic_id?: string | null
+          track_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          project_id?: string
+          topic_id?: string | null
+          track_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_project_links_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "tech_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tech_project_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "tech_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tech_project_links_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "tech_topics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tech_project_links_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tech_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_projects: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          design_notes: string | null
+          end_date: string | null
+          github_url: string | null
+          hub_category: string | null
+          id: string
+          is_public: boolean | null
+          is_published_to_hub: boolean | null
+          live_url: string | null
+          name: string
+          progress_percent: number | null
+          start_date: string | null
+          status: string | null
+          tech_stack: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          design_notes?: string | null
+          end_date?: string | null
+          github_url?: string | null
+          hub_category?: string | null
+          id?: string
+          is_public?: boolean | null
+          is_published_to_hub?: boolean | null
+          live_url?: string | null
+          name: string
+          progress_percent?: number | null
+          start_date?: string | null
+          status?: string | null
+          tech_stack?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          design_notes?: string | null
+          end_date?: string | null
+          github_url?: string | null
+          hub_category?: string | null
+          id?: string
+          is_public?: boolean | null
+          is_published_to_hub?: boolean | null
+          live_url?: string | null
+          name?: string
+          progress_percent?: number | null
+          start_date?: string | null
+          status?: string | null
+          tech_stack?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tech_subtopics: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          name: string
+          topic_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          name: string
+          topic_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          name?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_subtopics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "tech_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_topic_attachments: {
+        Row: {
+          attachment_type: string
+          content: string | null
+          created_at: string | null
+          file_url: string | null
+          id: string
+          title: string
+          topic_id: string
+          user_id: string
+        }
+        Insert: {
+          attachment_type: string
+          content?: string | null
+          created_at?: string | null
+          file_url?: string | null
+          id?: string
+          title: string
+          topic_id: string
+          user_id: string
+        }
+        Update: {
+          attachment_type?: string
+          content?: string | null
+          created_at?: string | null
+          file_url?: string | null
+          id?: string
+          title?: string
+          topic_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_topic_attachments_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "tech_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_topics: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          display_order: number | null
+          estimated_minutes: number | null
+          id: string
+          importance_weight: number | null
+          industry_relevance: string | null
+          interview_frequency: string | null
+          module_id: string
+          name: string
+          next_topics: string[] | null
+          prerequisites: string[] | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          display_order?: number | null
+          estimated_minutes?: number | null
+          id?: string
+          importance_weight?: number | null
+          industry_relevance?: string | null
+          interview_frequency?: string | null
+          module_id: string
+          name: string
+          next_topics?: string[] | null
+          prerequisites?: string[] | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          display_order?: number | null
+          estimated_minutes?: number | null
+          id?: string
+          importance_weight?: number | null
+          industry_relevance?: string | null
+          interview_frequency?: string | null
+          module_id?: string
+          name?: string
+          next_topics?: string[] | null
+          prerequisites?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_topics_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "tech_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_track_levels: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          estimated_hours: number | null
+          id: string
+          level_order: number
+          name: string
+          track_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          level_order: number
+          name: string
+          track_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          estimated_hours?: number | null
+          id?: string
+          level_order?: number
+          name?: string
+          track_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_track_levels_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tech_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_tracks: {
+        Row: {
+          career_relevance: string | null
+          category_id: string
+          color: string | null
+          created_at: string | null
+          description: string | null
+          difficulty_level: string | null
+          display_order: number | null
+          estimated_hours: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          is_premium: boolean | null
+          name: string
+          prerequisites: string[] | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          career_relevance?: string | null
+          category_id: string
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          display_order?: number | null
+          estimated_hours?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_premium?: boolean | null
+          name: string
+          prerequisites?: string[] | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          career_relevance?: string | null
+          category_id?: string
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          display_order?: number | null
+          estimated_hours?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_premium?: boolean | null
+          name?: string
+          prerequisites?: string[] | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_tracks_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "tech_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_user_progress: {
+        Row: {
+          completed_at: string | null
+          confidence_level: number | null
+          created_at: string | null
+          id: string
+          last_studied_at: string | null
+          notes: string | null
+          progress_percent: number | null
+          revision_count: number | null
+          status: string | null
+          time_spent_minutes: number | null
+          topic_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          confidence_level?: number | null
+          created_at?: string | null
+          id?: string
+          last_studied_at?: string | null
+          notes?: string | null
+          progress_percent?: number | null
+          revision_count?: number | null
+          status?: string | null
+          time_spent_minutes?: number | null
+          topic_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          confidence_level?: number | null
+          created_at?: string | null
+          id?: string
+          last_studied_at?: string | null
+          notes?: string | null
+          progress_percent?: number | null
+          revision_count?: number | null
+          status?: string | null
+          time_spent_minutes?: number | null
+          topic_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_user_progress_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "tech_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           category: string | null
