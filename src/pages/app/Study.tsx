@@ -119,12 +119,14 @@ const WorkspaceNavigation = ({
   activeTemplate: string;
   onBack: () => void;
 }) => {
-  const templateLabel = STUDY_TEMPLATES.find(t => t.id === activeTemplate)?.label || activeTemplate;
+  const templateInfo = STUDY_TEMPLATES.find(t => t.id === activeTemplate);
+  const templateName = templateInfo?.name || activeTemplate;
+  const templateIcon = templateInfo?.icon || "📚";
   
   return (
     <StudyWorkspaceBreadcrumb
-      templateId={activeTemplate}
-      templateLabel={templateLabel}
+      templateName={templateName}
+      templateIcon={templateIcon}
       onBack={onBack}
     />
   );
@@ -150,8 +152,9 @@ const Study = () => {
   // Onboarding states
   const { 
     showOnboarding, 
-    hasCompletedOnboarding, 
-    completeOnboarding 
+    showTour,
+    completeOnboarding,
+    completeTour 
   } = useStudyOnboarding();
   const [showGuidedTour, setShowGuidedTour] = useState(false);
   
@@ -201,8 +204,8 @@ const Study = () => {
 
   // Stats
   const stats = useMemo(() => {
-    const books = libraryItems.filter(item => item.item_type === "epub" || item.item_type === "pdf");
-    const notes = libraryItems.filter(item => item.item_type === "note");
+    const books = libraryItems.filter(item => item.format === "epub" || item.format === "pdf");
+    const notes = libraryItems.filter(item => item.format === "txt");
     const archived = libraryItems.filter(item => item.is_archived);
     return { books: books.length, notes: notes.length, archived: archived.length };
   }, [libraryItems]);
@@ -263,11 +266,8 @@ const Study = () => {
     setActiveTemplate(null);
   };
 
-  const handleOnboardingComplete = (selectedTemplate: string | null) => {
+  const handleOnboardingComplete = () => {
     completeOnboarding();
-    if (selectedTemplate) {
-      setActiveTemplate(selectedTemplate);
-    }
     setShowGuidedTour(true);
   };
 
@@ -286,10 +286,7 @@ const Study = () => {
       return (
         <div className="w-full">
           <WorkspaceNavigation activeTemplate={activeTemplate} onBack={handleBackToDashboard} />
-          <OPSCExamDashboard 
-            examType={activeTemplate === "opsc-oas-2026" ? "OAS" : "OFS"}
-            onBack={handleBackToDashboard}
-          />
+          <OPSCExamDashboard />
         </div>
       );
     }
@@ -300,31 +297,35 @@ const Study = () => {
         <WorkspaceNavigation activeTemplate={activeTemplate} onBack={handleBackToDashboard} />
         <GenericExamWorkspace
           templateId={activeTemplate}
-          templateName={templateInfo?.label || activeTemplate}
+          templateName={templateInfo?.name || activeTemplate}
+          templateIcon={templateInfo?.icon || "📚"}
+          templateCategory={templateInfo?.category || "study"}
+          templateSubcategory={templateInfo?.subcategory || ""}
+          examYear={templateInfo?.year || new Date().getFullYear()}
           subjects={config?.subjects || ["General"]}
-          onBack={handleBackToDashboard}
+          totalTopics={templateInfo?.topics || 20}
         />
       </div>
     );
   }
 
   // Show onboarding if needed
-  if (showOnboarding && !hasCompletedOnboarding) {
+  if (showOnboarding) {
     return (
       <div className="w-full">
         <StudyOnboardingFlow 
           onComplete={handleOnboardingComplete}
-          onSkip={() => completeOnboarding()}
         />
       </div>
     );
   }
 
   // Show book reader if a book is selected
-  if (selectedBook) {
+  if (selectedBook && selectedBook.file_url) {
     return (
       <BookReader 
-        item={selectedBook} 
+        item={selectedBook}
+        fileUrl={selectedBook.file_url}
         onClose={handleCloseReader} 
       />
     );
@@ -335,11 +336,10 @@ const Study = () => {
     return (
       <div className="w-full">
         <StudyTemplatesLibrary
-          onSelect={(templateId) => {
+          onSelectTemplate={(template) => {
             setShowTemplatesLibrary(false);
-            handleTemplateSelect(templateId);
+            handleTemplateSelect(template.template_id);
           }}
-          onClose={() => setShowTemplatesLibrary(false)}
         />
       </div>
     );
@@ -427,7 +427,6 @@ const Study = () => {
         <TabsContent value="timetable" className="mt-6">
           <div className="grid gap-6 xl:grid-cols-3">
             <div className="xl:col-span-2 space-y-6">
-              <StudyTimeline />
               <StudySubjectManager />
             </div>
             <div className="space-y-6">
@@ -452,16 +451,19 @@ const Study = () => {
           <LibraryGrid
             items={libraryItems}
             isLoading={libraryLoading}
-            onOpenBook={handleOpenBook}
-            onEditBook={setEditingBook}
-            onDeleteBook={handleDeleteBook}
-            onToggleArchive={handleToggleArchive}
-            onAddBook={() => setShowAddBook(true)}
+            onItemClick={handleOpenBook}
+            onUpload={() => setShowAddBook(true)}
+            onEdit={setEditingBook}
+            onDelete={handleDeleteBook}
+            onArchive={handleToggleArchive}
           />
         </TabsContent>
 
         <TabsContent value="goals" className="mt-6">
-          <StudyGoals />
+          <div className="text-center py-12 text-muted-foreground">
+            <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p>Study Goals coming soon...</p>
+          </div>
         </TabsContent>
 
         <TabsContent value="vocabulary" className="mt-6">
@@ -481,15 +483,21 @@ const Study = () => {
       <AddBookDialog
         open={showAddBook}
         onOpenChange={setShowAddBook}
-        onSuccess={handleBookAdded}
+        onUpload={(data) => {
+          setShowAddBook(false);
+          refetchLibrary();
+        }}
       />
 
       {editingBook && (
         <EditBookDialog
           open={!!editingBook}
           onOpenChange={(open) => !open && setEditingBook(null)}
-          book={editingBook}
-          onSuccess={handleBookEdited}
+          item={editingBook}
+          onSave={() => {
+            setEditingBook(null);
+            refetchLibrary();
+          }}
         />
       )}
 

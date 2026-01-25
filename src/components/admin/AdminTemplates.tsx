@@ -13,41 +13,14 @@ import { Separator } from "@/components/ui/separator";
 import { 
   Layout, Plus, Star, Eye, Trash2, Send, Check, 
   BookOpen, Target, Award, Clock, Users, FileText,
-  ChevronRight, CheckCircle2, Briefcase, Code, Globe
+  ChevronRight, CheckCircle2, Briefcase, Code, Globe,
+  Edit2, Save, X
 } from "lucide-react";
 import { useAdminTemplates, useCreateTemplate, useCreateNotification, useLogAdminActivity } from "@/hooks/useAdmin";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "sonner";
-
-// Sample syllabus preview data for different categories
-const syllabusPreviewData: Record<string, any> = {
-  study: {
-    subjects: ["Core Concepts", "Advanced Topics", "Practical Applications"],
-    topics: 24,
-    resources: 12,
-    estimatedTime: "40 hours",
-  },
-  exam: {
-    subjects: ["Prelims", "Mains", "Interview"],
-    topics: 50,
-    resources: 30,
-    estimatedTime: "200+ hours",
-  },
-  technical: {
-    subjects: ["Fundamentals", "System Design", "DSA", "Projects"],
-    topics: 80,
-    resources: 45,
-    estimatedTime: "150 hours",
-  },
-  finance: {
-    subjects: ["Budgeting", "Investments", "Tax Planning"],
-    topics: 15,
-    resources: 8,
-    estimatedTime: "20 hours",
-  },
-};
 
 // Category configuration for organization
 const categoryConfig: Record<string, { icon: any; label: string; color: string }> = {
@@ -68,18 +41,46 @@ const AdminTemplates = () => {
   const logActivity = useLogAdminActivity();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<any>(null);
   const [previewTemplate, setPreviewTemplate] = useState<any>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("all");
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "study",
+    category: "government",
     template_type: "syllabus",
     is_featured: false,
     subjects: "",
     topics_count: 20,
     resources_count: 10,
     estimated_hours: 40,
+    outcomes: "",
+    prerequisites: "",
+  });
+
+  // Update template mutation
+  const updateTemplate = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const { error } = await supabase
+        .from("admin_templates")
+        .update(data)
+        .eq("id", id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["public-templates"] });
+      toast.success("Template updated successfully");
+      setEditingTemplate(null);
+    },
+    onError: (error) => {
+      console.error("Failed to update:", error);
+      toast.error("Failed to update template");
+    },
   });
 
   // Publish template mutation
@@ -100,20 +101,17 @@ const AdminTemplates = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-templates"] });
       queryClient.invalidateQueries({ queryKey: ["public-templates"] });
       
-      // Get template details for notification
       const template = templates?.find(t => t.id === templateId);
       
-      // Create notification for all users
       await createNotification.mutateAsync({
         title: "🎉 New Template Available!",
-        message: `Check out the new "${template?.title}" template in the Template Library. ${template?.description || ''}`,
+        message: `Check out the new "${template?.title}" template in the Template Library.`,
         notification_type: "feature",
         target_audience: "all",
-        action_url: "/app/study/templates",
+        action_url: "/app/study?tab=gallery",
         action_label: "View Template",
       });
 
-      // Log activity
       logActivity.mutate({
         action: `Published template: ${template?.title}`,
         target_type: "template",
@@ -128,6 +126,90 @@ const AdminTemplates = () => {
     },
   });
 
+  // Unpublish (save to draft) mutation
+  const unpublishTemplate = useMutation({
+    mutationFn: async (templateId: string) => {
+      const { error } = await supabase
+        .from("admin_templates")
+        .update({ 
+          is_active: false,
+          published_at: null
+        })
+        .eq("id", templateId);
+      
+      if (error) throw error;
+      return templateId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["public-templates"] });
+      toast.success("Template saved to drafts");
+    },
+    onError: (error) => {
+      console.error("Failed to unpublish:", error);
+      toast.error("Failed to save to drafts");
+    },
+  });
+
+  // Delete template mutation
+  const deleteTemplate = useMutation({
+    mutationFn: async (templateId: string) => {
+      const { error } = await supabase
+        .from("admin_templates")
+        .delete()
+        .eq("id", templateId);
+      
+      if (error) throw error;
+      return templateId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-templates"] });
+      toast.success("Template deleted");
+    },
+    onError: (error) => {
+      console.error("Failed to delete:", error);
+      toast.error("Failed to delete template");
+    },
+  });
+
+  const handleEdit = (template: any) => {
+    const templateData = template.template_data || {};
+    setEditingTemplate({
+      ...template,
+      subjects: templateData.subjects?.join(", ") || "",
+      topics_count: templateData.topics_count || 20,
+      resources_count: templateData.resources_count || 10,
+      estimated_hours: templateData.estimated_hours || 40,
+      outcomes: templateData.outcomes?.join("\n") || "",
+      prerequisites: templateData.prerequisites?.join("\n") || "",
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingTemplate) return;
+    
+    const templateData = {
+      subjects: editingTemplate.subjects.split(",").map((s: string) => s.trim()).filter(Boolean),
+      topics_count: editingTemplate.topics_count,
+      resources_count: editingTemplate.resources_count,
+      estimated_hours: editingTemplate.estimated_hours,
+      outcomes: editingTemplate.outcomes.split("\n").filter(Boolean),
+      prerequisites: editingTemplate.prerequisites.split("\n").filter(Boolean),
+    };
+
+    updateTemplate.mutate({
+      id: editingTemplate.id,
+      data: {
+        title: editingTemplate.title,
+        description: editingTemplate.description,
+        category: editingTemplate.category,
+        template_type: editingTemplate.template_type,
+        is_featured: editingTemplate.is_featured,
+        template_data: templateData,
+      }
+    });
+  };
+
   const handlePreview = (template: any) => {
     setPreviewTemplate(template);
   };
@@ -140,7 +222,7 @@ const AdminTemplates = () => {
     setPreviewTemplate(null);
   };
 
-  const handleCreateAndPreview = () => {
+  const handleCreate = () => {
     if (!formData.title.trim()) {
       toast.error("Please enter a template title");
       return;
@@ -151,6 +233,8 @@ const AdminTemplates = () => {
       topics_count: formData.topics_count,
       resources_count: formData.resources_count,
       estimated_hours: formData.estimated_hours,
+      outcomes: formData.outcomes.split("\n").filter(Boolean),
+      prerequisites: formData.prerequisites.split("\n").filter(Boolean),
     };
     
     createTemplate.mutate({
@@ -161,23 +245,21 @@ const AdminTemplates = () => {
       template_data: templateData,
       is_featured: formData.is_featured,
     }, {
-      onSuccess: (data) => {
+      onSuccess: () => {
         setIsDialogOpen(false);
         setFormData({
           title: "",
           description: "",
-          category: "study",
+          category: "government",
           template_type: "syllabus",
           is_featured: false,
           subjects: "",
           topics_count: 20,
           resources_count: 10,
           estimated_hours: 40,
+          outcomes: "",
+          prerequisites: "",
         });
-        // Open preview for the new template
-        if (data) {
-          setPreviewTemplate(data);
-        }
       }
     });
   };
@@ -190,9 +272,14 @@ const AdminTemplates = () => {
     );
   }
 
-  // Count published as those with published_at set (not just is_active)
   const publishedTemplates = templates?.filter(t => t.published_at !== null)?.length || 0;
   const draftTemplates = templates?.filter(t => t.published_at === null)?.length || 0;
+
+  // Group templates by category
+  const categories = ["government", "technical", "international", "study", "exam", "finance", "library"];
+  const filteredTemplates = activeCategory === "all" 
+    ? templates 
+    : templates?.filter(t => t.category === activeCategory);
 
   return (
     <div className="space-y-6">
@@ -214,8 +301,8 @@ const AdminTemplates = () => {
         <Card className="border-border/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10">
-                <Check className="w-5 h-5 text-primary" />
+              <div className="p-2.5 rounded-xl bg-emerald-500/10">
+                <Check className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{publishedTemplates}</p>
@@ -227,8 +314,8 @@ const AdminTemplates = () => {
         <Card className="border-border/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10">
-                <FileText className="w-5 h-5 text-primary" />
+              <div className="p-2.5 rounded-xl bg-amber-500/10">
+                <FileText className="w-5 h-5 text-amber-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{draftTemplates}</p>
@@ -264,7 +351,7 @@ const AdminTemplates = () => {
                 Template Management
               </CardTitle>
               <CardDescription>
-                Create, preview, and publish templates for all users
+                Create, edit, preview, and publish templates for all users
               </CardDescription>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -274,32 +361,23 @@ const AdminTemplates = () => {
                   New Template
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Create New Template</DialogTitle>
                   <DialogDescription>
-                    Fill in the details and preview before publishing
+                    Fill in all details before saving to drafts
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Title *</Label>
-                    <Input
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="e.g., UPSC Civil Services 2025"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Brief description of what this template covers..."
-                      rows={3}
-                    />
-                  </div>
                   <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Title *</Label>
+                      <Input
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="e.g., UPSC Civil Services 2025"
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label>Category</Label>
                       <Select
@@ -310,43 +388,36 @@ const AdminTemplates = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="study">Study</SelectItem>
-                          <SelectItem value="exam">Exam</SelectItem>
-                          <SelectItem value="technical">Technical</SelectItem>
+                          <SelectItem value="government">Government Exams</SelectItem>
+                          <SelectItem value="technical">Technical Careers</SelectItem>
+                          <SelectItem value="international">International Exams</SelectItem>
+                          <SelectItem value="study">Study Plans</SelectItem>
+                          <SelectItem value="exam">Exam Prep</SelectItem>
                           <SelectItem value="finance">Finance</SelectItem>
-                          <SelectItem value="library">Library</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Type</Label>
-                      <Select
-                        value={formData.template_type}
-                        onValueChange={(value) => setFormData({ ...formData, template_type: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="syllabus">Syllabus</SelectItem>
-                          <SelectItem value="exam">Exam Pattern</SelectItem>
-                          <SelectItem value="workflow">Workflow</SelectItem>
-                          <SelectItem value="schedule">Schedule</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Brief description of what this template covers..."
+                      rows={3}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Subjects (comma separated)</Label>
                     <Input
                       value={formData.subjects}
                       onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
-                      placeholder="e.g., History, Geography, Polity"
+                      placeholder="e.g., History, Geography, Polity, Economy"
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>Topics</Label>
+                      <Label>Topics Count</Label>
                       <Input
                         type="number"
                         value={formData.topics_count}
@@ -362,7 +433,7 @@ const AdminTemplates = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Hours</Label>
+                      <Label>Est. Hours</Label>
                       <Input
                         type="number"
                         value={formData.estimated_hours}
@@ -370,26 +441,32 @@ const AdminTemplates = () => {
                       />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="featured"
-                      checked={formData.is_featured}
-                      onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
-                      className="rounded border-input"
+                  <div className="space-y-2">
+                    <Label>Learning Outcomes (one per line)</Label>
+                    <Textarea
+                      value={formData.outcomes}
+                      onChange={(e) => setFormData({ ...formData, outcomes: e.target.value })}
+                      placeholder="Master the fundamentals of...&#10;Understand key concepts in...&#10;Apply knowledge to..."
+                      rows={4}
                     />
-                    <Label htmlFor="featured">Mark as Featured</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Prerequisites (one per line)</Label>
+                    <Textarea
+                      value={formData.prerequisites}
+                      onChange={(e) => setFormData({ ...formData, prerequisites: e.target.value })}
+                      placeholder="Basic understanding of...&#10;Completed previous module..."
+                      rows={3}
+                    />
                   </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button 
-                    onClick={handleCreateAndPreview} 
-                    disabled={createTemplate.isPending || !formData.title.trim()}
-                  >
-                    {createTemplate.isPending ? "Creating..." : "Create & Preview"}
+                  <Button onClick={handleCreate} disabled={createTemplate.isPending}>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save to Drafts
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -397,249 +474,331 @@ const AdminTemplates = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Organized by Category */}
-          {Object.entries(categoryConfig).map(([categoryKey, config]) => {
-            const categoryTemplates = templates?.filter(t => t.category === categoryKey) || [];
-            if (categoryTemplates.length === 0) return null;
-            
-            const Icon = config.icon;
-            const publishedCount = categoryTemplates.filter(t => t.published_at !== null).length;
-            
-            return (
-              <div key={categoryKey} className="mb-8 last:mb-0">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className={`p-2 rounded-lg border ${config.color}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <h3 className="font-semibold">{config.label}</h3>
-                  <Badge variant="secondary" className="text-xs">
-                    {categoryTemplates.length} total
-                  </Badge>
-                  <Badge variant="outline" className="text-xs text-primary">
-                    {publishedCount} published
-                  </Badge>
+          {/* Category Filter Tabs */}
+          <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
+            <TabsList className="flex flex-wrap h-auto gap-1">
+              <TabsTrigger value="all" className="text-xs">All ({templates?.length || 0})</TabsTrigger>
+              {categories.map(cat => {
+                const count = templates?.filter(t => t.category === cat).length || 0;
+                const config = categoryConfig[cat];
+                if (count === 0) return null;
+                return (
+                  <TabsTrigger key={cat} value={cat} className="text-xs gap-1">
+                    <config.icon className="w-3 h-3" />
+                    {config.label} ({count})
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </Tabs>
+
+          {/* Templates List */}
+          <ScrollArea className="h-[500px]">
+            <div className="space-y-3">
+              {filteredTemplates?.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Layout className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No templates in this category</p>
                 </div>
-                
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {categoryTemplates.map((template) => (
-                    <Card key={template.id} className="border-border/50 overflow-hidden hover:border-primary/30 transition-colors">
+              ) : (
+                filteredTemplates?.map((template) => {
+                  const config = categoryConfig[template.category] || categoryConfig.study;
+                  const isPublished = template.published_at !== null;
+                  const templateData = template.template_data || {};
+                  
+                  return (
+                    <Card key={template.id} className="border-border/50">
                       <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium text-sm">{template.title}</h3>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline" className={config.color}>
+                                <config.icon className="w-3 h-3 mr-1" />
+                                {config.label}
+                              </Badge>
                               {template.is_featured && (
-                                <Star className="w-3 h-3 text-primary fill-primary" />
+                                <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+                                  <Star className="w-3 h-3 mr-1" />
+                                  Featured
+                                </Badge>
+                              )}
+                              {isPublished ? (
+                                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                                  Published
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  <FileText className="w-3 h-3 mr-1" />
+                                  Draft
+                                </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                            <h3 className="font-semibold mb-1">{template.title}</h3>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
                               {template.description || "No description"}
                             </p>
+                            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                              {(templateData as any)?.subjects?.length > 0 && (
+                                <span>{(templateData as any).subjects.length} subjects</span>
+                              )}
+                              {(templateData as any)?.topics_count && (
+                                <span>{(templateData as any).topics_count} topics</span>
+                              )}
+                              {(templateData as any)?.estimated_hours && (
+                                <span>{(templateData as any).estimated_hours}h estimated</span>
+                              )}
+                              <span>{template.usage_count || 0} uses</span>
+                            </div>
                           </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 mb-3 flex-wrap">
-                          <Badge variant="secondary" className="text-[10px]">{template.template_type}</Badge>
-                          {template.published_at ? (
-                            <Badge className="bg-primary/10 text-primary text-[10px] border-0">Published</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px]">Draft</Badge>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                          <div className="flex items-center gap-1">
-                            <Eye className="w-3 h-3" />
-                            {template.usage_count || 0} uses
-                          </div>
-                          <span>
-                            {template.published_at ? format(new Date(template.published_at), "MMM d, yyyy") : "Not published"}
-                          </span>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1"
-                            onClick={() => handlePreview(template)}
-                          >
-                            <Eye className="w-3 h-3 mr-1" />
-                            Preview
-                          </Button>
-                          {!template.published_at && (
-                            <Button 
-                              size="sm" 
-                              className="flex-1"
-                              onClick={() => {
-                                setPreviewTemplate(template);
-                              }}
-                            >
-                              <Send className="w-3 h-3 mr-1" />
-                              Publish
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(template)}>
+                              <Edit2 className="w-4 h-4" />
                             </Button>
-                          )}
+                            <Button variant="ghost" size="sm" onClick={() => handlePreview(template)}>
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-destructive"
+                              onClick={() => deleteTemplate.mutate(template.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-          
-          {(!templates || templates.length === 0) && (
-            <div className="text-center py-12 text-muted-foreground">
-              <Layout className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="font-medium">No templates created yet</p>
-              <p className="text-sm">Create your first template to share with all users</p>
+                  );
+                })
+              )}
             </div>
-          )}
+          </ScrollArea>
         </CardContent>
       </Card>
 
-      {/* Preview & Publish Modal */}
-      <Dialog open={!!previewTemplate} onOpenChange={() => setPreviewTemplate(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh]">
+      {/* Edit Dialog */}
+      <Dialog open={!!editingTemplate} onOpenChange={(open) => !open && setEditingTemplate(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {previewTemplate?.is_active ? "Template Preview" : "Preview & Publish"}
-              {previewTemplate?.is_featured && (
-                <Star className="w-4 h-4 text-primary fill-primary" />
-              )}
-            </DialogTitle>
+            <DialogTitle>Edit Template</DialogTitle>
             <DialogDescription>
-              {previewTemplate?.is_active 
-                ? "This template is already published and visible to users"
-                : "Review the template before publishing to all users"
-              }
+              Update template details and content
             </DialogDescription>
           </DialogHeader>
-          
+          {editingTemplate && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Title *</Label>
+                  <Input
+                    value={editingTemplate.title}
+                    onChange={(e) => setEditingTemplate({ ...editingTemplate, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select
+                    value={editingTemplate.category}
+                    onValueChange={(value) => setEditingTemplate({ ...editingTemplate, category: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="government">Government Exams</SelectItem>
+                      <SelectItem value="technical">Technical Careers</SelectItem>
+                      <SelectItem value="international">International Exams</SelectItem>
+                      <SelectItem value="study">Study Plans</SelectItem>
+                      <SelectItem value="exam">Exam Prep</SelectItem>
+                      <SelectItem value="finance">Finance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={editingTemplate.description || ""}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Subjects (comma separated)</Label>
+                <Input
+                  value={editingTemplate.subjects}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, subjects: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Topics Count</Label>
+                  <Input
+                    type="number"
+                    value={editingTemplate.topics_count}
+                    onChange={(e) => setEditingTemplate({ ...editingTemplate, topics_count: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Resources</Label>
+                  <Input
+                    type="number"
+                    value={editingTemplate.resources_count}
+                    onChange={(e) => setEditingTemplate({ ...editingTemplate, resources_count: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Est. Hours</Label>
+                  <Input
+                    type="number"
+                    value={editingTemplate.estimated_hours}
+                    onChange={(e) => setEditingTemplate({ ...editingTemplate, estimated_hours: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Learning Outcomes (one per line)</Label>
+                <Textarea
+                  value={editingTemplate.outcomes}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, outcomes: e.target.value })}
+                  rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Prerequisites (one per line)</Label>
+                <Textarea
+                  value={editingTemplate.prerequisites}
+                  onChange={(e) => setEditingTemplate({ ...editingTemplate, prerequisites: e.target.value })}
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditingTemplate(null)}>
+              Cancel
+            </Button>
+            {editingTemplate?.published_at ? (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  unpublishTemplate.mutate(editingTemplate.id);
+                  setEditingTemplate(null);
+                }}
+              >
+                Save to Draft
+              </Button>
+            ) : null}
+            <Button onClick={handleSaveEdit} disabled={updateTemplate.isPending}>
+              <Save className="w-4 h-4 mr-2" />
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview & Publish Dialog */}
+      <Dialog open={!!previewTemplate} onOpenChange={(open) => !open && setPreviewTemplate(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Template Preview</DialogTitle>
+            <DialogDescription>
+              Review before publishing to all users
+            </DialogDescription>
+          </DialogHeader>
           {previewTemplate && (
-            <ScrollArea className="max-h-[60vh]">
-              <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+            <div className="space-y-6 py-4">
+              <Tabs defaultValue="overview">
+                <TabsList>
                   <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="content">Content</TabsTrigger>
+                  <TabsTrigger value="syllabus">Syllabus</TabsTrigger>
                   <TabsTrigger value="outcomes">Outcomes</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="overview" className="space-y-4 pt-4">
-                  <div className="p-4 rounded-lg bg-muted/30 border border-border/50">
-                    <h3 className="font-semibold text-lg mb-2">{previewTemplate.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {previewTemplate.description || "No description provided"}
-                    </p>
+                <TabsContent value="overview" className="mt-4 space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-lg">{previewTemplate.title}</h3>
+                    <p className="text-muted-foreground mt-1">{previewTemplate.description}</p>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 rounded-lg bg-muted/30 flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <BookOpen className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Category</p>
-                        <p className="font-medium text-sm capitalize">{previewTemplate.category}</p>
-                      </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2 text-sm">
+                      <BookOpen className="w-4 h-4 text-muted-foreground" />
+                      <span>{(previewTemplate.template_data as any)?.subjects?.length || 0} Subjects</span>
                     </div>
-                    <div className="p-3 rounded-lg bg-muted/30 flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <FileText className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Type</p>
-                        <p className="font-medium text-sm capitalize">{previewTemplate.template_type}</p>
-                      </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Target className="w-4 h-4 text-muted-foreground" />
+                      <span>{(previewTemplate.template_data as any)?.topics_count || 0} Topics</span>
                     </div>
-                    <div className="p-3 rounded-lg bg-muted/30 flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Target className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Topics</p>
-                        <p className="font-medium text-sm">
-                          {(previewTemplate.template_data as any)?.topics_count || 
-                           syllabusPreviewData[previewTemplate.category]?.topics || 20}
-                        </p>
-                      </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span>{(previewTemplate.template_data as any)?.estimated_hours || 0} Hours</span>
                     </div>
-                    <div className="p-3 rounded-lg bg-muted/30 flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Clock className="w-4 h-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Est. Duration</p>
-                        <p className="font-medium text-sm">
-                          {(previewTemplate.template_data as any)?.estimated_hours || 
-                           syllabusPreviewData[previewTemplate.category]?.estimatedTime || "40"} hours
-                        </p>
-                      </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Award className="w-4 h-4 text-muted-foreground" />
+                      <span>{(previewTemplate.template_data as any)?.resources_count || 0} Resources</span>
                     </div>
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="content" className="space-y-4 pt-4">
-                  <h4 className="font-medium">Included Subjects</h4>
+                <TabsContent value="syllabus" className="mt-4">
                   <div className="space-y-2">
-                    {((previewTemplate.template_data as any)?.subjects || 
-                      syllabusPreviewData[previewTemplate.category]?.subjects || 
-                      ["Subject 1", "Subject 2", "Subject 3"]
-                    ).map((subject: string, idx: number) => (
-                      <div 
-                        key={idx}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
-                            <span className="text-xs font-medium text-primary">{idx + 1}</span>
-                          </div>
-                          <span className="text-sm font-medium">{subject}</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                    ))}
+                    <h4 className="font-medium">Subjects</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {previewTemplate.template_data?.subjects?.map((subject: string, i: number) => (
+                        <Badge key={i} variant="outline">{subject}</Badge>
+                      )) || <span className="text-muted-foreground text-sm">No subjects defined</span>}
+                    </div>
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="outcomes" className="space-y-4 pt-4">
-                  <h4 className="font-medium">What Users Will Learn</h4>
-                  <div className="space-y-2">
-                    {[
-                      "Complete understanding of core concepts",
-                      "Practical application skills",
-                      "Exam-ready preparation framework",
-                      "Progress tracking and analytics",
-                      "Revision schedules and study plans",
-                    ].map((outcome, idx) => (
-                      <div 
-                        key={idx}
-                        className="flex items-start gap-3 p-3 rounded-lg bg-muted/30"
-                      >
-                        <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" />
-                        <span className="text-sm">{outcome}</span>
+                <TabsContent value="outcomes" className="mt-4">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Learning Outcomes</h4>
+                      <ul className="space-y-2">
+                        {previewTemplate.template_data?.outcomes?.map((outcome: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-sm">
+                            <Check className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                            <span>{outcome}</span>
+                          </li>
+                        )) || <li className="text-muted-foreground text-sm">No outcomes defined</li>}
+                      </ul>
+                    </div>
+                    {previewTemplate.template_data?.prerequisites?.length > 0 && (
+                      <div>
+                        <h4 className="font-medium mb-2">Prerequisites</h4>
+                        <ul className="space-y-1">
+                          {previewTemplate.template_data.prerequisites.map((prereq: string, i: number) => (
+                            <li key={i} className="text-sm text-muted-foreground">• {prereq}</li>
+                          ))}
+                        </ul>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>
-            </ScrollArea>
+            </div>
           )}
-          
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setPreviewTemplate(null)}>
               Close
             </Button>
-            {previewTemplate && !previewTemplate.published_at && (
+            {previewTemplate?.published_at ? (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  unpublishTemplate.mutate(previewTemplate.id);
+                  setPreviewTemplate(null);
+                }}
+              >
+                Unpublish (Save to Draft)
+              </Button>
+            ) : (
               <Button onClick={handlePublish} disabled={isPublishing}>
-                {isPublishing ? (
-                  <>Publishing...</>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Publish to All Users
-                  </>
-                )}
+                <Send className="w-4 h-4 mr-2" />
+                {isPublishing ? "Publishing..." : "Publish to Users"}
               </Button>
             )}
           </DialogFooter>
