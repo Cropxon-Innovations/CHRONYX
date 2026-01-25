@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BookOpen, Calendar, Target, Trophy, Clock, FileText, 
   CheckCircle2, CircleDashed, Play, Brain, MessageSquare,
-  GraduationCap, TrendingUp, Users, Award, Lightbulb
+  GraduationCap, TrendingUp, Users, Award, Lightbulb, Sparkles, ArrowLeft
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,8 @@ import { OPSCStudyTimetable } from "./OPSCStudyTimetable";
 import { OPSCNotesLibrary } from "./OPSCNotesLibrary";
 import { OPSCPYQModule } from "./OPSCPYQModule";
 import { OPSCToppersSection } from "./OPSCToppersSection";
-import { NyayaBot } from "./NyayaBot";
+import { NovaStudyBot } from "./NovaStudyBot";
+import { FloatingNovaStudy } from "./FloatingNovaStudy";
 
 export const OPSCExamDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -238,9 +239,9 @@ export const OPSCExamDashboard: React.FC = () => {
             <Trophy className="w-4 h-4" />
             <span className="hidden sm:inline">Toppers</span>
           </TabsTrigger>
-          <TabsTrigger value="nyaya" className="data-[state=active]:bg-card gap-2 text-xs sm:text-sm">
-            <MessageSquare className="w-4 h-4" />
-            <span className="hidden sm:inline">Nyāya Bot</span>
+          <TabsTrigger value="nova" className="data-[state=active]:bg-card gap-2 text-xs sm:text-sm">
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">NOVA Study</span>
           </TabsTrigger>
         </TabsList>
 
@@ -272,10 +273,19 @@ export const OPSCExamDashboard: React.FC = () => {
           <OPSCToppersSection />
         </TabsContent>
 
-        <TabsContent value="nyaya">
-          <NyayaBot />
+        <TabsContent value="nova">
+          <NovaStudyBot 
+            examType="OPSC"
+            subjects={["Indian Polity", "History", "Geography", "Economy", "Odisha GK", "Ethics"]}
+          />
         </TabsContent>
       </Tabs>
+
+      {/* Floating NOVA Study button for inline doubt clearing */}
+      <FloatingNovaStudy
+        examType="OPSC"
+        subjects={["Indian Polity", "History", "Geography", "Economy", "Odisha GK", "Ethics"]}
+      />
     </div>
   );
 };
