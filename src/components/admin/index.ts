@@ -6,3 +6,5 @@ export { default as AdminNotifications } from "./AdminNotifications";
 export { default as AdminAnalytics } from "./AdminAnalytics";
 export { default as AdminPricing } from "./AdminPricing";
 export { default as AdminServiceHealth } from "./AdminServiceHealth";
+export { default as AdminDatabase } from "./AdminDatabase";
+export { default as AdminActivityLogs } from "./AdminActivityLogs";
