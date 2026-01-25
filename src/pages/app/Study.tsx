@@ -18,13 +18,13 @@ import { EditBookDialog } from "@/components/study/EditBookDialog";
 import { StudyGoals } from "@/components/study/StudyGoals";
 import { VocabularyScreen } from "@/components/study/VocabularyScreen";
 import { StudyAnalytics } from "@/components/study/StudyAnalytics";
-import { StudyProgressTracker } from "@/components/study/StudyProgressTracker";
 import { StudyLeaderboard } from "@/components/study/StudyLeaderboard";
 import { SpacedRepetitionReminders } from "@/components/study/SpacedRepetitionReminders";
 import { SyllabusAIParser } from "@/components/study/SyllabusAIParser";
 import { StudySubjectManager } from "@/components/study/StudySubjectManager";
 import { StudyTodosWidget } from "@/components/study/StudyTodosWidget";
-import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, GraduationCap } from "lucide-react";
+import { StudyTemplatesLibrary } from "@/components/study/templates/StudyTemplatesLibrary";
+import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, LayoutTemplate } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { OPSCExamDashboard } from "@/components/exam/opsc/OPSCExamDashboard";
 import { StudyOnboardingFlow, StudyGuidedTour } from "@/components/study/onboarding";
@@ -39,6 +39,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+interface UserTemplate {
+  id: string;
+  template_id: string;
+  template_name: string;
+  template_category: string;
+  template_subcategory: string | null;
+  template_level: string;
+  template_year: number | null;
+  template_icon: string;
+  total_subjects: number;
+  total_topics: number;
+  is_active: boolean;
+  progress_percent: number;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
 
 const subjects = ["Mathematics", "Programming", "Philosophy", "Language", "Science", "History", "Literature", "Art", "Music", "Other"];
 
@@ -58,7 +76,7 @@ const Study = () => {
     completeTour 
   } = useStudyOnboarding();
   
-  const initialTab = searchParams.get('tab') || "progress";
+  const initialTab = searchParams.get('tab') || "templates";
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showTimer, setShowTimer] = useState(false);
   const [showAddBook, setShowAddBook] = useState(false);
@@ -66,6 +84,22 @@ const Study = () => {
   const [readingItem, setReadingItem] = useState<LibraryItem | null>(null);
   const [editingItem, setEditingItem] = useState<LibraryItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<LibraryItem | null>(null);
+  const [activeUserTemplate, setActiveUserTemplate] = useState<UserTemplate | null>(null);
+
+  // Fetch user's active templates
+  const { data: userTemplates = [] } = useQuery({
+    queryKey: ["user-study-templates", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_study_templates")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data as UserTemplate[];
+    },
+    enabled: !!user,
+  });
 
   // Fetch study logs
   const { data: studyLogs = [], isLoading } = useQuery({
@@ -374,13 +408,13 @@ const Study = () => {
       {/* Tabs - Calm, minimal */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-muted/30 border border-border p-1 h-auto flex-wrap">
+          <TabsTrigger value="templates" className="data-[state=active]:bg-card gap-2">
+            <LayoutTemplate className="w-4 h-4" />
+            <span className="hidden sm:inline">Templates</span>
+          </TabsTrigger>
           <TabsTrigger value="progress" className="data-[state=active]:bg-card gap-2">
             <CheckSquare className="w-4 h-4" />
             <span className="hidden sm:inline">Progress</span>
-          </TabsTrigger>
-          <TabsTrigger value="opsc" className="data-[state=active]:bg-card gap-2">
-            <GraduationCap className="w-4 h-4" />
-            <span className="hidden sm:inline">OPSC 2026</span>
           </TabsTrigger>
           <TabsTrigger value="reviews" className="data-[state=active]:bg-card gap-2">
             <Brain className="w-4 h-4" />
@@ -422,8 +456,40 @@ const Study = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="opsc">
-          <OPSCExamDashboard />
+        <TabsContent value="templates">
+          <StudyTemplatesLibrary 
+            onSelectTemplate={(template) => {
+              setActiveUserTemplate(template);
+              setActiveTab("progress");
+              toast({ title: `Switched to ${template.template_name}` });
+            }}
+            activeTemplateId={activeUserTemplate?.id}
+          />
+        </TabsContent>
+
+        <TabsContent value="progress">
+          <div className="space-y-6">
+            {/* Active Template Context */}
+            {activeUserTemplate && (
+              <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-border">
+                <span className="text-2xl">{activeUserTemplate.template_icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground truncate">{activeUserTemplate.template_name}</p>
+                  <p className="text-xs text-muted-foreground">{activeUserTemplate.progress_percent.toFixed(0)}% complete</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Today's Study Tasks from Todos */}
+            <StudyTodosWidget />
+            
+            <div className="flex gap-2 flex-wrap">
+              <SyllabusAIParser onSuccess={() => queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] })} />
+            </div>
+            
+            {/* Hierarchical Subject Manager */}
+            <StudySubjectManager />
+          </div>
         </TabsContent>
 
         <TabsContent value="reviews">

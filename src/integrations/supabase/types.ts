@@ -5483,6 +5483,65 @@ export type Database = {
         }
         Relationships: []
       }
+      study_certificates: {
+        Row: {
+          certificate_number: string
+          certificate_url: string | null
+          completion_date: string
+          course_name: string
+          created_at: string
+          id: string
+          is_verified: boolean | null
+          issued_at: string
+          issuer_name: string | null
+          issuer_title: string | null
+          metadata: Json | null
+          recipient_name: string
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          certificate_number: string
+          certificate_url?: string | null
+          completion_date?: string
+          course_name: string
+          created_at?: string
+          id?: string
+          is_verified?: boolean | null
+          issued_at?: string
+          issuer_name?: string | null
+          issuer_title?: string | null
+          metadata?: Json | null
+          recipient_name: string
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          certificate_number?: string
+          certificate_url?: string | null
+          completion_date?: string
+          course_name?: string
+          created_at?: string
+          id?: string
+          is_verified?: boolean | null
+          issued_at?: string
+          issuer_name?: string | null
+          issuer_title?: string | null
+          metadata?: Json | null
+          recipient_name?: string
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_certificates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "user_study_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_chapters: {
         Row: {
           created_at: string
@@ -6935,6 +6994,63 @@ export type Database = {
         }
         Relationships: []
       }
+      user_study_templates: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          progress_percent: number | null
+          template_category: string
+          template_icon: string | null
+          template_id: string
+          template_level: string | null
+          template_name: string
+          template_subcategory: string | null
+          template_year: number | null
+          total_subjects: number | null
+          total_topics: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          progress_percent?: number | null
+          template_category: string
+          template_icon?: string | null
+          template_id: string
+          template_level?: string | null
+          template_name: string
+          template_subcategory?: string | null
+          template_year?: number | null
+          total_subjects?: number | null
+          total_topics?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          progress_percent?: number | null
+          template_category?: string
+          template_icon?: string | null
+          template_id?: string
+          template_level?: string | null
+          template_name?: string
+          template_subcategory?: string | null
+          template_year?: number | null
+          total_subjects?: number | null
+          total_topics?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vault_items: {
         Row: {
           category: string | null
@@ -7247,6 +7363,7 @@ export type Database = {
         Args: { p_plan_type: string; p_usage_type: string; p_user_id: string }
         Returns: Json
       }
+      generate_certificate_number: { Args: never; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
       increment_usage: {
         Args: { p_count?: number; p_usage_type: string; p_user_id: string }
