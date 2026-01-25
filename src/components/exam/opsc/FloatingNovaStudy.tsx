@@ -21,7 +21,7 @@ export const FloatingNovaStudy: React.FC<FloatingNovaStudyProps> = ({
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button - Dark Charcoal Theme */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
@@ -32,47 +32,56 @@ export const FloatingNovaStudy: React.FC<FloatingNovaStudyProps> = ({
           >
             <Button
               onClick={() => setIsOpen(true)}
-              className="h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 relative group"
+              className={cn(
+                "h-14 w-14 rounded-full shadow-xl relative group",
+                "bg-zinc-900 hover:bg-zinc-800 border border-zinc-700",
+                "transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              )}
             >
-              <Sparkles className="w-6 h-6" />
-              <span className="absolute -top-12 right-0 bg-card border border-border rounded-lg px-3 py-1.5 text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg">
-                Ask NOVA Study
+              <Sparkles className="w-6 h-6 text-white" />
+              
+              {/* Tooltip - Always visible on hover */}
+              <span className={cn(
+                "absolute -top-14 right-0 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap",
+                "bg-zinc-900 text-white border border-zinc-700 shadow-xl",
+                "opacity-0 group-hover:opacity-100 transition-all duration-200",
+                "pointer-events-none"
+              )}>
+                <span className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  NOVA Study AI
+                </span>
+                <span className="absolute bottom-0 right-6 translate-y-1/2 rotate-45 w-2 h-2 bg-zinc-900 border-r border-b border-zinc-700" />
               </span>
             </Button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Chat panel */}
+      {/* Chat panel - Dark Charcoal Theme */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ 
-              opacity: 1, 
-              y: 0, 
-              scale: 1,
-              height: isMinimized ? "auto" : "auto"
-            }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
             className={cn(
-              "fixed z-50 shadow-2xl rounded-2xl overflow-hidden border border-border bg-background",
-              isMinimized 
-                ? "bottom-6 right-6 w-80" 
-                : "bottom-6 right-6 w-96 max-h-[600px]"
+              "fixed z-50 shadow-2xl rounded-2xl overflow-hidden",
+              "bg-zinc-900 border border-zinc-700",
+              isMinimized ? "bottom-6 right-6 w-80" : "bottom-6 right-6 w-[420px] max-h-[650px]"
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary/10 to-primary/5 border-b border-border">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-primary/10">
-                  <Sparkles className="w-4 h-4 text-primary" />
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-zinc-800 to-zinc-900 border-b border-zinc-700">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/20">
+                  <Sparkles className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <span className="font-medium text-sm">NOVA Study</span>
+                  <span className="font-semibold text-white">NOVA Study AI</span>
                   {currentTopic && !isMinimized && (
-                    <p className="text-xs text-muted-foreground">{currentTopic}</p>
+                    <p className="text-xs text-zinc-400">{currentTopic}</p>
                   )}
                 </div>
               </div>
@@ -80,7 +89,7 @@ export const FloatingNovaStudy: React.FC<FloatingNovaStudyProps> = ({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-7 w-7"
+                  className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-700"
                   onClick={() => setIsMinimized(!isMinimized)}
                 >
                   <Minimize2 className="w-4 h-4" />
@@ -88,7 +97,7 @@ export const FloatingNovaStudy: React.FC<FloatingNovaStudyProps> = ({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-7 w-7"
+                  className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-700"
                   onClick={() => setIsOpen(false)}
                 >
                   <X className="w-4 h-4" />
@@ -98,7 +107,7 @@ export const FloatingNovaStudy: React.FC<FloatingNovaStudyProps> = ({
 
             {/* Content */}
             {!isMinimized && (
-              <div className="max-h-[500px] overflow-auto">
+              <div className="max-h-[550px] overflow-auto bg-zinc-900">
                 <NovaStudyBot
                   examType={examType}
                   subjects={subjects}
