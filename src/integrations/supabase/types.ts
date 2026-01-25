@@ -68,6 +68,87 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_activity_logs: {
+        Row: {
+          action: string
+          admin_user_id: string | null
+          created_at: string | null
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
+      admin_templates: {
+        Row: {
+          category: string
+          cover_image_url: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          published_at: string | null
+          published_by: string | null
+          template_data: Json
+          template_type: string
+          title: string
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          category: string
+          cover_image_url?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          published_at?: string | null
+          published_by?: string | null
+          template_data?: Json
+          template_type: string
+          title: string
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          category?: string
+          cover_image_url?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          published_at?: string | null
+          published_by?: string | null
+          template_data?: Json
+          template_type?: string
+          title?: string
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
       ai_category_patterns: {
         Row: {
           confidence: number | null
@@ -2861,6 +2942,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_usage_stats: {
+        Row: {
+          avg_duration_seconds: number | null
+          date: string
+          feature_name: string
+          id: string
+          unique_users: number | null
+          usage_count: number | null
+        }
+        Insert: {
+          avg_duration_seconds?: number | null
+          date: string
+          feature_name: string
+          id?: string
+          unique_users?: number | null
+          usage_count?: number | null
+        }
+        Update: {
+          avg_duration_seconds?: number | null
+          date?: string
+          feature_name?: string
+          id?: string
+          unique_users?: number | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
       finance_report_subscriptions: {
         Row: {
           created_at: string
@@ -4856,6 +4964,102 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_analytics: {
+        Row: {
+          active_users: number | null
+          created_at: string | null
+          date: string
+          edge_function_calls: number | null
+          finance_transactions: number | null
+          free_users: number | null
+          id: string
+          library_views: number | null
+          new_users: number | null
+          premium_users: number | null
+          pro_users: number | null
+          storage_used_mb: number | null
+          study_sessions: number | null
+          total_revenue: number | null
+          total_users: number | null
+        }
+        Insert: {
+          active_users?: number | null
+          created_at?: string | null
+          date: string
+          edge_function_calls?: number | null
+          finance_transactions?: number | null
+          free_users?: number | null
+          id?: string
+          library_views?: number | null
+          new_users?: number | null
+          premium_users?: number | null
+          pro_users?: number | null
+          storage_used_mb?: number | null
+          study_sessions?: number | null
+          total_revenue?: number | null
+          total_users?: number | null
+        }
+        Update: {
+          active_users?: number | null
+          created_at?: string | null
+          date?: string
+          edge_function_calls?: number | null
+          finance_transactions?: number | null
+          free_users?: number | null
+          id?: string
+          library_views?: number | null
+          new_users?: number | null
+          premium_users?: number | null
+          pro_users?: number | null
+          storage_used_mb?: number | null
+          study_sessions?: number | null
+          total_revenue?: number | null
+          total_users?: number | null
+        }
+        Relationships: []
+      }
+      pricing_config: {
+        Row: {
+          annual_price: number | null
+          created_at: string | null
+          description: string | null
+          display_name: string
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          monthly_price: number
+          plan_name: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          annual_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          monthly_price: number
+          plan_name: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          annual_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          monthly_price?: number
+          plan_name?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -5221,6 +5425,36 @@ export type Database = {
           target_amount?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      service_health: {
+        Row: {
+          error_message: string | null
+          id: string
+          last_check_at: string | null
+          metadata: Json | null
+          response_time_ms: number | null
+          service_name: string
+          status: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          last_check_at?: string | null
+          metadata?: Json | null
+          response_time_ms?: number | null
+          service_name: string
+          status?: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          last_check_at?: string | null
+          metadata?: Json | null
+          response_time_ms?: number | null
+          service_name?: string
+          status?: string
         }
         Relationships: []
       }
@@ -6829,6 +7063,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_notifications: {
+        Row: {
+          action_label: string | null
+          action_url: string | null
+          created_at: string | null
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          is_dismissible: boolean | null
+          message: string
+          notification_type: string
+          starts_at: string | null
+          target_audience: string | null
+          title: string
+        }
+        Insert: {
+          action_label?: string | null
+          action_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_dismissible?: boolean | null
+          message: string
+          notification_type?: string
+          starts_at?: string | null
+          target_audience?: string | null
+          title: string
+        }
+        Update: {
+          action_label?: string | null
+          action_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_dismissible?: boolean | null
+          message?: string
+          notification_type?: string
+          starts_at?: string | null
+          target_audience?: string | null
+          title?: string
+        }
+        Relationships: []
       }
       task_templates: {
         Row: {
@@ -8489,6 +8771,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notification_status: {
+        Row: {
+          dismissed_at: string | null
+          id: string
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          notification_id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          dismissed_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          notification_id: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          dismissed_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          notification_id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notification_status_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "system_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_rewards: {
         Row: {
           available_points: number | null
@@ -8518,6 +8838,30 @@ export type Database = {
           redeemed_points?: number
           total_points?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
@@ -8893,12 +9237,21 @@ export type Database = {
       }
       generate_certificate_number: { Args: never; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       increment_usage: {
         Args: { p_count?: number; p_usage_type: string; p_user_id: string }
         Returns: undefined
       }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       content_status: "not_started" | "in_progress" | "completed" | "revised"
       exam_stage: "prelims" | "mains" | "interview"
       exam_type: "opsc" | "upsc" | "state_psc"
@@ -9031,6 +9384,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       content_status: ["not_started", "in_progress", "completed", "revised"],
       exam_stage: ["prelims", "mains", "interview"],
       exam_type: ["opsc", "upsc", "state_psc"],
