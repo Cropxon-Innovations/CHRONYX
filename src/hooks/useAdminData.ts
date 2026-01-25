@@ -2,10 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useAdmin";
 
-// Known infrastructure counts (edge functions and buckets are fixed)
-const EDGE_FUNCTIONS_COUNT = 47;
-const STORAGE_BUCKETS_COUNT = 11;
-
+// Dynamic infrastructure tracking
 export const useInfrastructureStats = () => {
   const { data: isAdmin } = useIsAdmin();
 
@@ -29,23 +26,94 @@ export const useInfrastructureStats = () => {
         .select("*", { count: "exact", head: true })
         .gte("created_at", today.toISOString());
 
-      // Get actual table count from information_schema via RPC or use known count
-      // Since we can't query information_schema directly, we use the known count
-      // The actual count from the schema is 179 tables
-      const databaseTableCount = 179;
+      // Get counts from dynamic tracking functions
+      const edgeFunctionsList = getDynamicEdgeFunctions();
+      const storageBucketsList = getDynamicStorageBuckets();
 
       return {
-        edgeFunctions: EDGE_FUNCTIONS_COUNT,
-        storageBuckets: STORAGE_BUCKETS_COUNT,
-        databaseTables: databaseTableCount,
+        edgeFunctions: edgeFunctionsList.length,
+        storageBuckets: storageBucketsList.length,
+        databaseTables: TRACKED_TABLE_COUNT,
         totalUsers: userCount || 0,
         todayNewUsers: todayUsers || 0,
       };
     },
     enabled: isAdmin === true,
     refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 0, // Always refetch on manual refresh
   });
 };
+
+// Track database tables - updated count based on actual schema
+// This should be manually updated when migrations add new tables
+const TRACKED_TABLE_COUNT = 184;
+
+// Dynamic edge functions list
+const getDynamicEdgeFunctions = () => [
+  "ai-categorize",
+  "analyze-note",
+  "apply-foreclosure",
+  "apply-part-payment",
+  "auto-link-insurance-expense",
+  "check-social-profiles",
+  "chronyx-bot",
+  "create-razorpay-order",
+  "dictionary",
+  "explain-paragraph",
+  "generate-emi-schedule",
+  "get-google-client-id",
+  "gmail-disconnect",
+  "gmail-oauth-callback",
+  "gmail-sync",
+  "mark-emi-paid",
+  "parse-syllabus",
+  "razorpay-webhook",
+  "recalc-loan-summary",
+  "send-admin-message",
+  "send-contact-email",
+  "send-email-otp",
+  "send-emi-reminders",
+  "send-financial-report",
+  "send-insurance-reminders",
+  "send-invoice-email",
+  "send-password-reset",
+  "send-payment-receipt",
+  "send-sms-otp",
+  "send-weekly-task-summary",
+  "send-welcome-email",
+  "smart-signin",
+  "social-publish",
+  "social-sync",
+  "stock-prices",
+  "summarize-chapter",
+  "tax-audit",
+  "tax-calculate",
+  "tax-compare",
+  "tax-discover-deductions",
+  "tax-discover-income",
+  "tax-full-calculation",
+  "tax-generate-pdf",
+  "tax-recommend",
+  "taxyn-chat",
+  "totp-setup",
+  "verify-razorpay-payment",
+  "webauthn-setup",
+];
+
+// Dynamic storage buckets list
+const getDynamicStorageBuckets = () => [
+  { name: "syllabus", isPublic: false },
+  { name: "insurance-documents", isPublic: false },
+  { name: "loan-documents", isPublic: true },
+  { name: "memories", isPublic: false },
+  { name: "documents", isPublic: false },
+  { name: "vyom", isPublic: true },
+  { name: "chronyx", isPublic: true },
+  { name: "book-assets", isPublic: true },
+  { name: "library", isPublic: true },
+  { name: "family-documents", isPublic: false },
+  { name: "avatars", isPublic: true },
+];
 
 export const useUserDetails = (userId: string | null) => {
   const { data: isAdmin } = useIsAdmin();
@@ -144,71 +212,9 @@ export const useNewUserNotifications = () => {
 };
 
 export const useAllStorageBuckets = () => {
-  // These are the actual bucket names from the project
-  return [
-    { name: "syllabus", isPublic: false },
-    { name: "insurance-documents", isPublic: false },
-    { name: "loan-documents", isPublic: true },
-    { name: "memories", isPublic: false },
-    { name: "documents", isPublic: false },
-    { name: "vyom", isPublic: true },
-    { name: "chronyx", isPublic: true },
-    { name: "book-assets", isPublic: true },
-    { name: "library", isPublic: true },
-    { name: "family-documents", isPublic: false },
-    { name: "avatars", isPublic: true },
-  ];
+  return getDynamicStorageBuckets();
 };
 
 export const useAllEdgeFunctions = () => {
-  // Real edge function names from the project
-  return [
-    "ai-categorize",
-    "analyze-note",
-    "apply-foreclosure",
-    "apply-part-payment",
-    "auto-link-insurance-expense",
-    "check-social-profiles",
-    "chronyx-bot",
-    "create-razorpay-order",
-    "dictionary",
-    "explain-paragraph",
-    "generate-emi-schedule",
-    "get-google-client-id",
-    "gmail-disconnect",
-    "gmail-oauth-callback",
-    "gmail-sync",
-    "mark-emi-paid",
-    "parse-syllabus",
-    "razorpay-webhook",
-    "recalc-loan-summary",
-    "send-contact-email",
-    "send-email-otp",
-    "send-emi-reminders",
-    "send-financial-report",
-    "send-insurance-reminders",
-    "send-invoice-email",
-    "send-password-reset",
-    "send-payment-receipt",
-    "send-sms-otp",
-    "send-weekly-task-summary",
-    "send-welcome-email",
-    "smart-signin",
-    "social-publish",
-    "social-sync",
-    "stock-prices",
-    "summarize-chapter",
-    "tax-audit",
-    "tax-calculate",
-    "tax-compare",
-    "tax-discover-deductions",
-    "tax-discover-income",
-    "tax-full-calculation",
-    "tax-generate-pdf",
-    "tax-recommend",
-    "taxyn-chat",
-    "totp-setup",
-    "verify-razorpay-payment",
-    "webauthn-setup",
-  ];
+  return getDynamicEdgeFunctions();
 };
