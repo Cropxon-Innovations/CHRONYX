@@ -95,6 +95,20 @@ export const STUDY_TEMPLATES: StudyTemplate[] = [
     icon: "🎯"
   },
   {
+    id: "opsc-ofs-2026",
+    name: "OPSC OFS 2026",
+    category: "government",
+    subcategory: "State PSC",
+    level: "full-prep",
+    year: 2026,
+    description: "Odisha Forest Service complete preparation",
+    subjects: 10,
+    topics: 185,
+    isNew: true,
+    lastUpdated: "2025-01-20",
+    icon: "🌲"
+  },
+  {
     id: "ssc-cgl-2026",
     name: "SSC CGL 2026",
     category: "government",
