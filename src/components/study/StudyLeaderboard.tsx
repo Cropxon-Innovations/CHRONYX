@@ -391,13 +391,13 @@ const LeaderboardList = ({
             </Avatar>
             
             <div className="flex-1 min-w-0">
-              <p className={cn("font-medium truncate", isCurrentUser && "text-primary")}>
-                {entry.display_name || "Anonymous"}
-                {isCurrentUser && <Badge variant="secondary" className="ml-2 text-[10px]">You</Badge>}
-              </p>
-              <p className="text-xs text-muted-foreground">
+              <div className={cn("font-medium truncate flex items-center gap-2", isCurrentUser && "text-primary")}>
+                <span>{entry.display_name || "Anonymous"}</span>
+                {isCurrentUser && <Badge variant="secondary" className="text-[10px]">You</Badge>}
+              </div>
+              <span className="text-xs text-muted-foreground">
                 {entry.completed_topics} topics completed
-              </p>
+              </span>
             </div>
             
             <div className="flex items-center gap-4 text-right">

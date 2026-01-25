@@ -362,6 +362,10 @@ const Study = () => {
             <CheckSquare className="w-4 h-4" />
             <span className="hidden sm:inline">Progress</span>
           </TabsTrigger>
+          <TabsTrigger value="opsc" className="data-[state=active]:bg-card gap-2">
+            <GraduationCap className="w-4 h-4" />
+            <span className="hidden sm:inline">OPSC 2026</span>
+          </TabsTrigger>
           <TabsTrigger value="reviews" className="data-[state=active]:bg-card gap-2">
             <Brain className="w-4 h-4" />
             <span className="hidden sm:inline">Reviews</span>
@@ -400,6 +404,10 @@ const Study = () => {
             {/* Hierarchical Subject Manager */}
             <StudySubjectManager />
           </div>
+        </TabsContent>
+
+        <TabsContent value="opsc">
+          <OPSCExamDashboard />
         </TabsContent>
 
         <TabsContent value="reviews">

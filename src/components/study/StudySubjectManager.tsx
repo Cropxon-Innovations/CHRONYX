@@ -84,8 +84,27 @@ const SUBJECT_ICONS: Record<string, { icon: string; color: string }> = {
   "Other": { icon: "📚", color: "#64748B" },
 };
 
-const AVAILABLE_ICONS = ["📐", "💻", "⚛️", "🧪", "🧬", "📜", "📖", "🗣️", "🌍", "🎵", "🎨", "💼", "❤️", "🔬", "📚", "✏️", "🎓", "💡", "📊", "🗂️"];
-const AVAILABLE_COLORS = ["#3B82F6", "#10B981", "#8B5CF6", "#F59E0B", "#22C55E", "#A78BFA", "#EC4899", "#14B8A6", "#06B6D4", "#F97316", "#D946EF", "#6366F1", "#EF4444", "#0EA5E9", "#64748B"];
+// Technical & Programming Icons
+const AVAILABLE_ICONS = [
+  // Programming & Tech
+  "💻", "🖥️", "⌨️", "🔧", "⚙️", "🔌", "💾", "📀", "🌐", "🔗",
+  // Cloud & DevOps  
+  "☁️", "🐳", "🚀", "📦", "🔄", "🛠️", "🎯", "🔒", "🔑", "📡",
+  // Languages & Frameworks
+  "🐍", "☕", "🦀", "🐹", "💎", "🌿", "⚡", "🔥", "❄️", "🎭",
+  // Data & AI
+  "🤖", "🧠", "📊", "📈", "🗄️", "💡", "🔍", "📐", "🧮", "🎲",
+  // Traditional Study
+  "📚", "📖", "✏️", "🎓", "📝", "🗂️", "📋", "🏆", "⭐", "🎯",
+  // Sciences
+  "⚛️", "🧪", "🧬", "🔬", "🌍", "🌏", "🌎", "🌕", "⚗️", "🔭",
+];
+const AVAILABLE_COLORS = [
+  "#3B82F6", "#10B981", "#8B5CF6", "#F59E0B", "#22C55E", 
+  "#A78BFA", "#EC4899", "#14B8A6", "#06B6D4", "#F97316", 
+  "#D946EF", "#6366F1", "#EF4444", "#0EA5E9", "#64748B",
+  "#84CC16", "#F43F5E", "#8B5CF6", "#0891B2", "#7C3AED"
+];
 
 interface StudySubject {
   id: string;
@@ -172,10 +191,10 @@ export const StudySubjectManager = () => {
   const [editingTopic, setEditingTopic] = useState<StudyTopic | null>(null);
 
   // Form states
-  const [newSubject, setNewSubject] = useState({ name: "", icon: "📚", color: "#6366F1" });
+  const [newSubject, setNewSubject] = useState({ name: "", icon: "💻", color: "#6366F1" });
   const [newChapter, setNewChapter] = useState({ subjectId: "", name: "" });
   const [newModule, setNewModule] = useState({ chapterId: "", name: "" });
-  const [newTopic, setNewTopic] = useState({ moduleId: "", chapterId: "", name: "", hours: "1" });
+  const [newTopic, setNewTopic] = useState({ moduleId: "", chapterId: "", name: "", hours: "1", description: "" });
 
   // Selected context for adding
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
@@ -409,9 +428,11 @@ export const StudySubjectManager = () => {
   });
 
   const addTopicMutation = useMutation({
-    mutationFn: async (data: { module_id?: string; chapter_id?: string; subject_id?: string; subject: string; chapter_name: string; topic_name: string; estimated_hours: number }) => {
+    mutationFn: async (data: { module_id?: string; chapter_id?: string; subject_id?: string; subject: string; chapter_name: string; topic_name: string; estimated_hours: number; notes?: string }) => {
+      if (!user?.id) throw new Error("User not authenticated");
+      
       const { error } = await supabase.from("syllabus_topics").insert({
-        user_id: user!.id,
+        user_id: user.id,
         subject: data.subject,
         chapter_name: data.chapter_name,
         topic_name: data.topic_name,
@@ -421,14 +442,23 @@ export const StudySubjectManager = () => {
         module_id: data.module_id || null,
         chapter_id: data.chapter_id || null,
         subject_id: data.subject_id || null,
+        notes: data.notes || null,
       });
-      if (error) throw error;
+      if (error) {
+        console.error("Error adding topic:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["syllabus-topics"] });
       toast.success("Topic added! +10 pts when completed 🎯");
       setShowAddTopic(false);
-      setNewTopic({ moduleId: "", chapterId: "", name: "", hours: "1" });
+      setNewTopic({ moduleId: "", chapterId: "", name: "", hours: "1", description: "" });
+      setSelectedSubjectId(null);
+      setSelectedChapterId(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to add topic");
     },
   });
 
@@ -1094,6 +1124,65 @@ export const StudySubjectManager = () => {
             </div>
 
             <div className="space-y-2">
+              <Label>Topic Details / Notes (Optional)</Label>
+              <div className="border rounded-lg p-2 bg-muted/30">
+                <div className="flex gap-1 mb-2 flex-wrap border-b pb-2">
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setNewTopic({ ...newTopic, description: newTopic.description + "• " })}
+                  >
+                    • Bullet
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setNewTopic({ ...newTopic, description: newTopic.description + "1. " })}
+                  >
+                    1. Number
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setNewTopic({ ...newTopic, description: newTopic.description + "☐ " })}
+                  >
+                    ☐ Checkbox
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setNewTopic({ ...newTopic, description: newTopic.description + "→ " })}
+                  >
+                    → Arrow
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2 text-xs"
+                    onClick={() => setNewTopic({ ...newTopic, description: newTopic.description + "★ " })}
+                  >
+                    ★ Important
+                  </Button>
+                </div>
+                <textarea
+                  value={newTopic.description}
+                  onChange={(e) => setNewTopic({ ...newTopic, description: e.target.value })}
+                  placeholder="Add details, key points, or notes...&#10;• Use bullet points&#10;1. Or numbered lists&#10;☐ Or checkboxes for tasks"
+                  className="w-full min-h-[100px] bg-transparent resize-none border-0 focus:outline-none text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <Label>Estimated Hours</Label>
               <Input 
                 type="number" 
@@ -1119,12 +1208,13 @@ export const StudySubjectManager = () => {
                     subject_id: selectedSubjectId || undefined,
                     chapter_id: selectedChapterId || undefined,
                     module_id: newTopic.moduleId || undefined,
+                    notes: newTopic.description || undefined,
                   });
                 }
               }} 
-              disabled={!newTopic.name.trim() || !selectedSubjectId || !selectedChapterId}
+              disabled={!newTopic.name.trim() || !selectedSubjectId || !selectedChapterId || addTopicMutation.isPending}
             >
-              Add Topic
+              {addTopicMutation.isPending ? "Adding..." : "Add Topic"}
             </Button>
           </DialogFooter>
         </DialogContent>
