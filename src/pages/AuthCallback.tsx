@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { checkIsAdmin, ADMIN_ROUTE } from "@/hooks/useAdminCheck";
 
 // CHRONYX Logo Component
 const ChronxyxLogo = ({ className = "w-16 h-16" }: { className?: string }) => (
@@ -135,11 +136,18 @@ const AuthCallback = () => {
       }
 
       if (data.session) {
-        console.log('[AuthCallback] Session found, redirecting to app...');
+        console.log('[AuthCallback] Session found, checking admin status...');
         // Clean URL and redirect
         window.history.replaceState({}, '', '/auth/callback');
+        
+        // Check if user is admin and redirect accordingly
+        const isAdmin = await checkIsAdmin(data.session.user.id);
         setTimeout(() => {
-          navigate("/app", { replace: true });
+          if (isAdmin) {
+            navigate(ADMIN_ROUTE, { replace: true });
+          } else {
+            navigate("/app", { replace: true });
+          }
         }, 1500);
       } else {
         console.log('[AuthCallback] No session found, waiting for auth state change...');
@@ -147,7 +155,12 @@ const AuthCallback = () => {
         setTimeout(async () => {
           const { data: retryData } = await supabase.auth.getSession();
           if (retryData.session) {
-            navigate("/app", { replace: true });
+            const isAdmin = await checkIsAdmin(retryData.session.user.id);
+            if (isAdmin) {
+              navigate(ADMIN_ROUTE, { replace: true });
+            } else {
+              navigate("/app", { replace: true });
+            }
           } else {
             setError('Unable to complete authentication. Please try again.');
           }

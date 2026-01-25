@@ -27,7 +27,8 @@ import {
   ExternalLink,
   Award,
   Check,
-  ChevronRight
+  ChevronRight,
+  Eye
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -48,6 +49,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { STUDY_TEMPLATES, StudyTemplate, StudyCategory } from "@/hooks/useStudyOnboarding";
 import { cn } from "@/lib/utils";
+import { TemplatePreviewModal } from "./TemplatePreviewModal";
 
 interface UserTemplate {
   id: string;
@@ -87,6 +89,8 @@ export const StudyTemplatesLibrary = ({ onSelectTemplate, activeTemplateId }: Pr
   const [activeCategory, setActiveCategory] = useState("my-templates");
   const [search, setSearch] = useState("");
   const [deletingTemplate, setDeletingTemplate] = useState<UserTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<StudyTemplate | null>(null);
+  const [addingTemplateId, setAddingTemplateId] = useState<string | null>(null);
   
   // Fetch user's templates
   const { data: userTemplates = [], isLoading: templatesLoading } = useQuery({
@@ -306,8 +310,14 @@ export const StudyTemplatesLibrary = ({ onSelectTemplate, activeTemplateId }: Pr
                   <OfficialTemplateCard
                     template={template}
                     isAdded={isTemplateAdded(template.id)}
-                    onAdd={() => addTemplateMutation.mutate(template)}
-                    isAdding={addTemplateMutation.isPending}
+                    onAdd={() => {
+                      setAddingTemplateId(template.id);
+                      addTemplateMutation.mutate(template, {
+                        onSettled: () => setAddingTemplateId(null)
+                      });
+                    }}
+                    onPreview={() => setPreviewTemplate(template)}
+                    isAdding={addingTemplateId === template.id}
                   />
                 </motion.div>
               ))}
@@ -346,6 +356,26 @@ export const StudyTemplatesLibrary = ({ onSelectTemplate, activeTemplateId }: Pr
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Template Preview Modal */}
+      <TemplatePreviewModal
+        template={previewTemplate}
+        open={!!previewTemplate}
+        onOpenChange={(open) => !open && setPreviewTemplate(null)}
+        onAddTemplate={() => {
+          if (previewTemplate) {
+            setAddingTemplateId(previewTemplate.id);
+            addTemplateMutation.mutate(previewTemplate, {
+              onSettled: () => {
+                setAddingTemplateId(null);
+                setPreviewTemplate(null);
+              }
+            });
+          }
+        }}
+        isAdded={previewTemplate ? isTemplateAdded(previewTemplate.id) : false}
+        isAdding={previewTemplate ? addingTemplateId === previewTemplate.id : false}
+      />
     </div>
   );
 };
@@ -457,11 +487,13 @@ const OfficialTemplateCard = ({
   template, 
   isAdded,
   onAdd,
+  onPreview,
   isAdding
 }: {
   template: StudyTemplate;
   isAdded: boolean;
   onAdd: () => void;
+  onPreview: () => void;
   isAdding: boolean;
 }) => {
   return (
@@ -518,28 +550,39 @@ const OfficialTemplateCard = ({
           </span>
         </div>
 
-        {/* Action */}
-        <Button
-          onClick={(e) => { e.stopPropagation(); onAdd(); }}
-          disabled={isAdded || isAdding}
-          className="w-full gap-2"
-          variant={isAdded ? "secondary" : "default"}
-          size="sm"
-        >
-          {isAdded ? (
-            <>
-              <Check className="w-4 h-4" />
-              Added
-            </>
-          ) : isAdding ? (
-            "Adding..."
-          ) : (
-            <>
-              <Plus className="w-4 h-4" />
-              Use Template
-            </>
-          )}
-        </Button>
+        {/* Actions */}
+        <div className="flex gap-2">
+          <Button
+            onClick={(e) => { e.stopPropagation(); onPreview(); }}
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-2"
+          >
+            <Eye className="w-4 h-4" />
+            Preview
+          </Button>
+          <Button
+            onClick={(e) => { e.stopPropagation(); onAdd(); }}
+            disabled={isAdded || isAdding}
+            className="flex-1 gap-2"
+            variant={isAdded ? "secondary" : "default"}
+            size="sm"
+          >
+            {isAdded ? (
+              <>
+                <Check className="w-4 h-4" />
+                Added
+              </>
+            ) : isAdding ? (
+              "Adding..."
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                Add
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </Card>
   );
