@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Check, Sparkles, Crown, Zap, Loader2, Calculator, Bot, Star } from "lucide-react";
 import { motion } from "framer-motion";
@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutDialog } from "@/components/checkout/CheckoutDialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { usePricingConfig } from "@/hooks/useAdmin";
 
 const Pricing = () => {
   const { user } = useAuth();
@@ -20,6 +21,9 @@ const Pricing = () => {
   const [checkoutPlan, setCheckoutPlan] = useState<"pro" | "premium" | null>(null);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Fetch dynamic pricing from database
+  const { data: pricingConfig, isLoading: pricingLoading } = usePricingConfig();
 
   const currentPlan = getCurrentPlan();
 
@@ -56,80 +60,98 @@ const Pricing = () => {
     navigate('/app/profile');
   };
 
-  const plans = [
-    {
-      name: "Free",
-      monthlyPrice: 0,
-      annualPrice: 0,
-      period: "forever",
-      description: "Everything you need to get started",
-      icon: Zap,
-      highlight: false,
-      planType: "free" as const,
-      features: [
-        "Unlimited tasks & todos",
-        "Study syllabus tracking",
-        "Expense & income tracking",
-        "Loan EMI management",
-        "Insurance policy tracking",
-        "Basic tax calculator",
-        "3 TAXYN messages/day",
-        "2GB memory storage",
-        "Basic reports & insights",
-        "Email support",
-      ],
-      cta: "Get Started Free",
-    },
-    {
-      name: "Pro",
-      monthlyPrice: 199,
-      annualPrice: 1999,
-      period: billingCycle === "monthly" ? "/month" : "/year",
-      savings: billingCycle === "annual" ? "Save ₹389" : null,
-      description: "Enhanced features for power users",
-      icon: Sparkles,
-      highlight: true,
-      popular: true,
-      planType: "pro" as const,
-      features: [
-        "Everything in Free, plus:",
-        "10GB memory storage",
-        "Advanced financial analytics",
-        "Unlimited tax calculations",
-        "Unlimited TAXYN AI assistant",
-        "Regime comparison & optimization",
-        "Tax PDF reports",
-        "FinanceFlow AI (Gmail import)",
-        "Priority reminders",
-        "Priority email support",
-      ],
-      cta: currentPlan === "pro" ? "Current Plan" : "Upgrade to Pro",
-    },
-    {
-      name: "Premium",
-      monthlyPrice: 499,
-      annualPrice: 4999,
-      period: billingCycle === "monthly" ? "/month" : "/year",
-      savings: billingCycle === "annual" ? "Save ₹989" : null,
-      description: "Full access with all premium features",
-      icon: Crown,
-      highlight: false,
-      planType: "premium" as const,
-      features: [
-        "Everything in Pro, plus:",
-        "100GB memory storage",
-        "Advanced AI insights",
-        "Multi-year tax history",
-        "CA consultation credits",
-        "Family profiles",
-        "Export all data formats",
-        "Early access to all features",
-        "Private Discord access",
-        "Direct founder support",
-      ],
-      cta: currentPlan === "premium" ? "Current Plan" : "Get Premium",
-    },
-  ];
+  // Build plans from database config or use defaults
+  const plans = useMemo(() => {
+    // Helper to get price from config or fallback
+    const getPlanConfig = (planName: string) => {
+      return pricingConfig?.find(p => p.plan_name === planName);
+    };
+
+    const freePlan = getPlanConfig('free');
+    const proPlan = getPlanConfig('pro');
+    const premiumPlan = getPlanConfig('premium');
+
+    return [
+      {
+        name: freePlan?.display_name || "Free",
+        monthlyPrice: Number(freePlan?.monthly_price) || 0,
+        annualPrice: Number(freePlan?.annual_price) || 0,
+        period: "forever",
+        description: freePlan?.description || "Everything you need to get started",
+        icon: Zap,
+        highlight: false,
+        planType: "free" as const,
+        features: Array.isArray(freePlan?.features) 
+          ? freePlan.features.map(f => String(f))
+          : [
+              "Unlimited tasks & todos",
+              "Study syllabus tracking",
+              "Expense & income tracking",
+              "Loan EMI management",
+              "Insurance policy tracking",
+              "Basic tax calculator",
+              "3 TAXYN messages/day",
+              "2GB memory storage",
+              "Basic reports & insights",
+              "Email support",
+            ],
+        cta: "Get Started Free",
+      },
+      {
+        name: proPlan?.display_name || "Pro",
+        monthlyPrice: Number(proPlan?.monthly_price) || 199,
+        annualPrice: Number(proPlan?.annual_price) || 1999,
+        period: billingCycle === "monthly" ? "/month" : "/year",
+        savings: billingCycle === "annual" ? `Save ₹${(Number(proPlan?.monthly_price || 199) * 12) - (Number(proPlan?.annual_price || 1999))}` : null,
+        description: proPlan?.description || "Enhanced features for power users",
+        icon: Sparkles,
+        highlight: true,
+        popular: true,
+        planType: "pro" as const,
+        features: Array.isArray(proPlan?.features)
+          ? proPlan.features.map(f => String(f))
+          : [
+              "Everything in Free, plus:",
+              "10GB memory storage",
+              "Advanced financial analytics",
+              "Unlimited tax calculations",
+              "Unlimited TAXYN AI assistant",
+              "Regime comparison & optimization",
+              "Tax PDF reports",
+              "FinanceFlow AI (Gmail import)",
+              "Priority reminders",
+              "Priority email support",
+            ],
+        cta: currentPlan === "pro" ? "Current Plan" : "Upgrade to Pro",
+      },
+      {
+        name: premiumPlan?.display_name || "Premium",
+        monthlyPrice: Number(premiumPlan?.monthly_price) || 499,
+        annualPrice: Number(premiumPlan?.annual_price) || 4999,
+        period: billingCycle === "monthly" ? "/month" : "/year",
+        savings: billingCycle === "annual" ? `Save ₹${(Number(premiumPlan?.monthly_price || 499) * 12) - (Number(premiumPlan?.annual_price || 4999))}` : null,
+        description: premiumPlan?.description || "Full access with all premium features",
+        icon: Crown,
+        highlight: false,
+        planType: "premium" as const,
+        features: Array.isArray(premiumPlan?.features)
+          ? premiumPlan.features.map(f => String(f))
+          : [
+              "Everything in Pro, plus:",
+              "100GB memory storage",
+              "Advanced AI insights",
+              "Multi-year tax history",
+              "CA consultation credits",
+              "Family profiles",
+              "Export all data formats",
+              "Early access to all features",
+              "Private Discord access",
+              "Direct founder support",
+            ],
+        cta: currentPlan === "premium" ? "Current Plan" : "Get Premium",
+      },
+    ];
+  }, [pricingConfig, billingCycle, currentPlan]);
 
   // Tax-only addon pricing section
   const taxAddon = {

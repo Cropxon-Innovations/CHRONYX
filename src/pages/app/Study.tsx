@@ -143,7 +143,7 @@ const Study = () => {
     completeTour 
   } = useStudyOnboarding();
   
-  const initialTab = searchParams.get('tab') || "templates";
+  const initialTab = searchParams.get('tab') || "progress";
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showTimer, setShowTimer] = useState(false);
   const [showAddBook, setShowAddBook] = useState(false);
