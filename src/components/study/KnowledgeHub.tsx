@@ -16,8 +16,11 @@ import {
   Star,
   Filter,
   Sparkles,
+  ShoppingCart,
 } from "lucide-react";
 import { LibraryFormat } from "./LibraryGrid";
+import { ContentPurchaseDialog } from "./ContentPurchaseDialog";
+import { toast } from "sonner";
 
 interface PublicBook {
   id: string;
@@ -32,6 +35,7 @@ interface PublicBook {
   price: number;
   created_at: string;
   view_count?: number;
+  user_id: string;
 }
 
 interface KnowledgeHubProps {
@@ -43,6 +47,9 @@ export const KnowledgeHub = ({ onSelectBook }: KnowledgeHubProps) => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [purchasedIds, setPurchasedIds] = useState<string[]>([]);
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
+  const [selectedForPurchase, setSelectedForPurchase] = useState<PublicBook | null>(null);
   const { user } = useAuth();
 
   const categories = [
@@ -56,7 +63,8 @@ export const KnowledgeHub = ({ onSelectBook }: KnowledgeHubProps) => {
 
   useEffect(() => {
     fetchPublicBooks();
-  }, [selectedCategory]);
+    if (user) fetchPurchasedContent();
+  }, [selectedCategory, user]);
 
   const fetchPublicBooks = async () => {
     setLoading(true);
@@ -86,11 +94,38 @@ export const KnowledgeHub = ({ onSelectBook }: KnowledgeHubProps) => {
         is_paid: item.is_paid || false,
         price: item.price || 0,
         created_at: item.created_at,
+        user_id: item.user_id,
       })));
     } catch (error) {
       console.error("Error fetching public books:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPurchasedContent = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('content_purchases')
+        .select('content_id')
+        .eq('buyer_id', user.id)
+        .eq('status', 'completed');
+      
+      setPurchasedIds((data || []).map(p => p.content_id));
+    } catch (error) {
+      console.error("Error fetching purchases:", error);
+    }
+  };
+
+  const handleBookClick = (book: PublicBook) => {
+    // If it's the creator's own content, or free, or already purchased
+    if (book.user_id === user?.id || !book.is_paid || purchasedIds.includes(book.id)) {
+      onSelectBook?.(book);
+    } else {
+      // Show purchase dialog
+      setSelectedForPurchase(book);
+      setPurchaseDialogOpen(true);
     }
   };
 
@@ -189,7 +224,7 @@ export const KnowledgeHub = ({ onSelectBook }: KnowledgeHubProps) => {
             <div
               key={book.id}
               className="group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl bg-card border border-border"
-              onClick={() => onSelectBook?.(book)}
+              onClick={() => handleBookClick(book)}
             >
               {/* Cover */}
               {book.cover_url ? (
@@ -209,9 +244,15 @@ export const KnowledgeHub = ({ onSelectBook }: KnowledgeHubProps) => {
 
               {/* Price Badge */}
               {book.is_paid ? (
-                <Badge className="absolute top-2 right-2 bg-emerald-500">
-                  ₹{book.price}
-                </Badge>
+                purchasedIds.includes(book.id) ? (
+                  <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground">
+                    Owned
+                  </Badge>
+                ) : (
+                  <Badge className="absolute top-2 right-2 bg-emerald-500 text-white">
+                    ₹{book.price}
+                  </Badge>
+                )
               ) : (
                 <Badge variant="secondary" className="absolute top-2 right-2">
                   Free
@@ -258,6 +299,19 @@ export const KnowledgeHub = ({ onSelectBook }: KnowledgeHubProps) => {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Purchase Dialog */}
+      {selectedForPurchase && (
+        <ContentPurchaseDialog
+          open={purchaseDialogOpen}
+          onOpenChange={setPurchaseDialogOpen}
+          item={selectedForPurchase}
+          onPurchaseComplete={() => {
+            fetchPurchasedContent();
+            toast.success("Content unlocked!");
+          }}
+        />
       )}
     </div>
   );

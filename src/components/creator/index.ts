@@ -1,0 +1,1 @@
+export { CreatorPaymentSettings } from './CreatorPaymentSettings';

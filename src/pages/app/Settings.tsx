@@ -237,20 +237,25 @@ const Settings = () => {
 
         // Delete old avatar if exists
         if (avatarUrl && !avatarUrl.startsWith("emoji:")) {
-          const oldPath = avatarUrl.split("/").slice(-2).join("/");
-          await supabase.storage.from("documents").remove([oldPath]);
+          try {
+            const oldPath = avatarUrl.split("/").slice(-2).join("/");
+            await supabase.storage.from("avatars").remove([oldPath]);
+          } catch (e) {
+            // Ignore deletion errors for old avatars
+            console.log("Could not delete old avatar:", e);
+          }
         }
 
-        // Upload new avatar
+        // Upload new avatar to avatars bucket (public)
         const { error: uploadError } = await supabase.storage
-          .from("documents")
+          .from("avatars")
           .upload(fileName, file, { upsert: true });
 
         if (uploadError) throw uploadError;
 
         // Get public URL
         const { data: urlData } = supabase.storage
-          .from("documents")
+          .from("avatars")
           .getPublicUrl(fileName);
 
         newAvatarUrl = urlData.publicUrl;
@@ -291,8 +296,12 @@ const Settings = () => {
     try {
       // Delete from storage if it's a file URL
       if (avatarUrl && !avatarUrl.startsWith("emoji:")) {
-        const path = avatarUrl.split("/").slice(-2).join("/");
-        await supabase.storage.from("documents").remove([path]);
+        try {
+          const path = avatarUrl.split("/").slice(-2).join("/");
+          await supabase.storage.from("avatars").remove([path]);
+        } catch (e) {
+          console.log("Could not delete avatar:", e);
+        }
       }
 
       // Update profile
