@@ -28,9 +28,14 @@ import {
   Send,
   Copy,
   CheckCircle,
+  Smartphone,
+  Globe,
+  Laptop,
 } from "lucide-react";
 import { useUserDetails } from "@/hooks/useAdminData";
-import { useCreateNotification, useLogAdminActivity } from "@/hooks/useAdmin";
+import { useLogAdminActivity } from "@/hooks/useAdmin";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -47,12 +52,13 @@ const UserDetailModal = ({
   open,
   onOpenChange,
 }: UserDetailModalProps) => {
+  const { user: adminUser } = useAuth();
   const { data: userDetails, isLoading } = useUserDetails(userId);
-  const createNotification = useCreateNotification();
   const logActivity = useLogAdminActivity();
   const [messageSubject, setMessageSubject] = useState("");
   const [messageContent, setMessageContent] = useState("");
   const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const handleCopyId = () => {
     if (userId) {
@@ -63,33 +69,58 @@ const UserDetailModal = ({
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!messageSubject.trim() || !messageContent.trim()) {
       toast.error("Please enter both subject and message");
       return;
     }
 
-    createNotification.mutate(
-      {
-        title: messageSubject,
-        message: messageContent,
-        notification_type: "info",
-        target_audience: "specific",
-      },
-      {
-        onSuccess: () => {
-          logActivity.mutate({
-            action: `Sent message to user: ${userEmail}`,
-            target_type: "user",
-            target_id: userId || undefined,
-            metadata: { subject: messageSubject },
-          });
-          toast.success("Message sent successfully");
-          setMessageSubject("");
-          setMessageContent("");
-        },
-      }
-    );
+    if (!userDetails?.profile?.email || !adminUser?.id) {
+      toast.error("Unable to send message - missing user or admin info");
+      return;
+    }
+
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-admin-message', {
+        body: {
+          recipientEmail: userDetails.profile.email,
+          recipientName: userDetails.profile.display_name,
+          subject: messageSubject,
+          message: messageContent,
+          adminId: adminUser.id,
+        }
+      });
+
+      if (error) throw error;
+
+      logActivity.mutate({
+        action: `Sent email to user: ${userEmail}`,
+        target_type: "user",
+        target_id: userId || undefined,
+        metadata: { subject: messageSubject },
+      });
+
+      toast.success("Email sent successfully to " + userDetails.profile.email);
+      setMessageSubject("");
+      setMessageContent("");
+    } catch (error: any) {
+      console.error("Failed to send message:", error);
+      toast.error("Failed to send email: " + (error.message || "Unknown error"));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const getDeviceIcon = (deviceType: string | null) => {
+    switch (deviceType?.toLowerCase()) {
+      case 'mobile':
+        return <Smartphone className="w-4 h-4 text-primary" />;
+      case 'tablet':
+        return <Monitor className="w-4 h-4 text-primary" />;
+      default:
+        return <Laptop className="w-4 h-4 text-primary" />;
+    }
   };
 
   if (!open) return null;
@@ -146,7 +177,7 @@ const UserDetailModal = ({
                     {userDetails.subscription?.plan_type || "Free"} Plan
                   </Badge>
                   {userDetails.roles?.includes("admin") && (
-                    <Badge className="bg-amber-500/10 text-amber-500">
+                    <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/30">
                       <Shield className="w-3 h-3 mr-1" />
                       Admin
                     </Badge>
@@ -180,7 +211,7 @@ const UserDetailModal = ({
                 <TabsTrigger value="payments">Payments</TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
                 <TabsTrigger value="logins">Logins</TabsTrigger>
-                <TabsTrigger value="message">Send Message</TabsTrigger>
+                <TabsTrigger value="message">Send Email</TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="mt-4">
@@ -245,7 +276,7 @@ const UserDetailModal = ({
                           }
                           className={
                             userDetails.subscription?.status === "active"
-                              ? "bg-green-500/10 text-green-500"
+                              ? "bg-green-500/10 text-green-600 border-green-500/30"
                               : ""
                           }
                         >
@@ -295,17 +326,17 @@ const UserDetailModal = ({
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-medium">
-                              ₹{(Number(payment.amount) / 100).toLocaleString()}
+                              ₹{Number(payment.amount).toLocaleString()}
                             </p>
                             <Badge
                               variant={
-                                payment.status === "captured"
+                                payment.status === "completed" || payment.status === "captured"
                                   ? "default"
                                   : "secondary"
                               }
                               className={
-                                payment.status === "captured"
-                                  ? "bg-green-500/10 text-green-500"
+                                payment.status === "completed" || payment.status === "captured"
+                                  ? "bg-green-500/10 text-green-600 border-green-500/30"
                                   : ""
                               }
                             >
@@ -368,21 +399,32 @@ const UserDetailModal = ({
                         >
                           <div className="flex items-center gap-3">
                             <div className="p-2 rounded-lg bg-primary/10">
-                              <Monitor className="w-4 h-4 text-primary" />
+                              {getDeviceIcon(login.device_type)}
                             </div>
                             <div>
-                              <p className="text-sm font-medium">
-                                {login.device_type || "Unknown Device"}
-                              </p>
-                              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                <MapPin className="w-3 h-3" />
-                                {login.city || "Unknown"},{" "}
-                                {login.country || "Unknown"}
-                              </p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium">
+                                  {login.device_type || "Unknown Device"}
+                                </p>
+                                <Badge variant="outline" className="text-xs">
+                                  {login.browser || "Unknown"} • {login.os || "Unknown OS"}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-3 mt-1">
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" />
+                                  {login.city || "Unknown"},{" "}
+                                  {login.country || "Unknown"}
+                                </p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Globe className="w-3 h-3" />
+                                  {login.ip_address || "Unknown IP"}
+                                </p>
+                              </div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
                               <Clock className="w-3 h-3" />
                               {login.created_at ? format(new Date(login.created_at), "PPp") : "N/A"}
                             </p>
@@ -392,7 +434,7 @@ const UserDetailModal = ({
                               }
                               className={
                                 login.status === "success"
-                                  ? "bg-green-500/10 text-green-500"
+                                  ? "bg-green-500/10 text-green-600 border-green-500/30"
                                   : ""
                               }
                             >
@@ -406,6 +448,7 @@ const UserDetailModal = ({
                     <div className="text-center py-8 text-muted-foreground">
                       <Monitor className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p>No login history</p>
+                      <p className="text-xs mt-1">Login tracking is now enabled for new logins</p>
                     </div>
                   )}
                 </ScrollArea>
@@ -413,6 +456,12 @@ const UserDetailModal = ({
 
               <TabsContent value="message" className="mt-4">
                 <div className="space-y-4">
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      Email will be sent from <strong>admin@getchronyx.com</strong> to <strong>{userDetails.profile?.email}</strong>
+                    </p>
+                  </div>
                   <div>
                     <label className="text-sm font-medium mb-2 block">
                       Subject
@@ -436,11 +485,15 @@ const UserDetailModal = ({
                   </div>
                   <Button
                     onClick={handleSendMessage}
-                    disabled={createNotification.isPending}
+                    disabled={sending}
                     className="w-full gap-2"
                   >
-                    <Send className="w-4 h-4" />
-                    Send Message to {userDetails.profile?.email?.split("@")[0]}
+                    {sending ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    {sending ? "Sending..." : `Send Email to ${userDetails.profile?.email?.split("@")[0]}`}
                   </Button>
                 </div>
               </TabsContent>

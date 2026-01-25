@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { checkIsAdmin, ADMIN_ROUTE } from "@/hooks/useAdminCheck";
+import { trackLogin } from "@/hooks/useLoginTracking";
 
 interface AuthContextType {
   user: User | null;
@@ -21,11 +22,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const loginTrackedRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -35,8 +37,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setTimeout(() => {
             checkIsAdmin(session.user.id).then(setIsAdmin);
           }, 0);
+          
+          // Track login on SIGNED_IN event (avoid duplicate tracking)
+          if (event === 'SIGNED_IN' && loginTrackedRef.current !== session.user.id) {
+            loginTrackedRef.current = session.user.id;
+            // Determine login method
+            const provider = session.user.app_metadata?.provider || 'password';
+            trackLogin(session.user, provider, 'success');
+          }
         } else {
           setIsAdmin(false);
+          loginTrackedRef.current = null;
         }
       }
     );
