@@ -1,5 +1,5 @@
 import { useState, useEffect, Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import TopHeader from "./TopHeader";
 import CollapsibleNetWorth from "./CollapsibleNetWorth";
@@ -11,8 +11,20 @@ import FloatingQuickAction from "./FloatingQuickAction";
 import ChronyxBot from "@/components/chat/ChronyxBot";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, CheckSquare } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { ADMIN_ROUTE } from "@/hooks/useAdminCheck";
 
 const AppLayout = () => {
+  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  
+  // Redirect admin users to admin panel
+  useEffect(() => {
+    if (isAdmin) {
+      navigate(ADMIN_ROUTE, { replace: true });
+    }
+  }, [isAdmin, navigate]);
+
   const [isNetWorthCollapsed, setIsNetWorthCollapsed] = useState(false);
   const [isNetWorthPinned, setIsNetWorthPinned] = useState(false);
   const [isTodosCollapsed, setIsTodosCollapsed] = useState(false);

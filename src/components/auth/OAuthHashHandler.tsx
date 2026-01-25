@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { checkIsAdmin, ADMIN_ROUTE } from "@/hooks/useAdminCheck";
 
 /**
  * OAuthHashHandler - Detects OAuth tokens in URL hash fragment and processes them.
@@ -8,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
  * When Supabase OAuth uses implicit flow, tokens appear in the URL hash (#access_token=...).
  * This component detects these tokens and ensures they are properly processed,
  * then redirects users to the dashboard with a clean URL.
+ * Admin users are redirected to the secure admin panel.
  */
 export const useOAuthHashHandler = () => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -32,7 +34,6 @@ export const useOAuthHashHandler = () => {
         const hashParams = new URLSearchParams(hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
-        const expiresIn = hashParams.get('expires_in');
         const error = hashParams.get('error');
         const errorDescription = hashParams.get('error_description');
 
@@ -67,11 +68,20 @@ export const useOAuthHashHandler = () => {
         if (sessionData?.session) {
           console.log('[OAuth] Session established successfully for:', sessionData.session.user.email);
           
+          // Check if user is admin
+          const isAdmin = await checkIsAdmin(sessionData.session.user.id);
+          console.log('[OAuth] Is admin:', isAdmin);
+          
           // Clean the URL by removing the hash fragment
           window.history.replaceState({}, '', window.location.pathname);
           
-          // Navigate to dashboard
-          navigate('/app', { replace: true });
+          // Navigate to appropriate dashboard
+          if (isAdmin) {
+            console.log('[OAuth] Redirecting to admin panel...');
+            navigate(ADMIN_ROUTE, { replace: true });
+          } else {
+            navigate('/app', { replace: true });
+          }
         } else {
           // If no session yet, try to set it manually using the tokens
           // This is a fallback in case auto-detection didn't work
@@ -92,8 +102,19 @@ export const useOAuthHashHandler = () => {
 
             if (data.session) {
               console.log('[OAuth] Session set manually for:', data.session.user.email);
+              
+              // Check if user is admin
+              const isAdmin = await checkIsAdmin(data.session.user.id);
+              console.log('[OAuth] Is admin (manual session):', isAdmin);
+              
               window.history.replaceState({}, '', window.location.pathname);
-              navigate('/app', { replace: true });
+              
+              if (isAdmin) {
+                console.log('[OAuth] Redirecting to admin panel...');
+                navigate(ADMIN_ROUTE, { replace: true });
+              } else {
+                navigate('/app', { replace: true });
+              }
             }
           }
         }
