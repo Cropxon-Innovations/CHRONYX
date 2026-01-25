@@ -158,7 +158,7 @@ const Study = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Tab and view state
-  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "gallery");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "templates");
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [activeUserTemplate, setActiveUserTemplate] = useState<UserTemplate | null>(null);
   const [showTemplatesLibrary, setShowTemplatesLibrary] = useState(false);
