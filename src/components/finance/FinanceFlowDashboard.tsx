@@ -155,7 +155,7 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b bg-muted/50">
-            <th className="text-left p-3 font-medium text-muted-foreground">Date</th>
+            <th className="text-left p-3 font-medium text-muted-foreground">Date & Time</th>
             <th className="text-left p-3 font-medium text-muted-foreground">Merchant</th>
             <th className="text-left p-3 font-medium text-muted-foreground hidden sm:table-cell">Category</th>
             <th className="text-left p-3 font-medium text-muted-foreground hidden md:table-cell">Mode</th>
@@ -165,10 +165,13 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
           </tr>
         </thead>
         <tbody>
-          {filteredTransactions.map(tx => (
+          {[...filteredTransactions].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(tx => (
             <tr key={tx.id} className="border-b hover:bg-muted/30 transition-colors">
-              <td className="p-3 text-xs text-muted-foreground">
-                {format(parseISO(tx.transaction_date), 'MMM d, yyyy')}
+              <td className="p-3">
+                <div className="text-xs">
+                  <p className="font-medium">{format(new Date(tx.created_at), 'MMM d, yyyy')}</p>
+                  <p className="text-muted-foreground">{format(new Date(tx.created_at), 'hh:mm a')}</p>
+                </div>
               </td>
               <td className="p-3">
                 <div>
@@ -260,16 +263,21 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
               
               {/* Transactions */}
               <div className="pl-4 border-l-2 border-muted ml-4 mt-4 space-y-3">
-                {txs.map(tx => (
+                {[...txs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(tx => (
                   <div key={tx.id} className="relative flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 -ml-4 pl-6">
                     <div className={cn(
                       "absolute left-0 top-5 w-2 h-2 rounded-full -translate-x-[5px]",
                       tx.transaction_type === 'credit' ? "bg-emerald-500" : "bg-destructive"
                     )} />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">{tx.merchant_name || 'Unknown'}</p>
-                        {PAYMENT_MODE_ICONS[tx.payment_mode]}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p className="font-medium truncate">{tx.merchant_name || 'Unknown'}</p>
+                          {PAYMENT_MODE_ICONS[tx.payment_mode]}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {format(new Date(tx.created_at), 'hh:mm a')}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{tx.email_subject}</p>
                       <div className="flex gap-2 mt-1">
