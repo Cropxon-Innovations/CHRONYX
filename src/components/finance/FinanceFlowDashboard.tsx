@@ -26,7 +26,7 @@ import {
   BarChart3,
   FileText,
 } from "lucide-react";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, isWithinInterval, parseISO, subDays } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, startOfDay, endOfDay, isWithinInterval, parseISO, subDays, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface Transaction {
@@ -77,7 +77,7 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
     const now = new Date();
     switch (period) {
       case 'today':
-        return { start: now, end: now };
+        return { start: startOfDay(now), end: endOfDay(now) };
       case 'week':
         return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
       case 'month':
@@ -87,9 +87,9 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
       case 'year':
         return { start: startOfYear(now), end: endOfYear(now) };
       case 'custom':
-        return { start: selectedDate, end: selectedDate };
+        return { start: startOfDay(selectedDate), end: endOfDay(selectedDate) };
       default:
-        return { start: now, end: now };
+        return { start: startOfDay(now), end: endOfDay(now) };
     }
   }, [period, selectedDate]);
 
@@ -97,11 +97,14 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
       const txDate = parseISO(tx.transaction_date);
-      const inRange = isWithinInterval(txDate, { start: dateRange.start, end: dateRange.end });
+      // Use isSameDay for 'today' to handle date-only strings properly
+      const inRange = period === 'today' 
+        ? isSameDay(txDate, new Date())
+        : isWithinInterval(txDate, { start: dateRange.start, end: dateRange.end });
       const matchesCategory = categoryFilter === 'all' || tx.raw_extracted_data?.category === categoryFilter;
       return inRange && matchesCategory;
     });
-  }, [transactions, dateRange, categoryFilter]);
+  }, [transactions, dateRange, categoryFilter, period]);
 
   // Calculate summaries
   const summaries = useMemo(() => {
