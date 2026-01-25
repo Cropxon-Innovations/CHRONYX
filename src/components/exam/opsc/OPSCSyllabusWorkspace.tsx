@@ -24,7 +24,7 @@ type SyllabusStatus = "not_started" | "in_progress" | "completed" | "revised";
 
 interface SyllabusItem {
   id: string;
-  stage?: string;
+  stage?: "prelims" | "mains" | "interview";
   subject: string;
   topic: string;
   subtopic?: string;
@@ -198,18 +198,18 @@ export const OPSCSyllabusWorkspace: React.FC = () => {
 
   const getStatusIcon = (status: SyllabusStatus) => {
     switch (status) {
-      case "completed": return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-      case "in_progress": return <CircleDashed className="w-4 h-4 text-amber-500" />;
-      case "revised": return <RotateCcw className="w-4 h-4 text-blue-500" />;
+      case "completed": return <CheckCircle2 className="w-4 h-4 text-primary" />;
+      case "in_progress": return <CircleDashed className="w-4 h-4 text-accent-foreground" />;
+      case "revised": return <RotateCcw className="w-4 h-4 text-secondary-foreground" />;
       default: return <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30" />;
     }
   };
 
   const getStatusColor = (status: SyllabusStatus) => {
     switch (status) {
-      case "completed": return "text-green-600 bg-green-500/10";
-      case "in_progress": return "text-amber-600 bg-amber-500/10";
-      case "revised": return "text-blue-600 bg-blue-500/10";
+      case "completed": return "text-primary bg-primary/10";
+      case "in_progress": return "text-accent-foreground bg-accent/50";
+      case "revised": return "text-secondary-foreground bg-secondary";
       default: return "text-muted-foreground bg-muted/30";
     }
   };
