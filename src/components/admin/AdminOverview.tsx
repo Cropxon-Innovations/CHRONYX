@@ -101,7 +101,7 @@ const AdminOverview = () => {
     },
     {
       title: "Total Revenue",
-      value: `₹${(totalRevenue / 100).toLocaleString()}`,
+      value: `₹${totalRevenue.toLocaleString()}`,
       icon: CreditCard,
       description: "Lifetime earnings",
       color: "text-primary",

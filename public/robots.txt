@@ -3,6 +3,9 @@
 # https://chronyx.lovable.app
 # by ORIGINX LABS PVT. LTD.
 # =========================================
+# Personal Finance | Study Planner | Notes
+# Document Vault | Timetable | Templates
+# =========================================
 
 # Allow all major search engines
 User-agent: Googlebot
@@ -66,6 +69,12 @@ Allow: /
 User-agent: Googlebot-Extended
 Allow: /
 
+User-agent: cohere-ai
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
 # Default rules
 User-agent: *
 Allow: /
@@ -75,8 +84,11 @@ Disallow: /api/
 Disallow: /auth/callback
 Disallow: /app/*/private/
 Disallow: /*.json$
+Disallow: /admin/
 
-# Important public pages (for clarity)
+# =========================================
+# PUBLIC PAGES - IMPORTANT FOR SEO
+# =========================================
 Allow: /
 Allow: /login
 Allow: /pricing
@@ -86,6 +98,53 @@ Allow: /privacy
 Allow: /terms
 Allow: /security
 Allow: /refund
+
+# =========================================
+# FEATURE PAGES - FOR DISCOVERY
+# Personal Finance Management
+# =========================================
+Allow: /app/dashboard
+Allow: /app/expenses
+Allow: /app/income
+Allow: /app/finance-flow
+Allow: /app/tax
+Allow: /app/loans
+Allow: /app/insurance
+Allow: /app/reports
+
+# =========================================
+# STUDY & EDUCATION FEATURES
+# Study Planner | Templates | Timetable
+# =========================================
+Allow: /app/study
+Allow: /app/study?tab=gallery
+Allow: /app/study?tab=templates
+Allow: /app/study?tab=schedule
+
+# =========================================
+# NOTES & DOCUMENTS
+# Rich Text Notes | Document Vault
+# =========================================
+Allow: /app/notes
+Allow: /app/documents
+Allow: /app/vault
+
+# =========================================
+# LIBRARY & KNOWLEDGE HUB
+# Books | Study Materials | E-Reader
+# =========================================
+Allow: /app/library
+Allow: /app/library?tab=hub
+
+# =========================================
+# OTHER FEATURES
+# Todos | Memory | Lifespan Tracker
+# =========================================
+Allow: /app/todos
+Allow: /app/memory
+Allow: /app/lifespan
+Allow: /app/profile
+Allow: /app/settings
 
 # Sitemap location
 Sitemap: https://chronyx.lovable.app/sitemap.xml
