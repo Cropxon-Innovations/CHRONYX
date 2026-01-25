@@ -212,11 +212,21 @@ const MERCHANT_PATTERNS = [
   { regex: /electricity|bescom|power|tata\s*power/i, name: 'Electricity', category: 'Utilities' },
   { regex: /gas\s*bill|indane|bharat\s*gas/i, name: 'Gas', category: 'Utilities' },
   
-  // Insurance
-  { regex: /lic|life\s*insurance/i, name: 'LIC', category: 'Insurance' },
-  { regex: /acko/i, name: 'Acko', category: 'Insurance' },
+  // Insurance - Use word boundaries to avoid false matches
+  { regex: /\blic\b|lic\s+of\s+india|life\s*insurance\s*corporation|premium\s+.*lic/i, name: 'LIC', category: 'Insurance' },
+  { regex: /\backo\b/i, name: 'Acko', category: 'Insurance' },
   { regex: /hdfc\s*ergo/i, name: 'HDFC Ergo', category: 'Insurance' },
   { regex: /icici\s*lombard/i, name: 'ICICI Lombard', category: 'Insurance' },
+  { regex: /bajaj\s*allianz/i, name: 'Bajaj Allianz', category: 'Insurance' },
+  { regex: /star\s*health/i, name: 'Star Health', category: 'Insurance' },
+  
+  // Tech/Software subscriptions
+  { regex: /lovable/i, name: 'Lovable', category: 'Technology' },
+  { regex: /github/i, name: 'GitHub', category: 'Technology' },
+  { regex: /openai|chatgpt/i, name: 'OpenAI', category: 'Technology' },
+  { regex: /vercel/i, name: 'Vercel', category: 'Technology' },
+  { regex: /netlify/i, name: 'Netlify', category: 'Technology' },
+  { regex: /aws|amazon\s*web\s*services/i, name: 'AWS', category: 'Technology' },
   
   // Payments
   { regex: /razorpay/i, name: 'Razorpay Payment', category: 'Other' },
@@ -363,26 +373,60 @@ function extractSource(text: string, from: string): { source: string; channel: '
 }
 
 function extractMerchant(text: string): { name: string; category: string; confidence: number } | null {
-  // Try standard merchant patterns
-  for (const pattern of MERCHANT_PATTERNS) {
-    if (pattern.regex.test(text)) {
-      return { name: pattern.name, category: pattern.category, confidence: 0.95 };
+  // Priority 1: Extract from "towards [MERCHANT]" pattern (most reliable for credit card alerts)
+  const towardsMatch = text.match(/towards\s+([A-Z0-9][A-Za-z0-9\s\.\-&]{2,40})(?:\s+on|\s+at|\s+dated|\.|\,)/i);
+  if (towardsMatch && towardsMatch[1]) {
+    const merchantName = towardsMatch[1].trim();
+    // Check if this merchant matches a known pattern
+    for (const pattern of MERCHANT_PATTERNS) {
+      if (pattern.regex.test(merchantName)) {
+        return { name: pattern.name, category: pattern.category, confidence: 0.95 };
+      }
+    }
+    // Return the raw merchant name from email
+    if (merchantName.length > 2 && !/^\d+$/.test(merchantName)) {
+      return { name: merchantName, category: 'Other', confidence: 0.85 };
     }
   }
   
-  // Try to extract from "to [NAME]" or "paid to [NAME]" patterns
-  const toMatch = text.match(/(?:to|paid\s+to|sent\s+to)\s+([A-Z][A-Za-z\s]{2,30})(?:\s+(?:on|via|using|ref)|[.\-])/i);
+  // Priority 2: Try VPA merchant extraction (for UPI payments - "to VPA xxx MERCHANT_NAME")
+  const vpaMatch = text.match(/to\s+vpa\s+[\w.@]+\s+([A-Z][A-Za-z\s]{2,40})(?:\s+on|\.)/i);
+  if (vpaMatch && vpaMatch[1]) {
+    const merchantName = vpaMatch[1].trim();
+    // Check against known patterns
+    for (const pattern of MERCHANT_PATTERNS) {
+      if (pattern.regex.test(merchantName)) {
+        return { name: pattern.name, category: pattern.category, confidence: 0.9 };
+      }
+    }
+    return { name: merchantName, category: 'Other', confidence: 0.75 };
+  }
+  
+  // Priority 3: Try "to [NAME]" or "paid to [NAME]" patterns
+  const toMatch = text.match(/(?:paid\s+to|sent\s+to|transferred\s+to)\s+([A-Z][A-Za-z\s]{2,30})(?:\s+(?:on|via|using|ref)|[.\-])/i);
   if (toMatch && toMatch[1]) {
-    const name = toMatch[1].trim();
-    if (name.length > 2 && !/^\d+$/.test(name)) {
-      return { name, category: 'Other', confidence: 0.7 };
+    const merchantName = toMatch[1].trim();
+    // Check against known patterns
+    for (const pattern of MERCHANT_PATTERNS) {
+      if (pattern.regex.test(merchantName)) {
+        return { name: pattern.name, category: pattern.category, confidence: 0.9 };
+      }
+    }
+    if (merchantName.length > 2 && !/^\d+$/.test(merchantName)) {
+      return { name: merchantName, category: 'Other', confidence: 0.7 };
     }
   }
   
-  // Try VPA merchant extraction
-  const vpaMatch = text.match(/vpa\s+[\w.]+@([a-z]+)\s+([A-Z][A-Za-z\s]{2,30})/i);
-  if (vpaMatch && vpaMatch[2]) {
-    return { name: vpaMatch[2].trim(), category: 'Other', confidence: 0.75 };
+  // Priority 4: Fall back to checking entire text against known merchant patterns
+  // But only for high-confidence patterns with word boundaries
+  for (const pattern of MERCHANT_PATTERNS) {
+    // Skip generic insurance patterns when falling back to full text search
+    if (pattern.name === 'LIC' && !/\blic\b|life\s*insurance\s*corporation/i.test(text)) {
+      continue;
+    }
+    if (pattern.regex.test(text)) {
+      return { name: pattern.name, category: pattern.category, confidence: 0.8 };
+    }
   }
   
   return null;

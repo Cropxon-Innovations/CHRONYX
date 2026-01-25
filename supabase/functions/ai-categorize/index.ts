@@ -30,7 +30,7 @@ const CATEGORY_PATTERNS: Record<string, { pattern: RegExp; category: string; con
     { pattern: /udemy|coursera|unacademy|byju|upgrad|simplilearn|school|college|university|tuition|books|kindle/i, category: 'Education', confidence: 0.85 },
   ],
   'Finance': [
-    { pattern: /sip|mutual\s*fund|zerodha|groww|upstox|paytm\s*money|kuvera|emi|loan|insurance|lic|hdfc\s*life|icici\s*prudential/i, category: 'Finance', confidence: 0.87 },
+    { pattern: /sip|mutual\s*fund|zerodha|groww|upstox|paytm\s*money|kuvera|emi|loan/i, category: 'Finance', confidence: 0.87 },
   ],
   'Subscriptions': [
     { pattern: /subscription|membership|premium|pro\s*plan|annual|monthly\s*fee|renewal/i, category: 'Subscriptions', confidence: 0.8 },
@@ -39,7 +39,11 @@ const CATEGORY_PATTERNS: Record<string, { pattern: RegExp; category: string; con
     { pattern: /petrol|diesel|fuel|iocl|hpcl|bpcl|indian\s*oil|bharat\s*petroleum|shell|reliance\s*petro/i, category: 'Fuel', confidence: 0.95 },
   ],
   'Insurance': [
-    { pattern: /insurance|policy|premium|lic|hdfc\s*ergo|icici\s*lombard|bajaj\s*allianz|star\s*health|max\s*bupa|care\s*health/i, category: 'Insurance', confidence: 0.9 },
+    // Use word boundary for LIC to avoid matching "public", "click", etc.
+    { pattern: /\blic\b|life\s*insurance\s*corp|hdfc\s*ergo|icici\s*lombard|bajaj\s*allianz|star\s*health|max\s*bupa|care\s*health/i, category: 'Insurance', confidence: 0.9 },
+  ],
+  'Technology': [
+    { pattern: /lovable|github|openai|chatgpt|vercel|netlify|aws|azure|digitalocean|heroku/i, category: 'Technology', confidence: 0.9 },
   ],
   'Investments': [
     { pattern: /nse|bse|shares|stocks|equity|demat|trading|zerodha|groww|upstox|angel|motilal|kotak\s*securities/i, category: 'Investments', confidence: 0.85 },
