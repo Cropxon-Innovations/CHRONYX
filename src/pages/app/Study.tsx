@@ -27,6 +27,8 @@ import { StudyTodosWidget } from "@/components/study/StudyTodosWidget";
 import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, GraduationCap } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { OPSCExamDashboard } from "@/components/exam/opsc/OPSCExamDashboard";
+import { StudyOnboardingFlow, StudyGuidedTour } from "@/components/study/onboarding";
+import { useStudyOnboarding } from "@/hooks/useStudyOnboarding";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +48,15 @@ const Study = () => {
   const queryClient = useQueryClient();
   const { logActivity } = useActivityLog();
   const [searchParams] = useSearchParams();
+  
+  // Study onboarding
+  const { 
+    showOnboarding, 
+    showTour, 
+    isLoading: onboardingLoading,
+    completeOnboarding,
+    completeTour 
+  } = useStudyOnboarding();
   
   const initialTab = searchParams.get('tab') || "progress";
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -313,6 +324,11 @@ const Study = () => {
     addLogMutation.mutate({ duration, subject });
     setShowTimer(false);
   };
+
+  // Show onboarding for new users
+  if (showOnboarding && !onboardingLoading) {
+    return <StudyOnboardingFlow onComplete={completeOnboarding} />;
+  }
 
   // Reading view
   if (readingItem) {
