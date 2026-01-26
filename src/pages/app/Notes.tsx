@@ -1,12 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useActivityLog } from "@/hooks/useActivityLog";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { NoteTypeSelector, NoteType } from "@/components/notes/NoteTypeSelector";
-import { SmartSections, SmartSection, SMART_SECTIONS } from "@/components/notes/SmartSections";
 import { NoteCard, NoteData } from "@/components/notes/NoteCard";
 import { NoteEditor } from "@/components/notes/NoteEditor";
 import { NotesTimeline } from "@/components/notes/NotesTimeline";
@@ -14,18 +13,24 @@ import { QuickNotesGrid } from "@/components/notes/QuickNotesGrid";
 import { DailyReflection } from "@/components/notes/DailyReflection";
 import { Emotion } from "@/components/notes/EmotionSelector";
 import { LinkedEntity } from "@/components/notes/LinkedEntitySuggestion";
-import { handleExport } from "@/components/notes/NoteExport";
+import { 
+  NoteflowHeader, 
+  NoteflowSidebar, 
+  NoteflowDailyNote,
+  NoteflowSearch,
+  type NoteflowViewMode,
+  type SidebarSection,
+  type SmartFilter
+} from "@/components/noteflow";
 import { cn } from "@/lib/utils";
 import { 
-  Plus, 
-  LayoutGrid, 
-  Clock,
-  Sparkles,
   Pin,
-  StickyNote
+  Sparkles,
+  Plus,
+  FolderTree
 } from "lucide-react";
-
-type ViewMode = "grid" | "timeline" | "sticky";
+import { isToday, isYesterday, isThisWeek, isThisMonth, startOfWeek, endOfWeek } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 const Notes = () => {
   const { user } = useAuth();
@@ -35,9 +40,10 @@ const Notes = () => {
   // State
   const [notes, setNotes] = useState<NoteData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSection, setSelectedSection] = useState<SmartSection>("recent");
+  const [selectedSection, setSelectedSection] = useState<SidebarSection>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<NoteflowViewMode>("grid");
+  const [showSearch, setShowSearch] = useState(false);
   
   // Type selection dialog
   const [showTypeSelector, setShowTypeSelector] = useState(false);
@@ -66,6 +72,62 @@ const Notes = () => {
     setLoading(false);
   };
 
+  // Extract all unique tags and folders
+  const { allTags, allFolders } = useMemo(() => {
+    const tagSet = new Set<string>();
+    const folderSet = new Set<string>();
+    
+    notes.forEach((note) => {
+      note.tags?.forEach((tag) => tagSet.add(tag));
+      if (note.folder) folderSet.add(note.folder);
+    });
+
+    return {
+      allTags: Array.from(tagSet).sort(),
+      allFolders: Array.from(folderSet).sort(),
+    };
+  }, [notes]);
+
+  // Calculate counts for sidebar
+  const counts = useMemo(() => {
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+
+    const filters: Record<SmartFilter, number> = {
+      all: notes.filter(n => !n.is_archived).length,
+      today: notes.filter(n => !n.is_archived && isToday(new Date(n.updated_at))).length,
+      yesterday: notes.filter(n => !n.is_archived && isYesterday(new Date(n.updated_at))).length,
+      this_week: notes.filter(n => !n.is_archived && isThisWeek(new Date(n.updated_at))).length,
+      this_month: notes.filter(n => !n.is_archived && isThisMonth(new Date(n.updated_at))).length,
+      untagged: notes.filter(n => !n.is_archived && (!n.tags || n.tags.length === 0)).length,
+      with_links: notes.filter(n => !n.is_archived && n.linked_entities?.length > 0).length,
+      archived: notes.filter(n => n.is_archived).length,
+    };
+
+    const types: Record<NoteType, number> = {
+      quick_note: notes.filter(n => !n.is_archived && n.type === "quick_note").length,
+      journal: notes.filter(n => !n.is_archived && n.type === "journal").length,
+      document: notes.filter(n => !n.is_archived && n.type === "document").length,
+      finance_note: notes.filter(n => !n.is_archived && n.type === "finance_note").length,
+      memory_note: notes.filter(n => !n.is_archived && n.type === "memory_note").length,
+      tax_note: notes.filter(n => !n.is_archived && n.type === "tax_note").length,
+      story: notes.filter(n => !n.is_archived && n.type === "story").length,
+    };
+
+    const tags: Record<string, number> = {};
+    allTags.forEach((tag) => {
+      tags[tag] = notes.filter(n => !n.is_archived && n.tags?.includes(tag)).length;
+    });
+
+    const folders: Record<string, number> = {};
+    allFolders.forEach((folder) => {
+      folders[folder] = notes.filter(n => !n.is_archived && n.folder === folder).length;
+    });
+
+    return { filters, types, tags, folders };
+  }, [notes, allTags, allFolders]);
+
   // Filter notes based on section and search
   const filteredNotes = useMemo(() => {
     return notes.filter((note) => {
@@ -76,12 +138,30 @@ const Notes = () => {
         if (note.is_archived) return false;
       }
 
+      // Smart filters
+      if (selectedSection === "today" && !isToday(new Date(note.updated_at))) return false;
+      if (selectedSection === "yesterday" && !isYesterday(new Date(note.updated_at))) return false;
+      if (selectedSection === "this_week" && !isThisWeek(new Date(note.updated_at))) return false;
+      if (selectedSection === "this_month" && !isThisMonth(new Date(note.updated_at))) return false;
+      if (selectedSection === "untagged" && note.tags && note.tags.length > 0) return false;
+      if (selectedSection === "with_links" && (!note.linked_entities || note.linked_entities.length === 0)) return false;
+
       // Type filter
-      if (selectedSection !== "recent" && selectedSection !== "archived") {
-        const sectionConfig = SMART_SECTIONS.find(s => s.id === selectedSection);
-        if (sectionConfig?.filterType && note.type !== sectionConfig.filterType) {
-          return false;
-        }
+      const noteTypes: NoteType[] = ["quick_note", "journal", "document", "finance_note", "memory_note", "tax_note", "story"];
+      if (noteTypes.includes(selectedSection as NoteType) && note.type !== selectedSection) {
+        return false;
+      }
+
+      // Tag filter
+      if (selectedSection.startsWith("tag:")) {
+        const tag = selectedSection.replace("tag:", "");
+        if (!note.tags?.includes(tag)) return false;
+      }
+
+      // Folder filter
+      if (selectedSection.startsWith("folder:")) {
+        const folder = selectedSection.replace("folder:", "");
+        if (note.folder !== folder) return false;
       }
 
       // Search filter
@@ -96,22 +176,6 @@ const Notes = () => {
       return true;
     });
   }, [notes, selectedSection, searchQuery]);
-
-  // Note counts for sections
-  const noteCounts = useMemo(() => {
-    const counts: Record<SmartSection, number> = {
-      recent: notes.filter(n => !n.is_archived).length,
-      quick_note: notes.filter(n => !n.is_archived && n.type === "quick_note").length,
-      journal: notes.filter(n => !n.is_archived && n.type === "journal").length,
-      document: notes.filter(n => !n.is_archived && n.type === "document").length,
-      finance_note: notes.filter(n => !n.is_archived && n.type === "finance_note").length,
-      memory_note: notes.filter(n => !n.is_archived && n.type === "memory_note").length,
-      tax_note: notes.filter(n => !n.is_archived && n.type === "tax_note").length,
-      story: notes.filter(n => !n.is_archived && n.type === "story").length,
-      archived: notes.filter(n => n.is_archived).length,
-    };
-    return counts;
-  }, [notes]);
 
   const pinnedNotes = filteredNotes.filter(n => n.is_pinned);
   const unpinnedNotes = filteredNotes.filter(n => !n.is_pinned);
@@ -128,6 +192,15 @@ const Notes = () => {
     setEditingNote(note);
     setSelectedType(note.type || "quick_note");
     setIsEditing(true);
+  };
+
+  const handleOpenNote = (noteId: string) => {
+    const note = notes.find(n => n.id === noteId);
+    if (note) handleEditNote(note);
+  };
+
+  const handleCreateDailyNote = () => {
+    handleCreateNote("journal");
   };
 
   const handleSaveNote = async (data: {
@@ -239,6 +312,19 @@ const Notes = () => {
     }
   };
 
+  // Prepare search data
+  const searchableNotes = useMemo(() => 
+    notes.map(n => ({
+      id: n.id,
+      title: n.title || "Untitled",
+      type: n.type || "quick_note",
+      tags: n.tags || [],
+      updated_at: n.updated_at,
+      preview: n.content?.slice(0, 100) || "",
+    })), 
+    [notes]
+  );
+
   // Loading state
   if (loading) {
     return (
@@ -271,177 +357,224 @@ const Notes = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-light text-foreground tracking-wide flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary" />
-            CHRONYX Notes
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Your private life record — thoughts, memories, finances, and decisions
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* View Toggle */}
-          <div className="flex items-center border border-border rounded-xl p-1">
-            <Button
-              variant={viewMode === "sticky" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("sticky")}
-              className="h-8 px-3"
-              title="Sticky Notes"
-            >
-              <StickyNote className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
-              className="h-8 px-3"
-              title="Grid View"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === "timeline" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("timeline")}
-              className="h-8 px-3"
-              title="Timeline"
-            >
-              <Clock className="w-4 h-4" />
-            </Button>
-          </div>
-          
-          <Button onClick={() => setShowTypeSelector(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            New Note
-          </Button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Smart Sections Sidebar */}
-        <SmartSections
-          selectedSection={selectedSection}
-          onSelectSection={setSelectedSection}
-          noteCounts={noteCounts}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+    <TooltipProvider>
+      <div className="space-y-6 animate-fade-in">
+        {/* Header */}
+        <NoteflowHeader
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onCreateNote={() => setShowTypeSelector(true)}
+          onOpenSearch={() => setShowSearch(true)}
+          noteCount={counts.filters.all}
         />
 
-        {/* Notes Area */}
-        <div className="flex-1 min-w-0 space-y-6">
-          {/* Daily Reflection Prompt */}
-          <DailyReflection onReflectionSaved={fetchNotes} />
+        {/* Main Content */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar */}
+          <NoteflowSidebar
+            selectedSection={selectedSection}
+            onSelectSection={setSelectedSection}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            counts={counts}
+            tags={allTags}
+            folders={allFolders}
+          />
 
-          {viewMode === "sticky" ? (
-            <QuickNotesGrid
-              notes={notes}
-              onNoteClick={handleEditNote}
-              onCreateQuickNote={() => handleCreateNote("quick_note")}
+          {/* Notes Area */}
+          <div className="flex-1 min-w-0 space-y-6">
+            {/* Daily Note Prompt */}
+            <NoteflowDailyNote
+              onOpenNote={handleOpenNote}
+              onCreateDailyNote={handleCreateDailyNote}
             />
-          ) : viewMode === "timeline" ? (
-            <NotesTimeline
-              notes={filteredNotes}
-              onEditNote={handleEditNote}
-              onPinNote={handlePinNote}
-              onArchiveNote={handleArchiveNote}
-              onDeleteNote={handleDeleteNote}
-            />
-          ) : (
-            <div className="space-y-6">
-              {/* Pinned Notes */}
-              {pinnedNotes.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                    <Pin className="w-4 h-4" />
-                    Pinned
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {pinnedNotes.map((note) => (
-                      <NoteCard
-                        key={note.id}
-                        note={note}
-                        onEdit={() => handleEditNote(note)}
-                        onPin={() => handlePinNote(note)}
-                        onArchive={() => handleArchiveNote(note)}
-                        onDelete={() => handleDeleteNote(note)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {/* Other Notes */}
-              {unpinnedNotes.length > 0 && (
-                <div>
-                  {pinnedNotes.length > 0 && (
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3">Others</h3>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {unpinnedNotes.map((note) => (
-                      <NoteCard
-                        key={note.id}
-                        note={note}
-                        onEdit={() => handleEditNote(note)}
-                        onPin={() => handlePinNote(note)}
-                        onArchive={() => handleArchiveNote(note)}
-                        onDelete={() => handleDeleteNote(note)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
+            {/* Daily Reflection */}
+            <DailyReflection onReflectionSaved={fetchNotes} />
 
-              {/* Empty State */}
-              {filteredNotes.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="p-4 rounded-full bg-muted/50 mb-4">
-                    <Sparkles className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="font-medium text-foreground mb-1">
-                    {selectedSection === "archived" ? "No archived notes" : "No notes yet"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {selectedSection === "archived" 
-                      ? "Archived notes will appear here" 
-                      : "Create your first note to get started"}
-                  </p>
-                  {selectedSection !== "archived" && (
-                    <Button onClick={() => setShowTypeSelector(true)}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Note
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+            {viewMode === "sticky" ? (
+              <QuickNotesGrid
+                notes={notes}
+                onNoteClick={handleEditNote}
+                onCreateQuickNote={() => handleCreateNote("quick_note")}
+              />
+            ) : viewMode === "timeline" ? (
+              <NotesTimeline
+                notes={filteredNotes}
+                onEditNote={handleEditNote}
+                onPinNote={handlePinNote}
+                onArchiveNote={handleArchiveNote}
+                onDeleteNote={handleDeleteNote}
+              />
+            ) : viewMode === "folders" ? (
+              // Folder view
+              <div className="space-y-6">
+                {allFolders.length > 0 ? (
+                  allFolders.map((folder) => {
+                    const folderNotes = filteredNotes.filter(n => n.folder === folder);
+                    if (folderNotes.length === 0) return null;
 
-      {/* Note Type Selector Dialog */}
-      <Dialog open={showTypeSelector} onOpenChange={setShowTypeSelector}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl">Choose Note Type</DialogTitle>
-          </DialogHeader>
-          <div className="pt-4">
-            <p className="text-sm text-muted-foreground mb-6">
-              Select the type of note you want to create. This helps organize your content and enables smart features.
-            </p>
-            <NoteTypeSelector
-              selectedType={null}
-              onSelect={handleCreateNote}
-            />
+                    return (
+                      <div key={folder}>
+                        <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                          <FolderTree className="w-4 h-4" />
+                          {folder}
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {folderNotes.map((note) => (
+                            <NoteCard
+                              key={note.id}
+                              note={note}
+                              onEdit={() => handleEditNote(note)}
+                              onPin={() => handlePinNote(note)}
+                              onArchive={() => handleArchiveNote(note)}
+                              onDelete={() => handleDeleteNote(note)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="p-4 rounded-full bg-muted/50 mb-4">
+                      <FolderTree className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-medium text-foreground mb-1">No folders yet</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Organize your notes by creating folders
+                    </p>
+                  </div>
+                )}
+
+                {/* Unfiled Notes */}
+                {(() => {
+                  const unfiledNotes = filteredNotes.filter(n => !n.folder);
+                  if (unfiledNotes.length === 0) return null;
+
+                  return (
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                        <FolderTree className="w-4 h-4" />
+                        Unfiled
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {unfiledNotes.map((note) => (
+                          <NoteCard
+                            key={note.id}
+                            note={note}
+                            onEdit={() => handleEditNote(note)}
+                            onPin={() => handlePinNote(note)}
+                            onArchive={() => handleArchiveNote(note)}
+                            onDelete={() => handleDeleteNote(note)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Pinned Notes */}
+                {pinnedNotes.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                      <Pin className="w-4 h-4" />
+                      Pinned
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {pinnedNotes.map((note) => (
+                        <NoteCard
+                          key={note.id}
+                          note={note}
+                          onEdit={() => handleEditNote(note)}
+                          onPin={() => handlePinNote(note)}
+                          onArchive={() => handleArchiveNote(note)}
+                          onDelete={() => handleDeleteNote(note)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Other Notes */}
+                {unpinnedNotes.length > 0 && (
+                  <div>
+                    {pinnedNotes.length > 0 && (
+                      <h3 className="text-sm font-medium text-muted-foreground mb-3">Others</h3>
+                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {unpinnedNotes.map((note) => (
+                        <NoteCard
+                          key={note.id}
+                          note={note}
+                          onEdit={() => handleEditNote(note)}
+                          onPin={() => handlePinNote(note)}
+                          onArchive={() => handleArchiveNote(note)}
+                          onDelete={() => handleDeleteNote(note)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {filteredNotes.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="p-4 rounded-full bg-muted/50 mb-4">
+                      <Sparkles className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-medium text-foreground mb-1">
+                      {selectedSection === "archived" ? "No archived notes" : "No notes yet"}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {selectedSection === "archived" 
+                        ? "Archived notes will appear here" 
+                        : "Create your first note to get started"}
+                    </p>
+                    {selectedSection !== "archived" && (
+                      <Button onClick={() => setShowTypeSelector(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Note
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        </div>
+
+        {/* Global Search */}
+        <NoteflowSearch
+          open={showSearch}
+          onOpenChange={setShowSearch}
+          notes={searchableNotes}
+          recentSearches={[]}
+          onSelectNote={handleOpenNote}
+          onCreateNote={handleCreateNote}
+        />
+
+        {/* Note Type Selector Dialog */}
+        <Dialog open={showTypeSelector} onOpenChange={setShowTypeSelector}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Choose Note Type</DialogTitle>
+            </DialogHeader>
+            <div className="pt-4">
+              <p className="text-sm text-muted-foreground mb-6">
+                Select the type of note you want to create. This helps organize your content and enables smart features.
+              </p>
+              <NoteTypeSelector
+                selectedType={null}
+                onSelect={handleCreateNote}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   );
 };
 
