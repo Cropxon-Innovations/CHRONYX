@@ -3148,6 +3148,45 @@ export type Database = {
         }
         Relationships: []
       }
+      five_year_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_year: number
+          id: string
+          milestones: Json | null
+          start_year: number
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_year: number
+          id?: string
+          milestones?: Json | null
+          start_year: number
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_year?: number
+          id?: string
+          milestones?: Json | null
+          start_year?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gmail_import_logs: {
         Row: {
           action: string
@@ -4565,6 +4604,51 @@ export type Database = {
           updated_at?: string
           user_id?: string
           visibility?: string | null
+        }
+        Relationships: []
+      }
+      notes_trash: {
+        Row: {
+          auto_delete_at: string
+          canvas_data: Json | null
+          content: Json | null
+          deleted_at: string
+          folder_id: string | null
+          id: string
+          metadata: Json | null
+          original_note_id: string
+          tags: string[] | null
+          title: string | null
+          user_id: string
+          versions: Json | null
+        }
+        Insert: {
+          auto_delete_at?: string
+          canvas_data?: Json | null
+          content?: Json | null
+          deleted_at?: string
+          folder_id?: string | null
+          id?: string
+          metadata?: Json | null
+          original_note_id: string
+          tags?: string[] | null
+          title?: string | null
+          user_id: string
+          versions?: Json | null
+        }
+        Update: {
+          auto_delete_at?: string
+          canvas_data?: Json | null
+          content?: Json | null
+          deleted_at?: string
+          folder_id?: string | null
+          id?: string
+          metadata?: Json | null
+          original_note_id?: string
+          tags?: string[] | null
+          title?: string | null
+          user_id?: string
+          versions?: Json | null
         }
         Relationships: []
       }
@@ -8841,6 +8925,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          badge_color: string | null
+          badge_description: string | null
+          badge_icon: string | null
+          badge_id: string
+          badge_name: string
+          earned_at: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          badge_color?: string | null
+          badge_description?: string | null
+          badge_icon?: string | null
+          badge_id: string
+          badge_name: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          badge_color?: string | null
+          badge_description?: string | null
+          badge_icon?: string | null
+          badge_id?: string
+          badge_name?: string
+          earned_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_notification_status: {
         Row: {
           dismissed_at: string | null
@@ -9178,6 +9298,45 @@ export type Database = {
           },
         ]
       }
+      user_wallet: {
+        Row: {
+          created_at: string
+          id: string
+          lifetime_coins: number | null
+          lifetime_points: number | null
+          lifetime_redeemed: number | null
+          redeemable_balance: number | null
+          total_coins: number | null
+          total_points: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lifetime_coins?: number | null
+          lifetime_points?: number | null
+          lifetime_redeemed?: number | null
+          redeemable_balance?: number | null
+          total_coins?: number | null
+          total_points?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lifetime_coins?: number | null
+          lifetime_points?: number | null
+          lifetime_redeemed?: number | null
+          redeemable_balance?: number | null
+          total_coins?: number | null
+          total_points?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vault_items: {
         Row: {
           category: string | null
@@ -9274,6 +9433,48 @@ export type Database = {
           translation_text?: string | null
           user_id?: string
           word?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          coins_amount: number | null
+          created_at: string
+          id: string
+          inr_amount: number | null
+          metadata: Json | null
+          points_amount: number | null
+          reason: string
+          reference_id: string | null
+          reference_type: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          coins_amount?: number | null
+          created_at?: string
+          id?: string
+          inr_amount?: number | null
+          metadata?: Json | null
+          points_amount?: number | null
+          reason: string
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          coins_amount?: number | null
+          created_at?: string
+          id?: string
+          inr_amount?: number | null
+          metadata?: Json | null
+          points_amount?: number | null
+          reason?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -9458,6 +9659,60 @@ export type Database = {
         }
         Relationships: []
       }
+      yearly_resolutions: {
+        Row: {
+          achieved_at: string | null
+          category: string | null
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          points_earned: number | null
+          priority: number | null
+          progress: number | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          achieved_at?: string | null
+          category?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          points_earned?: number | null
+          priority?: number | null
+          progress?: number | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          achieved_at?: string | null
+          category?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          points_earned?: number | null
+          priority?: number | null
+          progress?: number | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       study_leaderboard: {
@@ -9482,6 +9737,16 @@ export type Database = {
           p_reference_id?: string
           p_reference_type?: string
           p_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      add_wallet_points: {
+        Args: {
+          p_points: number
+          p_reason: string
+          p_reference_id?: string
+          p_reference_type?: string
           p_user_id: string
         }
         Returns: undefined
