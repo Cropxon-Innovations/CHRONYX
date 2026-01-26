@@ -5,3 +5,8 @@ export { NoteflowTagManager } from "./NoteflowTagManager";
 export { NoteflowDailyNote } from "./NoteflowDailyNote";
 export { NoteflowSearch } from "./NoteflowSearch";
 export { NoteflowEditor, CalloutBlock } from "./NoteflowEditor";
+export { UnifiedNoteEditor } from "./UnifiedNoteEditor";
+export { CanvasLayer, type CanvasLayerRef } from "./CanvasLayer";
+export { StickyNotesPanel } from "./StickyNotesPanel";
+export { NoteVersionHistory } from "./NoteVersionHistory";
+export { NoteAIAssistant } from "./NoteAIAssistant";
