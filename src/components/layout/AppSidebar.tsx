@@ -36,7 +36,7 @@ import {
   User,
   FileText,
   Users,
-  StickyNote,
+  PenTool,
   Lock,
   Shield,
   ShieldCheck,
@@ -45,6 +45,7 @@ import {
   BookMarked,
   GitBranch,
 } from "lucide-react";
+import { getBadgeClasses, getBadgeDotColor } from "@/lib/badge-colors";
 import {
   Dialog,
   DialogContent,
@@ -88,7 +89,7 @@ const navSections: NavSection[] = [
     title: "Productivity",
     items: [
       { path: "/app/todos", label: "Todos", icon: CheckSquare },
-      { path: "/app/notes", label: "Noteflow", icon: StickyNote, badge: "BETA" },
+      { path: "/app/notes", label: "Noteflow", icon: PenTool, badge: "BETA" },
       { path: "/app/study", label: "Study", icon: GraduationCap },
       { path: "/app/library", label: "Library", icon: BookMarked, badge: "NEW" },
       { path: "/app/achievements", label: "Achievements", icon: Trophy },
@@ -391,7 +392,7 @@ const AppSidebar = () => {
                           >
                             <Icon className="w-4 h-4" />
                             {badge && (
-                              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
+                              <span className={cn("absolute -top-1 -right-1 w-2 h-2 rounded-full", getBadgeDotColor(badge))} />
                             )}
                           </Link>
                         </TooltipTrigger>
@@ -420,7 +421,7 @@ const AppSidebar = () => {
                       <Icon className="w-4 h-4" />
                       <span className="flex-1">{label}</span>
                       {badge && (
-                        <span className="px-1.5 py-0.5 text-[9px] font-medium rounded bg-red-500/10 text-red-500 border border-red-500/20">
+                        <span className={cn("px-1.5 py-0.5 text-[9px] font-medium rounded border", getBadgeClasses(badge))}>
                           {badge}
                         </span>
                       )}
