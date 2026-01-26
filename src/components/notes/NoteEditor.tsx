@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { UnifiedNoteEditor } from "@/components/noteflow/UnifiedNoteEditor";
-import { NoteflowAI } from "@/components/noteflow/NoteflowAI";
+import { NoteflowLM } from "@/components/noteflow/NoteflowLM";
 import { NoteVersionHistory } from "@/components/noteflow/NoteVersionHistory";
 import { PDFExportDialog } from "./PDFExportDialog";
 import { exportProfessionalPDF } from "./ProfessionalPDFExport";
@@ -60,12 +60,11 @@ interface NoteEditorProps {
   }) => void;
   onClose: () => void;
   isSaving?: boolean;
-  onTypeChange?: (type: NoteType) => void;
 }
 
 export const NoteEditor = ({
   noteId,
-  noteType,
+  noteType: initialNoteType,
   initialTitle = "",
   initialContent = "",
   initialEmotion,
@@ -77,6 +76,7 @@ export const NoteEditor = ({
   isSaving = false,
 }: NoteEditorProps) => {
   const [title, setTitle] = useState(initialTitle);
+  const [noteType, setNoteType] = useState<NoteType>(initialNoteType);
   const [content, setContent] = useState(initialContent);
   const [canvasData, setCanvasData] = useState<string>("");
   const [emotion, setEmotion] = useState<Emotion | undefined>(initialEmotion);
@@ -257,16 +257,14 @@ export const NoteEditor = ({
                   <span className="text-sm font-medium">{typeConfig.label}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuContent align="start" className="w-48 bg-background border border-border shadow-lg z-50">
                 {NOTE_TYPES.map((nt) => {
                   const NtIcon = nt.icon;
                   return (
                     <DropdownMenuItem
                       key={nt.type}
-                      onClick={() => {
-                        // Type is saved with the note when user saves
-                      }}
-                      className={cn("gap-2", noteType === nt.type && "bg-primary/10")}
+                      onClick={() => setNoteType(nt.type)}
+                      className={cn("gap-2 cursor-pointer", noteType === nt.type && "bg-primary/10")}
                     >
                       <NtIcon className={cn("w-4 h-4", nt.color)} />
                       {nt.label}
@@ -285,12 +283,12 @@ export const NoteEditor = ({
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
-            {/* Noteflow AI */}
-            <NoteflowAI 
+            {/* NoteflowLM */}
+            <NoteflowLM 
               noteContent={content}
               noteTitle={title || "Untitled Note"}
               onApplyResult={(result) => {
-                toast({ title: "AI Result applied" });
+                toast({ title: "NoteflowLM Result applied" });
               }}
             />
 
