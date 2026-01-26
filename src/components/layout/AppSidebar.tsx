@@ -27,7 +27,7 @@ import {
   Images,
   ChevronLeft,
   ChevronRight,
-  Search,
+  Target,
   Mail,
   Zap,
   Phone,
@@ -81,7 +81,7 @@ const navSections: NavSection[] = [
     title: "Overview",
     items: [
       { path: "/app", label: "Dashboard", icon: LayoutDashboard },
-      { path: "/app/search", label: "Search", icon: Search },
+      { path: "/app/resolutions", label: "Resolutions", icon: Target },
     ],
   },
   {
