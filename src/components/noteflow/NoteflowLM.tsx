@@ -1,12 +1,12 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, ClipboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 import {
   Sheet,
   SheetContent,
@@ -16,12 +16,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
   PenTool,
   Image as ImageIcon,
   Presentation,
@@ -30,15 +24,18 @@ import {
   Sparkles,
   Globe,
   Lock,
-  Loader2,
   Check,
   AlertCircle,
   ChevronRight,
   RefreshCw,
   Download,
+  ExternalLink,
+  Crown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNoteflowLMUsage } from "@/hooks/useNoteflowLMUsage";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface GenerationPreview {
   type: "image" | "slides" | "infographic";
@@ -46,6 +43,12 @@ interface GenerationPreview {
   mode: "private" | "public";
   slideCount?: number;
   details: string[];
+}
+
+interface GenerationResult {
+  type: "image" | "slides";
+  content: string;
+  images?: { type: string; image_url: { url: string } }[];
 }
 
 interface NoteflowLMProps {
@@ -62,6 +65,7 @@ const GENERATION_TYPES = [
     icon: ImageIcon,
     badge: "BETA",
     badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+    available: true,
   },
   {
     id: "slides",
@@ -70,6 +74,7 @@ const GENERATION_TYPES = [
     icon: Presentation,
     badge: "BETA",
     badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+    available: true,
   },
   {
     id: "infographic",
@@ -78,7 +83,7 @@ const GENERATION_TYPES = [
     icon: LayoutGrid,
     badge: "COMING SOON",
     badgeColor: "bg-muted text-muted-foreground border-border",
-    disabled: true,
+    available: false,
   },
   {
     id: "video",
@@ -87,7 +92,7 @@ const GENERATION_TYPES = [
     icon: Video,
     badge: "COMING SOON",
     badgeColor: "bg-muted text-muted-foreground border-border",
-    disabled: true,
+    available: false,
   },
 ];
 
@@ -104,9 +109,24 @@ export const NoteflowLM = ({
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [preview, setPreview] = useState<GenerationPreview | null>(null);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<GenerationResult | null>(null);
   const [step, setStep] = useState<"select" | "preview" | "generating" | "result">("select");
   const { toast } = useToast();
+
+  const { canGenerate, dailyUsed, dailyLimit, remaining, loading: usageLoading, recordGeneration } = useNoteflowLMUsage();
+  const { getCurrentPlan } = useSubscription();
+  const currentPlan = getCurrentPlan();
+
+  // Handle paste for textarea
+  const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>, setter: (value: string) => void, currentValue: string) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+    const target = e.target as HTMLTextAreaElement;
+    const start = target.selectionStart;
+    const end = target.selectionEnd;
+    const newValue = currentValue.substring(0, start) + pastedText + currentValue.substring(end);
+    setter(newValue);
+  };
 
   const extractTextFromContent = (content: string): string => {
     try {
@@ -201,7 +221,21 @@ export const NoteflowLM = ({
 
       if (error) throw error;
 
-      setResult(data?.result || "Generation completed!");
+      // Record the generation
+      await recordGeneration({
+        generationType: selectedType as 'image' | 'slides' | 'infographic' | 'video',
+        noteTitle,
+        mode,
+        customPrompt,
+        resultSummary: typeof data?.result === 'string' ? data.result.substring(0, 200) : 'Generated',
+        success: true,
+      });
+
+      setResult({
+        type: selectedType as "image" | "slides",
+        content: data?.result || "Generation completed!",
+        images: data?.images,
+      });
       setStep("result");
     } catch (error) {
       console.error("Generation error:", error);
@@ -302,17 +336,18 @@ export const NoteflowLM = ({
                   {GENERATION_TYPES.map((type) => {
                     const Icon = type.icon;
                     const isSelected = selectedType === type.id;
+                    const isDisabled = !type.available;
                     return (
                       <button
                         key={type.id}
-                        onClick={() => !type.disabled && setSelectedType(type.id)}
-                        disabled={type.disabled}
+                        onClick={() => type.available && setSelectedType(type.id)}
+                        disabled={isDisabled}
                         className={cn(
                           "relative flex flex-col items-center gap-2 p-4 rounded-xl border text-center",
                           "transition-all duration-200",
-                          isSelected && !type.disabled && "bg-primary/5 border-primary/50 shadow-sm",
-                          !isSelected && !type.disabled && "hover:bg-accent hover:border-primary/30",
-                          type.disabled && "opacity-50 cursor-not-allowed"
+                          isSelected && type.available && "bg-primary/5 border-primary/50 shadow-sm",
+                          !isSelected && type.available && "hover:bg-accent hover:border-primary/30",
+                          isDisabled && "opacity-50 cursor-not-allowed"
                         )}
                       >
                         <div className={cn(
@@ -339,6 +374,7 @@ export const NoteflowLM = ({
                   })}
                 </div>
               </div>
+
 
               {/* Type-specific options */}
               {selectedType === "slides" && (
@@ -481,8 +517,24 @@ export const NoteflowLM = ({
                   <Check className="w-4 h-4 text-emerald-600" />
                   <p className="text-sm font-semibold text-emerald-600">Generation Complete!</p>
                 </div>
+                
+                {/* Display Images if available */}
+                {result.images && result.images.length > 0 && (
+                  <div className="space-y-3 mb-4">
+                    {result.images.map((img, index) => (
+                      <div key={index} className="rounded-lg overflow-hidden border">
+                        <img
+                          src={img.image_url.url}
+                          alt={`Generated ${index + 1}`}
+                          className="w-full h-auto"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {result}
+                  {result.content}
                 </p>
               </div>
 
@@ -495,10 +547,12 @@ export const NoteflowLM = ({
                   <RefreshCw className="w-4 h-4" />
                   New Generation
                 </Button>
-                <Button className="flex-1 gap-2">
-                  <Download className="w-4 h-4" />
-                  Download
-                </Button>
+                <Link to="/app/noteflowlm" className="flex-1">
+                  <Button className="w-full gap-2">
+                    <ExternalLink className="w-4 h-4" />
+                    Open Workspace
+                  </Button>
+                </Link>
               </div>
             </div>
           )}
