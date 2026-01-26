@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -22,7 +23,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Upload, FileText, Download, Trash2, Eye, Share2, Mail, MessageCircle, Loader2 } from "lucide-react";
+import { Upload, FileText, Download, Trash2, Eye, Share2, Mail, MessageCircle } from "lucide-react";
+import { UploadProgress } from "@/components/ui/upload-progress";
 
 interface InsuranceDocumentsProps {
   insuranceId: string;
@@ -38,12 +40,18 @@ const DOCUMENT_TYPES = [
 ];
 
 export const InsuranceDocuments = ({ insuranceId }: InsuranceDocumentsProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedType, setSelectedType] = useState("policy");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<string>("");
+  
+  // Upload progress state
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState<"idle" | "preparing" | "uploading" | "processing" | "complete" | "error">("idle");
+  const [uploadMessage, setUploadMessage] = useState("");
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ["insurance-documents", insuranceId],
@@ -60,30 +68,93 @@ export const InsuranceDocuments = ({ insuranceId }: InsuranceDocumentsProps) => 
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      const filePath = `${insuranceId}/${Date.now()}_${file.name}`;
+      if (!user) throw new Error("User not authenticated");
+      
+      setUploadStage("preparing");
+      setUploadProgress(0);
+      setUploadMessage("Preparing upload...");
+      
+      // Use user.id in path for better organization and RLS compliance
+      const timestamp = Date.now();
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const filePath = `${user.id}/${insuranceId}/${timestamp}_${safeFileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("insurance-documents")
-        .upload(filePath, file);
+      setUploadStage("uploading");
+      setUploadMessage(`Uploading ${file.name}...`);
+      
+      // Simulate progress since Supabase doesn't provide native progress events
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
 
-      if (uploadError) throw uploadError;
+      try {
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from("insurance-documents")
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-      // Get a signed URL since the bucket is private
-      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from("insurance-documents")
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year expiry
+        clearInterval(progressInterval);
 
-      if (signedUrlError) throw signedUrlError;
+        if (uploadError) {
+          throw uploadError;
+        }
 
-      const { error: dbError } = await supabase.from("insurance_documents").insert({
-        insurance_id: insuranceId,
-        file_name: file.name,
-        file_url: signedUrlData.signedUrl,
-        file_type: file.type,
-        document_type: selectedType,
-      });
+        setUploadProgress(95);
+        setUploadStage("processing");
+        setUploadMessage("Saving document...");
 
-      if (dbError) throw dbError;
+        // Get a signed URL since the bucket is private
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from("insurance-documents")
+          .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year expiry
+
+        if (signedUrlError) {
+          // Try to get public URL as fallback
+          const { data: publicUrlData } = supabase.storage
+            .from("insurance-documents")
+            .getPublicUrl(filePath);
+          
+          // Use public URL if signed URL fails
+          const finalUrl = signedUrlData?.signedUrl || publicUrlData.publicUrl;
+          
+          const { error: dbError } = await supabase.from("insurance_documents").insert({
+            insurance_id: insuranceId,
+            file_name: file.name,
+            file_url: finalUrl,
+            file_type: file.type,
+            document_type: selectedType,
+          });
+
+          if (dbError) throw dbError;
+        } else {
+          const { error: dbError } = await supabase.from("insurance_documents").insert({
+            insurance_id: insuranceId,
+            file_name: file.name,
+            file_url: signedUrlData.signedUrl,
+            file_type: file.type,
+            document_type: selectedType,
+          });
+
+          if (dbError) throw dbError;
+        }
+
+        setUploadProgress(100);
+        setUploadStage("complete");
+        setUploadMessage("Upload complete!");
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+          setUploadStage("idle");
+          setUploadProgress(0);
+          setUploadMessage("");
+        }, 2000);
+        
+      } catch (error) {
+        clearInterval(progressInterval);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["insurance-documents", insuranceId] });
@@ -91,7 +162,16 @@ export const InsuranceDocuments = ({ insuranceId }: InsuranceDocumentsProps) => 
     },
     onError: (error) => {
       console.error("Upload error:", error);
-      toast({ title: "Upload failed", variant: "destructive" });
+      setUploadStage("error");
+      setUploadMessage("Upload failed. Please try again.");
+      toast({ title: "Upload failed", description: String(error), variant: "destructive" });
+      
+      // Reset after 3 seconds
+      setTimeout(() => {
+        setUploadStage("idle");
+        setUploadProgress(0);
+        setUploadMessage("");
+      }, 3000);
     },
   });
 
@@ -116,28 +196,33 @@ export const InsuranceDocuments = ({ insuranceId }: InsuranceDocumentsProps) => 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast({ title: "File must be less than 10MB", variant: "destructive" });
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: "File must be less than 20MB", variant: "destructive" });
       return;
     }
 
-    setUploading(true);
     try {
       await uploadMutation.mutateAsync(file);
     } finally {
-      setUploading(false);
-      e.target.value = "";
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
-  const handleDownload = (url: string, fileName: string) => {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.target = "_blank";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async (url: string, fileName: string) => {
+    try {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({ title: "Download failed", variant: "destructive" });
+    }
   };
 
   const handleShare = (doc: typeof documents[0], method: "whatsapp" | "email") => {
@@ -165,47 +250,68 @@ export const InsuranceDocuments = ({ insuranceId }: InsuranceDocumentsProps) => 
     return DOCUMENT_TYPES.find((t) => t.value === type)?.label || type;
   };
 
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const isUploading = uploadStage !== "idle";
+
   return (
     <div className="space-y-4">
       {/* Upload Section */}
-      <div className="flex items-center gap-3 flex-wrap p-4 bg-muted/30 rounded-lg border border-border">
-        <Select value={selectedType} onValueChange={setSelectedType}>
-          <SelectTrigger className="w-48 bg-background border-border">
-            <SelectValue placeholder="Document type" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border">
-            {DOCUMENT_TYPES.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="p-4 bg-muted/30 rounded-lg border border-border space-y-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <Select value={selectedType} onValueChange={setSelectedType}>
+            <SelectTrigger className="w-48 bg-background border-border">
+              <SelectValue placeholder="Document type" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border">
+              {DOCUMENT_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <input
-          type="file"
-          id="insurance-doc-upload"
-          className="hidden"
-          onChange={handleUpload}
-          accept=".pdf,.jpg,.jpeg,.png,.webp"
-        />
-        <label htmlFor="insurance-doc-upload">
-          <Button
-            variant="outline"
-            className="border-border cursor-pointer"
-            disabled={uploading}
-            asChild
-          >
-            <span>
-              {uploading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
+          <input
+            ref={fileInputRef}
+            type="file"
+            id="insurance-doc-upload"
+            className="hidden"
+            onChange={handleUpload}
+            accept=".pdf,.jpg,.jpeg,.png,.webp"
+            disabled={isUploading}
+          />
+          <label htmlFor="insurance-doc-upload">
+            <Button
+              variant="outline"
+              className="border-border cursor-pointer"
+              disabled={isUploading}
+              asChild
+            >
+              <span>
                 <Upload className="w-4 h-4 mr-2" />
-              )}
-              Upload Document
-            </span>
-          </Button>
-        </label>
+                Upload Document
+              </span>
+            </Button>
+          </label>
+        </div>
+        
+        {/* Upload Progress */}
+        {isUploading && (
+          <UploadProgress
+            progress={uploadProgress}
+            stage={uploadStage}
+            message={uploadMessage}
+            variant="bar"
+            size="md"
+            showPercentage={true}
+          />
+        )}
       </div>
 
       {/* Documents List */}

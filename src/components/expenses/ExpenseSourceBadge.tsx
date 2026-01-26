@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Mail, Sparkles, User } from "lucide-react";
+import { Bot, Mail, Sparkles, User, Zap } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -28,7 +28,7 @@ const ExpenseSourceBadge = ({
           <TooltipTrigger asChild>
             <Badge 
               variant="outline" 
-              className="text-[9px] px-1.5 py-0 h-4 bg-primary/5 border-primary/30 text-primary gap-1"
+              className="text-[9px] px-1.5 py-0 h-4 bg-muted/50 border-border text-muted-foreground gap-1"
             >
               <User className="w-2.5 h-2.5" />
               Manual
@@ -42,7 +42,9 @@ const ExpenseSourceBadge = ({
     );
   }
   
-  // Show Auto badge for auto-generated expenses
+  // Show FinanceFlow (AI) badge for auto-generated expenses from gmail
+  const isFromFinanceFlow = sourceType === "gmail" || sourceType === "financeflow";
+  
   const confidenceLabel = 
     confidenceScore >= 0.8 ? "High" :
     confidenceScore >= 0.6 ? "Medium" : "Low";
@@ -51,13 +53,57 @@ const ExpenseSourceBadge = ({
     confidenceScore >= 0.8 ? "text-emerald-500" :
     confidenceScore >= 0.6 ? "text-amber-500" : "text-muted-foreground";
   
+  // FinanceFlow AI badge
+  if (isFromFinanceFlow) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge 
+              variant="outline" 
+              className="text-[9px] px-1.5 py-0 h-4 bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-violet-500/30 text-violet-600 dark:text-violet-400 gap-1"
+            >
+              <Bot className="w-2.5 h-2.5" />
+              FinanceFlow
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <Zap className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-xs font-medium">
+                  Auto-imported via FinanceFlow AI
+                </span>
+              </div>
+              {merchantName && (
+                <p className="text-xs text-muted-foreground">
+                  Detected merchant: {merchantName}
+                </p>
+              )}
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground">Confidence:</span>
+                <span className={`text-xs font-medium ${confidenceColor}`}>
+                  {confidenceLabel} ({Math.round(confidenceScore * 100)}%)
+                </span>
+              </div>
+              <p className="text-[10px] text-muted-foreground italic">
+                Parsed from email alerts automatically
+              </p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+  
+  // Generic Auto badge for other auto-generated expenses (insurance, etc.)
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <Badge 
             variant="outline" 
-            className="text-[9px] px-1.5 py-0 h-4 bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/30 text-red-600 dark:text-red-400 gap-1"
+            className="text-[9px] px-1.5 py-0 h-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 gap-1"
           >
             <Sparkles className="w-2.5 h-2.5" />
             Auto
@@ -68,20 +114,14 @@ const ExpenseSourceBadge = ({
             <div className="flex items-center gap-2">
               <Mail className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="text-xs font-medium">
-                {sourceType === "gmail" ? "Imported from Gmail" : "Auto-imported"}
+                {sourceType === "insurance" ? "Insurance Premium" : "Auto-generated"}
               </span>
             </div>
             {merchantName && (
               <p className="text-xs text-muted-foreground">
-                Detected merchant: {merchantName}
+                Source: {merchantName}
               </p>
             )}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">Confidence:</span>
-              <span className={`text-xs font-medium ${confidenceColor}`}>
-                {confidenceLabel} ({Math.round(confidenceScore * 100)}%)
-              </span>
-            </div>
             <p className="text-[10px] text-muted-foreground italic">
               You can edit or delete this entry anytime
             </p>
