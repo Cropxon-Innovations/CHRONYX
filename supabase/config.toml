@@ -128,3 +128,6 @@ verify_jwt = false
 
 [functions.send-redemption-notification]
 verify_jwt = false
+
+[functions.generate-noteflow-ai]
+verify_jwt = false

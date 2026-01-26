@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { UnifiedNoteEditor } from "@/components/noteflow/UnifiedNoteEditor";
-import { NoteAIAssistant } from "@/components/noteflow/NoteAIAssistant";
+import { NoteflowAI } from "@/components/noteflow/NoteflowAI";
 import { NoteVersionHistory } from "@/components/noteflow/NoteVersionHistory";
 import { PDFExportDialog } from "./PDFExportDialog";
 import { exportProfessionalPDF } from "./ProfessionalPDFExport";
@@ -285,11 +285,11 @@ export const NoteEditor = ({
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
-            {/* AI Assistant */}
-            <NoteAIAssistant 
-              noteContent={extractTextFromContent(content)} 
+            {/* Noteflow AI */}
+            <NoteflowAI 
+              noteContent={content}
+              noteTitle={title || "Untitled Note"}
               onApplyResult={(result) => {
-                // Could append AI result to content
                 toast({ title: "AI Result applied" });
               }}
             />
