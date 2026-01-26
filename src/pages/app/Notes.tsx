@@ -575,6 +575,13 @@ const Notes = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Branding */}
+        <div className="fixed bottom-4 right-4 z-10 opacity-50 hover:opacity-80 transition-opacity pointer-events-none">
+          <p className="text-[10px] font-medium text-muted-foreground tracking-wider">
+            CHRONYX BY <span className="text-primary">OriginX Labs</span>
+          </p>
+        </div>
       </div>
     </TooltipProvider>
   );
