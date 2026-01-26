@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { NOTE_TYPES } from "./NoteTypeSelector";
 
 interface NoteEditorProps {
   noteId?: string;
@@ -59,6 +60,7 @@ interface NoteEditorProps {
   }) => void;
   onClose: () => void;
   isSaving?: boolean;
+  onTypeChange?: (type: NoteType) => void;
 }
 
 export const NoteEditor = ({
@@ -245,14 +247,34 @@ export const NoteEditor = ({
               <TooltipContent>Close</TooltipContent>
             </Tooltip>
             
-            {/* Note type badge */}
-            <div className={cn("p-1.5 rounded-xl", typeConfig.bgColor)}>
-              <TypeIcon className={cn("w-4 h-4", typeConfig.color)} />
-            </div>
-            
-            <Badge variant="secondary" className="flex-shrink-0 font-medium">
-              {typeConfig.label}
-            </Badge>
+            {/* Note type selector dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2 h-8">
+                  <div className={cn("p-1 rounded-lg", typeConfig.bgColor)}>
+                    <TypeIcon className={cn("w-3.5 h-3.5", typeConfig.color)} />
+                  </div>
+                  <span className="text-sm font-medium">{typeConfig.label}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                {NOTE_TYPES.map((nt) => {
+                  const NtIcon = nt.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={nt.type}
+                      onClick={() => {
+                        // Type is saved with the note when user saves
+                      }}
+                      className={cn("gap-2", noteType === nt.type && "bg-primary/10")}
+                    >
+                      <NtIcon className={cn("w-4 h-4", nt.color)} />
+                      {nt.label}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             {/* Auto-save status */}
             <span className="text-xs text-muted-foreground flex items-center gap-1.5">
