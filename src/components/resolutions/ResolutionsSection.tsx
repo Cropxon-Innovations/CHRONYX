@@ -60,19 +60,35 @@ interface WalletData {
   redeemable_balance: number;
 }
 
-// Year color schemes
-const yearColors: Record<number, { bg: string; text: string; gradient: string; border: string }> = {
-  2025: { bg: "bg-violet-500/10", text: "text-violet-600 dark:text-violet-400", gradient: "from-violet-500 to-purple-600", border: "border-violet-500/30" },
-  2026: { bg: "bg-blue-500/10", text: "text-blue-600 dark:text-blue-400", gradient: "from-blue-500 to-cyan-500", border: "border-blue-500/30" },
-  2027: { bg: "bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400", gradient: "from-emerald-500 to-teal-500", border: "border-emerald-500/30" },
-  2028: { bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", gradient: "from-amber-500 to-orange-500", border: "border-amber-500/30" },
-  2029: { bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", gradient: "from-rose-500 to-pink-500", border: "border-rose-500/30" },
-  2030: { bg: "bg-indigo-500/10", text: "text-indigo-600 dark:text-indigo-400", gradient: "from-indigo-500 to-blue-600", border: "border-indigo-500/30" },
+// Year color schemes - current year is always green
+const currentYear = new Date().getFullYear();
+
+const getYearColors = (year: number): { bg: string; text: string; gradient: string; border: string } => {
+  // Current year is always green
+  if (year === currentYear) {
+    return { 
+      bg: "bg-green-500/10", 
+      text: "text-green-600 dark:text-green-400", 
+      gradient: "from-green-500 to-emerald-500", 
+      border: "border-green-500/30" 
+    };
+  }
+  
+  // Other years based on offset from current year
+  const offset = year - currentYear;
+  const yearColors: Record<number, { bg: string; text: string; gradient: string; border: string }> = {
+    1: { bg: "bg-blue-500/10", text: "text-blue-600 dark:text-blue-400", gradient: "from-blue-500 to-cyan-500", border: "border-blue-500/30" },
+    2: { bg: "bg-violet-500/10", text: "text-violet-600 dark:text-violet-400", gradient: "from-violet-500 to-purple-600", border: "border-violet-500/30" },
+    3: { bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", gradient: "from-amber-500 to-orange-500", border: "border-amber-500/30" },
+    4: { bg: "bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", gradient: "from-rose-500 to-pink-500", border: "border-rose-500/30" },
+    5: { bg: "bg-indigo-500/10", text: "text-indigo-600 dark:text-indigo-400", gradient: "from-indigo-500 to-blue-600", border: "border-indigo-500/30" },
+  };
+  
+  return yearColors[offset] || yearColors[1];
 };
 
-const getYearColor = (year: number) => {
-  return yearColors[year] || yearColors[2026];
-};
+// Alias for consistency with existing code
+const getYearColor = getYearColors;
 
 const categories = [
   { value: "health", label: "Health & Fitness", icon: "💪" },

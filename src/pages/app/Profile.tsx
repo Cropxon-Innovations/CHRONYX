@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Crown, Sparkles, User, CreditCard, Calendar, CheckCircle2, XCircle, Clock, RefreshCw, Download, FileText, Smartphone, Building2, Wallet, Info, Key, Loader2, Shield, Mail, Eye } from "lucide-react";
+import { Crown, Sparkles, User, CreditCard, Calendar, CheckCircle2, XCircle, Clock, RefreshCw, Download, FileText, Smartphone, Building2, Wallet, Info, Key, Loader2, Shield, Mail, Eye, Coins } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { WalletRedemption } from "@/components/resolutions/WalletRedemption";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -436,7 +437,19 @@ const Profile = () => {
         </Card>
       </div>
 
-      {/* Plan Features */}
+      {/* Rewards Wallet */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Coins className="h-5 w-5 text-amber-500" />
+            Rewards Wallet
+          </CardTitle>
+          <CardDescription>Your points, coins, and redeemable balance</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <WalletRedemption compact />
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
