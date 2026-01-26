@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Link } from "react-router-dom";
 import {
   Collapsible,
   CollapsibleContent,
@@ -30,9 +31,9 @@ import {
   CalendarDays,
   AlertCircle,
   PenTool,
+  ExternalLink,
 } from "lucide-react";
 import { NoteType } from "@/components/notes/NoteTypeSelector";
-import { NoteflowLM } from "./NoteflowLM";
 
 export type SmartFilter = 
   | "all"
@@ -111,28 +112,30 @@ export const NoteflowSidebar = ({
 
   return (
     <div className="w-full lg:w-72 flex-shrink-0 space-y-4">
-      {/* NoteflowLM Feature */}
-      <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/10 to-indigo-500/5 border border-violet-500/20">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/10">
-            <PenTool className="w-4 h-4 text-violet-600" />
+      {/* NoteflowLM Feature - Link to Workspace */}
+      <Link to="/app/noteflowlm">
+        <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/10 to-indigo-500/5 border border-violet-500/20 hover:border-violet-500/40 hover:shadow-lg hover:shadow-violet-500/5 transition-all duration-300 cursor-pointer group">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/10">
+              <PenTool className="w-4 h-4 text-violet-600" />
+            </div>
+            <div className="flex-1">
+              <span className="text-sm font-semibold text-foreground">NoteflowLM</span>
+              <Badge variant="outline" className="ml-2 text-[8px] px-1 py-0 bg-gradient-to-r from-violet-500/10 to-indigo-500/10 text-violet-600 border-violet-500/30">
+                BETA
+              </Badge>
+            </div>
+            <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-violet-600 transition-colors" />
           </div>
-          <div className="flex-1">
-            <span className="text-sm font-semibold text-foreground">NoteflowLM</span>
-            <Badge variant="outline" className="ml-2 text-[8px] px-1 py-0 bg-gradient-to-r from-violet-500/10 to-indigo-500/10 text-violet-600 border-violet-500/30">
-              BETA
-            </Badge>
+          <p className="text-xs text-muted-foreground mb-2">
+            Transform notes into images, slides & more — NotebookLM competitor
+          </p>
+          <div className="flex items-center gap-1.5 text-xs text-violet-600 font-medium">
+            <Sparkles className="w-3 h-3" />
+            <span>Open Workspace</span>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mb-3">
-          Transform notes into images, slides & more
-        </p>
-        <NoteflowLM 
-          noteContent=""
-          noteTitle="Quick Generation"
-          onApplyResult={() => {}}
-        />
-      </div>
+      </Link>
 
       {/* Search */}
       <div className="relative">

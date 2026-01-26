@@ -4579,6 +4579,48 @@ export type Database = {
           },
         ]
       }
+      noteflowlm_generations: {
+        Row: {
+          created_at: string | null
+          custom_prompt: string | null
+          generation_date: string
+          generation_type: string
+          id: string
+          mode: string
+          note_id: string | null
+          note_title: string | null
+          result_summary: string | null
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          custom_prompt?: string | null
+          generation_date?: string
+          generation_type: string
+          id?: string
+          mode: string
+          note_id?: string | null
+          note_title?: string | null
+          result_summary?: string | null
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          custom_prompt?: string | null
+          generation_date?: string
+          generation_type?: string
+          id?: string
+          mode?: string
+          note_id?: string | null
+          note_title?: string | null
+          result_summary?: string | null
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           color: string | null
@@ -5037,6 +5079,7 @@ export type Database = {
           gmail_imports_per_month: number
           id: string
           is_active: boolean
+          noteflowlm_generations_per_day: number | null
           ocr_scans_per_month: number
           plan_type: string
           price_inr: number
@@ -5054,6 +5097,7 @@ export type Database = {
           gmail_imports_per_month?: number
           id?: string
           is_active?: boolean
+          noteflowlm_generations_per_day?: number | null
           ocr_scans_per_month?: number
           plan_type: string
           price_inr?: number
@@ -5071,6 +5115,7 @@ export type Database = {
           gmail_imports_per_month?: number
           id?: string
           is_active?: boolean
+          noteflowlm_generations_per_day?: number | null
           ocr_scans_per_month?: number
           plan_type?: string
           price_inr?: number
