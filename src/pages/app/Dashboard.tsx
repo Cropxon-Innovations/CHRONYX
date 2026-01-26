@@ -20,6 +20,7 @@ import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import WealthDashboard from "@/components/dashboard/WealthDashboard";
 import ResolutionsSection from "@/components/resolutions/ResolutionsSection";
 import WalletRedemption from "@/components/resolutions/WalletRedemption";
+import {
   PremiumCard, 
   PremiumCardHeader, 
   PremiumCardTitle, 
