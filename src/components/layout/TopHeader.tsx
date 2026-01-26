@@ -10,6 +10,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { LiveClock } from "./LiveClock";
 import { HeaderQuote } from "./HeaderQuote";
 import { LifespanSpinner } from "./LifespanSpinner";
+import { GlobalSearch } from "./GlobalSearch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,8 @@ import {
   Zap,
   Moon,
   Sun,
+  Search,
+  Command,
 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { motion } from "framer-motion";
@@ -42,10 +45,23 @@ export const TopHeader = () => {
   const { getCurrentPlan, loading: planLoading } = useSubscription();
   const { theme, setTheme } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   const plan = getCurrentPlan();
   
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+  
+  // Global keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
   
   useEffect(() => {
     const fetchProfile = async () => {
@@ -120,8 +136,22 @@ export const TopHeader = () => {
       {/* Center - Motivational Quote */}
       <HeaderQuote />
       
-      {/* Right - Theme Toggle, Plan, Settings, User Menu */}
+      {/* Right - Search, Theme Toggle, Plan, Settings, User Menu */}
       <div className="flex items-center gap-2">
+        {/* Search Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsSearchOpen(true)}
+          className="h-9 gap-2 px-3 text-muted-foreground hover:text-foreground"
+        >
+          <Search className="w-4 h-4" />
+          <span className="hidden xl:inline text-sm">Search</span>
+          <kbd className="hidden xl:inline px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded ml-1">
+            <Command className="w-3 h-3 inline" />K
+          </kbd>
+        </Button>
+        
         {/* Theme Toggle */}
         <Button
           variant="ghost"
@@ -230,6 +260,9 @@ export const TopHeader = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      
+      {/* Global Search Dialog */}
+      <GlobalSearch open={isSearchOpen} onOpenChange={setIsSearchOpen} />
     </div>
   );
 };

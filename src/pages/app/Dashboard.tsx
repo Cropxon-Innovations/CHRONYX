@@ -18,7 +18,8 @@ import { BioCard } from "@/components/dashboard/BioCard";
 import TodaySummary from "@/components/dashboard/TodaySummary";
 import NotificationCenter from "@/components/dashboard/NotificationCenter";
 import WealthDashboard from "@/components/dashboard/WealthDashboard";
-import { 
+import ResolutionsSection from "@/components/resolutions/ResolutionsSection";
+import WalletRedemption from "@/components/resolutions/WalletRedemption";
   PremiumCard, 
   PremiumCardHeader, 
   PremiumCardTitle, 
@@ -379,6 +380,12 @@ const Dashboard = () => {
             <TodaySummary />
             <NotificationCenter />
           </section>
+
+          {/* Resolutions & Goals */}
+          <ResolutionsSection />
+          
+          {/* Wallet & Redemption */}
+          <WalletRedemption />
         </TabsContent>
 
         {/* Wealth Tab */}
