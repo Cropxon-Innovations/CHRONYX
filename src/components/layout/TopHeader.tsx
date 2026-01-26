@@ -11,6 +11,7 @@ import { LiveClock } from "./LiveClock";
 import { HeaderQuote } from "./HeaderQuote";
 import { LifespanSpinner } from "./LifespanSpinner";
 import { GlobalSearch } from "./GlobalSearch";
+import { NotificationBell } from "./NotificationBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -165,6 +166,9 @@ export const TopHeader = () => {
             <Moon className="w-4 h-4" />
           )}
         </Button>
+        
+        {/* Notification Bell */}
+        <NotificationBell />
         
         {/* Plan Badge with animation */}
         {!planLoading && (
