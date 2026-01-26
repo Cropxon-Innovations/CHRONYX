@@ -57,7 +57,7 @@ interface FinanceFlowDashboardProps {
 }
 
 type ViewMode = 'table' | 'timeline' | 'cards';
-type Period = 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+type Period = 'today' | 'yesterday' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
 
 const PAYMENT_MODE_ICONS: Record<string, React.ReactNode> = {
   UPI: <Smartphone className="w-3.5 h-3.5" />,
@@ -75,9 +75,12 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
   // Calculate date range based on period
   const dateRange = useMemo(() => {
     const now = new Date();
+    const yesterday = subDays(now, 1);
     switch (period) {
       case 'today':
         return { start: startOfDay(now), end: endOfDay(now) };
+      case 'yesterday':
+        return { start: startOfDay(yesterday), end: endOfDay(yesterday) };
       case 'week':
         return { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
       case 'month':
@@ -93,14 +96,45 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
     }
   }, [period, selectedDate]);
 
+  // Calculate yesterday's data for comparison
+  const yesterdayData = useMemo(() => {
+    const yesterday = subDays(new Date(), 1);
+    const yesterdayTxs = transactions.filter(tx => isSameDay(parseISO(tx.transaction_date), yesterday));
+    const debits = yesterdayTxs.filter(t => t.transaction_type === 'debit');
+    const credits = yesterdayTxs.filter(t => t.transaction_type === 'credit');
+    return {
+      count: yesterdayTxs.length,
+      debitAmount: debits.reduce((sum, t) => sum + Number(t.amount), 0),
+      creditAmount: credits.reduce((sum, t) => sum + Number(t.amount), 0),
+    };
+  }, [transactions]);
+
+  // Calculate today's data for comparison
+  const todayData = useMemo(() => {
+    const today = new Date();
+    const todayTxs = transactions.filter(tx => isSameDay(parseISO(tx.transaction_date), today));
+    const debits = todayTxs.filter(t => t.transaction_type === 'debit');
+    const credits = todayTxs.filter(t => t.transaction_type === 'credit');
+    return {
+      count: todayTxs.length,
+      debitAmount: debits.reduce((sum, t) => sum + Number(t.amount), 0),
+      creditAmount: credits.reduce((sum, t) => sum + Number(t.amount), 0),
+    };
+  }, [transactions]);
+
   // Filter transactions by date range
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
       const txDate = parseISO(tx.transaction_date);
-      // Use isSameDay for 'today' to handle date-only strings properly
-      const inRange = period === 'today' 
-        ? isSameDay(txDate, new Date())
-        : isWithinInterval(txDate, { start: dateRange.start, end: dateRange.end });
+      // Use isSameDay for 'today' or 'yesterday' to handle date-only strings properly
+      let inRange = false;
+      if (period === 'today') {
+        inRange = isSameDay(txDate, new Date());
+      } else if (period === 'yesterday') {
+        inRange = isSameDay(txDate, subDays(new Date(), 1));
+      } else {
+        inRange = isWithinInterval(txDate, { start: dateRange.start, end: dateRange.end });
+      }
       const matchesCategory = categoryFilter === 'all' || tx.raw_extracted_data?.category === categoryFilter;
       return inRange && matchesCategory;
     });
@@ -165,16 +199,16 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
           </tr>
         </thead>
         <tbody>
-          {[...filteredTransactions].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()).map(tx => (
+          {[...filteredTransactions].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(tx => (
             <tr key={tx.id} className="border-b hover:bg-muted/30 transition-colors">
               <td className="p-3">
                 <div className="text-[11px]">
                   <div className="font-medium">{format(parseISO(tx.transaction_date), 'MMM d, yyyy')}</div>
                   <div className="text-muted-foreground text-[10px]">
-                    Transaction: {format(parseISO(tx.transaction_date), 'hh:mm a')}
+                    Transaction: {format(new Date(tx.created_at), 'HH:mm')}
                   </div>
                   <div className="text-muted-foreground text-[9px] italic">
-                    Fetched: {format(new Date(tx.created_at), 'MMM d, hh:mm a')}
+                    Fetched: {format(new Date(tx.created_at), 'MMM d, HH:mm')}
                   </div>
                 </div>
               </td>
@@ -268,7 +302,7 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
               
               {/* Transactions */}
               <div className="pl-4 border-l-2 border-muted ml-4 mt-4 space-y-3">
-                {[...txs].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()).map(tx => (
+                {[...txs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(tx => (
                   <div key={tx.id} className="relative flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 -ml-4 pl-6">
                     <div className={cn(
                       "absolute left-0 top-5 w-2 h-2 rounded-full -translate-x-[5px]",
@@ -282,10 +316,10 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
                         </div>
                           <div className="text-right shrink-0">
                             <div className="text-[10px] text-muted-foreground">
-                              {format(parseISO(tx.transaction_date), 'hh:mm a')}
+                              {format(new Date(tx.created_at), 'HH:mm')}
                             </div>
                             <div className="text-[9px] text-muted-foreground italic">
-                              Fetched: {format(new Date(tx.created_at), 'hh:mm a')}
+                              Fetched: {format(new Date(tx.created_at), 'HH:mm')}
                             </div>
                           </div>
                       </div>
@@ -376,7 +410,49 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
 
   return (
     <div className="space-y-4">
-      {/* Today's Summary Cards */}
+      {/* Yesterday vs Today Comparison */}
+      <Card className="bg-muted/30">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium">Yesterday vs Today</span>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Yesterday</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg font-bold">₹{yesterdayData.debitAmount.toLocaleString()}</span>
+                <span className="text-xs text-muted-foreground">spent</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground">{yesterdayData.count} transactions</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Today</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg font-bold">₹{todayData.debitAmount.toLocaleString()}</span>
+                <span className="text-xs text-muted-foreground">spent</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground">{todayData.count} transactions</p>
+            </div>
+          </div>
+          {todayData.debitAmount !== yesterdayData.debitAmount && (
+            <div className="mt-3 pt-3 border-t">
+              <p className={cn(
+                "text-xs flex items-center gap-1",
+                todayData.debitAmount > yesterdayData.debitAmount ? "text-destructive" : "text-emerald-600"
+              )}>
+                {todayData.debitAmount > yesterdayData.debitAmount ? (
+                  <><TrendingUp className="w-3 h-3" /> Spending ₹{(todayData.debitAmount - yesterdayData.debitAmount).toLocaleString()} more than yesterday</>
+                ) : (
+                  <><TrendingDown className="w-3 h-3" /> Spending ₹{(yesterdayData.debitAmount - todayData.debitAmount).toLocaleString()} less than yesterday</>
+                )}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="bg-gradient-to-br from-primary/5 to-transparent">
           <CardContent className="p-4">
@@ -447,6 +523,7 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="yesterday">Yesterday</SelectItem>
                   <SelectItem value="week">This Week</SelectItem>
                   <SelectItem value="month">This Month</SelectItem>
                   <SelectItem value="quarter">This Quarter</SelectItem>
