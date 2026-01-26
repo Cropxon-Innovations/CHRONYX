@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Edit, Trash2, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, formatDistanceToNow } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +39,7 @@ interface Expense {
   source_type: string | null;
   confidence_score: number | null;
   merchant_name: string | null;
+  created_at: string;
 }
 
 interface ExpensesListProps {
@@ -198,6 +199,13 @@ const ExpensesList = ({ onUpdate }: ExpensesListProps) => {
                           >
                             {expense.payment_mode}
                           </Badge>
+                          {expense.is_auto_generated && (
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                              <Clock className="w-3 h-3" />
+                              <span>{format(new Date(expense.created_at), 'hh:mm a')}</span>
+                              <span className="italic">• Fetched {formatDistanceToNow(new Date(expense.created_at), { addSuffix: true })}</span>
+                            </div>
+                          )}
                           {expense.notes && (
                             <button
                               onClick={() =>

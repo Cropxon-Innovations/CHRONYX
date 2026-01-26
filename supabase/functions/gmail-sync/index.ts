@@ -217,7 +217,7 @@ const MERCHANT_PATTERNS = [
   { regex: /gas\s*bill|indane|bharat\s*gas/i, name: 'Gas', category: 'Utilities' },
   
   // Insurance - Use word boundaries to avoid false matches
-  { regex: /\blic\b|lic\s+of\s+india|life\s*insurance\s*corporation|premium\s+.*lic/i, name: 'LIC', category: 'Insurance' },
+  { regex: /\blic\s+of\s+india\b|life\s*insurance\s*corporation|premium\s+.*\blic\b|paid\s+to\s+\blic\b/i, name: 'LIC', category: 'Insurance' },
   { regex: /\backo\b/i, name: 'Acko', category: 'Insurance' },
   { regex: /hdfc\s*ergo/i, name: 'HDFC Ergo', category: 'Insurance' },
   { regex: /icici\s*lombard/i, name: 'ICICI Lombard', category: 'Insurance' },

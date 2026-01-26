@@ -503,9 +503,6 @@ const FinanceFlowPreviewDialog = ({
           <div className="flex items-center gap-2 flex-wrap">
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
             <DialogTitle className="text-base sm:text-lg">FinanceFlow AI</DialogTitle>
-            <Badge variant="outline" className="text-[8px] sm:text-[9px] py-0 px-1 bg-red-500/10 text-red-500 border-red-500/30">
-              BETA
-            </Badge>
           </div>
           <DialogDescription className="text-xs sm:text-sm">
             Review and categorize detected transactions before importing
