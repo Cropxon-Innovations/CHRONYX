@@ -101,6 +101,41 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_redemption_notifications: {
+        Row: {
+          admin_user_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          notification_type: string
+          redemption_id: string | null
+        }
+        Insert: {
+          admin_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          notification_type: string
+          redemption_id?: string | null
+        }
+        Update: {
+          admin_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          notification_type?: string
+          redemption_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_redemption_notifications_redemption_id_fkey"
+            columns: ["redemption_id"]
+            isOneToOne: false
+            referencedRelation: "redemption_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_templates: {
         Row: {
           category: string
@@ -5353,7 +5388,10 @@ export type Database = {
       }
       redemption_requests: {
         Row: {
+          admin_notified: boolean | null
           amount_rupees: number
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           id: string
           notes: string | null
@@ -5361,11 +5399,18 @@ export type Database = {
           payment_method: string
           points_to_redeem: number
           processed_at: string | null
+          rejection_reason: string | null
           status: string
+          user_email: string | null
           user_id: string
+          user_name: string | null
+          user_notified: boolean | null
         }
         Insert: {
+          admin_notified?: boolean | null
           amount_rupees: number
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -5373,11 +5418,18 @@ export type Database = {
           payment_method: string
           points_to_redeem: number
           processed_at?: string | null
+          rejection_reason?: string | null
           status?: string
+          user_email?: string | null
           user_id: string
+          user_name?: string | null
+          user_notified?: boolean | null
         }
         Update: {
+          admin_notified?: boolean | null
           amount_rupees?: number
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -5385,8 +5437,12 @@ export type Database = {
           payment_method?: string
           points_to_redeem?: number
           processed_at?: string | null
+          rejection_reason?: string | null
           status?: string
+          user_email?: string | null
           user_id?: string
+          user_name?: string | null
+          user_notified?: boolean | null
         }
         Relationships: []
       }

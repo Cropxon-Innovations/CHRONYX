@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.send-admin-message]
 verify_jwt = false
+
+[functions.send-redemption-notification]
+verify_jwt = false
