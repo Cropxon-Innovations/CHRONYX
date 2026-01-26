@@ -28,9 +28,11 @@ import {
   Sparkles,
   Filter,
   CalendarDays,
-  AlertCircle
+  AlertCircle,
+  PenTool,
 } from "lucide-react";
 import { NoteType } from "@/components/notes/NoteTypeSelector";
+import { NoteflowLM } from "./NoteflowLM";
 
 export type SmartFilter = 
   | "all"
@@ -109,6 +111,29 @@ export const NoteflowSidebar = ({
 
   return (
     <div className="w-full lg:w-72 flex-shrink-0 space-y-4">
+      {/* NoteflowLM Feature */}
+      <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/10 to-indigo-500/5 border border-violet-500/20">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500/20 to-indigo-500/10">
+            <PenTool className="w-4 h-4 text-violet-600" />
+          </div>
+          <div className="flex-1">
+            <span className="text-sm font-semibold text-foreground">NoteflowLM</span>
+            <Badge variant="outline" className="ml-2 text-[8px] px-1 py-0 bg-gradient-to-r from-violet-500/10 to-indigo-500/10 text-violet-600 border-violet-500/30">
+              BETA
+            </Badge>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          Transform notes into images, slides & more
+        </p>
+        <NoteflowLM 
+          noteContent=""
+          noteTitle="Quick Generation"
+          onApplyResult={() => {}}
+        />
+      </div>
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -121,7 +146,7 @@ export const NoteflowSidebar = ({
         />
       </div>
 
-      <ScrollArea className="h-[calc(100vh-280px)] lg:h-auto">
+      <ScrollArea className="h-[calc(100vh-380px)] lg:h-auto">
         <div className="space-y-6 pr-3">
           {/* Smart Filters */}
           <div className="space-y-1">

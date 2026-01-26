@@ -48,7 +48,7 @@ interface GenerationPreview {
   details: string[];
 }
 
-interface NoteflowAIProps {
+interface NoteflowLMProps {
   noteContent: string;
   noteTitle?: string;
   onApplyResult?: (result: string) => void;
@@ -91,11 +91,11 @@ const GENERATION_TYPES = [
   },
 ];
 
-export const NoteflowAI = ({
+export const NoteflowLM = ({
   noteContent,
   noteTitle = "Untitled Note",
   onApplyResult,
-}: NoteflowAIProps) => {
+}: NoteflowLMProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"private" | "public">("private");
   const [selectedType, setSelectedType] = useState<string>("image");
@@ -237,8 +237,8 @@ export const NoteflowAI = ({
           className="gap-2 text-primary hover:text-primary hover:bg-primary/10"
         >
           <PenTool className="w-4 h-4" />
-          <span className="hidden sm:inline">Noteflow AI</span>
-          <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-amber-500/10 text-amber-600 border-amber-500/30">
+          <span className="hidden sm:inline">NoteflowLM</span>
+          <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-gradient-to-r from-violet-500/10 to-indigo-500/10 text-violet-600 border-violet-500/30">
             BETA
           </Badge>
         </Button>
@@ -246,18 +246,18 @@ export const NoteflowAI = ({
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
-              <PenTool className="w-5 h-5 text-primary" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-violet-500/20 to-indigo-500/10 border border-violet-500/20">
+              <PenTool className="w-5 h-5 text-violet-600" />
             </div>
             <div>
-              <span>Noteflow AI</span>
-              <Badge variant="outline" className="ml-2 text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/30">
+              <span>NoteflowLM</span>
+              <Badge variant="outline" className="ml-2 text-[9px] bg-gradient-to-r from-violet-500/10 to-indigo-500/10 text-violet-600 border-violet-500/30">
                 BETA
               </Badge>
             </div>
           </SheetTitle>
           <SheetDescription>
-            Transform your notes into images, slides, and more
+            Transform your notes into images, slides, and more — NotebookLM competitor
           </SheetDescription>
         </SheetHeader>
 
@@ -507,7 +507,7 @@ export const NoteflowAI = ({
         {/* Branding */}
         <div className="absolute bottom-4 right-4 opacity-60 hover:opacity-100 transition-opacity">
           <p className="text-[10px] font-medium text-muted-foreground tracking-wide">
-            CHRONYX BY <span className="text-primary">OriginX Labs</span>
+            CHRONYX BY <span className="text-primary">ORIGINX LABS PVT LTD</span>
           </p>
         </div>
       </SheetContent>

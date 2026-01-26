@@ -10,4 +10,4 @@ export { CanvasLayer, type CanvasLayerRef } from "./CanvasLayer";
 export { StickyNotesPanel } from "./StickyNotesPanel";
 export { NoteVersionHistory } from "./NoteVersionHistory";
 export { NoteAIAssistant } from "./NoteAIAssistant";
-export { NoteflowAI } from "./NoteflowAI";
+export { NoteflowLM } from "./NoteflowLM";
