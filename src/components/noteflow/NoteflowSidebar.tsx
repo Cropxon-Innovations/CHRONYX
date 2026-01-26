@@ -162,49 +162,8 @@ export const NoteflowSidebar = ({
             })}
           </div>
 
-          {/* Note Types */}
-          <Collapsible open={isTypesOpen} onOpenChange={setIsTypesOpen}>
-            <CollapsibleTrigger asChild>
-              <button className="w-full flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
-                <ChevronRight className={cn("w-3 h-3 transition-transform", isTypesOpen && "rotate-90")} />
-                Note Types
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-1 mt-1">
-              {NOTE_TYPES.map((noteType) => {
-                const Icon = noteType.icon;
-                const isSelected = selectedSection === noteType.type;
-                const count = counts.types[noteType.type] || 0;
-
-                return (
-                  <button
-                    key={noteType.type}
-                    onClick={() => onSelectSection(noteType.type)}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200",
-                      "text-sm font-medium",
-                      isSelected
-                        ? "bg-primary/10 text-primary border border-primary/20"
-                        : "hover:bg-muted text-foreground"
-                    )}
-                  >
-                    <Icon className={cn("w-4 h-4 flex-shrink-0", isSelected ? "text-primary" : noteType.color)} />
-                    <span className="flex-1 text-left truncate">{noteType.label}</span>
-                    {count > 0 && (
-                      <span className={cn(
-                        "text-xs px-1.5 py-0.5 rounded-full min-w-[24px] text-center",
-                        isSelected 
-                          ? "bg-primary/20 text-primary" 
-                          : "bg-muted text-muted-foreground"
-                      )}>
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </CollapsibleContent>
-          </Collapsible>
+          {/* Note Types - Removed per user request */}
+          {/* Users now tag notes manually within the editor */}
 
           {/* Tags */}
           {tags.length > 0 && (

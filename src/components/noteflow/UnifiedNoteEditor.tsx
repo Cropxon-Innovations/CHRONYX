@@ -166,25 +166,44 @@ export const UnifiedNoteEditor = ({
     editorProps: {
       attributes: {
         class: cn(
+          // Base prose styles
           "prose prose-sm dark:prose-invert max-w-none",
-          "focus:outline-none px-6 py-4",
-          // Apple-level typography
-          "prose-headings:font-bold prose-headings:tracking-tight",
-          "prose-h1:text-3xl prose-h1:font-extrabold prose-h1:mb-4",
-          "prose-h2:text-2xl prose-h2:font-bold prose-h2:mb-3",
-          "prose-h3:text-xl prose-h3:font-semibold prose-h3:mb-2",
-          "prose-h4:text-lg prose-h4:font-semibold prose-h4:mb-2",
-          "prose-p:text-foreground prose-p:leading-relaxed prose-p:mb-3",
+          "focus:outline-none",
+          // Premium Apple-level spacing and padding
+          "px-8 py-6 lg:px-12 lg:py-8",
+          // Apple-level typography with refined headings
+          "prose-headings:font-semibold prose-headings:tracking-[-0.02em] prose-headings:text-foreground",
+          "prose-h1:text-4xl prose-h1:font-bold prose-h1:mb-6 prose-h1:mt-8 prose-h1:leading-[1.15]",
+          "prose-h2:text-3xl prose-h2:font-semibold prose-h2:mb-5 prose-h2:mt-7 prose-h2:leading-[1.2]",
+          "prose-h3:text-2xl prose-h3:font-semibold prose-h3:mb-4 prose-h3:mt-6 prose-h3:leading-[1.25]",
+          "prose-h4:text-xl prose-h4:font-medium prose-h4:mb-3 prose-h4:mt-5 prose-h4:leading-[1.3]",
+          // Body text with refined line-height and spacing
+          "prose-p:text-foreground prose-p:leading-[1.75] prose-p:mb-4 prose-p:text-[16px]",
           "prose-strong:font-semibold prose-strong:text-foreground",
-          "prose-ul:my-2 prose-ol:my-2",
-          "prose-li:my-0.5 prose-li:marker:text-muted-foreground",
-          "prose-blockquote:border-l-4 prose-blockquote:border-primary/50",
-          "prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground",
-          "prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-sm",
-          "prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:rounded-xl",
-          "prose-table:border-collapse prose-table:w-full",
-          "prose-td:border prose-td:border-border prose-td:p-3",
-          "prose-th:border prose-th:border-border prose-th:p-3 prose-th:bg-muted/50 prose-th:font-semibold"
+          "prose-em:italic prose-em:text-foreground/90",
+          // Lists with proper spacing
+          "prose-ul:my-4 prose-ul:pl-6 prose-ol:my-4 prose-ol:pl-6",
+          "prose-li:my-1.5 prose-li:leading-[1.65] prose-li:marker:text-muted-foreground/60",
+          // Blockquotes with Apple-style border
+          "prose-blockquote:border-l-[3px] prose-blockquote:border-primary/40",
+          "prose-blockquote:pl-5 prose-blockquote:py-1 prose-blockquote:italic",
+          "prose-blockquote:text-muted-foreground prose-blockquote:my-6",
+          "prose-blockquote:not-italic prose-blockquote:font-normal prose-blockquote:text-[15px]",
+          // Code blocks with refined styling
+          "prose-code:bg-muted/70 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:text-[14px]",
+          "prose-code:font-mono prose-code:before:content-none prose-code:after:content-none",
+          "prose-pre:bg-muted/50 prose-pre:border prose-pre:border-border/50 prose-pre:rounded-xl prose-pre:my-6",
+          "prose-pre:shadow-sm prose-pre:overflow-x-auto",
+          // Tables with clean styling
+          "prose-table:border-collapse prose-table:w-full prose-table:my-6",
+          "prose-td:border prose-td:border-border/60 prose-td:p-3 prose-td:text-[15px]",
+          "prose-th:border prose-th:border-border/60 prose-th:p-3 prose-th:bg-muted/30 prose-th:font-medium prose-th:text-left",
+          // Horizontal rules
+          "prose-hr:border-border/40 prose-hr:my-8",
+          // Links with subtle styling
+          "prose-a:text-primary prose-a:no-underline prose-a:hover:underline prose-a:font-medium",
+          // Images
+          "prose-img:rounded-xl prose-img:shadow-md prose-img:my-6"
         ),
         style: `min-height: ${minHeight}`,
       },

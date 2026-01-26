@@ -181,8 +181,9 @@ const Notes = () => {
   const unpinnedNotes = filteredNotes.filter(n => !n.is_pinned);
 
   // Handlers
-  const handleCreateNote = (type: NoteType) => {
-    setSelectedType(type);
+  const handleCreateNote = (type?: NoteType) => {
+    // Default to quick_note - user can change type/tags in editor
+    setSelectedType(type || "quick_note");
     setEditingNote(null);
     setShowTypeSelector(false);
     setIsEditing(true);
@@ -200,6 +201,7 @@ const Notes = () => {
   };
 
   const handleCreateDailyNote = () => {
+    // Still create as journal for daily notes, but user can change
     handleCreateNote("journal");
   };
 
@@ -363,7 +365,7 @@ const Notes = () => {
         <NoteflowHeader
           viewMode={viewMode}
           onViewModeChange={setViewMode}
-          onCreateNote={() => setShowTypeSelector(true)}
+          onCreateNote={() => handleCreateNote()}
           onOpenSearch={() => setShowSearch(true)}
           noteCount={counts.filters.all}
         />
