@@ -19,15 +19,15 @@ import {
   Smartphone,
   Building2,
   ChevronRight,
-  Download,
   Filter,
   LayoutList,
   Clock,
   BarChart3,
   FileText,
 } from "lucide-react";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, startOfDay, endOfDay, isWithinInterval, parseISO, subDays, isSameDay } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, startOfDay, endOfDay, isWithinInterval, parseISO, subDays, isSameDay, isAfter, isBefore, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
+import FinanceFlowExport from "./FinanceFlowExport";
 
 interface Transaction {
   id: string;
@@ -122,19 +122,43 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
     };
   }, [transactions]);
 
-  // Filter transactions by date range
+  // Filter transactions by date range - fixed week filter
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
-      const txDate = parseISO(tx.transaction_date);
-      // Use isSameDay for 'today' or 'yesterday' to handle date-only strings properly
+      // Parse the transaction date - handle both date-only strings and full ISO strings
+      const txDateStr = tx.transaction_date;
+      let txDate: Date;
+      
+      // Check if it's a date-only string (YYYY-MM-DD)
+      if (txDateStr && txDateStr.length === 10 && !txDateStr.includes('T')) {
+        // Date-only string - create date at start of day in local timezone
+        const [year, month, day] = txDateStr.split('-').map(Number);
+        txDate = new Date(year, month - 1, day);
+      } else {
+        txDate = parseISO(txDateStr);
+      }
+      
       let inRange = false;
+      
       if (period === 'today') {
         inRange = isSameDay(txDate, new Date());
       } else if (period === 'yesterday') {
         inRange = isSameDay(txDate, subDays(new Date(), 1));
+      } else if (period === 'week') {
+        // For week filter, compare dates without time component
+        const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+        const txDateOnly = startOfDay(txDate);
+        inRange = (isAfter(txDateOnly, subDays(weekStart, 1)) || isSameDay(txDateOnly, weekStart)) && 
+                  (isBefore(txDateOnly, addDays(weekEnd, 1)) || isSameDay(txDateOnly, weekEnd));
       } else {
-        inRange = isWithinInterval(txDate, { start: dateRange.start, end: dateRange.end });
+        // For other periods, use date-only comparison
+        const txDateOnly = startOfDay(txDate);
+        const rangeStart = startOfDay(dateRange.start);
+        const rangeEnd = endOfDay(dateRange.end);
+        inRange = isWithinInterval(txDateOnly, { start: rangeStart, end: rangeEnd });
       }
+      
       const matchesCategory = categoryFilter === 'all' || tx.raw_extracted_data?.category === categoryFilter;
       return inRange && matchesCategory;
     });
@@ -203,11 +227,11 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
             <tr key={tx.id} className="border-b hover:bg-muted/30 transition-colors">
               <td className="p-3">
                 <div className="text-[11px]">
-                  <div className="font-medium">{format(parseISO(tx.transaction_date), 'MMM d, yyyy')}</div>
-                  <div className="text-muted-foreground text-[10px]">
-                    Transaction: {format(new Date(tx.created_at), 'HH:mm')}
+                  <div className="font-semibold text-foreground">{format(parseISO(tx.transaction_date), 'MMM d, yyyy')}</div>
+                  <div className="text-muted-foreground text-[10px] font-medium">
+                    Txn: {tx.transaction_date.includes('T') ? format(parseISO(tx.transaction_date), 'HH:mm') : '--:--'}
                   </div>
-                  <div className="text-muted-foreground text-[9px] italic">
+                  <div className="text-muted-foreground/70 text-[9px] italic">
                     Fetched: {format(new Date(tx.created_at), 'MMM d, HH:mm')}
                   </div>
                 </div>
@@ -315,8 +339,8 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
                           {PAYMENT_MODE_ICONS[tx.payment_mode]}
                         </div>
                           <div className="text-right shrink-0">
-                            <div className="text-[10px] text-muted-foreground">
-                              {format(new Date(tx.created_at), 'HH:mm')}
+                            <div className="text-[10px] font-medium text-foreground">
+                              {tx.transaction_date.includes('T') ? format(parseISO(tx.transaction_date), 'HH:mm') : '--:--'}
                             </div>
                             <div className="text-[9px] text-muted-foreground italic">
                               Fetched: {format(new Date(tx.created_at), 'HH:mm')}
@@ -600,15 +624,16 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
       <Card>
         <CardHeader className="pb-0">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Transactions
               <Badge variant="secondary" className="ml-2">{filteredTransactions.length}</Badge>
             </CardTitle>
-            <Button variant="outline" size="sm" className="gap-1 h-8">
-              <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Export</span>
-            </Button>
+            <FinanceFlowExport 
+              transactions={filteredTransactions} 
+              period={period} 
+              dateRange={dateRange} 
+            />
           </div>
         </CardHeader>
         <CardContent className="pt-4">

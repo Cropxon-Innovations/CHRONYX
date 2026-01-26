@@ -913,7 +913,8 @@ serve(async (req) => {
           continue;
         }
         
-        const transactionDateStr = parsed.transactionDate.toISOString().split('T')[0];
+        // Store full ISO timestamp including time from Gmail header
+        const transactionDateStr = parsed.transactionDate.toISOString();
         
         // MULTI-LEVEL DEDUPLICATION
         let isDuplicate = false;
@@ -1058,7 +1059,8 @@ serve(async (req) => {
             .from('expenses')
             .insert({
               user_id: userId,
-              expense_date: transactionDateStr,
+              // Store date-only for expense_date field (type: date)
+              expense_date: parsed.transactionDate.toISOString().split('T')[0],
               amount: parsed.amount,
               category: parsed.category,
               payment_mode: normalizedPaymentMode,
