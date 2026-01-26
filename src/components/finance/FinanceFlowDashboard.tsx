@@ -165,11 +165,11 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
           </tr>
         </thead>
         <tbody>
-          {[...filteredTransactions].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(tx => (
+          {[...filteredTransactions].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()).map(tx => (
             <tr key={tx.id} className="border-b hover:bg-muted/30 transition-colors">
               <td className="p-3">
                 <div className="text-xs">
-                  <p className="font-medium">{format(new Date(tx.created_at), 'MMM d, yyyy')}</p>
+                  <p className="font-medium">{format(parseISO(tx.transaction_date), 'MMM d, yyyy')}</p>
                   <p className="text-muted-foreground">{format(new Date(tx.created_at), 'hh:mm a')}</p>
                 </div>
               </td>
@@ -263,7 +263,7 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
               
               {/* Transactions */}
               <div className="pl-4 border-l-2 border-muted ml-4 mt-4 space-y-3">
-                {[...txs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(tx => (
+                {[...txs].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()).map(tx => (
                   <div key={tx.id} className="relative flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 -ml-4 pl-6">
                     <div className={cn(
                       "absolute left-0 top-5 w-2 h-2 rounded-full -translate-x-[5px]",
