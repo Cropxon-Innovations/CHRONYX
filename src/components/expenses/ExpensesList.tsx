@@ -202,7 +202,7 @@ const ExpensesList = ({ onUpdate }: ExpensesListProps) => {
                           {expense.is_auto_generated && (
                             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                               <Clock className="w-3 h-3" />
-                              <span>{format(new Date(expense.created_at), 'hh:mm a')}</span>
+                              <span>{format(new Date(expense.created_at), 'HH:mm')}</span>
                               <span className="italic">• Fetched {formatDistanceToNow(new Date(expense.created_at), { addSuffix: true })}</span>
                             </div>
                           )}
