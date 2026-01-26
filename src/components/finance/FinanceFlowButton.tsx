@@ -151,10 +151,6 @@ const FinanceFlowButton = ({ onImportComplete }: FinanceFlowButtonProps) => {
         
         <Sparkles className="w-4 h-4 text-red-500" />
         <span>FinanceFlow AI</span>
-        <Badge variant="outline" className="text-[9px] py-0 px-1 bg-red-500/10 text-red-500 border-red-500/30">
-          <FlaskConical className="w-2.5 h-2.5 mr-0.5" />
-          BETA
-        </Badge>
         
         {/* Pending count badge */}
         <AnimatePresence>

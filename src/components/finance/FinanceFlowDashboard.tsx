@@ -168,9 +168,14 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
           {[...filteredTransactions].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()).map(tx => (
             <tr key={tx.id} className="border-b hover:bg-muted/30 transition-colors">
               <td className="p-3">
-                <div className="text-xs">
-                  <p className="font-medium">{format(parseISO(tx.transaction_date), 'MMM d, yyyy')}</p>
-                  <p className="text-muted-foreground">{format(new Date(tx.created_at), 'hh:mm a')}</p>
+                <div className="text-[11px]">
+                  <div className="font-medium">{format(parseISO(tx.transaction_date), 'MMM d, yyyy')}</div>
+                  <div className="text-muted-foreground text-[10px]">
+                    Transaction: {format(parseISO(tx.transaction_date), 'hh:mm a')}
+                  </div>
+                  <div className="text-muted-foreground text-[9px] italic">
+                    Fetched: {format(new Date(tx.created_at), 'MMM d, hh:mm a')}
+                  </div>
                 </div>
               </td>
               <td className="p-3">
@@ -275,9 +280,14 @@ const FinanceFlowDashboard = ({ transactions, onRefresh }: FinanceFlowDashboardP
                           <p className="font-medium truncate">{tx.merchant_name || 'Unknown'}</p>
                           {PAYMENT_MODE_ICONS[tx.payment_mode]}
                         </div>
-                        <span className="text-[10px] text-muted-foreground shrink-0">
-                          {format(new Date(tx.created_at), 'hh:mm a')}
-                        </span>
+                          <div className="text-right shrink-0">
+                            <div className="text-[10px] text-muted-foreground">
+                              {format(parseISO(tx.transaction_date), 'hh:mm a')}
+                            </div>
+                            <div className="text-[9px] text-muted-foreground italic">
+                              Fetched: {format(new Date(tx.created_at), 'hh:mm a')}
+                            </div>
+                          </div>
                       </div>
                       <p className="text-xs text-muted-foreground truncate">{tx.email_subject}</p>
                       <div className="flex gap-2 mt-1">

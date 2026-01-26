@@ -227,10 +227,6 @@ const FinanceFlowSettings = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <CardTitle className="text-lg">FinanceFlow AI</CardTitle>
-                  <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-500 border-red-500/30">
-                    <FlaskConical className="w-3 h-3 mr-1" />
-                    BETA
-                  </Badge>
                 </div>
                 <CardDescription className="text-xs mt-0.5">
                   Auto-detect purchases from Gmail receipts
