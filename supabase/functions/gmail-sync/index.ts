@@ -152,6 +152,20 @@ const DATE_PATTERNS = [
   /\b(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2})\b/g,
 ];
 
+// Time patterns for transaction time extraction
+const TIME_PATTERNS = [
+  // HH:MM:SS (24-hour)
+  /\b(\d{1,2}:\d{2}:\d{2})\b/g,
+  // HH:MM (24-hour)
+  /\b(\d{1,2}:\d{2})\s*(?:hrs?|hours?)?\b/gi,
+  // HH:MM AM/PM (12-hour)
+  /\b(\d{1,2}:\d{2})\s*(am|pm)\b/gi,
+  // "at HH:MM" patterns
+  /at\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*(?:hrs?|hours?|am|pm)?\b/gi,
+  // "Time: HH:MM" patterns
+  /(?:time|timestamp)\s*[:\-]?\s*(\d{1,2}:\d{2}(?::\d{2})?)/gi,
+];
+
 // Account mask patterns
 const ACCOUNT_MASK_PATTERNS = [
   // A/c XXXXX1234, **1234, XXXX5678
@@ -324,6 +338,32 @@ function extractAccountMask(text: string): { accountMask: string | null; confide
     }
   }
   return { accountMask: null, confidence: 0 };
+}
+
+// Extract transaction time from email content
+function extractTransactionTime(text: string): string | null {
+  for (const pattern of TIME_PATTERNS) {
+    pattern.lastIndex = 0;
+    const match = pattern.exec(text);
+    if (match && match[1]) {
+      let timeStr = match[1];
+      // Handle AM/PM format
+      if (match[2]) {
+        const isPM = match[2].toLowerCase() === 'pm';
+        const [hours, mins] = timeStr.split(':').map(Number);
+        const adjustedHours = isPM && hours < 12 ? hours + 12 : (!isPM && hours === 12 ? 0 : hours);
+        timeStr = `${String(adjustedHours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+      }
+      // Validate time format
+      const parts = timeStr.split(':');
+      const hours = parseInt(parts[0]);
+      const mins = parseInt(parts[1]);
+      if (hours >= 0 && hours <= 23 && mins >= 0 && mins <= 59) {
+        return timeStr.substring(0, 5); // Return HH:MM format
+      }
+    }
+  }
+  return null;
 }
 
 function extractTransactionType(text: string): { type: 'debit' | 'credit' | null; confidence: number } {

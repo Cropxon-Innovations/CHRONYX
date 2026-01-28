@@ -68,6 +68,7 @@ import AssetsDashboard from "@/components/assets/AssetsDashboard";
 import ReportSubscriptions from "@/components/finance/ReportSubscriptions";
 import { StockPortfolio } from "@/components/finance/StockPortfolio";
 import { FinancialGoalsTracker } from "@/components/finance/FinancialGoalsTracker";
+import CreditCardTracker from "@/components/finance/CreditCardTracker";
 
 // Types
 interface FolderSettings {
@@ -784,32 +785,36 @@ const FinanceFlow = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 sm:grid-cols-10 lg:w-auto lg:inline-grid overflow-x-auto">
-          <TabsTrigger value="dashboard" className="gap-1">
+        <TabsList className="flex w-full overflow-x-auto scrollbar-hide">
+          <TabsTrigger value="dashboard" className="gap-1 flex-shrink-0">
             <Activity className="w-3 h-3" />
             <span className="hidden sm:inline">Dashboard</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-1">
+          <TabsTrigger value="analytics" className="gap-1 flex-shrink-0">
             <PieChart className="w-3 h-3" />
             <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
-          <TabsTrigger value="assets" className="gap-1">
+          <TabsTrigger value="cards" className="gap-1 flex-shrink-0">
+            <CreditCard className="w-3 h-3" />
+            <span className="hidden sm:inline">Cards</span>
+          </TabsTrigger>
+          <TabsTrigger value="assets" className="gap-1 flex-shrink-0">
             <Wallet className="w-3 h-3" />
             <span className="hidden sm:inline">Assets</span>
           </TabsTrigger>
-          <TabsTrigger value="stocks" className="gap-1">
+          <TabsTrigger value="stocks" className="gap-1 flex-shrink-0">
             <TrendingUp className="w-3 h-3" />
             <span className="hidden sm:inline">Stocks</span>
           </TabsTrigger>
-          <TabsTrigger value="goals" className="gap-1">
+          <TabsTrigger value="goals" className="gap-1 flex-shrink-0">
             <Sparkles className="w-3 h-3" />
             <span className="hidden sm:inline">Goals</span>
           </TabsTrigger>
-          <TabsTrigger value="folders" className="gap-1">
+          <TabsTrigger value="folders" className="gap-1 flex-shrink-0">
             <FolderOpen className="w-3 h-3" />
             <span className="hidden sm:inline">Folders</span>
           </TabsTrigger>
-          <TabsTrigger value="review" className="gap-1 relative">
+          <TabsTrigger value="review" className="gap-1 relative flex-shrink-0">
             <Eye className="w-3 h-3" />
             <span className="hidden sm:inline">Review</span>
             {reviewQueue.length > 0 && (
@@ -818,15 +823,15 @@ const FinanceFlow = () => {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="history" className="gap-1">
+          <TabsTrigger value="history" className="gap-1 flex-shrink-0">
             <History className="w-3 h-3" />
             <span className="hidden sm:inline">History</span>
           </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-1">
+          <TabsTrigger value="reports" className="gap-1 flex-shrink-0">
             <Mail className="w-3 h-3" />
             <span className="hidden sm:inline">Reports</span>
           </TabsTrigger>
-          <TabsTrigger value="logs" className="gap-1">
+          <TabsTrigger value="logs" className="gap-1 flex-shrink-0">
             <FileSearch className="w-3 h-3" />
             <span className="hidden sm:inline">Logs</span>
           </TabsTrigger>
@@ -843,6 +848,11 @@ const FinanceFlow = () => {
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="mt-4">
           <FinanceAnalytics />
+        </TabsContent>
+
+        {/* Credit Cards Tab - NEW */}
+        <TabsContent value="cards" className="mt-4">
+          <CreditCardTracker />
         </TabsContent>
 
         {/* Assets Tab */}
