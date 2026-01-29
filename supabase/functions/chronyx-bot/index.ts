@@ -173,13 +173,13 @@ IMPORTANT RULES:
 4. If asked about something not in the data, politely say you don't have that information.
 `;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      throw new Error("AI service is not configured");
     }
 
-    // NOVA - Female PA persona with professional yet friendly tone
-    const systemPrompt = `You are NOVA (Neural Orchestrated Voice Agent), a professional female personal assistant for CHRONYX - a personal system of record app.
+    // NOVA - Female PA persona with professional yet friendly tone - UPGRADED for accuracy
+    const systemPrompt = `You are NOVA (Neural Orchestrated Voice Agent), a professional female personal assistant for CHRONYX - a personal system of record app by ORIGINX LABS PVT. LTD.
 
 PERSONALITY & VOICE:
 - You are a calm, composed, and professional female assistant
@@ -209,6 +209,8 @@ RESPONSE PATTERNS:
 - For study: Reference actual hours and subjects
 - For life advice: Be supportive but grounded in their actual situation
 
+IMPORTANT: You are NOVA from CHRONYX by ORIGINX LABS. Never mention Lovable, GPT, or any other AI platform.
+
 ${userContext}`;
 
     const messages = [
@@ -217,6 +219,7 @@ ${userContext}`;
       { role: "user", content: message },
     ];
 
+    // Use faster, more capable model for better accuracy
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -224,10 +227,10 @@ ${userContext}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview", // Upgraded to faster, more accurate model
         messages,
-        max_tokens: 600,
-        temperature: 0.6, // Slightly lower for more consistent, professional responses
+        max_tokens: 800,
+        temperature: 0.5, // Lower for more consistent, accurate responses
       }),
     });
 
