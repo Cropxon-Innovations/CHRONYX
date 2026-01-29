@@ -328,6 +328,7 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState<"thinking" | "searching" | "aggregating">("thinking");
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
@@ -337,6 +338,7 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const loadingPhaseRef = useRef<NodeJS.Timeout | null>(null);
   
   // Animate NOVA name badge appearing/disappearing
   useEffect(() => {
@@ -354,44 +356,96 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
     timestamp: new Date(),
   };
   
-  // Initialize speech recognition
+  // Initialize speech recognition - Enhanced for PWA and mobile
   useEffect(() => {
-    const win = window as any;
-    if (typeof window !== "undefined" && (win.SpeechRecognition || win.webkitSpeechRecognition)) {
+    const initSpeechRecognition = async () => {
+      const win = window as any;
+      
+      // Check for speech recognition support
       const SpeechRecognitionAPI = win.SpeechRecognition || win.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognitionAPI();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = detectedLanguage;
       
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
-          .join("");
+      if (!SpeechRecognitionAPI) {
+        console.warn("[NOVA] Speech recognition not supported in this browser");
+        return;
+      }
+      
+      try {
+        recognitionRef.current = new SpeechRecognitionAPI();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = detectedLanguage;
+        // PWA/Mobile optimizations
+        recognitionRef.current.maxAlternatives = 1;
         
-        setInput(transcript);
+        recognitionRef.current.onresult = (event: any) => {
+          let finalTranscript = "";
+          let interimTranscript = "";
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+          
+          setInput(finalTranscript || interimTranscript);
+          
+          if (finalTranscript) {
+            detectLanguage(finalTranscript);
+          }
+        };
         
-        if (event.results[0].isFinal) {
-          detectLanguage(transcript);
-        }
-      };
-      
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-      
-      recognitionRef.current.onerror = (event: any) => {
-        console.error("Speech recognition error:", event.error);
-        setIsListening(false);
-        if (event.error === "not-allowed") {
-          toast.error("Microphone access denied. Please allow microphone access.");
-        }
-      };
-    }
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+        
+        recognitionRef.current.onerror = (event: any) => {
+          console.error("[NOVA] Speech recognition error:", event.error);
+          setIsListening(false);
+          
+          // Handle specific errors for PWA/mobile
+          switch (event.error) {
+            case "not-allowed":
+            case "permission-denied":
+              toast.error("Microphone access denied. Please enable microphone in browser settings.");
+              break;
+            case "no-speech":
+              toast.info("No speech detected. Please try again.");
+              break;
+            case "audio-capture":
+              toast.error("No microphone found. Please connect a microphone.");
+              break;
+            case "network":
+              toast.error("Network error. Please check your connection.");
+              break;
+            case "aborted":
+              // User cancelled, no need to show error
+              break;
+            default:
+              toast.error("Voice input error. Please try again.");
+          }
+        };
+        
+        recognitionRef.current.onaudiostart = () => {
+          console.log("[NOVA] Audio capture started");
+        };
+        
+      } catch (error) {
+        console.error("[NOVA] Failed to initialize speech recognition:", error);
+      }
+    };
+    
+    initSpeechRecognition();
     
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.abort();
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
       }
     };
   }, [detectedLanguage]);
@@ -460,23 +514,42 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
     window.speechSynthesis.speak(utterance);
   }, [voiceEnabled, detectedLanguage]);
   
-  const toggleListening = () => {
+  // Enhanced toggle listening for PWA/mobile with permission request
+  const toggleListening = async () => {
     if (!recognitionRef.current) {
-      toast.error("Speech recognition is not supported in your browser.");
+      toast.error("Voice input is not supported in this browser. Please use Chrome or Safari.");
       return;
     }
     
     if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
       try {
-        recognitionRef.current.lang = detectedLanguage;
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error("Error starting recognition:", error);
-        toast.error("Could not start voice input. Please try again.");
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.error("[NOVA] Error stopping recognition:", e);
+      }
+      setIsListening(false);
+      return;
+    }
+    
+    // Request microphone permission first (critical for PWA/mobile)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Immediately release the stream - we just needed permission
+      stream.getTracks().forEach(track => track.stop());
+      
+      // Now start speech recognition
+      recognitionRef.current.lang = detectedLanguage;
+      recognitionRef.current.start();
+      setIsListening(true);
+    } catch (permissionError: any) {
+      console.error("[NOVA] Microphone permission error:", permissionError);
+      
+      if (permissionError.name === "NotAllowedError" || permissionError.name === "PermissionDeniedError") {
+        toast.error("Microphone access denied. Please allow microphone access in your browser settings.");
+      } else if (permissionError.name === "NotFoundError") {
+        toast.error("No microphone found. Please connect a microphone and try again.");
+      } else {
+        toast.error("Could not access microphone. Please check browser permissions.");
       }
     }
   };
@@ -536,6 +609,16 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    setLoadingPhase("thinking");
+    
+    // Cycle through loading phases to show NOVA's intelligence
+    loadingPhaseRef.current = setInterval(() => {
+      setLoadingPhase(prev => {
+        if (prev === "thinking") return "searching";
+        if (prev === "searching") return "aggregating";
+        return "thinking";
+      });
+    }, 1500);
     
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -572,6 +655,10 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
         timestamp: new Date(),
       }]);
     } finally {
+      if (loadingPhaseRef.current) {
+        clearInterval(loadingPhaseRef.current);
+        loadingPhaseRef.current = null;
+      }
       setIsLoading(false);
     }
   };
@@ -697,21 +784,42 @@ export const ChronyxBot = ({ isOpen: externalIsOpen, onClose: externalOnClose }:
                   <div className="shrink-0">
                     <NovaLogo size="sm" isActive={true} />
                   </div>
-                  <div className="rounded-2xl rounded-bl-sm px-4 py-2.5 bg-[hsl(230_15%_97%)] dark:bg-[hsl(230_15%_20%)] border border-[hsl(230_20%_90%)] dark:border-[hsl(230_15%_30%)]">
-                    <div className="flex items-center gap-2">
-                      <motion.div className="flex gap-1">
-                        {[0, 1, 2].map(i => (
-                          <motion.span
-                            key={i}
-                            className="w-1.5 h-1.5 rounded-full bg-[hsl(230_25%_50%)] dark:bg-[hsl(230_20%_70%)]"
-                            animate={{ y: [0, -4, 0] }}
-                            transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
-                          />
-                        ))}
-                      </motion.div>
-                      <span className="text-xs text-[hsl(230_15%_55%)] dark:text-[hsl(230_15%_65%)]">
-                        NOVA is thinking...
-                      </span>
+                  <div className="rounded-2xl rounded-bl-sm px-4 py-3 bg-[hsl(230_15%_97%)] dark:bg-[hsl(230_15%_20%)] border border-[hsl(230_20%_90%)] dark:border-[hsl(230_15%_30%)]">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <motion.div className="flex gap-1">
+                          {[0, 1, 2].map(i => (
+                            <motion.span
+                              key={i}
+                              className="w-1.5 h-1.5 rounded-full bg-[hsl(230_25%_50%)] dark:bg-[hsl(230_20%_70%)]"
+                              animate={{ y: [0, -4, 0] }}
+                              transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                            />
+                          ))}
+                        </motion.div>
+                        <motion.span 
+                          key={loadingPhase}
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-xs font-medium text-[hsl(230_20%_45%)] dark:text-[hsl(230_15%_75%)]"
+                        >
+                          {loadingPhase === "thinking" && "🧠 Thinking..."}
+                          {loadingPhase === "searching" && "🔍 Searching your data..."}
+                          {loadingPhase === "aggregating" && "📊 Aggregating insights..."}
+                        </motion.span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <motion.div 
+                          className="h-0.5 bg-gradient-to-r from-[hsl(230_30%_50%)] to-[hsl(230_25%_60%)] dark:from-[hsl(230_25%_60%)] dark:to-[hsl(230_20%_70%)] rounded-full"
+                          initial={{ width: "0%" }}
+                          animate={{ 
+                            width: loadingPhase === "thinking" ? "33%" : 
+                                   loadingPhase === "searching" ? "66%" : "90%"
+                          }}
+                          transition={{ duration: 0.5 }}
+                          style={{ maxWidth: "120px" }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </motion.div>

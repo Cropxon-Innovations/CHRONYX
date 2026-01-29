@@ -548,6 +548,7 @@ interface ParsedTransaction {
   amount: number;
   category: string;
   transactionDate: Date;
+  transactionTime: string | null; // HH:MM format extracted from email
   transactionType: 'debit' | 'credit';
   paymentMode: string;
   referenceId: string | null;
@@ -587,12 +588,22 @@ function parseEmailContent(
   }
   
   const dateResult = extractDate(fullText, msgDate);
+  const timeResult = extractTransactionTime(fullText); // Extract time from email body
   const typeResult = extractTransactionType(fullText);
   const refResult = extractReferenceId(fullText);
   const accountResult = extractAccountMask(fullText);
   const sourceResult = extractSource(fullText, from);
   const merchantResult = extractMerchant(fullText);
   const description = extractDescription(fullText);
+  
+  // Combine date with extracted time if available
+  let transactionDate = dateResult.date;
+  if (timeResult) {
+    const [hours, mins] = timeResult.split(':').map(Number);
+    transactionDate = new Date(dateResult.date);
+    transactionDate.setHours(hours, mins, 0, 0);
+    console.log('[Gmail Sync] Extracted time:', timeResult, 'Combined date:', transactionDate.toISOString());
+  }
   
   // Determine payment mode
   let paymentMode = 'Other';
@@ -650,7 +661,8 @@ function parseEmailContent(
     merchant: merchantResult?.name || sourceResult.source || 'Unknown',
     amount: amountResult.amount,
     category: merchantResult?.category || 'Other',
-    transactionDate: dateResult.date,
+    transactionDate,
+    transactionTime: timeResult,
     transactionType: typeResult.type || 'debit',
     paymentMode,
     referenceId: refResult.referenceId,
