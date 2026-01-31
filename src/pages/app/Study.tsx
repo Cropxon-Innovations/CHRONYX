@@ -28,7 +28,8 @@ import { GenericExamWorkspace, StudyWorkspaceBreadcrumb } from "@/components/stu
 import { StudyWorkspace } from "@/components/study/workspace";
 import { OPSCExamDashboard } from "@/components/exam/opsc/OPSCExamDashboard";
 import TemplatesGallery from "@/components/study/TemplatesGallery";
-import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, LayoutTemplate, Layout } from "lucide-react";
+import { Clock, BookOpen, Target, Archive, BookMarked, BarChart3, CheckSquare, Trophy, Brain, LayoutTemplate, Layout, Code2 } from "lucide-react";
+import EngineeringBlogSection from "@/components/study/EngineeringBlogSection";
 import { useSearchParams } from "react-router-dom";
 import { StudyOnboardingFlow, StudyGuidedTour } from "@/components/study/onboarding";
 import { useStudyOnboarding, STUDY_TEMPLATES } from "@/hooks/useStudyOnboarding";
@@ -471,8 +472,13 @@ const Study = () => {
         </div>
 
         {/* Templates Gallery Tab */}
-        <TabsContent value="gallery" className="mt-6">
+        <TabsContent value="gallery" className="mt-6 space-y-8">
           <TemplatesGallery />
+          
+          {/* Engineering Blog Section */}
+          <div className="pt-6 border-t border-border/50">
+            <EngineeringBlogSection />
+          </div>
         </TabsContent>
 
         {/* Study Timetable Tab */}

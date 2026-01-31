@@ -1,10 +1,11 @@
 # =========================================
 # CHRONYX - Personal System of Record
-# https://chronyx.lovable.app
+# https://www.getchronyx.com
 # by ORIGINX LABS PVT. LTD.
 # =========================================
 # Personal Finance | Study Planner | Notes
 # Document Vault | Timetable | Templates
+# News & Media | Engineering Blog | AI
 # =========================================
 
 # Allow all major search engines
@@ -106,7 +107,7 @@ Allow: /refund
 Allow: /app/dashboard
 Allow: /app/expenses
 Allow: /app/income
-Allow: /app/finance-flow
+Allow: /app/financeflow
 Allow: /app/tax
 Allow: /app/loans
 Allow: /app/insurance
@@ -119,13 +120,14 @@ Allow: /app/reports
 Allow: /app/study
 Allow: /app/study?tab=gallery
 Allow: /app/study?tab=templates
-Allow: /app/study?tab=schedule
+Allow: /app/study?tab=timetable
 
 # =========================================
 # NOTES & DOCUMENTS
-# Rich Text Notes | Document Vault
+# Rich Text Notes | Document Vault | AI
 # =========================================
 Allow: /app/notes
+Allow: /app/noteflowlm
 Allow: /app/documents
 Allow: /app/vault
 
@@ -137,6 +139,12 @@ Allow: /app/library
 Allow: /app/library?tab=hub
 
 # =========================================
+# NEWS & MEDIA
+# NEWSTACK.Live Integration
+# =========================================
+Allow: /app/news
+
+# =========================================
 # OTHER FEATURES
 # Todos | Memory | Lifespan Tracker
 # =========================================
@@ -145,9 +153,11 @@ Allow: /app/memory
 Allow: /app/lifespan
 Allow: /app/profile
 Allow: /app/settings
+Allow: /app/family-tree
+Allow: /app/achievements
 
 # Sitemap location
-Sitemap: https://chronyx.lovable.app/sitemap.xml
+Sitemap: https://www.getchronyx.com/sitemap.xml
 
 # Host directive
-Host: https://chronyx.lovable.app
+Host: https://www.getchronyx.com

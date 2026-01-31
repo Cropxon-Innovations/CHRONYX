@@ -44,6 +44,7 @@ import {
   Heart,
   BookMarked,
   GitBranch,
+  Newspaper,
 } from "lucide-react";
 import { getBadgeClasses, getBadgeDotColor } from "@/lib/badge-colors";
 import {
@@ -76,7 +77,7 @@ interface NavSection {
   items: NavItem[];
 }
 
-// Modularized navigation sections - Reordered: Overview → Productivity → Finance → Life → Security
+// Modularized navigation sections - Reordered: Overview → Productivity → Finance → Life → Media → Security
 const navSections: NavSection[] = [
   {
     title: "Overview",
@@ -115,6 +116,12 @@ const navSections: NavSection[] = [
       { path: "/app/family-tree", label: "Family Tree", icon: GitBranch, badge: "NEW" },
       { path: "/app/social", label: "Social", icon: Users, badge: "BETA" },
       { path: "/app/lifespan", label: "Lifespan", icon: Hourglass },
+    ],
+  },
+  {
+    title: "Media",
+    items: [
+      { path: "/app/news", label: "NEWSTACK.Live", icon: Newspaper, badge: "NEW" },
     ],
   },
   {

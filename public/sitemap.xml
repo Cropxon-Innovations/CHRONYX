@@ -9,18 +9,20 @@
   <!-- CHRONYX Sitemap - Personal Life Management -->
   <!-- Personal System of Record | Private Vault -->
   <!-- Study Planner | Finance Tracker | Notes -->
+  <!-- AI-Powered | News | Engineering Blog -->
+  <!-- BY ORIGINX LABS PVT. LTD. -->
   <!-- ========================================= -->
   
   <!-- Homepage - Primary Landing -->
   <url>
-    <loc>https://chronyx.lovable.app/</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://chronyx.lovable.app/og-image.png</image:loc>
+      <image:loc>https://www.getchronyx.com/og-image.png</image:loc>
       <image:title>CHRONYX - Personal System of Record</image:title>
-      <image:caption>A private personal space for tasks, finances, documents, study planning, notes, and memories</image:caption>
+      <image:caption>AI-powered personal space for tasks, finances, documents, study planning, notes, news, and memories</image:caption>
     </image:image>
   </url>
   
@@ -29,29 +31,29 @@
   <!-- ========================================= -->
   
   <url>
-    <loc>https://chronyx.lovable.app/privacy</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/privacy</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/terms</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/terms</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/security</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/security</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/refund</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/refund</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -61,22 +63,22 @@
   <!-- ========================================= -->
   
   <url>
-    <loc>https://chronyx.lovable.app/pricing</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/pricing</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/about</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/about</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/contact</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/contact</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -86,15 +88,15 @@
   <!-- ========================================= -->
   
   <url>
-    <loc>https://chronyx.lovable.app/login</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/login</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/forgot-password</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/forgot-password</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -104,32 +106,32 @@
   <!-- ========================================= -->
   
   <url>
-    <loc>https://chronyx.lovable.app/app/study</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/study</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
   <!-- Study Templates Gallery -->
   <url>
-    <loc>https://chronyx.lovable.app/app/study?tab=gallery</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/study?tab=gallery</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   
   <!-- My Templates -->
   <url>
-    <loc>https://chronyx.lovable.app/app/study?tab=templates</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/study?tab=templates</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   
   <!-- Study Timetable -->
   <url>
-    <loc>https://chronyx.lovable.app/app/study?tab=schedule</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/study?tab=timetable</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -139,91 +141,91 @@
   <!-- ========================================= -->
   
   <url>
-    <loc>https://chronyx.lovable.app/app/dashboard</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/dashboard</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/todos</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/todos</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/memory</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/memory</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/notes</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/notes</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/documents</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/documents</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <!-- ========================================= -->
-  <!-- CORE APP FEATURES - FINANCE -->
+  <!-- CORE APP FEATURES - FINANCE & TAX -->
   <!-- ========================================= -->
   
   <url>
-    <loc>https://chronyx.lovable.app/app/expenses</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/expenses</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/income</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/income</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/finance-flow</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/financeflow</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <url>
+    <loc>https://www.getchronyx.com/app/tax</loc>
+    <lastmod>2026-01-31</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/tax</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/loans</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/loans</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/insurance</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/insurance</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/reports</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://chronyx.lovable.app/app/reports</loc>
-    <lastmod>2026-01-25</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
   </url>
   
   <!-- ========================================= -->
@@ -231,15 +233,37 @@
   <!-- ========================================= -->
   
   <url>
-    <loc>https://chronyx.lovable.app/app/library</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/library</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/library?tab=hub</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/library?tab=hub</loc>
+    <lastmod>2026-01-31</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- ========================================= -->
+  <!-- NEWS & MEDIA -->
+  <!-- ========================================= -->
+  
+  <url>
+    <loc>https://www.getchronyx.com/app/news</loc>
+    <lastmod>2026-01-31</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- ========================================= -->
+  <!-- NOTEFLOW & AI FEATURES -->
+  <!-- ========================================= -->
+  
+  <url>
+    <loc>https://www.getchronyx.com/app/noteflowlm</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -249,38 +273,52 @@
   <!-- ========================================= -->
   
   <url>
-    <loc>https://chronyx.lovable.app/app/lifespan</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/lifespan</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/vault</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/vault</loc>
+    <lastmod>2026-01-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://www.getchronyx.com/app/family-tree</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/settings</loc>
-    <lastmod>2026-01-25</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://www.getchronyx.com/app/achievements</loc>
+    <lastmod>2026-01-31</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/profile</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/settings</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.4</priority>
   </url>
   
   <url>
-    <loc>https://chronyx.lovable.app/app/backup</loc>
-    <lastmod>2026-01-25</lastmod>
+    <loc>https://www.getchronyx.com/app/profile</loc>
+    <lastmod>2026-01-31</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.4</priority>
+  </url>
+  
+  <url>
+    <loc>https://www.getchronyx.com/app/backup</loc>
+    <lastmod>2026-01-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
   </url>
 
 </urlset>
