@@ -5,7 +5,7 @@ import {
   Heart, Server, Database, Cloud, Zap, 
   RefreshCw, CheckCircle2, AlertCircle, XCircle
 } from "lucide-react";
-import { useServiceHealth } from "@/hooks/useAdmin";
+import { useRealTimeServiceHealth } from "@/hooks/useAdminInfrastructure";
 import { format } from "date-fns";
 
 const statusIcons: Record<string, React.ReactNode> = {
@@ -21,9 +21,9 @@ const statusColors: Record<string, string> = {
 };
 
 const AdminServiceHealth = () => {
-  const { data: services, isLoading, refetch } = useServiceHealth();
+  const { data: services, isLoading, refetch, isRefetching } = useRealTimeServiceHealth();
 
-  const healthySevices = services?.filter(s => s.status === "healthy")?.length || 0;
+  const healthyServices = services?.filter(s => s.status === "healthy")?.length || 0;
   const degradedServices = services?.filter(s => s.status === "degraded")?.length || 0;
   const downServices = services?.filter(s => s.status === "down")?.length || 0;
   const totalServices = services?.length || 0;
@@ -58,7 +58,7 @@ const AdminServiceHealth = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Healthy</p>
-                <p className="text-2xl font-bold">{healthySevices}</p>
+                <p className="text-2xl font-bold">{healthyServices}</p>
               </div>
               <div className="p-3 rounded-xl bg-primary/10">
                 <CheckCircle2 className="w-6 h-6 text-primary" />
@@ -104,12 +104,12 @@ const AdminServiceHealth = () => {
                 Service Health Monitor
               </CardTitle>
               <CardDescription>
-                Real-time status of all platform services
+                Real-time status of all platform services (auto-refresh every 30s)
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefetching ? "animate-spin" : ""}`} />
+              {isRefetching ? "Checking..." : "Refresh"}
             </Button>
           </div>
         </CardHeader>
@@ -132,7 +132,7 @@ const AdminServiceHealth = () => {
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-3">
-                      {service.response_time_ms && (
+                      {service.response_time_ms !== undefined && (
                         <span className="text-sm font-mono">
                           {service.response_time_ms}ms
                         </span>
@@ -157,7 +157,7 @@ const AdminServiceHealth = () => {
             <div className="text-center py-12 text-muted-foreground">
               <Heart className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>No services configured for monitoring</p>
-              <p className="text-sm">Service health data will appear here once configured</p>
+              <p className="text-sm">Click refresh to run health checks</p>
             </div>
           )}
         </CardContent>
@@ -173,7 +173,7 @@ const AdminServiceHealth = () => {
               </div>
               <div>
                 <p className="font-medium">Database</p>
-                <p className="text-sm text-muted-foreground">Supabase PostgreSQL</p>
+                <p className="text-sm text-muted-foreground">Lovable Cloud PostgreSQL</p>
               </div>
             </div>
           </CardContent>
@@ -186,7 +186,7 @@ const AdminServiceHealth = () => {
               </div>
               <div>
                 <p className="font-medium">Storage</p>
-                <p className="text-sm text-muted-foreground">Supabase Storage</p>
+                <p className="text-sm text-muted-foreground">Lovable Cloud Storage</p>
               </div>
             </div>
           </CardContent>

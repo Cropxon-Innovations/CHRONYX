@@ -191,12 +191,13 @@ const Library = () => {
   };
 
   const handleItemClick = (item: LibraryItem) => {
-    if (item.file_url && item.format === 'pdf') {
+    // Open PDF and EPUB files in the reader
+    if (item.file_url && (item.format === 'pdf' || item.format === 'epub')) {
       setSelectedItem(item);
       setCurrentPage(item.current_page || 1);
       setReaderOpen(true);
     } else if (item.file_url) {
-      // For non-PDF files, open in new tab
+      // For other file types, open in new tab
       window.open(item.file_url, '_blank');
     }
   };

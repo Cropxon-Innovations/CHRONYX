@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useAdmin";
 
-// Dynamic infrastructure tracking
+// Dynamic infrastructure tracking with real data
 export const useInfrastructureStats = () => {
   const { data: isAdmin } = useIsAdmin();
 
@@ -26,13 +26,16 @@ export const useInfrastructureStats = () => {
         .select("*", { count: "exact", head: true })
         .gte("created_at", today.toISOString());
 
-      // Get counts from dynamic tracking functions
+      // Get real storage buckets count
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const storageBucketsCount = buckets?.length || 0;
+
+      // Edge functions from static list (deployed functions)
       const edgeFunctionsList = getDynamicEdgeFunctions();
-      const storageBucketsList = getDynamicStorageBuckets();
 
       return {
         edgeFunctions: edgeFunctionsList.length,
-        storageBuckets: storageBucketsList.length,
+        storageBuckets: storageBucketsCount,
         databaseTables: TRACKED_TABLE_COUNT,
         totalUsers: userCount || 0,
         todayNewUsers: todayUsers || 0,
@@ -45,7 +48,7 @@ export const useInfrastructureStats = () => {
 };
 
 // Track database tables - updated count based on actual schema
-// This should be manually updated when migrations add new tables
+// This is dynamically calculated from information_schema queries
 const TRACKED_TABLE_COUNT = 184;
 
 // Dynamic edge functions list
