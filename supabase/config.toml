@@ -131,3 +131,6 @@ verify_jwt = false
 
 [functions.generate-noteflow-ai]
 verify_jwt = false
+
+[functions.admin-infrastructure]
+verify_jwt = false

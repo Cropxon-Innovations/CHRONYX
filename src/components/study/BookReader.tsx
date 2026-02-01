@@ -28,6 +28,7 @@ import { ExplainParagraph } from "./ExplainParagraph";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import * as pdfjsLib from "pdfjs-dist";
+import ePub, { Book as EpubBook, Rendition } from "epubjs";
 
 // Use legacy build which includes worker inline - most reliable for Vite
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -51,15 +52,22 @@ interface BookReaderProps {
 
 const THEME_STYLES: Record<
   ReadingTheme,
-  { bg: string; text: string; label: string; icon: React.ElementType; canvasFilter?: string }
+  { bg: string; text: string; label: string; icon: React.ElementType; canvasFilter?: string; epubTheme?: object }
 > = {
-  day: { bg: "bg-background", text: "text-foreground", label: "Day", icon: Sun },
+  day: { 
+    bg: "bg-background", 
+    text: "text-foreground", 
+    label: "Day", 
+    icon: Sun,
+    epubTheme: { body: { background: "#ffffff", color: "#1a1a1a" } }
+  },
   sepia: {
     bg: "bg-background",
     text: "text-foreground",
     label: "Sepia",
     icon: Sunset,
     canvasFilter: "sepia",
+    epubTheme: { body: { background: "#f4ecd8", color: "#5c4b37" } }
   },
   night: {
     bg: "bg-background",
@@ -67,6 +75,7 @@ const THEME_STYLES: Record<
     label: "Night",
     icon: Moon,
     canvasFilter: "invert hue-rotate-180",
+    epubTheme: { body: { background: "#1a1a1a", color: "#e0e0e0" } }
   },
 };
 
@@ -88,6 +97,7 @@ export const BookReader = ({
   const [theme, setTheme] = useState<ReadingTheme>(initialTheme);
   const [mode, setMode] = useState<ReadingMode>(initialMode);
   const [scale, setScale] = useState(1.5);
+  const [fontSize, setFontSize] = useState(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,6 +105,13 @@ export const BookReader = ({
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  
+  // EPUB specific state
+  const [epubBook, setEpubBook] = useState<EpubBook | null>(null);
+  const [epubRendition, setEpubRendition] = useState<Rendition | null>(null);
+  const [isEpub, setIsEpub] = useState(false);
+  const [epubProgress, setEpubProgress] = useState(0);
+  const [currentChapter, setCurrentChapter] = useState("");
   
   // AI Features state
   const [selectedText, setSelectedText] = useState("");
@@ -110,15 +127,20 @@ export const BookReader = ({
   
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const epubViewRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const hideControlsTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const progress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
+  const progress = isEpub ? epubProgress : (totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0);
   const themeStyle = THEME_STYLES[theme];
 
   // Detect if on mobile/tablet
   const isMobileOrTablet = typeof window !== "undefined" && 
     (window.innerWidth < 1024 || 'ontouchstart' in window);
+
+  // Determine file type
+  const actualFileUrl = fileUrl || (item as any).file_url;
+  const fileExt = actualFileUrl?.split('.').pop()?.toLowerCase() || item.format;
 
   // Handle text selection for dictionary/explain
   const handleTextSelection = useCallback(() => {
@@ -177,21 +199,114 @@ export const BookReader = ({
     setSelectedText("");
   };
 
-  // Determine actual file URL
-  const actualFileUrl = fileUrl || (item as any).file_url;
-
   // Retry PDF loading
   const retryLoadPdf = useCallback(() => {
     setRetryCount(prev => prev + 1);
   }, []);
 
+  // Load EPUB
+  useEffect(() => {
+    if (!actualFileUrl || fileExt !== 'epub') return;
+    
+    setIsEpub(true);
+    setIsLoading(true);
+    setRenderError(null);
+
+    const loadEpub = async () => {
+      try {
+        const book = ePub(actualFileUrl);
+        setEpubBook(book);
+
+        await book.ready;
+        
+        // Wait for the view container to be available
+        if (!epubViewRef.current) {
+          setTimeout(loadEpub, 100);
+          return;
+        }
+
+        const rendition = book.renderTo(epubViewRef.current, {
+          width: "100%",
+          height: "100%",
+          spread: isMobileOrTablet ? "none" : "auto",
+          flow: mode === "document" ? "scrolled" : "paginated",
+        });
+
+        setEpubRendition(rendition);
+
+        // Apply theme
+        const epubTheme = THEME_STYLES[theme].epubTheme;
+        if (epubTheme) {
+          rendition.themes.default(epubTheme);
+        }
+
+        // Set font size
+        rendition.themes.fontSize(`${fontSize}%`);
+
+        // Display the book
+        await rendition.display();
+
+        // Track progress
+        rendition.on("relocated", (location: any) => {
+          if (location.start) {
+            const progress = Math.round((location.start.percentage || 0) * 100);
+            setEpubProgress(progress);
+            setCurrentPage(location.start.index || 1);
+            onProgressUpdate?.(location.start.index || 1, progress);
+          }
+        });
+
+        // Track chapter changes
+        rendition.on("rendered", (section: any) => {
+          const chapter = book.navigation?.toc?.find(
+            (item: any) => section.href.includes(item.href)
+          );
+          if (chapter) {
+            setCurrentChapter(chapter.label);
+          }
+        });
+
+        // Get total locations for page count
+        await book.locations.generate(1024);
+        setTotalPages(book.locations.length() || 100);
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error loading EPUB:", error);
+        setRenderError(`Failed to load EPUB: ${error instanceof Error ? error.message : "Unknown error"}`);
+        setIsLoading(false);
+      }
+    };
+
+    loadEpub();
+
+    return () => {
+      if (epubBook) {
+        epubBook.destroy();
+      }
+    };
+  }, [actualFileUrl, fileExt, retryCount]);
+
+  // Update EPUB theme when theme changes
+  useEffect(() => {
+    if (epubRendition && isEpub) {
+      const epubTheme = THEME_STYLES[theme].epubTheme;
+      if (epubTheme) {
+        epubRendition.themes.default(epubTheme);
+      }
+    }
+  }, [theme, epubRendition, isEpub]);
+
+  // Update EPUB font size
+  useEffect(() => {
+    if (epubRendition && isEpub) {
+      epubRendition.themes.fontSize(`${fontSize}%`);
+    }
+  }, [fontSize, epubRendition, isEpub]);
+
   // Load PDF document
   useEffect(() => {
-    if (!actualFileUrl) {
-      setRenderError("No file URL provided");
-      setIsLoading(false);
-      return;
-    }
+    if (!actualFileUrl || fileExt === 'epub') return;
 
     // Check if it's a PDF
     const isPdf = actualFileUrl.toLowerCase().includes('.pdf') || item.format === 'pdf';
@@ -276,11 +391,11 @@ export const BookReader = ({
     };
 
     loadPdf();
-  }, [actualFileUrl, item.format, retryCount]);
+  }, [actualFileUrl, item.format, retryCount, fileExt]);
 
-  // Render current page
+  // Render current PDF page
   useEffect(() => {
-    if (!pdfDoc || !canvasRef.current) return;
+    if (!pdfDoc || !canvasRef.current || isEpub) return;
 
     const renderPage = async () => {
       try {
@@ -304,7 +419,7 @@ export const BookReader = ({
     };
 
     renderPage();
-  }, [pdfDoc, currentPage, scale]);
+  }, [pdfDoc, currentPage, scale, isEpub]);
 
   // Auto-hide controls
   const resetControlsTimer = useCallback(() => {
@@ -366,6 +481,10 @@ export const BookReader = ({
   };
 
   const goToNextPageWithAnimation = (direction: "left" | "right") => {
+    if (isEpub && epubRendition) {
+      epubRendition.next();
+      return;
+    }
     if (currentPage >= totalPages || isAnimating) return;
     setSlideDirection(direction);
     setIsAnimating(true);
@@ -377,6 +496,10 @@ export const BookReader = ({
   };
 
   const goToPreviousPageWithAnimation = (direction: "left" | "right") => {
+    if (isEpub && epubRendition) {
+      epubRendition.prev();
+      return;
+    }
     if (currentPage <= 1 || isAnimating) return;
     setSlideDirection(direction);
     setIsAnimating(true);
@@ -407,15 +530,15 @@ export const BookReader = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentPage, totalPages, isFullscreen, onClose, resetControlsTimer]);
+  }, [currentPage, totalPages, isFullscreen, onClose, resetControlsTimer, isEpub, epubRendition]);
 
-  // Update progress on page change
+  // Update progress on page change (PDF only)
   useEffect(() => {
-    if (totalPages > 0) {
+    if (!isEpub && totalPages > 0) {
       const newProgress = Math.round((currentPage / totalPages) * 100);
       onProgressUpdate?.(currentPage, newProgress);
     }
-  }, [currentPage, totalPages, onProgressUpdate]);
+  }, [currentPage, totalPages, onProgressUpdate, isEpub]);
 
   // Fullscreen handling
   useEffect(() => {
@@ -435,18 +558,31 @@ export const BookReader = ({
   };
 
   const goToPreviousPage = () => {
+    if (isEpub && epubRendition) {
+      epubRendition.prev();
+      return;
+    }
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
   };
 
   const goToNextPage = () => {
+    if (isEpub && epubRendition) {
+      epubRendition.next();
+      return;
+    }
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
 
   const goToPage = (page: number) => {
+    if (isEpub && epubRendition && epubBook) {
+      const cfi = epubBook.locations.cfiFromPercentage(page / totalPages);
+      epubRendition.display(cfi);
+      return;
+    }
     const validPage = Math.max(1, Math.min(page, totalPages || 1));
     setCurrentPage(validPage);
   };
@@ -496,7 +632,7 @@ export const BookReader = ({
             {item.title}
           </h1>
           <p className="text-xs opacity-60">
-            Page {currentPage} of {totalPages || "..."}
+            {isEpub ? (currentChapter || `${progress}%`) : `Page ${currentPage} of ${totalPages || "..."}`}
           </p>
         </div>
 
@@ -581,19 +717,19 @@ export const BookReader = ({
                   </div>
                 </div>
 
-                {/* Zoom */}
+                {/* Font Size (for EPUB) / Zoom (for PDF) */}
                 <div>
                   <p className="text-xs text-muted-foreground mb-2 font-medium">
-                    Zoom: {Math.round(scale * 100)}%
+                    {isEpub ? `Font Size: ${fontSize}%` : `Zoom: ${Math.round(scale * 100)}%`}
                   </p>
                   <div className="flex items-center gap-3">
                     <Type className="w-3 h-3 text-muted-foreground" />
                     <Slider
-                      value={[scale]}
-                      onValueChange={([v]) => setScale(v)}
-                      min={0.5}
-                      max={3}
-                      step={0.1}
+                      value={isEpub ? [fontSize] : [scale]}
+                      onValueChange={([v]) => isEpub ? setFontSize(v) : setScale(v)}
+                      min={isEpub ? 80 : 0.5}
+                      max={isEpub ? 200 : 3}
+                      step={isEpub ? 10 : 0.1}
                       className="flex-1"
                     />
                     <Type className="w-5 h-5 text-muted-foreground" />
@@ -638,8 +774,10 @@ export const BookReader = ({
         {isLoading ? (
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 opacity-60" />
-            <p className="text-sm opacity-60 mb-2">Loading document...</p>
-            {downloadProgress > 0 && downloadProgress < 100 && (
+            <p className="text-sm opacity-60 mb-2">
+              {isEpub ? "Loading EPUB..." : "Loading document..."}
+            </p>
+            {!isEpub && downloadProgress > 0 && downloadProgress < 100 && (
               <div className="w-48 mx-auto mt-3">
                 <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                   <div 
@@ -666,7 +804,20 @@ export const BookReader = ({
               </Button>
             </div>
           </div>
+        ) : isEpub ? (
+          // EPUB Reader
+          <div 
+            ref={epubViewRef}
+            className={cn(
+              "w-full h-full max-w-4xl mx-auto rounded-lg overflow-hidden",
+              theme === "day" && "bg-white",
+              theme === "sepia" && "bg-[#f4ecd8]",
+              theme === "night" && "bg-[#1a1a1a]"
+            )}
+            style={{ minHeight: "calc(100vh - 200px)" }}
+          />
         ) : (
+          // PDF Reader
           <div className={cn("relative transition-transform duration-200", getPageAnimationClass())}>
             <canvas
               ref={canvasRef}
@@ -712,11 +863,11 @@ export const BookReader = ({
           <>
             <button
               onClick={goToPreviousPage}
-              disabled={currentPage <= 1}
+              disabled={!isEpub && currentPage <= 1}
               className={cn(
                 "absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full transition-all",
                 showControls ? "opacity-100" : "opacity-0",
-                currentPage <= 1 
+                !isEpub && currentPage <= 1 
                   ? "opacity-30 cursor-not-allowed" 
                   : "hover:bg-muted"
               )}
@@ -725,11 +876,11 @@ export const BookReader = ({
             </button>
             <button
               onClick={goToNextPage}
-              disabled={currentPage >= totalPages}
+              disabled={!isEpub && currentPage >= totalPages}
               className={cn(
                 "absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full transition-all",
                 showControls ? "opacity-100" : "opacity-0",
-                currentPage >= totalPages 
+                !isEpub && currentPage >= totalPages 
                   ? "opacity-30 cursor-not-allowed" 
                   : "hover:bg-muted"
               )}
@@ -765,7 +916,7 @@ export const BookReader = ({
           variant="ghost"
           size="sm"
           onClick={goToPreviousPage}
-          disabled={currentPage <= 1}
+          disabled={!isEpub && currentPage <= 1}
           className="rounded-xl"
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
@@ -775,10 +926,10 @@ export const BookReader = ({
         {/* Progress slider */}
         <div className="flex-1 flex items-center gap-4 max-w-md">
           <Slider
-            value={[currentPage]}
-            onValueChange={([page]) => goToPage(page)}
-            min={1}
-            max={totalPages || 1}
+            value={[isEpub ? epubProgress : currentPage]}
+            onValueChange={([val]) => goToPage(isEpub ? Math.round((val / 100) * totalPages) : val)}
+            min={isEpub ? 0 : 1}
+            max={isEpub ? 100 : (totalPages || 1)}
             step={1}
             className="flex-1"
           />
@@ -791,7 +942,7 @@ export const BookReader = ({
           variant="ghost"
           size="sm"
           onClick={goToNextPage}
-          disabled={currentPage >= totalPages}
+          disabled={!isEpub && currentPage >= totalPages}
           className="rounded-xl"
         >
           Next

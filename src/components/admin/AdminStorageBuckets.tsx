@@ -2,15 +2,16 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { 
   Table, TableBody, TableCell, TableHead, 
   TableHeader, TableRow 
 } from "@/components/ui/table";
 import { 
   HardDrive, Search, Lock, Globe, Folder, 
-  Image, FileText, Shield, Database
+  Image, FileText, Shield, Database, RefreshCw
 } from "lucide-react";
-import { useAllStorageBuckets } from "@/hooks/useAdminData";
+import { useDynamicStorageBuckets } from "@/hooks/useAdminInfrastructure";
 
 const bucketDescriptions: Record<string, { description: string; icon: any; usage: string }> = {
   "syllabus": { description: "Student syllabus files", icon: FileText, usage: "Study Module" },
@@ -27,15 +28,23 @@ const bucketDescriptions: Record<string, { description: string; icon: any; usage
 };
 
 const AdminStorageBuckets = () => {
-  const buckets = useAllStorageBuckets();
+  const { data: buckets, isLoading, refetch, isRefetching } = useDynamicStorageBuckets();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredBuckets = buckets.filter(bucket =>
+  const filteredBuckets = (buckets || []).filter(bucket =>
     bucket.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const publicBuckets = buckets.filter(b => b.isPublic).length;
-  const privateBuckets = buckets.filter(b => !b.isPublic).length;
+  const publicBuckets = (buckets || []).filter(b => b.isPublic).length;
+  const privateBuckets = (buckets || []).filter(b => !b.isPublic).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -48,7 +57,7 @@ const AdminStorageBuckets = () => {
                 <HardDrive className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{buckets.length}</p>
+                <p className="text-2xl font-bold">{buckets?.length || 0}</p>
                 <p className="text-xs text-muted-foreground">Total Buckets</p>
               </div>
             </div>
@@ -105,17 +114,23 @@ const AdminStorageBuckets = () => {
                 Storage Buckets
               </CardTitle>
               <CardDescription>
-                File storage containers for user data
+                File storage containers (fetched from Lovable Cloud)
               </CardDescription>
             </div>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search buckets..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isRefetching ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search buckets..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -178,6 +193,13 @@ const AdminStorageBuckets = () => {
                     </TableRow>
                   );
                 })}
+                {filteredBuckets.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      No buckets found
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

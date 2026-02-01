@@ -11,7 +11,7 @@ import {
   Zap, Search, RefreshCw, CheckCircle, Clock, 
   ExternalLink, Code, Activity
 } from "lucide-react";
-import { useAllEdgeFunctions } from "@/hooks/useAdminData";
+import { useDynamicEdgeFunctions } from "@/hooks/useAdminInfrastructure";
 
 const functionCategories: Record<string, string> = {
   "ai-categorize": "AI",
@@ -21,6 +21,7 @@ const functionCategories: Record<string, string> = {
   "explain-paragraph": "AI",
   "summarize-chapter": "AI",
   "taxyn-chat": "AI",
+  "generate-noteflow-ai": "AI",
   "create-razorpay-order": "Payments",
   "razorpay-webhook": "Payments",
   "verify-razorpay-payment": "Payments",
@@ -61,18 +62,23 @@ const functionCategories: Record<string, string> = {
   "send-financial-report": "Finance",
   "send-weekly-task-summary": "Tasks",
   "send-contact-email": "System",
+  "send-admin-message": "System",
+  "send-redemption-notification": "System",
+  "admin-infrastructure": "System",
 };
 
 const AdminEdgeFunctions = () => {
-  const edgeFunctions = useAllEdgeFunctions();
+  const { data: edgeFunctions, isLoading, refetch, isRefetching } = useDynamicEdgeFunctions();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const functionsList = edgeFunctions || [];
   const categories = [...new Set(Object.values(functionCategories))];
 
-  const filteredFunctions = edgeFunctions.filter(fn => {
-    const matchesSearch = fn.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || functionCategories[fn] === selectedCategory;
+  const filteredFunctions = functionsList.filter(fn => {
+    const fnName = typeof fn === 'string' ? fn : fn.name;
+    const matchesSearch = fnName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = !selectedCategory || functionCategories[fnName] === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -94,6 +100,14 @@ const AdminEdgeFunctions = () => {
     return colors[category] || "bg-muted text-muted-foreground";
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats */}
@@ -105,7 +119,7 @@ const AdminEdgeFunctions = () => {
                 <Zap className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{edgeFunctions.length}</p>
+                <p className="text-2xl font-bold">{functionsList.length}</p>
                 <p className="text-xs text-muted-foreground">Total Functions</p>
               </div>
             </div>
@@ -118,7 +132,7 @@ const AdminEdgeFunctions = () => {
                 <CheckCircle className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{edgeFunctions.length}</p>
+                <p className="text-2xl font-bold">{functionsList.length}</p>
                 <p className="text-xs text-muted-foreground">Deployed</p>
               </div>
             </div>
@@ -159,10 +173,13 @@ const AdminEdgeFunctions = () => {
           size="sm"
           onClick={() => setSelectedCategory(null)}
         >
-          All ({edgeFunctions.length})
+          All ({functionsList.length})
         </Button>
         {categories.map(category => {
-          const count = edgeFunctions.filter(fn => functionCategories[fn] === category).length;
+          const count = functionsList.filter(fn => {
+            const fnName = typeof fn === 'string' ? fn : fn.name;
+            return functionCategories[fnName] === category;
+          }).length;
           return (
             <Button
               key={category}
@@ -186,10 +203,14 @@ const AdminEdgeFunctions = () => {
                 Edge Functions
               </CardTitle>
               <CardDescription>
-                All deployed serverless functions
+                All deployed serverless functions (dynamic)
               </CardDescription>
             </div>
             <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isRefetching ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -215,38 +236,48 @@ const AdminEdgeFunctions = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredFunctions.map((fn) => (
-                  <TableRow key={fn}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-primary" />
-                        <code className="font-mono text-sm">{fn}</code>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getCategoryColor(functionCategories[fn] || "System")}>
-                        {functionCategories[fn] || "System"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-sm text-green-600">Active</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-mono text-xs">
-                        Deno
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="gap-1.5">
-                        <ExternalLink className="w-3 h-3" />
-                        View Logs
-                      </Button>
+                {filteredFunctions.map((fn) => {
+                  const fnName = typeof fn === 'string' ? fn : fn.name;
+                  return (
+                    <TableRow key={fnName}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-primary" />
+                          <code className="font-mono text-sm">{fnName}</code>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getCategoryColor(functionCategories[fnName] || "System")}>
+                          {functionCategories[fnName] || "System"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                          <span className="text-sm text-green-600">Active</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-mono text-xs">
+                          Deno
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" className="gap-1.5">
+                          <ExternalLink className="w-3 h-3" />
+                          View Logs
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {filteredFunctions.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      No functions found
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
