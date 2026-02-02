@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef, memo } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { 
   CheckSquare, 
   BookOpen, 
@@ -34,7 +35,8 @@ import {
   Coins,
   PenTool,
   TreePine,
-  Folder
+  Folder,
+  Brain
 } from "lucide-react";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import LandingNav from "@/components/landing/LandingNav";
@@ -136,8 +138,88 @@ const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
   </svg>
 );
 
+// NoteFlowLM Flagship Feature Card - Premium design
+const NoteFlowLMCard = {
+  id: "noteflowlm",
+  title: "NoteFlowLM",
+  subtitle: "AI-Powered Note Intelligence",
+  icon: Sparkles,
+  color: "from-fuchsia-500 via-purple-500 to-indigo-500",
+  bgColor: "bg-gradient-to-br from-fuchsia-500/10 to-indigo-500/10",
+  borderColor: "border-fuchsia-500/40",
+  isFlagship: true,
+  content: (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 p-2.5 bg-gradient-to-r from-fuchsia-500/10 to-purple-500/10 rounded-xl border border-fuchsia-500/20">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center">
+          <Sparkles className="w-4 h-4 text-white" />
+        </div>
+        <div className="flex-1">
+          <p className="text-[10px] font-semibold text-fuchsia-600 dark:text-fuchsia-400">FLAGSHIP PRODUCT</p>
+          <p className="text-[8px] text-muted-foreground">Transform notes to visuals</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-1.5">
+        {[
+          { icon: "🖼️", label: "Images", status: "Live" },
+          { icon: "📊", label: "Slides", status: "Beta" },
+          { icon: "📹", label: "Video", status: "Soon" },
+        ].map((item) => (
+          <motion.div
+            key={item.label}
+            className="p-2 bg-muted/30 rounded-lg text-center border border-border/30"
+            whileHover={{ scale: 1.05 }}
+          >
+            <span className="text-sm">{item.icon}</span>
+            <p className="text-[8px] mt-0.5">{item.label}</p>
+            <span className={`text-[6px] px-1.5 py-0.5 rounded-full ${item.status === "Live" ? "bg-green-500/20 text-green-600" : item.status === "Beta" ? "bg-amber-500/20 text-amber-600" : "bg-gray-500/20 text-gray-500"}`}>
+              {item.status}
+            </span>
+          </motion.div>
+        ))}
+      </div>
+      <div className="flex justify-between items-center text-[9px]">
+        <span className="text-muted-foreground">Powered by Gemini 2.5</span>
+        <span className="text-fuchsia-500 font-medium">→ /app/noteflowlm</span>
+      </div>
+    </div>
+  ),
+};
+
 // Feature cards data for stacked animation - 12 cards with enhanced visuals
 const featureCards = [
+  NoteFlowLMCard,
+  {
+    id: "noteflow",
+    title: "Noteflow Editor",
+    subtitle: "Apple-level writing experience",
+    icon: PenTool,
+    color: "from-violet-500 to-purple-500",
+    bgColor: "bg-violet-500/10",
+    borderColor: "border-violet-500/30",
+    content: (
+      <div className="space-y-2">
+        <div className="p-2.5 bg-violet-500/10 rounded-lg border border-violet-500/20">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded bg-violet-500 flex items-center justify-center">
+              <PenTool className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-[10px] font-medium">Unified Editor</span>
+          </div>
+          <div className="flex gap-1">
+            {["Rich Text", "Canvas", "Handwriting"].map((mode) => (
+              <span key={mode} className="text-[7px] px-1.5 py-0.5 bg-muted/50 rounded-full">{mode}</span>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-1">
+          {["Plain", "Lined", "Grid"].map((paper) => (
+            <div key={paper} className="p-1.5 bg-muted/20 rounded text-center text-[8px]">{paper}</div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
   {
     id: "dashboard",
     title: "Dashboard",
@@ -268,31 +350,53 @@ const featureCards = [
     ),
   },
   {
-    id: "insurance",
-    title: "Insurance",
-    subtitle: "Policy tracker",
-    icon: Heart,
-    color: "from-rose-500 to-pink-500",
-    bgColor: "bg-rose-500/10",
-    borderColor: "border-rose-500/30",
+    id: "library",
+    title: "Digital Library",
+    subtitle: "World's hub for knowledge",
+    icon: Library,
+    color: "from-cyan-500 to-teal-500",
+    bgColor: "bg-cyan-500/10",
+    borderColor: "border-cyan-500/30",
     content: (
       <div className="space-y-2">
-        <div className="flex items-center justify-between p-2 bg-rose-500/10 rounded-lg border border-rose-500/20">
-          <div className="flex items-center gap-2">
-            <Heart className="w-3 h-3 text-rose-500" />
-            <span className="text-[11px] font-medium">Health Insurance</span>
-          </div>
-          <span className="text-[8px] px-1.5 py-0.5 bg-green-500/20 text-green-600 rounded-full">Active</span>
+        <div className="grid grid-cols-3 gap-1.5">
+          {["PDF", "EPUB", "Notes"].map((type, i) => (
+            <motion.div
+              key={type}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20 text-center"
+            >
+              <BookOpen className="w-3 h-3 mx-auto mb-1 text-cyan-600" />
+              <span className="text-[8px] text-muted-foreground">{type}</span>
+            </motion.div>
+          ))}
         </div>
-        <div className="grid grid-cols-2 gap-1.5">
-          <div className="p-1.5 bg-muted/20 rounded text-center">
-            <p className="text-[7px] text-muted-foreground">Sum Assured</p>
-            <p className="text-[10px] font-semibold">₹10L</p>
+        <div className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
+          <span className="text-[10px]">Uploaded Books</span>
+          <span className="text-[10px] font-semibold text-cyan-600">24</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "rewards",
+    title: "Rewards Hub",
+    subtitle: "Earn & redeem points",
+    icon: Gift,
+    color: "from-amber-500 to-yellow-500",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/30",
+    content: (
+      <div className="space-y-2.5">
+        <div className="p-2.5 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 rounded-lg border border-amber-500/20">
+          <div className="flex justify-between items-center">
+            <span className="text-[8px] text-muted-foreground uppercase tracking-wide">Your Points</span>
+            <Coins className="w-3 h-3 text-amber-500" />
           </div>
-          <div className="p-1.5 bg-muted/20 rounded text-center">
-            <p className="text-[7px] text-muted-foreground">Premium</p>
-            <p className="text-[10px] font-semibold">₹12K/yr</p>
-          </div>
+          <p className="text-lg font-bold text-amber-600">12,450</p>
+          <p className="text-[8px] text-muted-foreground">= ₹124.50 cashback</p>
         </div>
       </div>
     ),
@@ -326,80 +430,30 @@ const featureCards = [
     ),
   },
   {
-    id: "loans",
-    title: "Loan Manager",
-    subtitle: "EMI tracking",
-    icon: TrendingUp,
-    color: "from-teal-500 to-cyan-500",
-    bgColor: "bg-teal-500/10",
-    borderColor: "border-teal-500/30",
+    id: "ai",
+    title: "NOVA AI",
+    subtitle: "Personal assistant",
+    icon: Bot,
+    color: "from-fuchsia-500 to-purple-500",
+    bgColor: "bg-fuchsia-500/10",
+    borderColor: "border-fuchsia-500/30",
     content: (
       <div className="space-y-2">
-        <div className="p-2 bg-teal-500/10 rounded-lg border border-teal-500/20">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-medium">Home Loan</span>
-            <span className="text-[8px] px-1.5 py-0.5 bg-blue-500/20 text-blue-600 rounded-full">Active</span>
+        <div className="flex gap-2">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-500 flex items-center justify-center">
+            <Bot className="w-3 h-3 text-white" />
           </div>
-          <div className="flex justify-between mt-1.5">
-            <div>
-              <p className="text-[7px] text-muted-foreground">EMI</p>
-              <p className="text-[11px] font-semibold">₹45,000</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[7px] text-muted-foreground">Remaining</p>
-              <p className="text-[11px] font-semibold">156 EMIs</p>
-            </div>
+          <div className="flex-1 p-2 bg-muted/20 rounded-lg rounded-tl-none">
+            <p className="text-[10px]">"Your savings rate is up 12% this month!"</p>
           </div>
         </div>
-        <div className="h-1 bg-muted/30 rounded-full overflow-hidden">
-          <motion.div className="h-full bg-gradient-to-r from-teal-500 to-cyan-400" initial={{ width: 0 }} animate={{ width: "35%" }} transition={{ duration: 0.8 }} />
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "study",
-    title: "Study Planner",
-    subtitle: "Track learning",
-    icon: BookOpen,
-    color: "from-sky-500 to-blue-500",
-    bgColor: "bg-sky-500/10",
-    borderColor: "border-sky-500/30",
-    content: (
-      <div className="space-y-2">
-        {["Mathematics - 3h", "Physics - 2h", "Chemistry - 1.5h"].map((sub, i) => (
-          <motion.div key={sub} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="flex items-center justify-between p-1.5 bg-muted/20 rounded">
-            <span className="text-[10px]">{sub.split(" - ")[0]}</span>
-            <div className="flex items-center gap-1.5">
-              <div className="w-12 h-1 bg-muted/40 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-sky-500" initial={{ width: 0 }} animate={{ width: `${80 - i * 20}%` }} transition={{ duration: 0.6, delay: i * 0.15 }} />
-              </div>
-              <span className="text-[8px] text-muted-foreground">{sub.split(" - ")[1]}</span>
-            </div>
+        <div className="flex justify-center">
+          <motion.div className="flex items-center gap-1" animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>
+            <span className="w-1.5 h-1.5 bg-fuchsia-500 rounded-full" />
+            <span className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
+            <span className="w-1.5 h-1.5 bg-violet-500 rounded-full" />
           </motion.div>
-        ))}
-      </div>
-    ),
-  },
-  {
-    id: "lifespan",
-    title: "Lifespan",
-    subtitle: "Time visualization",
-    icon: Clock,
-    color: "from-slate-500 to-gray-500",
-    bgColor: "bg-slate-500/10",
-    borderColor: "border-slate-500/30",
-    content: (
-      <div className="space-y-2">
-        <div className="text-center">
-          <p className="text-[8px] text-muted-foreground uppercase tracking-wide">Time Lived</p>
-          <p className="text-xl font-light text-foreground">28 Years</p>
-          <p className="text-[9px] text-muted-foreground">≈ 10,227 days</p>
         </div>
-        <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
-          <motion.div className="h-full bg-gradient-to-r from-slate-500 to-gray-400" initial={{ width: 0 }} animate={{ width: "35%" }} transition={{ duration: 1 }} />
-        </div>
-        <p className="text-[8px] text-center text-muted-foreground">35% of expected lifespan (80 years)</p>
       </div>
     ),
   },
@@ -429,131 +483,6 @@ const featureCards = [
     ),
   },
   {
-    id: "expenses",
-    title: "Expenses",
-    subtitle: "Track spending",
-    icon: Wallet,
-    color: "from-red-500 to-rose-500",
-    bgColor: "bg-red-500/10",
-    borderColor: "border-red-500/30",
-    content: (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[9px] text-muted-foreground">This Month</span>
-          <span className="text-sm font-semibold text-red-500">₹45,230</span>
-        </div>
-        <div className="space-y-1">
-          {[{ cat: "Food", amt: "₹12K", pct: 27 }, { cat: "Transport", amt: "₹8K", pct: 18 }, { cat: "Shopping", amt: "₹15K", pct: 33 }].map((e, i) => (
-            <div key={e.cat} className="flex items-center gap-2">
-              <span className="text-[8px] w-12">{e.cat}</span>
-              <div className="flex-1 h-1 bg-muted/30 rounded-full overflow-hidden">
-                <motion.div className="h-full bg-red-500" initial={{ width: 0 }} animate={{ width: `${e.pct}%` }} transition={{ duration: 0.5, delay: i * 0.1 }} />
-              </div>
-              <span className="text-[8px] text-muted-foreground">{e.amt}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "ai",
-    title: "NOVA AI",
-    subtitle: "Personal assistant",
-    icon: Bot,
-    color: "from-fuchsia-500 to-purple-500",
-    bgColor: "bg-fuchsia-500/10",
-    borderColor: "border-fuchsia-500/30",
-    content: (
-      <div className="space-y-2">
-        <div className="flex gap-2">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-500 flex items-center justify-center">
-            <Bot className="w-3 h-3 text-white" />
-          </div>
-          <div className="flex-1 p-2 bg-muted/20 rounded-lg rounded-tl-none">
-            <p className="text-[10px]">"Your savings rate is up 12% this month. Great progress!"</p>
-          </div>
-        </div>
-        <div className="flex justify-end">
-          <div className="p-2 bg-primary/10 rounded-lg rounded-tr-none max-w-[80%]">
-            <p className="text-[10px] text-primary">Show me my tax savings</p>
-          </div>
-        </div>
-        <div className="flex justify-center">
-          <motion.div className="flex items-center gap-1" animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }}>
-            <span className="w-1.5 h-1.5 bg-fuchsia-500 rounded-full" />
-            <span className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
-            <span className="w-1.5 h-1.5 bg-violet-500 rounded-full" />
-          </motion.div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "library",
-    title: "Digital Library",
-    subtitle: "World's hub for knowledge",
-    icon: Library,
-    color: "from-cyan-500 to-teal-500",
-    bgColor: "bg-cyan-500/10",
-    borderColor: "border-cyan-500/30",
-    content: (
-      <div className="space-y-2">
-        <div className="grid grid-cols-3 gap-1.5">
-          {["PDF", "EPUB", "Notes"].map((type, i) => (
-            <motion.div
-              key={type}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20 text-center"
-            >
-              <BookOpen className="w-3 h-3 mx-auto mb-1 text-cyan-600" />
-              <span className="text-[8px] text-muted-foreground">{type}</span>
-            </motion.div>
-          ))}
-        </div>
-        <div className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
-          <span className="text-[10px]">Uploaded Books</span>
-          <span className="text-[10px] font-semibold text-cyan-600">24</span>
-        </div>
-        <div className="flex justify-between text-[8px] text-muted-foreground">
-          <span>Share with anyone</span>
-          <span className="text-cyan-500">Global access</span>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: "rewards",
-    title: "Rewards Hub",
-    subtitle: "Earn & redeem points",
-    icon: Gift,
-    color: "from-amber-500 to-yellow-500",
-    bgColor: "bg-amber-500/10",
-    borderColor: "border-amber-500/30",
-    content: (
-      <div className="space-y-2.5">
-        <div className="p-2.5 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 rounded-lg border border-amber-500/20">
-          <div className="flex justify-between items-center">
-            <span className="text-[8px] text-muted-foreground uppercase tracking-wide">Your Points</span>
-            <Coins className="w-3 h-3 text-amber-500" />
-          </div>
-          <p className="text-lg font-bold text-amber-600">12,450</p>
-          <p className="text-[8px] text-muted-foreground">= ₹124.50 cashback</p>
-        </div>
-        <div className="flex gap-1.5">
-          {[{ l: "Share", v: "+5" }, { l: "Review", v: "+10" }, { l: "Daily", v: "+2" }].map((d) => (
-            <div key={d.l} className="flex-1 p-1.5 bg-muted/20 rounded text-center">
-              <p className="text-[7px] text-muted-foreground">{d.l}</p>
-              <p className="text-[9px] font-semibold text-green-600">{d.v}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    ),
-  },
-  {
     id: "share",
     title: "Seamless Share",
     subtitle: "Share anything instantly",
@@ -567,20 +496,8 @@ const featureCards = [
           <Globe className="w-3.5 h-3.5 text-blue-500" />
           <div className="flex-1">
             <p className="text-[10px] font-medium">Public Library</p>
-            <p className="text-[8px] text-muted-foreground">12 items shared globally</p>
+            <p className="text-[8px] text-muted-foreground">12 items shared</p>
           </div>
-        </div>
-        <div className="grid grid-cols-3 gap-1">
-          {[{ icon: Users, label: "Friends" }, { icon: Globe, label: "Public" }, { icon: Lock, label: "Private" }].map((item) => (
-            <motion.div
-              key={item.label}
-              className="p-1.5 bg-muted/20 rounded text-center"
-              whileHover={{ scale: 1.05 }}
-            >
-              <item.icon className="w-3 h-3 mx-auto mb-0.5 text-muted-foreground" />
-              <span className="text-[7px]">{item.label}</span>
-            </motion.div>
-          ))}
         </div>
         <div className="flex justify-between text-[8px]">
           <span className="text-muted-foreground">Each share = +5 points</span>
@@ -590,19 +507,30 @@ const featureCards = [
     ),
   },
 ];
-
-// Animated Live Preview Component - Optimized for performance
+// Animated Live Preview Component - Stack then Queue Animation
 const AnimatedDashboardPreview = memo(() => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [animationPhase, setAnimationPhase] = useState<"stack" | "queue">("stack");
+  const [loopCount, setLoopCount] = useState(0);
   
   useEffect(() => {
     if (isHovered) return;
+    
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % featureCards.length);
-    }, 2500);
+      setActiveIndex((prev) => {
+        const next = (prev + 1) % featureCards.length;
+        // After one complete loop, switch to queue animation
+        if (next === 0 && loopCount === 0) {
+          setLoopCount(1);
+          setAnimationPhase("queue");
+        }
+        return next;
+      });
+    }, animationPhase === "stack" ? 2500 : 3500);
+    
     return () => clearInterval(interval);
-  }, [isHovered]);
+  }, [isHovered, animationPhase, loopCount]);
 
   return (
     <div
@@ -611,68 +539,59 @@ const AnimatedDashboardPreview = memo(() => {
       onMouseLeave={() => setIsHovered(false)}
       style={{ contain: "layout" }}
     >
-      {/* Static ambient glow - CSS only for performance */}
+      {/* Premium ambient glow - Enhanced for flagship */}
       <div 
-        className="absolute -inset-16 bg-gradient-to-br from-primary/15 via-violet-500/10 to-cyan-500/15 rounded-[3rem] blur-3xl opacity-50 animate-pulse"
+        className="absolute -inset-16 bg-gradient-to-br from-primary/20 via-fuchsia-500/15 to-cyan-500/15 rounded-[3rem] blur-3xl opacity-60 animate-pulse"
         style={{ animationDuration: "4s" }}
       />
       <div 
-        className="absolute -inset-10 bg-gradient-to-tr from-blue-500/10 via-transparent to-purple-500/10 rounded-3xl blur-2xl opacity-40"
+        className="absolute -inset-10 bg-gradient-to-tr from-violet-500/10 via-transparent to-purple-500/10 rounded-3xl blur-2xl opacity-50"
       />
       
       {/* Stacked cards container with 3D perspective */}
       <div 
-        className="relative h-[360px] w-full"
+        className="relative h-[380px] sm:h-[400px] w-full"
         style={{ perspective: "1200px", perspectiveOrigin: "center center" }}
       >
         {featureCards.map((card, index) => {
           const isActive = index === activeIndex;
           const distance = (index - activeIndex + featureCards.length) % featureCards.length;
           const reverseDistance = (activeIndex - index + featureCards.length) % featureCards.length;
+          const isFlagship = (card as any).isFlagship;
           
-          // Calculate positions for stacked effect
+          // Calculate positions for stacked/queue effect
           let zIndex = 0;
           let y = 200;
           let scale = 0.8;
           let opacity = 0;
           let rotateX = 0;
           let z = -200;
+          let x = 0;
           
-          if (distance === 0) { // Active card
-            zIndex = 50;
-            y = 0;
-            scale = 1;
-            opacity = 1;
-            rotateX = 0;
-            z = 0;
-          } else if (distance === 1) { // Next card
-            zIndex = 40;
-            y = 24;
-            scale = 0.94;
-            opacity = 0.8;
-            rotateX = 4;
-            z = -40;
-          } else if (distance === 2) { // 2nd next
-            zIndex = 30;
-            y = 44;
-            scale = 0.88;
-            opacity = 0.5;
-            rotateX = 7;
-            z = -80;
-          } else if (distance === 3) { // 3rd next
-            zIndex = 20;
-            y = 60;
-            scale = 0.82;
-            opacity = 0.3;
-            rotateX = 9;
-            z = -120;
-          } else if (reverseDistance === 1) { // Previous card (exiting up)
-            zIndex = 15;
-            y = -60;
-            scale = 0.9;
-            opacity = 0;
-            rotateX = -12;
-            z = -100;
+          if (animationPhase === "stack") {
+            // Stack animation (cards behind each other)
+            if (distance === 0) {
+              zIndex = 50; y = 0; scale = 1; opacity = 1; rotateX = 0; z = 0;
+            } else if (distance === 1) {
+              zIndex = 40; y = 24; scale = 0.94; opacity = 0.8; rotateX = 4; z = -40;
+            } else if (distance === 2) {
+              zIndex = 30; y = 44; scale = 0.88; opacity = 0.5; rotateX = 7; z = -80;
+            } else if (distance === 3) {
+              zIndex = 20; y = 60; scale = 0.82; opacity = 0.3; rotateX = 9; z = -120;
+            } else if (reverseDistance === 1) {
+              zIndex = 15; y = -60; scale = 0.9; opacity = 0; rotateX = -12; z = -100;
+            }
+          } else {
+            // Queue animation (cards slide in from side)
+            if (distance === 0) {
+              zIndex = 50; y = 0; scale = 1; opacity = 1; rotateX = 0; z = 0; x = 0;
+            } else if (distance === 1) {
+              zIndex = 40; y = 0; scale = 0.92; opacity = 0.7; rotateX = 0; z = -30; x = 30;
+            } else if (distance === 2) {
+              zIndex = 30; y = 0; scale = 0.84; opacity = 0.4; rotateX = 0; z = -60; x = 60;
+            } else if (reverseDistance === 1) {
+              zIndex = 15; y = 0; scale = 0.9; opacity = 0; rotateX = 0; z = -100; x = -60;
+            }
           }
           
           const Icon = card.icon;
@@ -689,9 +608,10 @@ const AnimatedDashboardPreview = memo(() => {
                 opacity,
                 rotateX,
                 z,
+                x,
               }}
               transition={{
-                duration: 0.5,
+                duration: 0.6,
                 ease: [0.32, 0.72, 0, 1],
               }}
               style={{
@@ -701,26 +621,44 @@ const AnimatedDashboardPreview = memo(() => {
               whileHover={isActive ? { scale: 1.02 } : {}}
             >
               <div 
-                className={`w-full bg-card/95 backdrop-blur-xl border ${card.borderColor} rounded-2xl shadow-2xl overflow-hidden`}
+                className={cn(
+                  "w-full backdrop-blur-xl border rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden",
+                  isFlagship 
+                    ? "bg-gradient-to-br from-fuchsia-500/5 via-purple-500/5 to-indigo-500/5 border-fuchsia-500/40" 
+                    : `bg-card/95 ${card.borderColor}`
+                )}
                 style={{
                   boxShadow: isActive 
-                    ? `0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px ${card.borderColor.replace('border-', 'rgba(').replace('/30', ', 0.3)')}`
+                    ? isFlagship
+                      ? '0 30px 60px -15px rgba(168, 85, 247, 0.35), 0 0 0 1px rgba(168, 85, 247, 0.3)'
+                      : `0 25px 50px -12px rgba(0,0,0,0.25)`
                     : '0 10px 30px -10px rgba(0,0,0,0.15)',
                 }}
               >
+                {/* Flagship badge */}
+                {isFlagship && (
+                  <div className="absolute top-2 right-2 px-2 py-0.5 bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-[8px] font-bold rounded-full flex items-center gap-1 z-10">
+                    <Crown className="w-2.5 h-2.5" />
+                    FLAGSHIP
+                  </div>
+                )}
+                
                 {/* Card header with gradient */}
-                <div className={`relative flex items-center gap-3 px-4 py-3 overflow-hidden`}>
+                <div className={`relative flex items-center gap-3 px-4 py-3 sm:py-4 overflow-hidden`}>
                   <div className={`absolute inset-0 bg-gradient-to-r ${card.color} opacity-10`} />
                   <motion.div 
-                    className={`relative w-9 h-9 rounded-xl ${card.bgColor} flex items-center justify-center`}
+                    className={cn(
+                      "relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center",
+                      isFlagship ? "bg-gradient-to-br from-fuchsia-500 to-purple-600" : card.bgColor
+                    )}
                     animate={isActive ? { rotate: [0, 5, -5, 0] } : {}}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                   >
-                    <Icon className="w-4.5 h-4.5 text-foreground" />
+                    <Icon className={cn("w-4 h-4 sm:w-5 sm:h-5", isFlagship ? "text-white" : "text-foreground")} />
                   </motion.div>
                   <div className="relative">
-                    <h3 className="text-sm font-semibold text-foreground">{card.title}</h3>
-                    <p className="text-[9px] text-muted-foreground">{card.subtitle}</p>
+                    <h3 className="text-sm sm:text-base font-semibold text-foreground">{card.title}</h3>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">{card.subtitle}</p>
                   </div>
                   <div className="ml-auto relative flex items-center gap-1.5">
                     <motion.div 
@@ -733,12 +671,12 @@ const AnimatedDashboardPreview = memo(() => {
                 </div>
                 
                 {/* Card content */}
-                <div className="px-4 py-3 min-h-[100px]">
+                <div className="px-4 py-3 sm:py-4 min-h-[100px] sm:min-h-[120px]">
                   {card.content}
                 </div>
                 
                 {/* Card footer with progress indicators */}
-                <div className="px-4 py-2 bg-muted/10 border-t border-border/10">
+                <div className="px-4 py-2 sm:py-3 bg-muted/10 border-t border-border/10">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       {featureCards.slice(0, 6).map((_, i) => (
@@ -796,11 +734,15 @@ const AnimatedDashboardPreview = memo(() => {
         <span className="text-[11px] text-muted-foreground font-medium tracking-wide">
           {featureCards[activeIndex].title}
         </span>
+        {(featureCards[activeIndex] as any).isFlagship && (
+          <span className="ml-2 text-[9px] px-1.5 py-0.5 bg-fuchsia-500/20 text-fuchsia-500 rounded-full">
+            ★ Flagship
+          </span>
+        )}
       </motion.div>
     </div>
   );
 });
-
 // Simple section wrapper with CSS-based reveal - no scroll listeners for performance
 const RevealSection = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
   const ref = useRef(null);
@@ -947,37 +889,52 @@ const Landing = () => {
       {/* Main Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
         
+        {/* Premium Header Banner - CHRONYX BY ORIGINX LABS */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+          className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary/10 via-fuchsia-500/10 to-primary/10 border-b border-border/30 backdrop-blur-xl"
+        >
+          <div className="flex items-center justify-center gap-3 py-2">
+            <ChronxyxLogo className="w-5 h-5" />
+            <span className="text-xs sm:text-sm font-light tracking-[0.2em] text-foreground">CHRONYX</span>
+            <span className="text-[10px] text-muted-foreground">BY</span>
+            <span className="text-xs sm:text-sm font-medium tracking-[0.15em] text-primary">ORIGINX LABS</span>
+          </div>
+        </motion.div>
+        
         {/* Navigation */}
         <LandingNav onDesktopDownload={() => setShowDesktopDialog(true)} />
 
         {/* HERO SECTION - Apple/Vercel style */}
         <motion.section 
-          className="relative flex-1 flex items-center justify-center px-6 pt-28 pb-20 lg:pt-32 lg:pb-24 min-h-screen"
+          className="relative flex-1 flex items-center justify-center px-4 sm:px-6 pt-32 pb-20 lg:pt-36 lg:pb-24 min-h-screen"
           style={{ opacity: mounted ? 1 : 0 }}
         >
           <div className="max-w-7xl mx-auto w-full">
-            <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               
               {/* Left - Content */}
-              <div className="text-center lg:text-left space-y-8">
+              <div className="text-center lg:text-left space-y-6 sm:space-y-8">
                 {/* Logo + Badge */}
                 <motion.div 
-                  className="flex items-center justify-center lg:justify-start gap-4"
+                  className="flex items-center justify-center lg:justify-start gap-3 sm:gap-4"
                   variants={fadeInUp}
                   initial="hidden"
                   animate="visible"
                   custom={0}
                 >
-                  <ChronxyxLogo className="w-14 h-14" />
+                  <ChronxyxLogo className="w-12 h-12 sm:w-14 sm:h-14" />
                   <div className="flex flex-col items-start">
-                    <span className="text-3xl font-extralight tracking-[0.25em] text-foreground">CHRONYX</span>
-                    <span className="text-[10px] text-muted-foreground tracking-[0.3em] uppercase font-medium">Personal System of Record</span>
+                    <span className="text-2xl sm:text-3xl font-extralight tracking-[0.25em] text-foreground">CHRONYX</span>
+                    <span className="text-[9px] sm:text-[10px] text-muted-foreground tracking-[0.3em] uppercase font-medium">Personal System of Record</span>
                   </div>
                 </motion.div>
 
                 {/* Main Headline - Vercel Typography */}
                 <motion.h1 
-                  className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extralight leading-[1.1] tracking-tight"
+                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extralight leading-[1.1] tracking-tight"
                   variants={fadeInUp}
                   initial="hidden"
                   animate="visible"
@@ -990,7 +947,7 @@ const Landing = () => {
 
                 {/* Subheadline */}
                 <motion.p 
-                  className="text-lg sm:text-xl text-muted-foreground font-light max-w-lg mx-auto lg:mx-0 leading-relaxed"
+                  className="text-base sm:text-lg lg:text-xl text-muted-foreground font-light max-w-lg mx-auto lg:mx-0 leading-relaxed"
                   variants={fadeInUp}
                   initial="hidden"
                   animate="visible"
@@ -1000,33 +957,39 @@ const Landing = () => {
                   all in one private, minimal dashboard.
                 </motion.p>
 
-                {/* Feature pills */}
+                {/* Feature pills - including NoteFlowLM */}
                 <motion.div 
-                  className="flex flex-wrap items-center justify-center lg:justify-start gap-3"
+                  className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3"
                   variants={fadeInUp}
                   initial="hidden"
                   animate="visible"
                   custom={3}
                 >
                   {[
+                    { icon: Sparkles, label: "NoteFlowLM", highlight: true, flagship: true },
                     { icon: Calculator, label: "Tax Calculator", highlight: true },
                     { icon: Wallet, label: "Finance" },
                     { icon: CheckSquare, label: "Tasks" },
+                    { icon: Library, label: "Library" },
                     { icon: Shield, label: "Private" },
                   ].map((item) => (
                     <motion.div 
                       key={item.label}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm border transition-all ${
-                        item.highlight 
-                          ? "border-primary/50 bg-primary/5 text-primary font-medium" 
-                          : "border-border/50 bg-card/30 text-muted-foreground hover:text-foreground hover:border-primary/30 backdrop-blur-sm"
-                      }`}
+                      className={cn(
+                        "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm border transition-all",
+                        (item as any).flagship
+                          ? "border-fuchsia-500/50 bg-gradient-to-r from-fuchsia-500/10 to-purple-500/10 text-fuchsia-600 dark:text-fuchsia-400 font-semibold shadow-lg shadow-fuchsia-500/10" 
+                          : item.highlight 
+                            ? "border-primary/50 bg-primary/5 text-primary font-medium" 
+                            : "border-border/50 bg-card/30 text-muted-foreground hover:text-foreground hover:border-primary/30 backdrop-blur-sm"
+                      )}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <item.icon className="w-4 h-4" />
+                      <item.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       <span>{item.label}</span>
-                      {item.highlight && <Sparkles className="w-3.5 h-3.5" />}
+                      {(item as any).flagship && <Crown className="w-3 h-3 text-fuchsia-500" />}
+                      {item.highlight && !(item as any).flagship && <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
                     </motion.div>
                   ))}
                 </motion.div>
@@ -1174,6 +1137,132 @@ const Landing = () => {
                   </motion.div>
                 );
               })}
+            </div>
+          </div>
+        </RevealSection>
+
+        {/* NOTEFLOWLM FLAGSHIP SECTION */}
+        <RevealSection className="px-4 sm:px-6 py-16 sm:py-24 bg-gradient-to-br from-fuchsia-500/5 via-purple-500/5 to-indigo-500/5 border-t border-fuchsia-500/10">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
+              <motion.div 
+                className="relative order-2 md:order-1"
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+              >
+                <div className="absolute -inset-4 bg-gradient-to-br from-fuchsia-500/20 to-purple-500/20 rounded-3xl blur-3xl" />
+                <div className="relative p-6 sm:p-8 bg-card/90 backdrop-blur-xl border border-fuchsia-500/30 rounded-2xl sm:rounded-3xl shadow-2xl">
+                  {/* Flagship badge */}
+                  <div className="absolute -top-3 -right-3 px-3 py-1 bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-xs font-bold rounded-full flex items-center gap-1.5 shadow-lg">
+                    <Crown className="w-3.5 h-3.5" />
+                    FLAGSHIP
+                  </div>
+                  
+                  <div className="flex items-center gap-3 mb-6">
+                    <motion.div 
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center"
+                      animate={{ rotate: [0, 5, -5, 0] }}
+                      transition={{ duration: 4, repeat: Infinity }}
+                    >
+                      <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                    </motion.div>
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent">NoteFlowLM</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground">AI-Powered Note Intelligence</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+                    {[
+                      { icon: "🖼️", label: "Images", status: "Live", desc: "Transform notes to visuals" },
+                      { icon: "📊", label: "Slides", status: "Beta", desc: "Auto presentations" },
+                      { icon: "📹", label: "Video", status: "Soon", desc: "Animated explainers" },
+                    ].map((item, i) => (
+                      <motion.div
+                        key={item.label}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.1 }}
+                        className="p-3 sm:p-4 bg-muted/30 rounded-xl border border-border/30 text-center hover:border-fuchsia-500/30 transition-colors"
+                      >
+                        <span className="text-xl sm:text-2xl">{item.icon}</span>
+                        <p className="text-xs sm:text-sm font-medium mt-1">{item.label}</p>
+                        <span className={cn(
+                          "text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full mt-1 inline-block",
+                          item.status === "Live" ? "bg-green-500/20 text-green-600" : 
+                          item.status === "Beta" ? "bg-amber-500/20 text-amber-600" : 
+                          "bg-muted text-muted-foreground"
+                        )}>
+                          {item.status}
+                        </span>
+                      </motion.div>
+                    ))}
+                  </div>
+                  
+                  <div className="p-3 sm:p-4 bg-gradient-to-r from-fuchsia-500/10 to-purple-500/10 rounded-xl border border-fuchsia-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Brain className="w-4 h-4 text-fuchsia-500" />
+                      <span className="text-xs sm:text-sm font-medium">Powered by Gemini 2.5</span>
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground">
+                      Transform any note into stunning visuals, presentations, and videos with AI
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+              
+              <div className="order-1 md:order-2">
+                <motion.div 
+                  className="flex items-center gap-3 mb-4 sm:mb-6"
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                >
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] sm:text-xs text-fuchsia-500 font-bold tracking-wider uppercase">★ FLAGSHIP PRODUCT</span>
+                  </div>
+                </motion.div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extralight text-foreground mb-4 sm:mb-6 tracking-tight">
+                  NoteFlowLM: <span className="bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent font-light">Transform Notes into Anything</span>
+                </h2>
+                <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 font-light leading-relaxed">
+                  The future of note-taking. Convert your notes into stunning images, professional slides, 
+                  and explainer videos with AI. Your direct competitor to NotebookLM.
+                </p>
+                <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
+                  {[
+                    "Generate images from notes with Gemini 2.5",
+                    "Auto-create presentation slides (Beta)",
+                    "Private Mode: Uses CHRONYX context",
+                    "Public Mode: Web search enabled",
+                    "Daily limits: Free 5, Pro 12, Premium 20",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2 sm:gap-3 text-sm sm:text-base">
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-fuchsia-500/10 flex items-center justify-center flex-shrink-0">
+                        <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-fuchsia-500" />
+                      </div>
+                      <span className="text-muted-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link to="/app/noteflowlm">
+                  <motion.button 
+                    className="group flex items-center gap-2 sm:gap-3 px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-medium bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white rounded-full hover:from-fuchsia-600 hover:to-purple-700 transition-all shadow-xl shadow-fuchsia-500/25"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Try NoteFlowLM
+                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
+                  </motion.button>
+                </Link>
+              </div>
             </div>
           </div>
         </RevealSection>
