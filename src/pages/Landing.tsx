@@ -896,11 +896,29 @@ const Landing = () => {
           transition={{ delay: 0.2, duration: 0.6 }}
           className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary/10 via-fuchsia-500/10 to-primary/10 border-b border-border/30 backdrop-blur-xl"
         >
-          <div className="flex items-center justify-center gap-3 py-2">
-            <ChronxyxLogo className="w-5 h-5" />
-            <span className="text-xs sm:text-sm font-light tracking-[0.2em] text-foreground">CHRONYX</span>
-            <span className="text-[10px] text-muted-foreground">BY</span>
-            <span className="text-xs sm:text-sm font-medium tracking-[0.15em] text-primary">ORIGINX LABS</span>
+          <div className="flex items-center justify-center gap-2 sm:gap-3 py-2 px-4">
+            {/* Logo and CHRONYX on left */}
+            <div className="flex items-center gap-2">
+              <ChronxyxLogo className="w-5 h-5" />
+              <div className="flex flex-col items-start leading-none">
+                <span className="text-xs sm:text-sm font-light tracking-[0.2em] text-foreground">CHRONYX</span>
+                <span className="text-[8px] sm:text-[9px] text-muted-foreground tracking-[0.1em] flex items-center gap-1">
+                  BY{" "}
+                  <a
+                    href="https://www.originxlabs.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary/80 font-medium transition-colors cursor-pointer group relative"
+                    title="Originx Labs Private Limited"
+                  >
+                    ORIGINX LABS
+                    <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[7px] bg-popover border border-border rounded px-1.5 py-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                      Originx Labs Private Limited
+                    </span>
+                  </a>
+                </span>
+              </div>
+            </div>
           </div>
         </motion.div>
         
