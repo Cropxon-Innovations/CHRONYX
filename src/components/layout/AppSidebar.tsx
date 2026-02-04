@@ -77,7 +77,7 @@ interface NavSection {
   items: NavItem[];
 }
 
-// Modularized navigation sections - Reordered: Overview → Productivity → Finance → Life → Media → Security
+// Modularized navigation sections - Reordered: Overview → Productivity → Finance → Life → Media → Tools → Security
 const navSections: NavSection[] = [
   {
     title: "Overview",
@@ -122,6 +122,12 @@ const navSections: NavSection[] = [
     title: "Media",
     items: [
       { path: "/app/news", label: "NEWSTACK.Live", icon: Newspaper, badge: "NEW" },
+    ],
+  },
+  {
+    title: "Tools",
+    items: [
+      { path: "/app/tools", label: "CONVERTIX", icon: Zap, badge: "NEW" },
     ],
   },
   {

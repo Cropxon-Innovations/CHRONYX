@@ -44,7 +44,9 @@ export interface LoanFormData {
   interest_rate: number;
   tenure_months: number;
   emi_amount: number;
-  start_date: string;
+  start_date: string; // EMI Start Date (first EMI date)
+  loan_start_date?: string; // Loan Disbursement Date
+  emi_day_of_month?: number; // Day of month for recurring EMI
   repayment_mode: string;
   notes?: string;
 }
@@ -79,9 +81,12 @@ export const AddLoanForm = ({
   const [principal, setPrincipal] = useState("");
   const [interestRate, setInterestRate] = useState("");
   const [tenure, setTenure] = useState("");
+  const [tenureUnit, setTenureUnit] = useState<"years" | "months">("years");
   const [emiAmount, setEmiAmount] = useState("");
   const [emiOverride, setEmiOverride] = useState(false);
+  const [loanStartDate, setLoanStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [emiDayOfMonth, setEmiDayOfMonth] = useState("5");
   const [repaymentMode, setRepaymentMode] = useState("Auto Debit");
   const [notes, setNotes] = useState("");
 
@@ -93,9 +98,19 @@ export const AddLoanForm = ({
       setLoanType(initialData.loan_type || "Home");
       setPrincipal(initialData.principal_amount?.toString() || "");
       setInterestRate(initialData.interest_rate?.toString() || "");
-      setTenure(initialData.tenure_months?.toString() || "");
+      // Convert months to years for display
+      const months = initialData.tenure_months || 0;
+      if (months >= 12 && months % 12 === 0) {
+        setTenure((months / 12).toString());
+        setTenureUnit("years");
+      } else {
+        setTenure(months.toString());
+        setTenureUnit("months");
+      }
       setEmiAmount(initialData.emi_amount?.toString() || "");
       setStartDate(initialData.start_date || new Date().toISOString().split("T")[0]);
+      setLoanStartDate((initialData as any).loan_start_date || new Date().toISOString().split("T")[0]);
+      setEmiDayOfMonth(((initialData as any).emi_day_of_month || 5).toString());
       setRepaymentMode(initialData.repayment_mode || "Auto Debit");
       setNotes(initialData.notes || "");
 
@@ -118,9 +133,12 @@ export const AddLoanForm = ({
       setPrincipal("");
       setInterestRate("");
       setTenure("");
+      setTenureUnit("years");
       setEmiAmount("");
       setEmiOverride(false);
+      setLoanStartDate(new Date().toISOString().split("T")[0]);
       setStartDate(new Date().toISOString().split("T")[0]);
+      setEmiDayOfMonth("5");
       setRepaymentMode("Auto Debit");
       setNotes("");
     }
@@ -139,17 +157,33 @@ export const AddLoanForm = ({
     })),
   ];
 
+  // Convert tenure to months for EMI calculation
+  const getTenureInMonths = () => {
+    const t = parseInt(tenure);
+    if (isNaN(t) || t <= 0) return 0;
+    return tenureUnit === "years" ? t * 12 : t;
+  };
+
+  // Get tenure display (convert months to years if applicable)
+  const getTenureDisplay = () => {
+    const months = getTenureInMonths();
+    if (months >= 12 && months % 12 === 0) {
+      return `${months / 12} year${months / 12 > 1 ? "s" : ""} (${months} months)`;
+    }
+    return `${months} month${months > 1 ? "s" : ""}`;
+  };
+
   useEffect(() => {
     if (!emiOverride && principal && interestRate && tenure) {
       const p = parseFloat(principal);
       const r = parseFloat(interestRate);
-      const t = parseInt(tenure);
-      if (p > 0 && r >= 0 && t > 0) {
-        const calculatedEmi = calculateEMI(p, r, t);
+      const tenureMonths = getTenureInMonths();
+      if (p > 0 && r >= 0 && tenureMonths > 0) {
+        const calculatedEmi = calculateEMI(p, r, tenureMonths);
         setEmiAmount(calculatedEmi.toFixed(2));
       }
     }
-  }, [principal, interestRate, tenure, emiOverride]);
+  }, [principal, interestRate, tenure, tenureUnit, emiOverride]);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -220,9 +254,11 @@ export const AddLoanForm = ({
       loan_type: loanType,
       principal_amount: parseFloat(principal),
       interest_rate: parseFloat(interestRate),
-      tenure_months: parseInt(tenure),
+      tenure_months: getTenureInMonths(),
       emi_amount: parseFloat(emiAmount),
       start_date: startDate,
+      loan_start_date: loanStartDate,
+      emi_day_of_month: parseInt(emiDayOfMonth) || 5,
       repayment_mode: repaymentMode,
       notes: notes || undefined,
     });
@@ -464,16 +500,32 @@ export const AddLoanForm = ({
 
           {/* Tenure */}
           <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">Loan Tenure (months)</Label>
-            <Input
-              type="number"
-              placeholder="240"
-              value={tenure}
-              onChange={(e) => setTenure(e.target.value)}
-              className="bg-background border-border"
-              required
-              min="1"
-            />
+            <Label className="text-sm text-muted-foreground">Loan Tenure</Label>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                placeholder={tenureUnit === "years" ? "20" : "240"}
+                value={tenure}
+                onChange={(e) => setTenure(e.target.value)}
+                className="bg-background border-border flex-1"
+                required
+                min="1"
+              />
+              <Select value={tenureUnit} onValueChange={(v) => setTenureUnit(v as "years" | "months")}>
+                <SelectTrigger className="bg-background border-border w-28">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="years">Years</SelectItem>
+                  <SelectItem value="months">Months</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {tenure && (
+              <p className="text-xs text-muted-foreground">
+                = {getTenureDisplay()}
+              </p>
+            )}
           </div>
 
           {/* EMI Amount */}
@@ -509,9 +561,21 @@ export const AddLoanForm = ({
             )}
           </div>
 
+          {/* Loan Start Date (Disbursement) */}
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Loan Start Date (Disbursement)</Label>
+            <Input
+              type="date"
+              value={loanStartDate}
+              onChange={(e) => setLoanStartDate(e.target.value)}
+              className="bg-background border-border"
+            />
+            <p className="text-xs text-muted-foreground">Date when the loan was disbursed</p>
+          </div>
+
           {/* EMI Start Date */}
           <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">EMI Start Date</Label>
+            <Label className="text-sm text-muted-foreground">First EMI Date</Label>
             <Input
               type="date"
               value={startDate}
@@ -519,6 +583,25 @@ export const AddLoanForm = ({
               className="bg-background border-border"
               required
             />
+            <p className="text-xs text-muted-foreground">Date of your first EMI payment</p>
+          </div>
+
+          {/* EMI Day of Month */}
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Monthly EMI Date</Label>
+            <Select value={emiDayOfMonth} onValueChange={setEmiDayOfMonth}>
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue placeholder="Select day" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border max-h-48">
+                {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                  <SelectItem key={day} value={day.toString()}>
+                    {day}{day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of every month
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Day of month when EMI is deducted</p>
           </div>
 
           {/* Repayment Mode */}
