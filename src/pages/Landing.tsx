@@ -47,6 +47,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+ // Import the demo video
+ import chronxyxDemoVideo from "@/assets/chronyx-demo.mp4";
+
 // Apple-style SF Pro inspired typography animations
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
@@ -889,45 +892,12 @@ const Landing = () => {
       {/* Main Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
         
-        {/* Premium Header Banner - CHRONYX BY ORIGINX LABS */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.6 }}
-          className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-primary/10 via-fuchsia-500/10 to-primary/10 border-b border-border/30 backdrop-blur-xl"
-        >
-          <div className="flex items-center justify-center gap-2 sm:gap-3 py-2 px-4">
-            {/* Logo and CHRONYX on left */}
-            <div className="flex items-center gap-2">
-              <ChronxyxLogo className="w-5 h-5" />
-              <div className="flex flex-col items-start leading-none">
-                <span className="text-xs sm:text-sm font-light tracking-[0.2em] text-foreground">CHRONYX</span>
-                <span className="text-[8px] sm:text-[9px] text-muted-foreground tracking-[0.1em] flex items-center gap-1">
-                  BY{" "}
-                  <a
-                    href="https://www.originxlabs.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:text-primary/80 font-medium transition-colors cursor-pointer group relative"
-                    title="Originx Labs Private Limited"
-                  >
-                    ORIGINX LABS
-                    <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[7px] bg-popover border border-border rounded px-1.5 py-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                      Originx Labs Private Limited
-                    </span>
-                  </a>
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-        
         {/* Navigation */}
         <LandingNav onDesktopDownload={() => setShowDesktopDialog(true)} />
 
         {/* HERO SECTION - Apple/Vercel style */}
         <motion.section 
-          className="relative flex-1 flex items-center justify-center px-4 sm:px-6 pt-32 pb-20 lg:pt-36 lg:pb-24 min-h-screen"
+          className="relative flex-1 flex items-center justify-center px-4 sm:px-6 pt-24 pb-20 lg:pt-28 lg:pb-24 min-h-screen"
           style={{ opacity: mounted ? 1 : 0 }}
         >
           <div className="max-w-7xl mx-auto w-full">
@@ -1788,7 +1758,7 @@ const Landing = () => {
             onClick={() => setShowDemo(false)}
           >
             <motion.div 
-              className="relative max-w-4xl w-full aspect-video bg-card rounded-2xl border border-border/50 flex items-center justify-center shadow-2xl"
+              className="relative max-w-4xl w-full aspect-video bg-card rounded-2xl border border-border/50 flex items-center justify-center shadow-2xl overflow-hidden"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -1796,17 +1766,19 @@ const Landing = () => {
             >
               <button 
                 onClick={() => setShowDemo(false)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-muted/50 hover:bg-muted transition-colors"
+                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/80 hover:bg-background transition-colors backdrop-blur-sm border border-border/50"
               >
                 <X className="w-5 h-5" />
               </button>
-              <div className="text-center p-8">
-                <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                  <Play className="w-10 h-10 text-primary ml-1" />
-                </div>
-                <h3 className="text-xl font-light mb-2">Demo Video</h3>
-                <p className="text-muted-foreground text-sm">Coming soon</p>
-              </div>
+              <video 
+                src={chronxyxDemoVideo}
+                controls
+                autoPlay
+                className="w-full h-full object-cover"
+                playsInline
+              >
+                Your browser does not support the video tag.
+              </video>
             </motion.div>
           </motion.div>
         )}
