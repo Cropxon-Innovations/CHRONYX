@@ -45,6 +45,7 @@ import {
   BookMarked,
   GitBranch,
   Newspaper,
+   Brain,
 } from "lucide-react";
 import { getBadgeClasses, getBadgeDotColor } from "@/lib/badge-colors";
 import {
@@ -130,6 +131,12 @@ const navSections: NavSection[] = [
       { path: "/app/tools", label: "CONVERTIX", icon: Zap, badge: "NEW" },
     ],
   },
+   {
+     title: "AI Agent",
+     items: [
+       { path: "/app/aeon", label: "∆E0N", icon: Brain, badge: "SOON" },
+     ],
+   },
   {
     title: "Security",
     items: [
