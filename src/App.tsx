@@ -57,6 +57,7 @@ const Resolutions = lazy(() => import("./pages/app/Resolutions"));
 const NoteflowLMWorkspace = lazy(() => import("./pages/app/NoteflowLMWorkspace"));
 const News = lazy(() => import("./pages/app/News"));
 const Tools = lazy(() => import("./pages/app/Tools"));
+ const Aeon = lazy(() => import("./pages/app/Aeon"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -288,6 +289,7 @@ const AnimatedRoutes = () => {
           <Route path="noteflowlm" element={<Suspense fallback={<PageLoader />}><NoteflowLMWorkspace /></Suspense>} />
           <Route path="news" element={<Suspense fallback={<PageLoader />}><News /></Suspense>} />
           <Route path="tools" element={<Suspense fallback={<PageLoader />}><Tools /></Suspense>} />
+           <Route path="aeon" element={<Suspense fallback={<PageLoader />}><Aeon /></Suspense>} />
           <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         </Route>
         <Route 

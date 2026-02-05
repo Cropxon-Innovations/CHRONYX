@@ -8,7 +8,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { differenceInDays, differenceInYears, differenceInMonths } from "date-fns";
+ import { differenceInDays, differenceInYears, differenceInMonths, startOfDay, parseISO, addYears } from "date-fns";
 
 interface LifespanData {
   percentage: number;
@@ -35,14 +35,26 @@ export const LifespanSpinner = () => {
       .single();
 
     if (data?.birth_date) {
-      const birthDate = new Date(data.birth_date);
-      const today = new Date();
+       // Parse birth date correctly using parseISO for consistent handling
+       const birthDate = startOfDay(parseISO(data.birth_date));
+       const today = startOfDay(new Date());
       const targetAge = data.target_age || 60;
       
-      const daysLived = differenceInDays(today, birthDate);
-      const totalDays = targetAge * 365.25; // Account for leap years
-      const daysRemaining = Math.max(0, Math.floor(totalDays - daysLived));
-      const percentage = Math.min(100, (daysLived / totalDays) * 100);
+       // Calculate target end date (birth date + target age years)
+       const targetEndDate = addYears(birthDate, targetAge);
+       
+       // Calculate days lived from birth to today
+       const daysLived = differenceInDays(today, birthDate);
+       
+       // Calculate total days from birth to target end date  
+       const totalDays = differenceInDays(targetEndDate, birthDate);
+       
+       // Calculate days remaining from today to target end date
+       const daysRemaining = Math.max(0, differenceInDays(targetEndDate, today));
+       
+       // Calculate percentage based on actual dates
+       const percentage = Math.min(100, Math.max(0, (daysLived / totalDays) * 100));
+       
       const yearsLived = differenceInYears(today, birthDate);
       const monthsLived = differenceInMonths(today, birthDate);
 
