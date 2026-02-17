@@ -81,15 +81,14 @@ const AnimatedLetter = ({
 );
 
 const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenProps) => {
-  const [stage, setStage] = useState(0); // 0: logo, 1: CHRONYX, 2: BY, 3: ORIGINX
+  const [stage, setStage] = useState(0); // 0: logo, 1: CHRONYX, 2: By line
 
   useEffect(() => {
     if (isVisible && !minimal) {
       const timers = [
         setTimeout(() => setStage(1), 400),   // Show CHRONYX
-        setTimeout(() => setStage(2), 1200),  // Show BY
-        setTimeout(() => setStage(3), 1600),  // Show ORIGINX
-        setTimeout(() => onComplete?.(), 3000), // Complete
+        setTimeout(() => setStage(2), 1200),  // Show By OriginX Labs
+        setTimeout(() => onComplete?.(), 2800), // Complete
       ];
       
       return () => timers.forEach(clearTimeout);
@@ -100,7 +99,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
   }, [isVisible, minimal, onComplete]);
 
   const chronyx = "CHRONYX";
-  const originx = "ORIGINX LABS PVT LTD";
+  const byLine = "By OriginX Labs Pvt. Ltd.";
 
   return (
     <AnimatePresence>
@@ -190,58 +189,31 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
                 </motion.div>
               )}
 
-              {/* BY - Elegant centered connector */}
+              {/* By OriginX Labs Pvt. Ltd. */}
               {stage >= 2 && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex items-center gap-4 py-2"
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 0.6, y: 0 }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex flex-col items-center gap-2 pt-1"
                 >
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: 32 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                    className="h-[1px] bg-gradient-to-r from-transparent to-muted-foreground/30"
-                  />
-                  <motion.span 
-                    initial={{ opacity: 0, letterSpacing: "0.5em" }}
-                    animate={{ opacity: 0.6, letterSpacing: "0.3em" }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className="text-xs sm:text-sm font-light text-muted-foreground tracking-[0.3em]"
-                  >
-                    BY
-                  </motion.span>
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: 32 }}
-                    transition={{ duration: 0.4, delay: 0.1 }}
-                    className="h-[1px] bg-gradient-to-l from-transparent to-muted-foreground/30"
-                  />
-                </motion.div>
-              )}
-
-              {/* ORIGINX LABS PVT LTD - Company name with staggered reveal */}
-              {stage >= 3 && (
-                <motion.div className="flex flex-col items-center gap-1">
-                  <div className="text-lg sm:text-xl md:text-2xl font-light tracking-[0.2em] text-foreground/90">
-                    {originx.split("").map((letter, i) => (
+                  <div className="text-sm sm:text-base md:text-lg font-light tracking-[0.2em] text-muted-foreground">
+                    {byLine.split("").map((letter, i) => (
                       <AnimatedLetter 
                         key={i} 
                         letter={letter} 
                         index={i}
                         baseDelay={0}
-                        className="text-foreground/80"
+                        className="text-muted-foreground"
                       />
                     ))}
                   </div>
                   
-                  {/* Subtle decorative line */}
                   <motion.div
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ duration: 0.6, delay: 0.8 }}
-                    className="mt-2 h-[1px] w-24 origin-center bg-gradient-to-r from-transparent via-primary/30 to-transparent"
+                    className="mt-1 h-[1px] w-24 origin-center bg-gradient-to-r from-transparent via-primary/30 to-transparent"
                   />
                 </motion.div>
               )}
@@ -269,21 +241,24 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
             </motion.div>
           </div>
 
-          {/* Footer with website */}
+          {/* Footer */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 0.5, y: 0 }}
             transition={{ delay: 2, duration: 0.5 }}
-            className="absolute bottom-6 flex flex-col items-center gap-2 sm:bottom-8 md:bottom-10"
+            className="absolute bottom-6 flex flex-col items-center gap-3 sm:bottom-8 md:bottom-10"
           >
-            <a 
-              href="https://www.originxlabs.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-[10px] tracking-[0.15em] text-muted-foreground/60 hover:text-muted-foreground transition-colors sm:text-xs"
-            >
-              www.originxlabs.com
-            </a>
+            <p className="text-[10px] tracking-[0.12em] text-muted-foreground/50 sm:text-xs">
+              made with <span className="text-destructive">❤️</span>{" "}
+              <a 
+                href="https://www.abhishekpanda.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-muted-foreground transition-colors underline underline-offset-2"
+              >
+                Abhishek Panda
+              </a>
+            </p>
           </motion.div>
         </motion.div>
       )}

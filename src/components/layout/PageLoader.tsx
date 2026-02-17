@@ -107,25 +107,24 @@ const PageLoader = () => {
         </div>
       </div>
       
-      {/* By ORIGINX LABS text */}
+      {/* Footer */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.5 }}
         transition={{ delay: 0.5 }}
-        className="absolute bottom-4 sm:bottom-6 md:bottom-8 flex flex-col items-center gap-0.5"
+        className="absolute bottom-4 sm:bottom-6 md:bottom-8 flex flex-col items-center gap-1"
       >
-        <p className="text-[9px] sm:text-[10px] md:text-xs tracking-[0.15em] text-muted-foreground text-center leading-relaxed">
-          CHRONYX BY ORIGINX<br />
-          LABS PVT. LTD.
+        <p className="text-[9px] sm:text-[10px] md:text-xs tracking-[0.12em] text-muted-foreground/50 text-center">
+          made with <span className="text-destructive">❤️</span>{" "}
+          <a 
+            href="https://www.abhishekpanda.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-muted-foreground transition-colors underline underline-offset-2"
+          >
+            Abhishek Panda
+          </a>
         </p>
-        <a 
-          href="https://www.originxlabs.com" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-[8px] tracking-[0.1em] text-muted-foreground/60 hover:text-muted-foreground transition-colors sm:text-[9px]"
-        >
-          www.originxlabs.com
-        </a>
       </motion.div>
     </motion.div>
   );
