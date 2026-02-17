@@ -82,6 +82,7 @@
     --chronyx-landing-button-text: 220 14% 16%;
     --chronyx-landing-button-hover: 220 14% 97%;
     --chronyx-landing-button-hover-border: 220 9% 70%;
+    --chronyx-brand: 220 10% 15%;
 
     /* Legacy aliases */
     --vyom-landing: var(--chronyx-landing);
@@ -209,6 +210,7 @@
     --chronyx-landing-button-text: 0 0% 90%;
     --chronyx-landing-button-hover: 240 6% 12%;
     --chronyx-landing-button-hover-border: 240 4% 34%;
+    --chronyx-brand: 0 0% 88%;
 
     /* Legacy aliases */
     --vyom-landing: var(--chronyx-landing);

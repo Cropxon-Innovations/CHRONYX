@@ -183,7 +183,7 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
               >
                 <ChronxyxLogo className="w-9 h-9" />
               </motion.div>
-              <span className="text-lg font-extralight tracking-[0.2em] text-foreground/90 group-hover:text-foreground transition-colors">
+              <span className="text-lg font-semibold tracking-[0.2em] transition-colors" style={{ color: 'hsl(var(--chronyx-brand))' }}>
                 CHRONYX
               </span>
             </Link>

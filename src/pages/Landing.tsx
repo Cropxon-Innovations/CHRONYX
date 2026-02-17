@@ -915,20 +915,20 @@ const Landing = () => {
                 >
                   <ChronxyxLogo className="w-12 h-12 sm:w-14 sm:h-14" />
                   <div className="flex flex-col items-start">
-                    <span className="text-2xl sm:text-3xl font-extralight tracking-[0.25em] text-foreground">CHRONYX</span>
+                    <span className="text-2xl sm:text-3xl font-semibold tracking-[0.25em]" style={{ color: 'hsl(var(--chronyx-brand))' }}>CHRONYX</span>
                     <span className="text-[9px] sm:text-[10px] text-muted-foreground tracking-[0.3em] uppercase font-medium">Personal System of Record</span>
                   </div>
                 </motion.div>
 
                 {/* Main Headline - Vercel Typography */}
                 <motion.h1 
-                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extralight leading-[1.1] tracking-tight"
+                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold leading-[1.1] tracking-tight"
                   variants={fadeInUp}
                   initial="hidden"
                   animate="visible"
                   custom={1}
                 >
-                  <span className="text-foreground">A quiet space</span>
+                  <span style={{ color: 'hsl(var(--chronyx-brand))' }}>A quiet space</span>
                   <br />
                   <span className="bg-gradient-to-r from-muted-foreground to-muted-foreground/60 bg-clip-text text-transparent">for your life.</span>
                 </motion.h1>
@@ -1066,7 +1066,7 @@ const Landing = () => {
         {/* WHAT IS CHRONYX */}
         <RevealSection className="px-6 py-24 border-t border-border/10">
           <article className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl sm:text-4xl font-extralight text-foreground mb-6 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-semibold mb-6 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
               What is CHRONYX?
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed font-light mb-4">
@@ -1085,7 +1085,7 @@ const Landing = () => {
         <RevealSection className="px-6 py-24 bg-muted/20">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-extralight text-foreground mb-4 tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-semibold mb-4 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
                 Everything you need, nothing you don't
               </h2>
               <p className="text-lg text-muted-foreground font-light max-w-xl mx-auto">
@@ -1216,8 +1216,8 @@ const Landing = () => {
                     <span className="text-[10px] sm:text-xs text-fuchsia-500 font-bold tracking-wider uppercase">★ FLAGSHIP PRODUCT</span>
                   </div>
                 </motion.div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extralight text-foreground mb-4 sm:mb-6 tracking-tight">
-                  NoteFlowLM: <span className="bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent font-light">Transform Notes into Anything</span>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-4 sm:mb-6 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
+                  NoteFlowLM: <span className="bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent">Transform Notes into Anything</span>
                 </h2>
                 <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 font-light leading-relaxed">
                   The future of note-taking. Convert your notes into stunning images, professional slides, 
@@ -1271,8 +1271,8 @@ const Landing = () => {
                   </div>
                   <span className="text-sm text-violet-500 font-medium tracking-wider uppercase">Tax Calculator</span>
                 </motion.div>
-                <h2 className="text-3xl sm:text-4xl font-extralight text-foreground mb-6 tracking-tight">
-                  Indian Income Tax <span className="text-primary font-light">Made Simple</span>
+                <h2 className="text-3xl sm:text-4xl font-semibold mb-6 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
+                  Indian Income Tax <span className="text-primary">Made Simple</span>
                 </h2>
                 <p className="text-lg text-muted-foreground mb-8 font-light leading-relaxed">
                   Calculate your taxes accurately with our step-by-step wizard. Compare Old vs New regime, 
@@ -1393,8 +1393,8 @@ const Landing = () => {
                   </div>
                   <span className="text-sm text-cyan-600 font-medium tracking-wider uppercase">Digital Library</span>
                 </motion.div>
-                <h2 className="text-3xl sm:text-4xl font-extralight text-foreground mb-6 tracking-tight">
-                  World's Most <span className="text-cyan-600 font-light">Online Digital Hub</span>
+                <h2 className="text-3xl sm:text-4xl font-semibold mb-6 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
+                  World's Most <span className="text-cyan-600">Online Digital Hub</span>
                 </h2>
                 <p className="text-lg text-muted-foreground mb-8 font-light leading-relaxed">
                   Upload your books, notes, and documents. Read with Day/Sepia/Night themes, 
@@ -1447,8 +1447,8 @@ const Landing = () => {
                   </div>
                   <span className="text-sm text-amber-600 font-medium tracking-wider uppercase">Rewards Hub</span>
                 </motion.div>
-                <h2 className="text-3xl sm:text-4xl font-extralight text-foreground mb-6 tracking-tight">
-                  Earn Points, <span className="text-amber-600 font-light">Get Real Cash</span>
+                <h2 className="text-3xl sm:text-4xl font-semibold mb-6 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
+                  Earn Points, <span className="text-amber-600">Get Real Cash</span>
                 </h2>
                 <p className="text-lg text-muted-foreground mb-8 font-light leading-relaxed">
                   Every action earns you points. Share content, complete tasks, and engage with the platform 
@@ -1550,7 +1550,7 @@ const Landing = () => {
               </div>
             </motion.div>
             
-            <h2 className="text-3xl font-extralight text-foreground mb-4 tracking-tight">
+            <h2 className="text-3xl font-semibold mb-4 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
               CHRONYX Desktop
             </h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-md mx-auto font-light">
@@ -1573,7 +1573,7 @@ const Landing = () => {
         <RevealSection className="px-6 py-24 border-t border-border/10">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-extralight text-foreground mb-4 tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-semibold mb-4 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
                 Simple, Honest Pricing
               </h2>
               <p className="text-lg text-muted-foreground font-light">
@@ -1697,7 +1697,7 @@ const Landing = () => {
               <div className="col-span-2 md:col-span-1">
                 <div className="flex items-center gap-3 mb-4">
                   <ChronxyxLogo className="w-10 h-10" />
-                  <span className="text-xl font-extralight tracking-[0.15em]">CHRONYX</span>
+                  <span className="text-xl font-semibold tracking-[0.15em]" style={{ color: 'hsl(var(--chronyx-brand))' }}>CHRONYX</span>
                 </div>
                 <p className="text-sm text-muted-foreground font-light">A quiet space for your life.</p>
                 <p className="text-xs text-muted-foreground/60 mt-3">by ORIGINX LABS</p>
