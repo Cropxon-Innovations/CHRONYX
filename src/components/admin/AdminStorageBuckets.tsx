@@ -114,7 +114,7 @@ const AdminStorageBuckets = () => {
                 Storage Buckets
               </CardTitle>
               <CardDescription>
-                File storage containers (fetched from Lovable Cloud)
+                File storage containers (fetched from CHRONYX Cloud)
               </CardDescription>
             </div>
             <div className="flex items-center gap-3">

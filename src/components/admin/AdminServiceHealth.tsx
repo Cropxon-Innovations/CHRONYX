@@ -173,7 +173,7 @@ const AdminServiceHealth = () => {
               </div>
               <div>
                 <p className="font-medium">Database</p>
-                <p className="text-sm text-muted-foreground">Lovable Cloud PostgreSQL</p>
+                <p className="text-sm text-muted-foreground">CHRONYX Cloud PostgreSQL</p>
               </div>
             </div>
           </CardContent>
@@ -186,7 +186,7 @@ const AdminServiceHealth = () => {
               </div>
               <div>
                 <p className="font-medium">Storage</p>
-                <p className="text-sm text-muted-foreground">Lovable Cloud Storage</p>
+                <p className="text-sm text-muted-foreground">CHRONYX Cloud Storage</p>
               </div>
             </div>
           </CardContent>
