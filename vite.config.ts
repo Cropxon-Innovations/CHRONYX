@@ -20,6 +20,8 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        // Version bump to invalidate old service worker cache
+        additionalManifestEntries: [{ url: '/index.html', revision: 'v2-branding-update' }],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

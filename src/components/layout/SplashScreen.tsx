@@ -98,8 +98,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
     }
   }, [isVisible, minimal, onComplete]);
 
-  const chronyx = "CHRONYX";
-  const byLine = "By OriginX Labs Pvt. Ltd.";
+  // Brand text rendered directly as simple text blocks for reliable two-line layout
 
   return (
     <AnimatePresence>
@@ -164,58 +163,38 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
               </motion.div>
             </motion.div>
 
-            {/* CHRONYX - Main brand name with character animation */}
-            <div className="relative flex flex-col items-center gap-4">
+            {/* CHRONYX - Main brand name */}
+            <div className="relative flex flex-col items-center gap-3">
               {stage >= 1 && (
-                <motion.div className="relative">
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight tracking-[0.35em] text-foreground">
-                    {chronyx.split("").map((letter, i) => (
-                      <AnimatedLetter 
-                        key={i} 
-                        letter={letter} 
-                        index={i}
-                        baseDelay={0}
-                      />
-                    ))}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                  className="relative"
+                >
+                  <h1 className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight tracking-[0.35em] text-foreground whitespace-nowrap">
+                    CHRONYX
                   </h1>
-                  
                   {/* Animated underline */}
                   <motion.div
                     initial={{ scaleX: 0, opacity: 0 }}
                     animate={{ scaleX: 1, opacity: 1 }}
-                    transition={{ duration: 0.8, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="mt-3 h-[1px] w-full origin-left bg-gradient-to-r from-primary/80 via-primary/40 to-transparent"
+                    transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    className="mt-2 h-[1px] w-full origin-left bg-gradient-to-r from-primary/80 via-primary/40 to-transparent"
                   />
                 </motion.div>
               )}
 
-              {/* By OriginX Labs Pvt. Ltd. */}
+              {/* By OriginX Labs Pvt. Ltd. — on its own separate line */}
               {stage >= 2 && (
-                <motion.div
+                <motion.p
                   initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 0.6, y: 0 }}
+                  animate={{ opacity: 0.65, y: 0 }}
                   transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex flex-col items-center gap-2 pt-1"
+                  className="block text-sm sm:text-base font-light tracking-[0.18em] text-muted-foreground whitespace-nowrap text-center"
                 >
-                  <div className="text-sm sm:text-base md:text-lg font-light tracking-[0.2em] text-muted-foreground">
-                    {byLine.split("").map((letter, i) => (
-                      <AnimatedLetter 
-                        key={i} 
-                        letter={letter} 
-                        index={i}
-                        baseDelay={0}
-                        className="text-muted-foreground"
-                      />
-                    ))}
-                  </div>
-                  
-                  <motion.div
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 0.6, delay: 0.8 }}
-                    className="mt-1 h-[1px] w-24 origin-center bg-gradient-to-r from-transparent via-primary/30 to-transparent"
-                  />
-                </motion.div>
+                  By OriginX Labs Pvt. Ltd.
+                </motion.p>
               )}
             </div>
 
