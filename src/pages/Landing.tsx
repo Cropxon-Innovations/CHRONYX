@@ -1106,18 +1106,18 @@ const Landing = () => {
                     whileHover={{ y: -5, transition: { duration: 0.2 } }}
                     className="group relative"
                   >
-                    {/* Outer glow ring on hover */}
-                    <div className={`absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+                    {/* Outer glow ring - always visible, stronger on hover */}
+                    <div className={`absolute -inset-[2px] rounded-2xl transition-opacity duration-500 ${
                       feature.highlight
-                        ? "bg-gradient-to-br from-primary/40 via-violet-500/30 to-primary/20"
-                        : "bg-gradient-to-br from-primary/25 via-border/30 to-transparent"
-                    } blur-[2px]`} />
+                        ? "bg-gradient-to-br from-primary/50 via-violet-500/40 to-primary/30 opacity-60 group-hover:opacity-100"
+                        : "bg-gradient-to-br from-primary/20 via-border/40 to-transparent opacity-0 group-hover:opacity-80"
+                    } blur-[1px]`} />
 
                     {/* Card body */}
-                    <div className={`relative p-6 rounded-2xl border transition-all duration-300 cursor-pointer h-full overflow-hidden ${
+                    <div className={`relative p-6 rounded-2xl border-2 transition-all duration-300 cursor-pointer h-full overflow-hidden ${
                       feature.highlight
-                        ? "border-primary/40 bg-gradient-to-br from-primary/8 via-card/90 to-violet-500/5 shadow-lg shadow-primary/10"
-                        : "border-border/40 bg-card/60 hover:border-primary/30 hover:bg-card/90 hover:shadow-lg hover:shadow-primary/5"
+                        ? "border-primary/60 bg-gradient-to-br from-primary/10 via-card/95 to-violet-500/8 shadow-xl shadow-primary/15"
+                        : "border-border/60 bg-card/80 hover:border-primary/50 hover:bg-card/95 hover:shadow-xl hover:shadow-primary/10"
                     }`}>
                       {/* Subtle inner top shimmer line */}
                       <div className={`absolute top-0 left-4 right-4 h-px rounded-full transition-opacity duration-300 ${
@@ -1764,7 +1764,7 @@ const Landing = () => {
               <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
                 <p className="text-xs text-muted-foreground/50 tracking-wider">Private · Quiet · Timeless</p>
                 <p className="text-xs text-muted-foreground/60">
-                  Developed with <span className="text-destructive">❤️</span>{" "}
+                  Developed by <span className="text-destructive">❤️</span>{" "}
                   <a
                     href="https://www.abhishekpanda.com"
                     target="_blank"
