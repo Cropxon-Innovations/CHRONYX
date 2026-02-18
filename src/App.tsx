@@ -313,8 +313,8 @@ const AppContent = () => {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   useEffect(() => {
-    // Check if this is first visit in this session
-    const hasSeenSplash = sessionStorage.getItem("chronyx_splash_shown");
+    // Check if this is first visit in this session (v2 key forces re-show after branding update)
+    const hasSeenSplash = sessionStorage.getItem("chronyx_splash_shown_v2");
     if (hasSeenSplash) {
       setShowSplash(false);
       setIsFirstLoad(false);
@@ -322,7 +322,7 @@ const AppContent = () => {
   }, []);
 
   const handleSplashComplete = () => {
-    sessionStorage.setItem("chronyx_splash_shown", "true");
+    sessionStorage.setItem("chronyx_splash_shown_v2", "true");
     setShowSplash(false);
     setIsFirstLoad(false);
   };
