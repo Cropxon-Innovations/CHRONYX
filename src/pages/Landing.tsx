@@ -1103,25 +1103,47 @@ const Landing = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.08, duration: 0.6 }}
-                    className={`group relative p-6 rounded-2xl border transition-all cursor-pointer ${
-                      feature.highlight 
-                        ? "border-primary/30 bg-gradient-to-br from-primary/5 to-violet-500/5" 
-                        : "border-border/30 bg-card/50 hover:border-primary/20 hover:bg-card/80"
-                    }`}
-                    whileHover={{ y: -4 }}
+                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                    className="group relative"
                   >
-                    {feature.highlight && (
-                      <div className="absolute -top-2 -right-2 px-2.5 py-1 bg-primary text-primary-foreground text-[10px] font-medium rounded-full tracking-wide">
-                        New
+                    {/* Outer glow ring on hover */}
+                    <div className={`absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+                      feature.highlight
+                        ? "bg-gradient-to-br from-primary/40 via-violet-500/30 to-primary/20"
+                        : "bg-gradient-to-br from-primary/25 via-border/30 to-transparent"
+                    } blur-[2px]`} />
+
+                    {/* Card body */}
+                    <div className={`relative p-6 rounded-2xl border transition-all duration-300 cursor-pointer h-full overflow-hidden ${
+                      feature.highlight
+                        ? "border-primary/40 bg-gradient-to-br from-primary/8 via-card/90 to-violet-500/5 shadow-lg shadow-primary/10"
+                        : "border-border/40 bg-card/60 hover:border-primary/30 hover:bg-card/90 hover:shadow-lg hover:shadow-primary/5"
+                    }`}>
+                      {/* Subtle inner top shimmer line */}
+                      <div className={`absolute top-0 left-4 right-4 h-px rounded-full transition-opacity duration-300 ${
+                        feature.highlight
+                          ? "bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-80"
+                          : "bg-gradient-to-r from-transparent via-border/60 to-transparent opacity-40 group-hover:via-primary/40 group-hover:opacity-70"
+                      }`} />
+
+                      {feature.highlight && (
+                        <div className="absolute -top-2.5 -right-2.5 px-2.5 py-1 bg-gradient-to-r from-primary to-violet-600 text-primary-foreground text-[10px] font-semibold rounded-full tracking-wide shadow-md shadow-primary/30">
+                          New
+                        </div>
+                      )}
+
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300 ${
+                        feature.highlight
+                          ? "bg-primary/15 shadow-md shadow-primary/20"
+                          : "bg-muted/60 group-hover:bg-primary/10 group-hover:shadow-sm group-hover:shadow-primary/15"
+                      }`}>
+                        <Icon className={`w-6 h-6 transition-colors duration-300 ${
+                          feature.highlight ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                        }`} />
                       </div>
-                    )}
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
-                      feature.highlight ? "bg-primary/10" : "bg-muted/50 group-hover:bg-primary/10"
-                    } transition-colors`}>
-                      <Icon className={`w-6 h-6 ${feature.highlight ? "text-primary" : "text-muted-foreground group-hover:text-primary"} transition-colors`} />
+                      <h3 className="text-base font-semibold text-foreground mb-1 group-hover:text-foreground/90 transition-colors">{feature.label}</h3>
+                      <p className="text-sm text-muted-foreground font-light leading-relaxed">{feature.desc}</p>
                     </div>
-                    <h3 className="text-base font-medium text-foreground mb-1">{feature.label}</h3>
-                    <p className="text-sm text-muted-foreground font-light">{feature.desc}</p>
                   </motion.div>
                 );
               })}
@@ -1739,7 +1761,20 @@ const Landing = () => {
               <p className="text-xs text-muted-foreground/60">
                 © 2024-2026 ORIGINX LABS PVT. LTD. All rights reserved.
               </p>
-              <p className="text-xs text-muted-foreground/40 tracking-wider">Private · Quiet · Timeless</p>
+              <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
+                <p className="text-xs text-muted-foreground/50 tracking-wider">Private · Quiet · Timeless</p>
+                <p className="text-xs text-muted-foreground/60">
+                  Developed with <span className="text-destructive">❤️</span>{" "}
+                  <a
+                    href="https://www.abhishekpanda.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium hover:text-foreground transition-colors underline underline-offset-2"
+                  >
+                    Abhishek Panda
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
         </footer>
