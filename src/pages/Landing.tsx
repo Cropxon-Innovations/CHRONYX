@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import LandingNav from "@/components/landing/LandingNav";
+import ScrollStackedFeatures from "@/components/landing/ScrollStackedFeatures";
 import {
   Dialog,
   DialogContent,
@@ -773,21 +774,7 @@ const Landing = () => {
     setMounted(true);
   }, []);
 
-  const features = [
-    { icon: CheckSquare, label: "Tasks", desc: "Daily todos & productivity" },
-    { icon: BookOpen, label: "Study", desc: "Syllabus & learning tracker" },
-    { icon: Library, label: "Library", desc: "Upload books & notes", highlight: true },
-    { icon: Wallet, label: "Finance", desc: "Budget, loans & savings" },
-    { icon: Calculator, label: "Tax", desc: "Smart Indian tax calculator", highlight: true },
-    { icon: Heart, label: "Insurance", desc: "Policy management" },
-    { icon: Image, label: "Memory", desc: "Private photo vault" },
-    { icon: Clock, label: "Lifespan", desc: "Time visualization" },
-    { icon: Share2, label: "Share", desc: "Seamless content sharing", highlight: true },
-    { icon: Gift, label: "Rewards", desc: "Earn & redeem points", highlight: true },
-    { icon: TreePine, label: "Family Tree", desc: "Genealogy records" },
-    { icon: FileText, label: "Documents", desc: "Secure document vault" },
-    { icon: Folder, label: "Notes", desc: "Smart note-taking" },
-  ];
+  // Features are now in ScrollStackedFeatures component
 
   const stats = [
     { value: "10K+", label: "Users" },
@@ -866,12 +853,39 @@ const Landing = () => {
       role="main"
       aria-label="CHRONYX - Personal System of Record | Tax Calculator | Finance Tracker"
     >
-      {/* SEO-optimized meta description */}
+      {/* SEO-optimized meta description & structured data */}
       <span className="sr-only">
-        CHRONYX is a private personal system of record for managing your life - tasks, finances, tax calculations, 
-        insurance policies, and memories. Indian Income Tax Calculator with Old vs New Regime comparison. 
-        Built by ORIGINX LABS PVT. LTD.
+        CHRONYX is a private personal system of record for managing your life — tasks, finances, tax calculations, 
+        insurance policies, study planning, digital library, and memories. Indian Income Tax Calculator with Old vs New 
+        Regime comparison. AI-powered NoteFlowLM for content creation. Rewards & cashback system. 
+        Built by ORIGINX LABS PVT. LTD. Available as PWA and web app at getchronyx.com.
       </span>
+      
+      {/* JSON-LD Structured Data for SEO & GEO */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "CHRONYX",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web, PWA",
+        "description": "AI-powered personal system of record — tasks, finance, study planner, tax calculator, digital library, document vault, and rewards. Built for India.",
+        "url": "https://www.getchronyx.com",
+        "author": {
+          "@type": "Organization",
+          "name": "ORIGINX LABS PVT. LTD.",
+          "url": "https://www.originxlabs.com"
+        },
+        "offers": [
+          { "@type": "Offer", "price": "0", "priceCurrency": "INR", "name": "Free" },
+          { "@type": "Offer", "price": "199", "priceCurrency": "INR", "name": "Pro" },
+          { "@type": "Offer", "price": "499", "priceCurrency": "INR", "name": "Premium" }
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "reviewCount": "1024"
+        }
+      })}} />
 
       {/* Apple-style background effects */}
       <GradientOrbs />
@@ -1081,75 +1095,8 @@ const Landing = () => {
           </article>
         </RevealSection>
 
-        {/* FEATURES GRID */}
-        <RevealSection className="px-6 py-24 bg-muted/20">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-semibold mb-4 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
-                Everything you need, nothing you don't
-              </h2>
-              <p className="text-lg text-muted-foreground font-light max-w-xl mx-auto">
-                Your complete digital ecosystem — library, tasks, finance, rewards, and seamless sharing
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {features.map((feature, i) => {
-                const Icon = feature.icon;
-                return (
-                  <motion.div
-                    key={feature.label}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.08, duration: 0.6 }}
-                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                    className="group relative"
-                  >
-                    {/* Outer glow ring - always visible, stronger on hover */}
-                    <div className={`absolute -inset-[2px] rounded-2xl transition-opacity duration-500 ${
-                      feature.highlight
-                        ? "bg-gradient-to-br from-primary/50 via-violet-500/40 to-primary/30 opacity-60 group-hover:opacity-100"
-                        : "bg-gradient-to-br from-primary/20 via-border/40 to-transparent opacity-0 group-hover:opacity-80"
-                    } blur-[1px]`} />
-
-                    {/* Card body */}
-                    <div className={`relative p-6 rounded-2xl border-2 transition-all duration-300 cursor-pointer h-full overflow-hidden ${
-                      feature.highlight
-                        ? "border-primary/60 bg-gradient-to-br from-primary/10 via-card/95 to-violet-500/8 shadow-xl shadow-primary/15"
-                        : "border-border/60 bg-card/80 hover:border-primary/50 hover:bg-card/95 hover:shadow-xl hover:shadow-primary/10"
-                    }`}>
-                      {/* Subtle inner top shimmer line */}
-                      <div className={`absolute top-0 left-4 right-4 h-px rounded-full transition-opacity duration-300 ${
-                        feature.highlight
-                          ? "bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-80"
-                          : "bg-gradient-to-r from-transparent via-border/60 to-transparent opacity-40 group-hover:via-primary/40 group-hover:opacity-70"
-                      }`} />
-
-                      {feature.highlight && (
-                        <div className="absolute -top-2.5 -right-2.5 px-2.5 py-1 bg-gradient-to-r from-primary to-violet-600 text-primary-foreground text-[10px] font-semibold rounded-full tracking-wide shadow-md shadow-primary/30">
-                          New
-                        </div>
-                      )}
-
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300 ${
-                        feature.highlight
-                          ? "bg-primary/15 shadow-md shadow-primary/20"
-                          : "bg-muted/60 group-hover:bg-primary/10 group-hover:shadow-sm group-hover:shadow-primary/15"
-                      }`}>
-                        <Icon className={`w-6 h-6 transition-colors duration-300 ${
-                          feature.highlight ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                        }`} />
-                      </div>
-                      <h3 className="text-base font-semibold text-foreground mb-1 group-hover:text-foreground/90 transition-colors">{feature.label}</h3>
-                      <p className="text-sm text-muted-foreground font-light leading-relaxed">{feature.desc}</p>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        </RevealSection>
+        {/* FEATURES - Scroll Stacked Animated Cards */}
+        <ScrollStackedFeatures />
 
         {/* NOTEFLOWLM FLAGSHIP SECTION */}
         <RevealSection className="px-4 sm:px-6 py-16 sm:py-24 bg-gradient-to-br from-fuchsia-500/5 via-purple-500/5 to-indigo-500/5 border-t border-fuchsia-500/10">
