@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import LandingNav from "@/components/landing/LandingNav";
+import ScrollStackedFeatures from "@/components/landing/ScrollStackedFeatures";
 import {
   Dialog,
   DialogContent,
