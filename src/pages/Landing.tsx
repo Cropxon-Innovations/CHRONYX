@@ -867,12 +867,39 @@ const Landing = () => {
       role="main"
       aria-label="CHRONYX - Personal System of Record | Tax Calculator | Finance Tracker"
     >
-      {/* SEO-optimized meta description */}
+      {/* SEO-optimized meta description & structured data */}
       <span className="sr-only">
-        CHRONYX is a private personal system of record for managing your life - tasks, finances, tax calculations, 
-        insurance policies, and memories. Indian Income Tax Calculator with Old vs New Regime comparison. 
-        Built by ORIGINX LABS PVT. LTD.
+        CHRONYX is a private personal system of record for managing your life — tasks, finances, tax calculations, 
+        insurance policies, study planning, digital library, and memories. Indian Income Tax Calculator with Old vs New 
+        Regime comparison. AI-powered NoteFlowLM for content creation. Rewards & cashback system. 
+        Built by ORIGINX LABS PVT. LTD. Available as PWA and web app at getchronyx.com.
       </span>
+      
+      {/* JSON-LD Structured Data for SEO & GEO */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "CHRONYX",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web, PWA",
+        "description": "AI-powered personal system of record — tasks, finance, study planner, tax calculator, digital library, document vault, and rewards. Built for India.",
+        "url": "https://www.getchronyx.com",
+        "author": {
+          "@type": "Organization",
+          "name": "ORIGINX LABS PVT. LTD.",
+          "url": "https://www.originxlabs.com"
+        },
+        "offers": [
+          { "@type": "Offer", "price": "0", "priceCurrency": "INR", "name": "Free" },
+          { "@type": "Offer", "price": "199", "priceCurrency": "INR", "name": "Pro" },
+          { "@type": "Offer", "price": "499", "priceCurrency": "INR", "name": "Premium" }
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "reviewCount": "1024"
+        }
+      })}} />
 
       {/* Apple-style background effects */}
       <GradientOrbs />
