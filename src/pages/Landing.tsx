@@ -919,20 +919,6 @@ const Landing = () => {
               
               {/* Left - Content */}
               <div className="text-center lg:text-left space-y-6 sm:space-y-8">
-                {/* Logo + Badge */}
-                <motion.div 
-                  className="flex items-center justify-center lg:justify-start gap-3 sm:gap-4"
-                  variants={fadeInUp}
-                  initial="hidden"
-                  animate="visible"
-                  custom={0}
-                >
-                  <ChronxyxLogo className="w-12 h-12 sm:w-14 sm:h-14" />
-                  <div className="flex flex-col items-start">
-                    <span className="text-2xl sm:text-3xl font-semibold tracking-[0.25em]" style={{ color: 'hsl(var(--chronyx-brand))' }}>CHRONYX</span>
-                    <span className="text-[9px] sm:text-[10px] text-muted-foreground tracking-[0.3em] uppercase font-medium">Personal System of Record</span>
-                  </div>
-                </motion.div>
 
                 {/* Main Headline - Vercel Typography */}
                 <motion.h1 

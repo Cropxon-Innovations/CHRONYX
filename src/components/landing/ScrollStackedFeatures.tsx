@@ -257,6 +257,7 @@ const ScrollStackedFeatures = () => {
 
   return (
     <section
+      id="features"
       ref={sectionRef}
       className="relative px-4 sm:px-6 py-20 sm:py-32 bg-gradient-to-b from-muted/20 via-background to-muted/10"
       aria-labelledby="features-heading"

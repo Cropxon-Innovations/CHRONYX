@@ -98,30 +98,44 @@ const ChronxyxLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
 );
 
 const featureGroups = {
+  ai: {
+    label: "AI & Intelligence",
+    icon: Bot,
+    color: "from-fuchsia-500 to-purple-600",
+    items: [
+      { icon: Sparkles, label: "NoteFlowLM", desc: "AI images, slides & video from notes", href: "#features", highlight: true, flagship: true },
+      { icon: Bot, label: "NOVA AI", desc: "Personal AI assistant across all modules", href: "#features" },
+      { icon: Calculator, label: "TAXYN", desc: "AI-powered tax assistant", href: "#features", highlight: true },
+    ],
+  },
   productivity: {
     label: "Productivity",
     icon: Layers,
+    color: "from-emerald-500 to-teal-500",
     items: [
-      { icon: CheckSquare, label: "Tasks", desc: "Daily todos & planning", href: "#features" },
-      { icon: BookOpen, label: "Study", desc: "Syllabus & learning", href: "#features" },
-      { icon: Clock, label: "Lifespan", desc: "Time visualization", href: "#features" },
+      { icon: CheckSquare, label: "Tasks & Todos", desc: "Smart task management & streaks", href: "#features" },
+      { icon: BookOpen, label: "Study Planner", desc: "Syllabus tracking & timetable", href: "#features" },
+      { icon: Clock, label: "Lifespan", desc: "Time visualization tracker", href: "#features" },
     ],
   },
   finance: {
-    label: "Finance",
+    label: "Finance & Tax",
     icon: BarChart3,
+    color: "from-amber-500 to-orange-500",
     items: [
-      { icon: Wallet, label: "Finance", desc: "Budget & expenses", href: "#features" },
-      { icon: Calculator, label: "Tax", desc: "Smart tax calculator", href: "#features", highlight: true },
-      { icon: Heart, label: "Insurance", desc: "Policy management", href: "#features" },
+      { icon: Wallet, label: "Finance Tracker", desc: "Expenses, income & budgets", href: "#features" },
+      { icon: Calculator, label: "Tax Calculator", desc: "Old vs New regime comparison", href: "#features", highlight: true },
+      { icon: Heart, label: "Insurance", desc: "Policy management & reminders", href: "#features" },
     ],
   },
   personal: {
-    label: "Personal",
+    label: "Personal Vault",
     icon: Lock,
+    color: "from-indigo-500 to-blue-500",
     items: [
-      { icon: Image, label: "Memory", desc: "Private photo vault", href: "#features" },
-      { icon: Bot, label: "TAXYN", desc: "AI tax assistant", href: "#features" },
+      { icon: Image, label: "Memory Vault", desc: "Private photo & media storage", href: "#features" },
+      { icon: Shield, label: "Document Vault", desc: "Encrypted document storage", href: "#features" },
+      { icon: BookOpen, label: "Digital Library", desc: "Upload & read books (PDF, EPUB)", href: "#features" },
     ],
   },
 };
@@ -199,34 +213,52 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                       Features
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
-                      <div className="w-[600px] p-6 bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl">
-                        <div className="grid grid-cols-3 gap-6">
+                      <div className="w-[720px] p-6 bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-5 pb-4 border-b border-border/30">
+                          <div>
+                            <h3 className="text-sm font-semibold text-foreground">Explore Features</h3>
+                            <p className="text-xs text-muted-foreground mt-0.5">Everything in one ecosystem</p>
+                          </div>
+                          <Link to="/login" className="text-xs font-medium text-primary hover:underline flex items-center gap-1">
+                            Get started free <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6">
                           {Object.entries(featureGroups).map(([key, group]) => (
-                            <div key={key}>
-                              <div className="flex items-center gap-2 mb-4">
-                                <group.icon className="w-4 h-4 text-primary" />
-                                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{group.label}</span>
+                            <div key={key} className="space-y-2">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${(group as any).color} flex items-center justify-center`}>
+                                  <group.icon className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <span className="text-xs font-semibold text-foreground tracking-wide">{group.label}</span>
                               </div>
-                              <div className="space-y-1">
+                              <div className="space-y-0.5">
                                 {group.items.map((item) => (
                                   <NavigationMenuLink key={item.label} asChild>
                                     <button
                                       onClick={() => scrollToSection("features")}
-                                      className={`flex items-start gap-3 w-full p-3 rounded-lg transition-all hover:bg-muted/50 ${
-                                        item.highlight ? "bg-primary/5 border border-primary/20" : ""
+                                      className={`flex items-center gap-3 w-full p-2.5 rounded-xl transition-all hover:bg-muted/50 group/item ${
+                                        (item as any).flagship ? "bg-gradient-to-r from-fuchsia-500/5 to-purple-500/5 border border-fuchsia-500/20" :
+                                        item.highlight ? "bg-primary/5 border border-primary/10" : ""
                                       }`}
                                     >
-                                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                                        item.highlight ? "bg-primary/10" : "bg-muted/50"
+                                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                        (item as any).flagship ? "bg-gradient-to-br from-fuchsia-500 to-purple-600" :
+                                        item.highlight ? "bg-primary/10" : "bg-muted/60"
                                       }`}>
-                                        <item.icon className={`w-4 h-4 ${item.highlight ? "text-primary" : "text-muted-foreground"}`} />
+                                        <item.icon className={`w-4 h-4 ${(item as any).flagship ? "text-white" : item.highlight ? "text-primary" : "text-muted-foreground group-hover/item:text-primary transition-colors"}`} />
                                       </div>
-                                      <div className="text-left">
-                                        <p className={`text-sm font-medium ${item.highlight ? "text-primary" : ""}`}>{item.label}</p>
-                                        <p className="text-xs text-muted-foreground">{item.desc}</p>
+                                      <div className="text-left flex-1 min-w-0">
+                                        <p className={`text-sm font-medium leading-tight ${(item as any).flagship ? "text-fuchsia-600 dark:text-fuchsia-400" : item.highlight ? "text-primary" : "text-foreground"}`}>{item.label}</p>
+                                        <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{item.desc}</p>
                                       </div>
-                                      {item.highlight && (
-                                        <span className="ml-auto text-[9px] px-2 py-0.5 bg-primary/20 text-primary rounded-full">New</span>
+                                      {(item as any).flagship && (
+                                        <span className="text-[8px] px-1.5 py-0.5 bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white rounded-full font-bold shrink-0">★ FLAGSHIP</span>
+                                      )}
+                                      {item.highlight && !(item as any).flagship && (
+                                        <span className="text-[9px] px-1.5 py-0.5 bg-primary/15 text-primary rounded-full font-medium shrink-0">New</span>
                                       )}
                                     </button>
                                   </NavigationMenuLink>
@@ -235,28 +267,25 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                             </div>
                           ))}
                         </div>
-                        <div className="mt-6 pt-4 border-t border-border/30 flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground">
-                            All features included in every plan
+
+                        <div className="mt-5 pt-4 border-t border-border/30 flex items-center justify-between">
+                          <p className="text-[11px] text-muted-foreground">
+                            All core features included in every plan
                           </p>
-                          <Link to="/login" className="text-xs text-primary hover:underline flex items-center gap-1">
-                            Get started <ArrowRight className="w-3 h-3" />
-                          </Link>
+                          <div className="flex items-center gap-4">
+                            <Link to="/pricing" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                              View Pricing
+                            </Link>
+                            <Link to="/login" className="text-xs font-medium px-3 py-1.5 bg-foreground text-background rounded-full hover:bg-foreground/90 transition-colors">
+                              Try Free →
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
                 </NavigationMenuList>
               </NavigationMenu>
-
-              {/* Pricing */}
-              <Link
-                to="/pricing"
-                className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/30"
-              >
-                <CreditCard className="w-4 h-4" />
-                Pricing
-              </Link>
 
               {/* About */}
               <Link
@@ -481,16 +510,6 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                     ))}
                   </CollapsibleContent>
                 </Collapsible>
-
-                {/* Pricing */}
-                <Link
-                  to="/pricing"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 w-full p-4 rounded-xl hover:bg-muted/30 transition-colors"
-                >
-                  <CreditCard className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm font-medium">Pricing</span>
-                </Link>
 
                 {/* About */}
                 <Link
