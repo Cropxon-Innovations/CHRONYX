@@ -98,30 +98,44 @@ const ChronxyxLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
 );
 
 const featureGroups = {
+  ai: {
+    label: "AI & Intelligence",
+    icon: Bot,
+    color: "from-fuchsia-500 to-purple-600",
+    items: [
+      { icon: Sparkles, label: "NoteFlowLM", desc: "AI images, slides & video from notes", href: "#features", highlight: true, flagship: true },
+      { icon: Bot, label: "NOVA AI", desc: "Personal AI assistant across all modules", href: "#features" },
+      { icon: Calculator, label: "TAXYN", desc: "AI-powered tax assistant", href: "#features", highlight: true },
+    ],
+  },
   productivity: {
     label: "Productivity",
     icon: Layers,
+    color: "from-emerald-500 to-teal-500",
     items: [
-      { icon: CheckSquare, label: "Tasks", desc: "Daily todos & planning", href: "#features" },
-      { icon: BookOpen, label: "Study", desc: "Syllabus & learning", href: "#features" },
-      { icon: Clock, label: "Lifespan", desc: "Time visualization", href: "#features" },
+      { icon: CheckSquare, label: "Tasks & Todos", desc: "Smart task management & streaks", href: "#features" },
+      { icon: BookOpen, label: "Study Planner", desc: "Syllabus tracking & timetable", href: "#features" },
+      { icon: Clock, label: "Lifespan", desc: "Time visualization tracker", href: "#features" },
     ],
   },
   finance: {
-    label: "Finance",
+    label: "Finance & Tax",
     icon: BarChart3,
+    color: "from-amber-500 to-orange-500",
     items: [
-      { icon: Wallet, label: "Finance", desc: "Budget & expenses", href: "#features" },
-      { icon: Calculator, label: "Tax", desc: "Smart tax calculator", href: "#features", highlight: true },
-      { icon: Heart, label: "Insurance", desc: "Policy management", href: "#features" },
+      { icon: Wallet, label: "Finance Tracker", desc: "Expenses, income & budgets", href: "#features" },
+      { icon: Calculator, label: "Tax Calculator", desc: "Old vs New regime comparison", href: "#features", highlight: true },
+      { icon: Heart, label: "Insurance", desc: "Policy management & reminders", href: "#features" },
     ],
   },
   personal: {
-    label: "Personal",
+    label: "Personal Vault",
     icon: Lock,
+    color: "from-indigo-500 to-blue-500",
     items: [
-      { icon: Image, label: "Memory", desc: "Private photo vault", href: "#features" },
-      { icon: Bot, label: "TAXYN", desc: "AI tax assistant", href: "#features" },
+      { icon: Image, label: "Memory Vault", desc: "Private photo & media storage", href: "#features" },
+      { icon: Shield, label: "Document Vault", desc: "Encrypted document storage", href: "#features" },
+      { icon: BookOpen, label: "Digital Library", desc: "Upload & read books (PDF, EPUB)", href: "#features" },
     ],
   },
 };
