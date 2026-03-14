@@ -511,16 +511,6 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                   </CollapsibleContent>
                 </Collapsible>
 
-                {/* Pricing */}
-                <Link
-                  to="/pricing"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 w-full p-4 rounded-xl hover:bg-muted/30 transition-colors"
-                >
-                  <CreditCard className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm font-medium">Pricing</span>
-                </Link>
-
                 {/* About */}
                 <Link
                   to="/about"
