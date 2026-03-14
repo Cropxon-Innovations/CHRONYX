@@ -287,15 +287,6 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                 </NavigationMenuList>
               </NavigationMenu>
 
-              {/* Pricing */}
-              <Link
-                to="/pricing"
-                className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/30"
-              >
-                <CreditCard className="w-4 h-4" />
-                Pricing
-              </Link>
-
               {/* About */}
               <Link
                 to="/about"
