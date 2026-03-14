@@ -774,21 +774,7 @@ const Landing = () => {
     setMounted(true);
   }, []);
 
-  const features = [
-    { icon: CheckSquare, label: "Tasks", desc: "Daily todos & productivity" },
-    { icon: BookOpen, label: "Study", desc: "Syllabus & learning tracker" },
-    { icon: Library, label: "Library", desc: "Upload books & notes", highlight: true },
-    { icon: Wallet, label: "Finance", desc: "Budget, loans & savings" },
-    { icon: Calculator, label: "Tax", desc: "Smart Indian tax calculator", highlight: true },
-    { icon: Heart, label: "Insurance", desc: "Policy management" },
-    { icon: Image, label: "Memory", desc: "Private photo vault" },
-    { icon: Clock, label: "Lifespan", desc: "Time visualization" },
-    { icon: Share2, label: "Share", desc: "Seamless content sharing", highlight: true },
-    { icon: Gift, label: "Rewards", desc: "Earn & redeem points", highlight: true },
-    { icon: TreePine, label: "Family Tree", desc: "Genealogy records" },
-    { icon: FileText, label: "Documents", desc: "Secure document vault" },
-    { icon: Folder, label: "Notes", desc: "Smart note-taking" },
-  ];
+  // Features are now in ScrollStackedFeatures component
 
   const stats = [
     { value: "10K+", label: "Users" },
