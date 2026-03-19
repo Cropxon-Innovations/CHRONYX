@@ -62,7 +62,7 @@ const ChronxyxLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
   <img
     src={chronyxLogoImg}
     alt="CHRONYX"
-    className={cn(className, "dark:invert")}
+    className={`${className} dark:invert`}
   />
 );
 
