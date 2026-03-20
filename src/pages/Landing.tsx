@@ -954,7 +954,7 @@ const Landing = () => {
                   custom={3}
                 >
                   {[
-                    { icon: Sparkles, label: "NoteFlowLM", highlight: true, flagship: true },
+                    { icon: Sparkles, label: "NoteFlow", highlight: true, flagship: true },
                     { icon: Calculator, label: "Tax Calculator", highlight: true },
                     { icon: Wallet, label: "Finance" },
                     { icon: CheckSquare, label: "Tasks" },
