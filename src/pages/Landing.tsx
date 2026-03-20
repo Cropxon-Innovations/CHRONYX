@@ -144,8 +144,8 @@ const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
 
 // NoteFlowLM Flagship Feature Card - Premium design
 const NoteFlowLMCard = {
-  id: "noteflowlm",
-  title: "NoteFlowLM",
+  id: "noteflow",
+  title: "NoteFlow",
   subtitle: "AI-Powered Note Intelligence",
   icon: Sparkles,
   color: "from-fuchsia-500 via-purple-500 to-indigo-500",
