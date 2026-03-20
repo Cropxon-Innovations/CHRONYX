@@ -72,7 +72,7 @@ const featureGroups = {
     icon: Bot,
     color: "from-fuchsia-500 to-purple-600",
     items: [
-      { icon: Sparkles, label: "NoteFlowLM", desc: "AI images, slides & video from notes", href: "#features", highlight: true, flagship: true },
+      { icon: Sparkles, label: "NoteFlow", desc: "AI images, slides & video from notes", href: "#features", highlight: true, flagship: true },
       { icon: Bot, label: "NOVA AI", desc: "Personal AI assistant across all modules", href: "#features" },
       { icon: Calculator, label: "TAXYN", desc: "AI-powered tax assistant", href: "#features", highlight: true },
     ],
