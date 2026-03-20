@@ -170,13 +170,16 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center group">
+            <Link to="/" className="flex items-center gap-3 group">
               <motion.div
                 whileHover={{ rotate: 180 }}
                 transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
               >
-                <ChronxyxLogo className="w-10 h-10" />
+                <ChronxyxLogo className="w-9 h-9" />
               </motion.div>
+              <span className="text-lg font-semibold tracking-[0.2em] transition-colors" style={{ color: 'hsl(var(--chronyx-brand))' }}>
+                CHRONYX
+              </span>
             </Link>
 
             {/* Desktop Navigation - Apple/Vercel style */}
