@@ -72,7 +72,7 @@ const featureGroups = {
     icon: Bot,
     color: "from-fuchsia-500 to-purple-600",
     items: [
-      { icon: Sparkles, label: "NoteFlowLM", desc: "AI images, slides & video from notes", href: "#features", highlight: true, flagship: true },
+      { icon: Sparkles, label: "NoteFlow", desc: "AI images, slides & video from notes", href: "#features", highlight: true, flagship: true },
       { icon: Bot, label: "NOVA AI", desc: "Personal AI assistant across all modules", href: "#features" },
       { icon: Calculator, label: "TAXYN", desc: "AI-powered tax assistant", href: "#features", highlight: true },
     ],
@@ -159,16 +159,13 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
+            <Link to="/" className="flex items-center group">
               <motion.div
                 whileHover={{ rotate: 180 }}
                 transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
               >
-                <ChronxyxLogo className="w-9 h-9" />
+                <ChronxyxLogo className="w-10 h-10" />
               </motion.div>
-              <span className="text-lg font-semibold tracking-[0.2em] transition-colors" style={{ color: 'hsl(var(--chronyx-brand))' }}>
-                CHRONYX
-              </span>
             </Link>
 
             {/* Desktop Navigation - Apple/Vercel style */}

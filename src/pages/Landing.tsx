@@ -50,6 +50,7 @@ import {
 
  // Import the demo video
  import chronxyxDemoVideo from "@/assets/chronyx-demo.mp4";
+ import chronyxLogoImg from "@/assets/chronyx-logo.png";
 
 // Apple-style SF Pro inspired typography animations
 const fadeInUp = {
@@ -144,8 +145,8 @@ const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
 
 // NoteFlowLM Flagship Feature Card - Premium design
 const NoteFlowLMCard = {
-  id: "noteflowlm",
-  title: "NoteFlowLM",
+  id: "noteflow",
+  title: "NoteFlow",
   subtitle: "AI-Powered Note Intelligence",
   icon: Sparkles,
   color: "from-fuchsia-500 via-purple-500 to-indigo-500",
@@ -954,7 +955,7 @@ const Landing = () => {
                   custom={3}
                 >
                   {[
-                    { icon: Sparkles, label: "NoteFlowLM", highlight: true, flagship: true },
+                    { icon: Sparkles, label: "NoteFlow", highlight: true, flagship: true },
                     { icon: Calculator, label: "Tax Calculator", highlight: true },
                     { icon: Wallet, label: "Finance" },
                     { icon: CheckSquare, label: "Tasks" },
@@ -1084,7 +1085,7 @@ const Landing = () => {
         {/* FEATURES - Scroll Stacked Animated Cards */}
         <ScrollStackedFeatures />
 
-        {/* NOTEFLOWLM FLAGSHIP SECTION */}
+        {/* NOTEFLOW FLAGSHIP SECTION */}
         <RevealSection className="px-4 sm:px-6 py-16 sm:py-24 bg-gradient-to-br from-fuchsia-500/5 via-purple-500/5 to-indigo-500/5 border-t border-fuchsia-500/10">
           <div className="max-w-5xl mx-auto">
             <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
@@ -1112,7 +1113,7 @@ const Landing = () => {
                       <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                     </motion.div>
                     <div>
-                      <h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent">NoteFlowLM</h3>
+                      <h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent">NoteFlow</h3>
                       <p className="text-xs sm:text-sm text-muted-foreground">AI-Powered Note Intelligence</p>
                     </div>
                   </div>
@@ -1172,11 +1173,11 @@ const Landing = () => {
                   </div>
                 </motion.div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-4 sm:mb-6 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
-                  NoteFlowLM: <span className="bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent">Transform Notes into Anything</span>
+                  NoteFlow: <span className="bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent">Transform Notes into Anything</span>
                 </h2>
                 <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 font-light leading-relaxed">
                   The future of note-taking. Convert your notes into stunning images, professional slides, 
-                  and explainer videos with AI. Your direct competitor to NotebookLM.
+                  and explainer videos with AI.
                 </p>
                 <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                   {[
@@ -1201,7 +1202,7 @@ const Landing = () => {
                     whileTap={{ scale: 0.98 }}
                   >
                     <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Try NoteFlowLM
+                    Try NoteFlow
                     <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform" />
                   </motion.button>
                 </Link>
@@ -1651,7 +1652,7 @@ const Landing = () => {
               {/* Brand */}
               <div className="col-span-2 md:col-span-1">
                 <div className="flex items-center gap-3 mb-4">
-                  <ChronxyxLogo className="w-10 h-10" />
+                  <img src={chronyxLogoImg} alt="CHRONYX" className="w-10 h-10 dark:invert" />
                   <span className="text-xl font-semibold tracking-[0.15em]" style={{ color: 'hsl(var(--chronyx-brand))' }}>CHRONYX</span>
                 </div>
                 <p className="text-sm text-muted-foreground font-light">A quiet space for your life.</p>
