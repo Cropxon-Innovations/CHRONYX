@@ -17,41 +17,18 @@ const sizeConfig = {
 
 // CHRONYX Logo Component - Consistent with Landing Page (no "C" letter)
 const LogoSVG = () => (
-  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-    <defs>
-      <linearGradient id="circular-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="hsl(var(--primary))" />
-        <stop offset="100%" stopColor="hsl(var(--primary) / 0.6)" />
-      </linearGradient>
-    </defs>
-    {/* Outer ring */}
-    <circle 
-      cx="50" cy="50" r="45" 
-      stroke="url(#circular-logo-gradient)" 
-      strokeWidth="2" 
-      fill="none"
-      opacity="0.8"
+  <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+    <circle cx="256" cy="256" r="248" fill="currentColor" />
+    <circle cx="256" cy="256" r="200" fill="none" stroke="hsl(var(--background))" strokeWidth="32" />
+    <circle cx="256" cy="256" r="168" fill="currentColor" />
+    <path
+      d="M256 128 L256 216 L168 216 L168 256 L216 256 L216 344 L256 344 L256 296 L344 296 L344 256 L296 256 L296 168 L256 168 L256 128Z"
+      fill="hsl(var(--background))"
     />
-    {/* Inner dashed ring */}
-    <circle 
-      cx="50" cy="50" r="35" 
-      stroke="hsl(var(--primary))" 
-      strokeWidth="1" 
-      strokeDasharray="6 4"
-      fill="none"
-      opacity="0.4"
-    />
-    {/* Center dot */}
-    <circle 
-      cx="50" cy="50" r="5" 
-      fill="hsl(var(--primary))"
-      opacity="0.9"
-    />
-    {/* Time markers at 12, 3, 6, 9 o'clock positions */}
-    <circle cx="50" cy="10" r="2" fill="hsl(var(--primary))" opacity="0.5"/>
-    <circle cx="90" cy="50" r="2" fill="hsl(var(--primary))" opacity="0.5"/>
-    <circle cx="50" cy="90" r="2" fill="hsl(var(--primary))" opacity="0.5"/>
-    <circle cx="10" cy="50" r="2" fill="hsl(var(--primary))" opacity="0.5"/>
+    <rect x="168" y="168" width="40" height="48" fill="hsl(var(--background))" />
+    <rect x="304" y="296" width="40" height="48" fill="hsl(var(--background))" />
+    <rect x="296" y="168" width="48" height="40" fill="hsl(var(--background))" />
+    <rect x="168" y="304" width="48" height="40" fill="hsl(var(--background))" />
   </svg>
 );
 
