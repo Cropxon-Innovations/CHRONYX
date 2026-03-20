@@ -1112,7 +1112,7 @@ const Landing = () => {
                       <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                     </motion.div>
                     <div>
-                      <h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent">NoteFlowLM</h3>
+                      <h3 className="text-xl sm:text-2xl font-semibold bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent">NoteFlow</h3>
                       <p className="text-xs sm:text-sm text-muted-foreground">AI-Powered Note Intelligence</p>
                     </div>
                   </div>
