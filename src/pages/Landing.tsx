@@ -1176,7 +1176,7 @@ const Landing = () => {
                 </h2>
                 <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 font-light leading-relaxed">
                   The future of note-taking. Convert your notes into stunning images, professional slides, 
-                  and explainer videos with AI. Your direct competitor to NotebookLM.
+                  and explainer videos with AI.
                 </p>
                 <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                   {[
