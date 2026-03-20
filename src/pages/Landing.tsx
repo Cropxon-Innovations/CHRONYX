@@ -118,28 +118,20 @@ const NoiseOverlay = () => (
   />
 );
 
-// CHRONYX Logo Component
+// CHRONYX Logo Component - Geometric angular symbol
 const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="hsl(var(--primary))" />
-        <stop offset="100%" stopColor="hsl(var(--primary) / 0.6)" />
-      </linearGradient>
-    </defs>
-    <circle cx="50" cy="50" r="45" stroke="url(#logo-gradient)" strokeWidth="2" fill="none" className="opacity-80" />
-    <circle cx="50" cy="50" r="35" stroke="hsl(var(--primary))" strokeWidth="1" strokeDasharray="6 4" fill="none" className="opacity-40" />
-    <circle cx="50" cy="50" r="5" fill="hsl(var(--primary))" className="opacity-90" />
-    {[0, 90, 180, 270].map((angle, i) => (
-      <circle 
-        key={i}
-        cx={50 + 40 * Math.cos((angle - 90) * Math.PI / 180)}
-        cy={50 + 40 * Math.sin((angle - 90) * Math.PI / 180)}
-        r="2"
-        fill="hsl(var(--primary))"
-        className="opacity-50"
-      />
-    ))}
+  <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="256" cy="256" r="248" fill="currentColor" />
+    <circle cx="256" cy="256" r="200" fill="none" stroke="hsl(var(--background))" strokeWidth="32" />
+    <circle cx="256" cy="256" r="168" fill="currentColor" />
+    <path
+      d="M256 128 L256 216 L168 216 L168 256 L216 256 L216 344 L256 344 L256 296 L344 296 L344 256 L296 256 L296 168 L256 168 L256 128Z"
+      fill="hsl(var(--background))"
+    />
+    <rect x="168" y="168" width="40" height="48" fill="hsl(var(--background))" />
+    <rect x="304" y="296" width="40" height="48" fill="hsl(var(--background))" />
+    <rect x="296" y="168" width="48" height="40" fill="hsl(var(--background))" />
+    <rect x="168" y="304" width="48" height="40" fill="hsl(var(--background))" />
   </svg>
 );
 
