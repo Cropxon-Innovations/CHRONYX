@@ -1644,7 +1644,7 @@ const Landing = () => {
               {/* Brand */}
               <div className="col-span-2 md:col-span-1">
                 <div className="flex items-center gap-3 mb-4">
-                  <img src={chronyxLogoImg} alt="CHRONYX" className="w-10 h-10 dark:invert" />
+                  <ChronxyxLogo className="w-10 h-10" />
                   <span className="text-xl font-semibold tracking-[0.15em]" style={{ color: 'hsl(var(--chronyx-brand))' }}>CHRONYX</span>
                 </div>
                 <p className="text-sm text-muted-foreground font-light">A quiet space for your life.</p>
