@@ -50,6 +50,7 @@ import {
 
  // Import the demo video
  import chronxyxDemoVideo from "@/assets/chronyx-demo.mp4";
+ import chronyxLogoImg from "@/assets/chronyx-logo.png";
 
 // Apple-style SF Pro inspired typography animations
 const fadeInUp = {
