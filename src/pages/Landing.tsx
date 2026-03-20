@@ -1084,7 +1084,7 @@ const Landing = () => {
         {/* FEATURES - Scroll Stacked Animated Cards */}
         <ScrollStackedFeatures />
 
-        {/* NOTEFLOWLM FLAGSHIP SECTION */}
+        {/* NOTEFLOW FLAGSHIP SECTION */}
         <RevealSection className="px-4 sm:px-6 py-16 sm:py-24 bg-gradient-to-br from-fuchsia-500/5 via-purple-500/5 to-indigo-500/5 border-t border-fuchsia-500/10">
           <div className="max-w-5xl mx-auto">
             <div className="grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
