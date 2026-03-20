@@ -55,15 +55,26 @@ interface LandingNavProps {
   onDesktopDownload?: () => void;
 }
 
-// CHRONYX Logo Component - CX Monogram
-import chronyxLogoImg from "@/assets/chronyx-logo.png";
-
+// CHRONYX Logo Icon - Geometric angular symbol in concentric circles
 const ChronxyxLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
-  <img
-    src={chronyxLogoImg}
-    alt="CHRONYX"
-    className={`${className} dark:invert`}
-  />
+  <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Outer circle */}
+    <circle cx="256" cy="256" r="248" fill="currentColor" />
+    {/* White ring */}
+    <circle cx="256" cy="256" r="200" fill="none" stroke="hsl(var(--background))" strokeWidth="32" />
+    {/* Inner filled circle */}
+    <circle cx="256" cy="256" r="168" fill="currentColor" />
+    {/* Geometric angular symbol - stylized interlocking arms */}
+    <path
+      d="M256 128 L256 216 L168 216 L168 256 L216 256 L216 344 L256 344 L256 296 L344 296 L344 256 L296 256 L296 168 L256 168 L256 128Z"
+      fill="hsl(var(--background))"
+    />
+    {/* Extended arms */}
+    <rect x="168" y="168" width="40" height="48" fill="hsl(var(--background))" />
+    <rect x="304" y="296" width="40" height="48" fill="hsl(var(--background))" />
+    <rect x="296" y="168" width="48" height="40" fill="hsl(var(--background))" />
+    <rect x="168" y="304" width="48" height="40" fill="hsl(var(--background))" />
+  </svg>
 );
 
 const featureGroups = {
@@ -159,13 +170,16 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center group">
+            <Link to="/" className="flex items-center gap-3 group">
               <motion.div
                 whileHover={{ rotate: 180 }}
                 transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
               >
-                <ChronxyxLogo className="w-10 h-10" />
+                <ChronxyxLogo className="w-9 h-9" />
               </motion.div>
+              <span className="text-lg font-semibold tracking-[0.2em] transition-colors" style={{ color: 'hsl(var(--chronyx-brand))' }}>
+                CHRONYX
+              </span>
             </Link>
 
             {/* Desktop Navigation - Apple/Vercel style */}
