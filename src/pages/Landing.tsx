@@ -1172,7 +1172,7 @@ const Landing = () => {
                   </div>
                 </motion.div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold mb-4 sm:mb-6 tracking-tight" style={{ color: 'hsl(var(--chronyx-brand))' }}>
-                  NoteFlowLM: <span className="bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent">Transform Notes into Anything</span>
+                  NoteFlow: <span className="bg-gradient-to-r from-fuchsia-500 to-purple-600 bg-clip-text text-transparent">Transform Notes into Anything</span>
                 </h2>
                 <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 font-light leading-relaxed">
                   The future of note-taking. Convert your notes into stunning images, professional slides, 
