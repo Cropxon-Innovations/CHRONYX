@@ -168,33 +168,19 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <motion.div
-                whileHover={{ rotate: 180 }}
-                transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
-              >
-                <ChronxyxLogo className="w-9 h-9" />
-              </motion.div>
-              <span className="text-lg font-semibold tracking-[0.2em] transition-colors" style={{ color: 'hsl(var(--chronyx-brand))' }}>
-                CHRONYX
-              </span>
-            </Link>
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16 gap-4">
 
-            {/* Desktop Navigation - Apple/Vercel style */}
-            <nav className="hidden md:flex items-center gap-1">
-              {/* Features Mega Menu */}
+            {/* LEFT: Features mega menu + About + Pricing */}
+            <nav className="hidden md:flex items-center justify-start gap-1">
               <NavigationMenu>
                 <NavigationMenuList>
                   <NavigationMenuItem>
                     <NavigationMenuTrigger className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
-                      <Sparkles className="w-4 h-4" />
+                      <Sparkles className="w-4 h-4 text-fuchsia-500" />
                       Features
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
                       <div className="w-[720px] p-6 bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl shadow-2xl">
-                        {/* Header */}
                         <div className="flex items-center justify-between mb-5 pb-4 border-b border-border/30">
                           <div>
                             <h3 className="text-sm font-semibold text-foreground">Explore Features</h3>
@@ -235,7 +221,7 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                                         <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{item.desc}</p>
                                       </div>
                                       {(item as any).flagship && (
-                                        <span className="text-[8px] px-1.5 py-0.5 bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white rounded-full font-bold shrink-0">★ FLAGSHIP</span>
+                                        <span className="text-[8px] px-1.5 py-0.5 bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white rounded-full font-bold shrink-0">★</span>
                                       )}
                                       {item.highlight && !(item as any).flagship && (
                                         <span className="text-[9px] px-1.5 py-0.5 bg-primary/15 text-primary rounded-full font-medium shrink-0">New</span>
@@ -247,48 +233,53 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                             </div>
                           ))}
                         </div>
-
-                        <div className="mt-5 pt-4 border-t border-border/30 flex items-center justify-between">
-                          <p className="text-[11px] text-muted-foreground">
-                            All core features included in every plan
-                          </p>
-                          <div className="flex items-center gap-4">
-                            <Link to="/pricing" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                              View Pricing
-                            </Link>
-                            <Link to="/login" className="text-xs font-medium px-3 py-1.5 bg-foreground text-background rounded-full hover:bg-foreground/90 transition-colors">
-                              Try Free →
-                            </Link>
-                          </div>
-                        </div>
                       </div>
                     </NavigationMenuContent>
                   </NavigationMenuItem>
                 </NavigationMenuList>
               </NavigationMenu>
 
-              {/* About */}
               <Link
                 to="/about"
-                className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/30"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors rounded-lg hover:bg-emerald-500/5"
               >
                 <Info className="w-4 h-4" />
                 About
               </Link>
 
-              {/* Contact - Navigate to /contact page */}
+              <Link
+                to="/pricing"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors rounded-lg hover:bg-amber-500/5"
+              >
+                <BarChart3 className="w-4 h-4" />
+                Pricing
+              </Link>
+            </nav>
+
+            {/* CENTER: Logo (icon only — no wordmark) */}
+            <Link to="/" className="flex items-center justify-center mx-auto group" aria-label="CHRONYX home">
+              <motion.div
+                whileHover={{ rotate: 180, scale: 1.05 }}
+                transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] }}
+                className="text-foreground"
+              >
+                <ChronxyxLogo className="w-10 h-10" />
+              </motion.div>
+            </Link>
+
+            {/* RIGHT: Contact, Download, Theme, Enter */}
+            <nav className="hidden md:flex items-center justify-end gap-1">
               <Link
                 to="/contact"
-                className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/30"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors rounded-lg hover:bg-sky-500/5"
               >
                 <Mail className="w-4 h-4" />
                 Contact
               </Link>
 
-              {/* Download Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/30">
+                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors rounded-lg hover:bg-violet-500/5">
                     <Download className="w-4 h-4" />
                     Download
                     <ChevronDown className="w-3 h-3" />
@@ -296,12 +287,9 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64 bg-card/95 backdrop-blur-xl border-border/50">
                   <DropdownMenuLabel className="text-xs text-muted-foreground">Desktop Apps</DropdownMenuLabel>
-                  <DropdownMenuItem
-                    className="flex items-center gap-3 py-3 cursor-pointer"
-                    onClick={onDesktopDownload}
-                  >
+                  <DropdownMenuItem className="flex items-center gap-3 py-3 cursor-pointer" onClick={onDesktopDownload}>
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
-                      <span className="text-sm"></span>
+                      <Laptop className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium">macOS</p>
@@ -309,10 +297,7 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                     </div>
                     <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded-full font-medium">Soon</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="flex items-center gap-3 py-3 cursor-pointer"
-                    onClick={onDesktopDownload}
-                  >
+                  <DropdownMenuItem className="flex items-center gap-3 py-3 cursor-pointer" onClick={onDesktopDownload}>
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
                       <Laptop className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
@@ -323,9 +308,7 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                     <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded-full font-medium">Soon</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="flex items-center gap-3 py-3 cursor-pointer text-primary"
-                  >
+                  <DropdownMenuItem className="flex items-center gap-3 py-3 cursor-pointer text-primary">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Shield className="w-5 h-5 text-primary" />
                     </div>
@@ -337,10 +320,8 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Divider */}
               <div className="w-px h-5 bg-border/50 mx-2" />
 
-              {/* Theme Toggle */}
               {mounted && (
                 <motion.button
                   onClick={toggleTheme}
@@ -357,28 +338,26 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
                       exit={{ rotate: 90, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {theme === "dark" ? (
-                        <Sun className="w-4 h-4" />
-                      ) : (
-                        <Moon className="w-4 h-4" />
-                      )}
+                      {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                     </motion.div>
                   </AnimatePresence>
                 </motion.button>
               )}
 
-              {/* Enter Button */}
               <Link to="/login">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="ml-3 flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all"
+                  className="ml-2 flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all"
                 >
                   <Shield className="w-4 h-4" />
                   Enter
                 </motion.button>
               </Link>
             </nav>
+
+            {/* Mobile spacer for grid layout */}
+            <div className="md:hidden" />
 
             {/* Mobile Menu Button */}
             <div className="flex md:hidden items-center gap-2">
