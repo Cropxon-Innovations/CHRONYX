@@ -13,7 +13,7 @@ const Tools = () => {
     {
       id: "convertix",
       name: "CONVERTIX",
-      subtitle: "By ORIGINX LABS",
+      subtitle: "",
       description: "Universal file conversion tool for PDFs, images, documents, and more. Convert between formats instantly with AI-powered precision.",
       icon: Zap,
       color: "from-emerald-500 to-teal-500",
@@ -55,7 +55,7 @@ const Tools = () => {
           <div className="flex items-center gap-3">
             <h1 className="text-2xl sm:text-3xl font-bold">Tools</h1>
             <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-              BY ORIGINX LABS
+              
             </Badge>
           </div>
           <p className="text-muted-foreground text-sm sm:text-base">
@@ -153,12 +153,12 @@ const Tools = () => {
         <p>
           <span className="font-semibold text-emerald-600">CONVERTIX</span> is a universal file conversion platform by{" "}
           <a
-            href="https://www.originxlabs.com"
+            href="https://www.getchronyx.com"
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-primary hover:underline"
           >
-            ORIGINX LABS PVT. LTD.
+            CHRONYX
           </a>
         </p>
         <p className="text-muted-foreground/70">

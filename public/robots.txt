@@ -1,7 +1,7 @@
 # =========================================
 # CHRONYX - Personal System of Record
 # https://www.getchronyx.com
-# by ORIGINX LABS PVT. LTD.
+# 
 # =========================================
 # Personal Finance | Study Planner | Notes
 # Document Vault | Timetable | Templates

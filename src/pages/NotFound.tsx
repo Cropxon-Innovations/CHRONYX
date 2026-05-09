@@ -165,12 +165,12 @@ const NotFound = () => {
           LABS PVT. LTD.
         </p>
         <a 
-          href="https://www.originxlabs.com" 
+          href="https://www.getchronyx.com" 
           target="_blank" 
           rel="noopener noreferrer"
           className="text-[9px] tracking-[0.1em] text-muted-foreground/60 hover:text-muted-foreground transition-colors sm:text-[10px]"
         >
-          www.originxlabs.com
+          www.getchronyx.com
         </a>
       </motion.div>
     </div>

@@ -115,7 +115,7 @@ export const EngineeringBlogSection = ({ className }: EngineeringBlogSectionProp
       </div>
 
       <p className="text-xs text-muted-foreground text-center pt-2">
-        Powered by <span className="font-medium">ORIGINX LABS</span> • Study & Engineering Resources
+        Powered by <span className="font-medium">CHRONYX</span> • Study & Engineering Resources
       </p>
     </div>
   );

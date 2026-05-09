@@ -146,7 +146,7 @@ const AdminPanel = () => {
             {!isSidebarCollapsed && (
               <div className="overflow-hidden">
                 <h1 className="font-semibold text-sm truncate">CHRONYX Admin</h1>
-                <p className="text-[10px] text-muted-foreground truncate">OriginX Labs Control</p>
+                <p className="text-[10px] text-muted-foreground truncate">CHRONYX Control</p>
               </div>
             )}
           </div>

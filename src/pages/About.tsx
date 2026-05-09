@@ -56,7 +56,7 @@ const About = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-xl font-bold tracking-tight">CHRONYX</span>
-              <span className="text-xs text-muted-foreground">by ORIGINX LABS</span>
+              <span className="text-xs text-muted-foreground"></span>
             </div>
             <ThemeToggle />
           </div>
@@ -249,16 +249,16 @@ const About = () => {
                   <Heart className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-bold">ORIGINX LABS PVT. LTD.</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold">CHRONYX</h2>
                   <p className="text-sm text-muted-foreground">The Company Behind CHRONYX</p>
                 </div>
               </div>
               <div className="space-y-5 text-muted-foreground leading-relaxed">
                 <p>
-                  <strong className="text-foreground">ORIGINX LABS PVT. LTD.</strong> is an innovative 
+                  <strong className="text-foreground">CHRONYX</strong> is an innovative 
                   technology company based in India, dedicated to building products that make a meaningful 
                   difference in people's lives. Founded with the vision of leveraging technology for 
-                  positive impact, ORIGINX LABS focuses on creating solutions that are both powerful and accessible.
+                  positive impact, CHRONYX focuses on creating solutions that are both powerful and accessible.
                 </p>
                 <p>
                   CHRONYX is our flagship consumer product, representing our commitment to building 
@@ -267,20 +267,20 @@ const About = () => {
                   reflects this philosophy.
                 </p>
                 <p>
-                  At ORIGINX LABS, we're driven by a passion for innovation, a commitment to quality, 
+                  At CHRONYX, we're driven by a passion for innovation, a commitment to quality, 
                   and an unwavering focus on user privacy and security. We're building the future, 
                   one thoughtful product at a time.
                 </p>
               </div>
               <div className="mt-8 pt-8 border-t border-border/50">
                 <a 
-                  href="https://www.originxlabs.com" 
+                  href="https://www.getchronyx.com" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
                 >
                   <Globe className="w-4 h-4" />
-                  Visit www.originxlabs.com →
+                  Visit www.getchronyx.com →
                 </a>
               </div>
             </CardContent>
@@ -439,10 +439,10 @@ const About = () => {
       {/* Footer */}
       <footer className="border-t border-border/40 mt-16 py-8">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p className="mb-2">© {new Date().getFullYear()} CHRONYX by ORIGINX LABS PVT. LTD.</p>
+          <p className="mb-2">© {new Date().getFullYear()} </p>
           <p>
-            <a href="https://www.originxlabs.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-              www.originxlabs.com
+            <a href="https://www.getchronyx.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+              www.getchronyx.com
             </a>
           </p>
         </div>

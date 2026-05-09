@@ -650,7 +650,7 @@ const Profile = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold tracking-wider">CHRONYX</h3>
-                    <p className="text-xs text-muted-foreground">by ORIGINX LABS</p>
+                    <p className="text-xs text-muted-foreground"></p>
                   </div>
                   <Badge variant="outline">
                     INV-{invoicePreview.razorpay_order_id?.slice(-8).toUpperCase()}

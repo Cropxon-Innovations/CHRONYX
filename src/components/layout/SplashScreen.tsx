@@ -58,7 +58,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
     if (isVisible && !minimal) {
       const timers = [
         setTimeout(() => setStage(1), 400),   // Show CHRONYX
-        setTimeout(() => setStage(2), 1200),  // Show By OriginX Labs
+        setTimeout(() => setStage(2), 1200),  // Show By CHRONYX
         setTimeout(() => onComplete?.(), 2800), // Complete
       ];
       
@@ -156,7 +156,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
                 </motion.div>
               )}
 
-              {/* By OriginX Labs Pvt. Ltd. — on its own separate line */}
+              {/*  — on its own separate line */}
               {stage >= 2 && (
                 <motion.p
                   initial={{ opacity: 0, y: 10 }}
@@ -164,7 +164,7 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
                   transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                   className="block text-sm sm:text-base font-light tracking-[0.18em] text-muted-foreground whitespace-nowrap text-center"
                 >
-                  By OriginX Labs Pvt. Ltd.
+                  
                 </motion.p>
               )}
             </div>

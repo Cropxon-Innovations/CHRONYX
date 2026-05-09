@@ -712,7 +712,7 @@ const Login = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.2, duration: 0.6 }}
               >
-                CHRONYX by ORIGINX LABS
+                
               </motion.p>
             </div>
           </motion.div>

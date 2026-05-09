@@ -136,7 +136,7 @@ export default function NoteflowLMWorkspace() {
       if (customPrompt) {
         details.push(`💡 Custom direction: "${customPrompt.slice(0, 50)}${customPrompt.length > 50 ? "..." : ""}"`);
       }
-      details.push(`🏷️ Branding: CHRONYX BY ORIGINX LABS PVT LTD watermark included`);
+      details.push(`🏷️ Branding:  watermark included`);
     } else if (selectedType === "slides") {
       details.push(`📝 Source: "${noteTitle || 'Untitled'}"`);
       details.push(`🖼️ Slides to generate: ${slideCount}`);
@@ -150,7 +150,7 @@ export default function NoteflowLMWorkspace() {
       }
       
       details.push(`🎯 Mode: ${mode === "private" ? "Using only your content" : "Will search and add relevant details"}`);
-      details.push(`🏷️ Branding: CHRONYX BY ORIGINX LABS PVT LTD on title and closing slides`);
+      details.push(`🏷️ Branding:  on title and closing slides`);
     }
 
     setPreview({
@@ -650,7 +650,7 @@ export default function NoteflowLMWorkspace() {
         {/* Branding Footer */}
         <div className="mt-8 text-center">
           <p className="text-[10px] text-muted-foreground tracking-widest">
-            CHRONYX BY ORIGINX LABS PVT LTD
+            
           </p>
         </div>
       </div>

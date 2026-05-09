@@ -850,7 +850,7 @@ const Landing = () => {
         CHRONYX is a private personal system of record for managing your life — tasks, finances, tax calculations, 
         insurance policies, study planning, digital library, and memories. Indian Income Tax Calculator with Old vs New 
         Regime comparison. AI-powered NoteFlowLM for content creation. Rewards & cashback system. 
-        Built by ORIGINX LABS PVT. LTD. Available as PWA and web app at getchronyx.com.
+        Built  Available as PWA and web app at getchronyx.com.
       </span>
       
       {/* JSON-LD Structured Data for SEO & GEO */}
@@ -864,8 +864,8 @@ const Landing = () => {
         "url": "https://www.getchronyx.com",
         "author": {
           "@type": "Organization",
-          "name": "ORIGINX LABS PVT. LTD.",
-          "url": "https://www.originxlabs.com"
+          "name": "CHRONYX",
+          "url": "https://www.getchronyx.com"
         },
         "offers": [
           { "@type": "Offer", "price": "0", "priceCurrency": "INR", "name": "Free" },
@@ -1647,7 +1647,7 @@ const Landing = () => {
                   <span className="text-xl font-semibold tracking-[0.15em]" style={{ color: 'hsl(var(--chronyx-brand))' }}>CHRONYX</span>
                 </div>
                 <p className="text-sm text-muted-foreground font-light">A quiet space for your life.</p>
-                <p className="text-xs text-muted-foreground/60 mt-3">by ORIGINX LABS</p>
+                <p className="text-xs text-muted-foreground/60 mt-3"></p>
               </div>
 
               {/* Product */}
@@ -1677,14 +1677,14 @@ const Landing = () => {
                   <li><Link to="/contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
                   <li><a href="mailto:Office@getchronyx.com" className="hover:text-foreground transition-colors">Office@getchronyx.com</a></li>
                   <li><a href="mailto:support@getchronyx.com" className="hover:text-foreground transition-colors">support@getchronyx.com</a></li>
-                  <li><a href="https://www.originxlabs.com" target="_blank" rel="noopener" className="hover:text-foreground transition-colors">originxlabs.com</a></li>
+                  <li><a href="https://www.getchronyx.com" target="_blank" rel="noopener" className="hover:text-foreground transition-colors">getchronyx.com</a></li>
                 </ul>
               </div>
             </div>
 
             <div className="pt-8 border-t border-border/20 flex flex-col sm:flex-row items-center justify-between gap-4">
               <p className="text-xs text-muted-foreground/60">
-                © 2024-2026 ORIGINX LABS PVT. LTD. All rights reserved.
+                © 2024-2026 CHRONYX All rights reserved.
               </p>
               <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
                 <p className="text-xs text-muted-foreground/50 tracking-wider">Private · Quiet · Timeless</p>

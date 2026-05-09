@@ -561,7 +561,7 @@ export const NoteflowLM = ({
         {/* Branding */}
         <div className="absolute bottom-4 right-4 opacity-60 hover:opacity-100 transition-opacity">
           <p className="text-[10px] font-medium text-muted-foreground tracking-wide">
-            CHRONYX BY <span className="text-primary">ORIGINX LABS PVT LTD</span>
+            CHRONYX BY <span className="text-primary">CHRONYX</span>
           </p>
         </div>
       </SheetContent>

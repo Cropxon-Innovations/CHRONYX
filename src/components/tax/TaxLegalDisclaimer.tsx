@@ -86,7 +86,7 @@ export function TaxLegalDisclaimer({ variant = "minimal" }: TaxLegalDisclaimerPr
         <div className="flex items-center justify-between text-[10px] text-muted-foreground px-2">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-3 h-3" />
-            <span>© {new Date().getFullYear()} ORIGINX LABS PVT. LTD.</span>
+            <span>© {new Date().getFullYear()} CHRONYX</span>
           </div>
           <span>India Tax Compliance • IT Act 1961</span>
         </div>
@@ -112,7 +112,7 @@ export function TaxLegalDisclaimer({ variant = "minimal" }: TaxLegalDisclaimerPr
         <div className="flex items-center gap-2 mt-3 pt-2 border-t border-amber-500/20">
           <AlertTriangle className="w-3 h-3" />
           <span className="text-[10px]">
-            © {new Date().getFullYear()} ORIGINX LABS PVT. LTD. • IT Act 1961 Compliant
+            © {new Date().getFullYear()} CHRONYX • IT Act 1961 Compliant
           </span>
         </div>
       </AlertDescription>
