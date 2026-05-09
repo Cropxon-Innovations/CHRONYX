@@ -268,7 +268,7 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
             </Link>
 
             {/* RIGHT: Contact, Download, Theme, Enter */}
-            <nav className="hidden md:flex items-center justify-end gap-1">
+            <nav className="hidden md:flex flex-1 items-center justify-end gap-1">
               <Link
                 to="/contact"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 transition-colors rounded-lg hover:bg-sky-500/5"
@@ -357,7 +357,7 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
             </nav>
 
             {/* Mobile Menu Button (right grid cell on small screens) */}
-            <div className="flex md:hidden items-center justify-end gap-2">
+            <div className="flex md:hidden flex-1 items-center justify-end gap-2">
               {mounted && (
                 <button
                   onClick={toggleTheme}
