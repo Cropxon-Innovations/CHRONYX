@@ -161,7 +161,7 @@ const NotFound = () => {
         className="absolute bottom-6 flex flex-col items-center gap-1 text-center"
       >
         <p className="text-[10px] tracking-[0.2em] text-muted-foreground sm:text-xs">
-          CHRONYX BY ORIGINX<br />
+          CHRONYX<br />
           LABS PVT. LTD.
         </p>
         <a 
