@@ -58,6 +58,67 @@ Deno.serve(async (req) => {
     const body: GenerateEmiRequest = await req.json();
     const { loan_id, principal, annual_interest_rate, tenure_months, emi_start_date, emi_amount_override } = body;
 
+    // Input validation
+    if (!loan_id || typeof loan_id !== "string" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(loan_id)) {
+      return new Response(JSON.stringify({ error: "Invalid loan_id" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (typeof principal !== "number" || !isFinite(principal) || principal <= 0 || principal > 1_000_000_000) {
+      return new Response(JSON.stringify({ error: "Invalid principal amount" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (typeof annual_interest_rate !== "number" || !isFinite(annual_interest_rate) ||
+        annual_interest_rate < 0 || annual_interest_rate > 100) {
+      return new Response(JSON.stringify({ error: "Invalid interest rate" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!Number.isInteger(tenure_months) || tenure_months < 1 || tenure_months > 600) {
+      return new Response(JSON.stringify({ error: "Invalid tenure" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!emi_start_date || typeof emi_start_date !== "string" || isNaN(Date.parse(emi_start_date))) {
+      return new Response(JSON.stringify({ error: "Invalid start date" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (emi_amount_override !== undefined && (typeof emi_amount_override !== "number" ||
+        emi_amount_override <= 0 || emi_amount_override > 1_000_000_000)) {
+      return new Response(JSON.stringify({ error: "Invalid EMI override" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Authorize: caller must own the loan
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: loanRow, error: loanErr } = await supabase
+      .from("loans").select("user_id").eq("id", loan_id).maybeSingle();
+    if (loanErr || !loanRow || loanRow.user_id !== userData.user.id) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     console.log(`Generating EMI schedule for loan ${loan_id}`);
     console.log(`Principal: ${principal}, Rate: ${annual_interest_rate}%, Tenure: ${tenure_months} months`);
 
