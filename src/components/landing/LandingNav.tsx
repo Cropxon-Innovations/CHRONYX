@@ -168,7 +168,7 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16 gap-4">
+          <div className="flex items-center h-16 gap-4">
 
             {/* LEFT: Features mega menu + About + Pricing */}
             <nav className="hidden md:flex items-center justify-start gap-1">
