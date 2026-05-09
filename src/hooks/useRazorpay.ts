@@ -129,7 +129,7 @@ export const useRazorpay = () => {
             key: keyId,
             amount: orderAmount,
             currency: currency,
-            name: "CHRONYX by ORIGINX LABS",
+            name: "",
             description: planDescription,
             order_id: orderId,
             handler: async (response: RazorpayResponse) => {

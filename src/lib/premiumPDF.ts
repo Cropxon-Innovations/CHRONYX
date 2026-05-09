@@ -1,7 +1,7 @@
 /**
  * CHRONYX Premium PDF Generator
  * Consistent Apple-grade PDF styling across all modules
- * Brand: CHRONYX BY ORIGINX LABS
+ * Brand: 
  */
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -10,9 +10,9 @@ import { format } from "date-fns";
 // ============= BRAND CONSTANTS =============
 export const BRAND = {
   name: "CHRONYX",
-  company: "OriginX Labs Pvt. Ltd.",
-  tagline: "CHRONYX BY ORIGINX LABS",
-  website: "originxlabs.com",
+  company: "CHRONYX",
+  tagline: "",
+  website: "getchronyx.com",
   founder: {
     name: "Abhishek Panda",
     title: "Founder & CEO",

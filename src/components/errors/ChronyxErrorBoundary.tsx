@@ -84,7 +84,7 @@ export class ChronyxErrorBoundary extends Component<Props, State> {
             {/* CHRONYX branding */}
             <div className="pt-8 border-t border-border">
               <p className="text-xs text-muted-foreground tracking-wider">
-                CHRONYX BY ORIGINX LABS PVT. LTD.
+                
               </p>
             </div>
           </div>

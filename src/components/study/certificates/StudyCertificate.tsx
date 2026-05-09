@@ -69,11 +69,11 @@ export const StudyCertificate = ({ certificate, onClose }: Props) => {
     pdf.line(width - 15 - cornerSize, height - 25, width - 15, height - 25);
     pdf.line(width - 25, height - 15, width - 25, height - 15 - cornerSize);
 
-    // Header: OriginX Labs
+    // Header: CHRONYX
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(14);
     pdf.setTextColor(100, 100, 100);
-    pdf.text("ORIGINX LABS PRIVATE LIMITED", width / 2, 35, { align: "center" });
+    pdf.text("CHRONYX", width / 2, 35, { align: "center" });
 
     // Title
     pdf.setFontSize(36);
@@ -138,7 +138,7 @@ export const StudyCertificate = ({ certificate, onClose }: Props) => {
     pdf.setFontSize(9);
     pdf.setTextColor(150, 150, 150);
     pdf.text(`Certificate ID: ${certificate.certificateNumber}`, width / 2, height - 25, { align: "center" });
-    pdf.text("Verify at: chronyx.originxlabs.com/verify", width / 2, height - 20, { align: "center" });
+    pdf.text("Verify at: chronyx.app/verify", width / 2, height - 20, { align: "center" });
 
     // Save
     pdf.save(`${certificate.courseName.replace(/\s+/g, '-')}-Certificate.pdf`);
@@ -183,7 +183,7 @@ export const StudyCertificate = ({ certificate, onClose }: Props) => {
             className="mb-4"
           >
             <p className="text-sm font-medium tracking-widest text-muted-foreground uppercase">
-              OriginX Labs Private Limited
+              CHRONYX
             </p>
           </motion.div>
 

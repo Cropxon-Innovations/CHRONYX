@@ -7,69 +7,62 @@ interface SplashScreenProps {
   minimal?: boolean;
 }
 
-// CHRONYX Logo Component - Same as Landing Page with proper theming
+// CHRONYX Logo — outer ring static, inner geometric symbol animates (rotation + pulse)
 const ChronxyxLogo = ({ className = "w-24 h-24" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Outer disc */}
     <circle cx="256" cy="256" r="248" fill="currentColor" />
+    {/* Concentric ring */}
     <circle cx="256" cy="256" r="200" fill="none" stroke="hsl(var(--background))" strokeWidth="32" />
-    <circle cx="256" cy="256" r="168" fill="currentColor" />
-    <path
-      d="M256 128 L256 216 L168 216 L168 256 L216 256 L216 344 L256 344 L256 296 L344 296 L344 256 L296 256 L296 168 L256 168 L256 128Z"
-      fill="hsl(var(--background))"
+    {/* Inner disc — animated group */}
+    <motion.g
+      style={{ originX: "256px", originY: "256px", transformBox: "fill-box" } as any}
+      animate={{ rotate: [0, 360], scale: [1, 1.04, 1] }}
+      transition={{
+        rotate: { duration: 6, repeat: Infinity, ease: "linear" },
+        scale: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
+      }}
+    >
+      <circle cx="256" cy="256" r="168" fill="currentColor" />
+      <path
+        d="M256 128 L256 216 L168 216 L168 256 L216 256 L216 344 L256 344 L256 296 L344 296 L344 256 L296 256 L296 168 L256 168 L256 128Z"
+        fill="hsl(var(--background))"
+      />
+      <rect x="168" y="168" width="40" height="48" fill="hsl(var(--background))" />
+      <rect x="304" y="296" width="40" height="48" fill="hsl(var(--background))" />
+      <rect x="296" y="168" width="48" height="40" fill="hsl(var(--background))" />
+      <rect x="168" y="304" width="48" height="40" fill="hsl(var(--background))" />
+    </motion.g>
+    {/* Pulsing accent ring around the inner symbol */}
+    <motion.circle
+      cx="256"
+      cy="256"
+      r="180"
+      fill="none"
+      stroke="hsl(var(--primary))"
+      strokeWidth="2"
+      style={{ originX: "256px", originY: "256px", transformBox: "fill-box" } as any}
+      animate={{ scale: [1, 1.08, 1], opacity: [0.6, 0, 0.6] }}
+      transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
     />
-    <rect x="168" y="168" width="40" height="48" fill="hsl(var(--background))" />
-    <rect x="304" y="296" width="40" height="48" fill="hsl(var(--background))" />
-    <rect x="296" y="168" width="48" height="40" fill="hsl(var(--background))" />
-    <rect x="168" y="304" width="48" height="40" fill="hsl(var(--background))" />
   </svg>
 );
 
-// Animated letter component for character-by-character reveal
-const AnimatedLetter = ({ 
-  letter, 
-  index, 
-  baseDelay = 0,
-  className = ""
-}: { 
-  letter: string; 
-  index: number; 
-  baseDelay?: number;
-  className?: string;
-}) => (
-  <motion.span
-    initial={{ opacity: 0, y: 20, rotateX: -90 }}
-    animate={{ opacity: 1, y: 0, rotateX: 0 }}
-    transition={{
-      duration: 0.5,
-      delay: baseDelay + index * 0.08,
-      ease: [0.22, 1, 0.36, 1],
-    }}
-    className={`inline-block ${className}`}
-    style={{ transformOrigin: "bottom" }}
-  >
-    {letter === " " ? "\u00A0" : letter}
-  </motion.span>
-);
-
 const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenProps) => {
-  const [stage, setStage] = useState(0); // 0: logo, 1: CHRONYX, 2: By line
+  const [stage, setStage] = useState(0);
 
   useEffect(() => {
     if (isVisible && !minimal) {
       const timers = [
-        setTimeout(() => setStage(1), 400),   // Show CHRONYX
-        setTimeout(() => setStage(2), 1200),  // Show By OriginX Labs
-        setTimeout(() => onComplete?.(), 2800), // Complete
+        setTimeout(() => setStage(1), 400),
+        setTimeout(() => onComplete?.(), 2400),
       ];
-      
       return () => timers.forEach(clearTimeout);
     } else if (isVisible && minimal) {
       const timer = setTimeout(() => onComplete?.(), 800);
       return () => clearTimeout(timer);
     }
   }, [isVisible, minimal, onComplete]);
-
-  // Brand text rendered directly as simple text blocks for reliable two-line layout
 
   return (
     <AnimatePresence>
@@ -88,7 +81,6 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
               transition={{ duration: 1 }}
               className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10"
             />
-            {/* Subtle animated circles */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1.2, opacity: 0.15 }}
@@ -101,7 +93,6 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
               transition={{ duration: 2.5, repeat: Infinity, repeatType: "reverse", delay: 0.5 }}
               className="absolute bottom-1/4 right-1/4 h-48 w-48 rounded-full bg-primary/5 blur-3xl"
             />
-            {/* Additional glow for premium feel */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.08 }}
@@ -112,29 +103,15 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
 
           {/* Main content */}
           <div className="relative flex flex-col items-center gap-8">
-            {/* Spinning CHRONYX Logo */}
             <motion.div
-              className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28"
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{
-                duration: 0.8,
-                ease: [0.22, 1, 0.36, 1],
-              }}
+              className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 text-foreground"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-              >
-                <ChronxyxLogo className="w-full h-full" />
-              </motion.div>
+              <ChronxyxLogo className="w-full h-full" />
             </motion.div>
 
-            {/* CHRONYX - Main brand name */}
             <div className="relative flex flex-col items-center gap-3">
               {stage >= 1 && (
                 <motion.div
@@ -146,7 +123,6 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
                   <h1 className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight tracking-[0.35em] text-foreground whitespace-nowrap">
                     CHRONYX
                   </h1>
-                  {/* Animated underline */}
                   <motion.div
                     initial={{ scaleX: 0, opacity: 0 }}
                     animate={{ scaleX: 1, opacity: 1 }}
@@ -155,54 +131,36 @@ const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenPr
                   />
                 </motion.div>
               )}
-
-              {/* By OriginX Labs Pvt. Ltd. — on its own separate line */}
-              {stage >= 2 && (
-                <motion.p
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 0.65, y: 0 }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="block text-sm sm:text-base font-light tracking-[0.18em] text-muted-foreground whitespace-nowrap text-center"
-                >
-                  By OriginX Labs Pvt. Ltd.
-                </motion.p>
-              )}
             </div>
 
-            {/* Loading indicator */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="mt-6"
+              transition={{ delay: 0.6 }}
+              className="mt-2"
             >
               <div className="relative h-0.5 w-40 overflow-hidden rounded-full bg-muted/50 sm:w-56">
                 <motion.div
                   initial={{ x: "-100%" }}
                   animate={{ x: "200%" }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                   className="absolute h-full w-1/3 bg-gradient-to-r from-transparent via-primary/70 to-transparent"
                 />
               </div>
             </motion.div>
           </div>
 
-          {/* Footer */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 0.5, y: 0 }}
-            transition={{ delay: 2, duration: 0.5 }}
+            transition={{ delay: 1.2, duration: 0.5 }}
             className="absolute bottom-6 flex flex-col items-center gap-3 sm:bottom-8 md:bottom-10"
           >
             <p className="text-[10px] tracking-[0.12em] text-muted-foreground/50 sm:text-xs">
               made with <span className="text-destructive">❤️</span>{" "}
-              <a 
-                href="https://www.abhishekpanda.com" 
-                target="_blank" 
+              <a
+                href="https://www.abhishekpanda.com"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-muted-foreground transition-colors underline underline-offset-2"
               >

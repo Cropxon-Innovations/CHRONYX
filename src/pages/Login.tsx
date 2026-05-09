@@ -21,7 +21,7 @@ import { SecurityMethodsModal } from "@/components/auth/SecurityMethodsModal";
 import { FirstTime2FAPrompt, shouldShow2FAPrompt } from "@/components/auth/FirstTime2FAPrompt";
 import { SmartSignIn, SmartSignInButton } from "@/components/auth/SmartSignIn";
 import { checkIsAdmin, ADMIN_ROUTE } from "@/hooks/useAdminCheck";
-import originxOneLogo from "@/assets/originx-one-logo.png";
+
 
 // CHRONYX Logo - Clean minimal
 const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
@@ -533,12 +533,7 @@ const Login = () => {
                   loading={isGoogleLoading}
                 />
                 
-                <div className="grid grid-cols-3 gap-2">
-                  <OAuthButton
-                    icon={<img src={originxOneLogo} alt="" className="w-5 h-5 object-contain" />}
-                    label="OriginX"
-                    comingSoon
-                  />
+                <div className="grid grid-cols-2 gap-2">
                   <OAuthButton
                     icon={<Github className="w-5 h-5" />}
                     label="GitHub"
@@ -712,7 +707,7 @@ const Login = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.2, duration: 0.6 }}
               >
-                CHRONYX by ORIGINX LABS
+                
               </motion.p>
             </div>
           </motion.div>

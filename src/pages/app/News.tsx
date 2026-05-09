@@ -94,9 +94,9 @@ const News = () => {
               </div>
               <div className="flex flex-col items-end gap-1">
                 <Badge variant="outline" className="text-xs border-primary/30">
-                  BY ORIGINX LABS PVT. LTD.
+                  
                 </Badge>
-                <span className="text-[10px] text-muted-foreground">A Subsidiary of ORIGINX LABS</span>
+                <span className="text-[10px] text-muted-foreground"></span>
               </div>
             </div>
           </CardHeader>
@@ -109,7 +109,7 @@ const News = () => {
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 NEWSTACK.Live is a premium news aggregation platform developed by{" "}
-                <span className="font-semibold text-foreground">ORIGINX LABS PRIVATE LIMITED</span>. 
+                <span className="font-semibold text-foreground">CHRONYX</span>. 
                 We curate and deliver real-time news from trusted sources across India and the world, 
                 providing a unified dashboard for staying informed on politics, business, technology, 
                 sports, and more.
@@ -228,12 +228,12 @@ const News = () => {
         <p>
           A news aggregation platform by{" "}
           <a 
-            href="https://www.originxlabs.com" 
+            href="https://www.getchronyx.com" 
             target="_blank" 
             rel="noopener noreferrer"
             className="font-semibold text-primary hover:underline"
           >
-            ORIGINX LABS PRIVATE LIMITED
+            CHRONYX
           </a>
         </p>
         <p className="text-muted-foreground/70">
