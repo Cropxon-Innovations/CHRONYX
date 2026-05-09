@@ -1031,8 +1031,8 @@ const Landing = () => {
                 </motion.div>
               </div>
 
-              {/* Right - Animated Preview */}
-              <div className="hidden lg:block">
+              {/* Right - Animated Live Preview (visible on all viewports) */}
+              <div className="block mt-4 lg:mt-0">
                 <AnimatedDashboardPreview />
               </div>
             </div>
