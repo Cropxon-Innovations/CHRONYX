@@ -21,7 +21,7 @@ import { SecurityMethodsModal } from "@/components/auth/SecurityMethodsModal";
 import { FirstTime2FAPrompt, shouldShow2FAPrompt } from "@/components/auth/FirstTime2FAPrompt";
 import { SmartSignIn, SmartSignInButton } from "@/components/auth/SmartSignIn";
 import { checkIsAdmin, ADMIN_ROUTE } from "@/hooks/useAdminCheck";
-import originxOneLogo from "@/assets/originx-one-logo.png";
+
 
 // CHRONYX Logo - Clean minimal
 const ChronxyxLogo = ({ className = "w-12 h-12" }: { className?: string }) => (
