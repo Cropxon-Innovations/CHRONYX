@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef, memo } from "react";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+import { motion, AnimatePresence, useInView, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { 
   CheckSquare, 
@@ -509,24 +509,28 @@ const AnimatedDashboardPreview = memo(() => {
   const [isHovered, setIsHovered] = useState(false);
   const [animationPhase, setAnimationPhase] = useState<"stack" | "queue">("stack");
   const [loopCount, setLoopCount] = useState(0);
-  
+  const prefersReducedMotion = useReducedMotion();
+
   useEffect(() => {
     if (isHovered) return;
-    
+
+    // Slower, more meditative cadence; even slower when reduced motion is preferred
+    const stackDelay = prefersReducedMotion ? 5000 : 3200;
+    const queueDelay = prefersReducedMotion ? 6000 : 4200;
+
     const interval = setInterval(() => {
       setActiveIndex((prev) => {
         const next = (prev + 1) % featureCards.length;
-        // After one complete loop, switch to queue animation
         if (next === 0 && loopCount === 0) {
           setLoopCount(1);
           setAnimationPhase("queue");
         }
         return next;
       });
-    }, animationPhase === "stack" ? 2500 : 3500);
-    
+    }, animationPhase === "stack" ? stackDelay : queueDelay);
+
     return () => clearInterval(interval);
-  }, [isHovered, animationPhase, loopCount]);
+  }, [isHovered, animationPhase, loopCount, prefersReducedMotion]);
 
   return (
     <div
@@ -606,9 +610,11 @@ const AnimatedDashboardPreview = memo(() => {
                 z,
                 x,
               }}
-              transition={{
-                duration: 0.6,
-                ease: [0.32, 0.72, 0, 1],
+              transition={prefersReducedMotion ? { duration: 0.4, ease: "easeOut" } : {
+                type: "spring",
+                stiffness: 80,
+                damping: 22,
+                mass: 0.9,
               }}
               style={{
                 transformStyle: "preserve-3d",
