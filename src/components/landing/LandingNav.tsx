@@ -170,6 +170,9 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center h-16 gap-4">
 
+            {/* Mobile left spacer to keep logo centered */}
+            <div className="md:hidden flex-1" />
+
             {/* LEFT: Features mega menu + About + Pricing */}
             <nav className="hidden md:flex flex-1 items-center justify-start gap-1">
               <NavigationMenu>
