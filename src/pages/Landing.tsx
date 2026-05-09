@@ -914,14 +914,13 @@ const Landing = () => {
 
                 {/* Main Headline - Vercel Typography */}
                 <motion.h1 
-                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold leading-[1.1] tracking-tight"
+                  className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold leading-[1.1] tracking-tight whitespace-nowrap"
                   variants={fadeInUp}
                   initial="hidden"
                   animate="visible"
                   custom={1}
                 >
-                  <span style={{ color: 'hsl(var(--chronyx-brand))' }}>A quiet space</span>
-                  <br />
+                  <span style={{ color: 'hsl(var(--chronyx-brand))' }}>A quiet space</span>{" "}
                   <span className="bg-gradient-to-r from-muted-foreground to-muted-foreground/60 bg-clip-text text-transparent">for your life.</span>
                 </motion.h1>
 
@@ -976,7 +975,7 @@ const Landing = () => {
 
                 {/* CTA Buttons */}
                 <motion.div 
-                  className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
+                  className="flex flex-row flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4"
                   variants={fadeInUp}
                   initial="hidden"
                   animate="visible"
