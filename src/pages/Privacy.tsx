@@ -103,7 +103,7 @@ const Privacy = () => {
         </div>
 
         <div className="mt-12 pt-6 border-t border-border text-center">
-          <p className="text-xs text-muted-foreground/60"></p>
+          
         </div>
       </div>
     </motion.main>

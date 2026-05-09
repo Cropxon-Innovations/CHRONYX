@@ -133,7 +133,7 @@ const MilestoneCard = ({ badges, totalTasks, streak, onClose }: MilestoneCardPro
               <img src={chronyxLogo} alt="CHRONYX" className="w-10 h-10" />
               <div>
                 <h2 className="text-lg font-bold tracking-wider">CHRONYX</h2>
-                <p className="text-xs text-white/60 uppercase tracking-widest"></p>
+                
               </div>
             </div>
             <div className="text-right">

@@ -850,7 +850,7 @@ const Landing = () => {
         CHRONYX is a private personal system of record for managing your life — tasks, finances, tax calculations, 
         insurance policies, study planning, digital library, and memories. Indian Income Tax Calculator with Old vs New 
         Regime comparison. AI-powered NoteFlowLM for content creation. Rewards & cashback system. 
-        Built  Available as PWA and web app at getchronyx.com.
+        Available as a PWA and web app at getchronyx.com.
       </span>
       
       {/* JSON-LD Structured Data for SEO & GEO */}
@@ -1647,7 +1647,7 @@ const Landing = () => {
                   <span className="text-xl font-semibold tracking-[0.15em]" style={{ color: 'hsl(var(--chronyx-brand))' }}>CHRONYX</span>
                 </div>
                 <p className="text-sm text-muted-foreground font-light">A quiet space for your life.</p>
-                <p className="text-xs text-muted-foreground/60 mt-3"></p>
+                
               </div>
 
               {/* Product */}

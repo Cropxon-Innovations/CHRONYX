@@ -177,7 +177,7 @@ const Security = () => {
         </article>
 
         <footer className="mt-12 pt-6 border-t border-border text-center">
-          <p className="text-xs text-muted-foreground/60"></p>
+          
         </footer>
       </div>
     </motion.main>
