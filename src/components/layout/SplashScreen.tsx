@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 interface SplashScreenProps {
@@ -8,45 +8,46 @@ interface SplashScreenProps {
 }
 
 // CHRONYX Logo — outer ring static, inner geometric symbol animates (rotation + pulse)
-const ChronxyxLogo = ({ className = "w-24 h-24" }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Outer disc */}
-    <circle cx="256" cy="256" r="248" fill="currentColor" />
-    {/* Concentric ring */}
-    <circle cx="256" cy="256" r="200" fill="none" stroke="hsl(var(--background))" strokeWidth="32" />
-    {/* Inner disc — animated group */}
-    <motion.g
-      style={{ originX: "256px", originY: "256px", transformBox: "fill-box" } as any}
-      animate={{ rotate: [0, 360], scale: [1, 1.04, 1] }}
-      transition={{
-        rotate: { duration: 6, repeat: Infinity, ease: "linear" },
-        scale: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
-      }}
-    >
-      <circle cx="256" cy="256" r="168" fill="currentColor" />
-      <path
-        d="M256 128 L256 216 L168 216 L168 256 L216 256 L216 344 L256 344 L256 296 L344 296 L344 256 L296 256 L296 168 L256 168 L256 128Z"
-        fill="hsl(var(--background))"
-      />
-      <rect x="168" y="168" width="40" height="48" fill="hsl(var(--background))" />
-      <rect x="304" y="296" width="40" height="48" fill="hsl(var(--background))" />
-      <rect x="296" y="168" width="48" height="40" fill="hsl(var(--background))" />
-      <rect x="168" y="304" width="48" height="40" fill="hsl(var(--background))" />
-    </motion.g>
-    {/* Pulsing accent ring around the inner symbol */}
-    <motion.circle
-      cx="256"
-      cy="256"
-      r="180"
-      fill="none"
-      stroke="hsl(var(--primary))"
-      strokeWidth="2"
-      style={{ originX: "256px", originY: "256px", transformBox: "fill-box" } as any}
-      animate={{ scale: [1, 1.08, 1], opacity: [0.6, 0, 0.6] }}
-      transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-    />
-  </svg>
-);
+const ChronxyxLogo = ({ className = "w-24 h-24" }: { className?: string }) => {
+  const reduce = useReducedMotion();
+  return (
+    <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="256" cy="256" r="248" fill="currentColor" />
+      <circle cx="256" cy="256" r="200" fill="none" stroke="hsl(var(--background))" strokeWidth="32" />
+      <motion.g
+        style={{ originX: "256px", originY: "256px", transformBox: "fill-box" } as any}
+        animate={reduce ? {} : { rotate: [0, 360], scale: [1, 1.04, 1] }}
+        transition={reduce ? undefined : {
+          rotate: { duration: 8, repeat: Infinity, ease: "linear" },
+          scale: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+        }}
+      >
+        <circle cx="256" cy="256" r="168" fill="currentColor" />
+        <path
+          d="M256 128 L256 216 L168 216 L168 256 L216 256 L216 344 L256 344 L256 296 L344 296 L344 256 L296 256 L296 168 L256 168 L256 128Z"
+          fill="hsl(var(--background))"
+        />
+        <rect x="168" y="168" width="40" height="48" fill="hsl(var(--background))" />
+        <rect x="304" y="296" width="40" height="48" fill="hsl(var(--background))" />
+        <rect x="296" y="168" width="48" height="40" fill="hsl(var(--background))" />
+        <rect x="168" y="304" width="48" height="40" fill="hsl(var(--background))" />
+      </motion.g>
+      {!reduce && (
+        <motion.circle
+          cx="256"
+          cy="256"
+          r="180"
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="2"
+          style={{ originX: "256px", originY: "256px", transformBox: "fill-box" } as any}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0, 0.5] }}
+          transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
+    </svg>
+  );
+};
 
 const SplashScreen = ({ isVisible, onComplete, minimal = false }: SplashScreenProps) => {
   const [stage, setStage] = useState(0);
