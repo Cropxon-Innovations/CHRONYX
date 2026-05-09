@@ -253,12 +253,12 @@ const Settings = () => {
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
+        // Get public URL with cache-buster so the new image is reflected immediately
         const { data: urlData } = supabase.storage
           .from("avatars")
           .getPublicUrl(fileName);
 
-        newAvatarUrl = urlData.publicUrl;
+        newAvatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       }
 
       // Update profile with new avatar URL
