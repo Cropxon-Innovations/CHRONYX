@@ -533,12 +533,7 @@ const Login = () => {
                   loading={isGoogleLoading}
                 />
                 
-                <div className="grid grid-cols-3 gap-2">
-                  <OAuthButton
-                    icon={<img src={originxOneLogo} alt="" className="w-5 h-5 object-contain" />}
-                    label="OriginX"
-                    comingSoon
-                  />
+                <div className="grid grid-cols-2 gap-2">
                   <OAuthButton
                     icon={<Github className="w-5 h-5" />}
                     label="GitHub"
