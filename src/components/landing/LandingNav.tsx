@@ -356,26 +356,17 @@ const LandingNav = ({ onDesktopDownload }: LandingNavProps) => {
               </Link>
             </nav>
 
-            {/* Mobile spacer for grid layout */}
-            <div className="md:hidden" />
-
-            {/* Mobile Menu Button */}
-            <div className="flex md:hidden items-center gap-2">
-              {/* Theme Toggle Mobile */}
+            {/* Mobile Menu Button (right grid cell on small screens) */}
+            <div className="flex md:hidden items-center justify-end gap-2">
               {mounted && (
                 <button
                   onClick={toggleTheme}
                   className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                   aria-label="Toggle theme"
                 >
-                  {theme === "dark" ? (
-                    <Sun className="w-5 h-5" />
-                  ) : (
-                    <Moon className="w-5 h-5" />
-                  )}
+                  {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                 </button>
               )}
-
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
