@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import chronyxLogo from "@/assets/chronyx-circular-logo.png";
+const chronyxLogo = "/chronyx-logo.svg";
 import { 
   CheckSquare, 
   BookOpen, 
