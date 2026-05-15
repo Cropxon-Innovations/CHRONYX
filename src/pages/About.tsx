@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SEO } from "@/components/seo/SEO";
 
 const About = () => {
   const chronyxFeatures = [
