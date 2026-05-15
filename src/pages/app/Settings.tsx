@@ -98,6 +98,7 @@ const Settings = () => {
   const [showCropper, setShowCropper] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const croppedBlobRef = useRef<Blob | null>(null);
   
   // OTP verification state
   const [verifyDialog, setVerifyDialog] = useState<{
@@ -206,18 +207,12 @@ const Settings = () => {
   };
 
   const handleCropComplete = (croppedBlob: Blob) => {
+    // Store blob in ref (DataTransfer hack on file input is unreliable across browsers)
+    croppedBlobRef.current = croppedBlob;
     const croppedUrl = URL.createObjectURL(croppedBlob);
     setAvatarPreview(croppedUrl);
     setShowCropper(false);
     setCropImageSrc(null);
-    
-    // Store the blob for upload
-    const file = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(file);
-    if (fileInputRef.current) {
-      fileInputRef.current.files = dataTransfer.files;
-    }
   };
 
   const saveAvatar = async () => {
@@ -230,10 +225,10 @@ const Settings = () => {
       if (selectedEmoji) {
         // Save emoji as avatar
         newAvatarUrl = `emoji:${selectedEmoji}`;
-      } else if (avatarPreview && fileInputRef.current?.files?.[0]) {
-        const file = fileInputRef.current.files[0];
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${user.id}/avatar.${fileExt}`;
+      } else if (avatarPreview && croppedBlobRef.current) {
+        const blob = croppedBlobRef.current;
+        const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+        const fileName = `${user.id}/avatar.jpg`;
 
         // Delete old avatar if exists
         if (avatarUrl && !avatarUrl.startsWith("emoji:")) {
@@ -271,6 +266,8 @@ const Settings = () => {
 
       setAvatarUrl(newAvatarUrl);
       setAvatarPreview(null);
+      croppedBlobRef.current = null;
+      if (fileInputRef.current) fileInputRef.current.value = "";
       setShowAvatarDialog(false);
       
       toast({

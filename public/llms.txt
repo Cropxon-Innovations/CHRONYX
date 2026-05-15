@@ -1,0 +1,36 @@
+# CHRONYX
+
+> CHRONYX is a private personal system of record — a quiet space to manage tasks, finances, tax, study plans, documents, AI notes, and memories with full data ownership.
+
+CHRONYX is a single, calm dashboard for everything in personal life: study planning (UPSC, SSC, OPSC, banking), Indian tax calculation (Old vs New Regime), expense and income tracking, EMI and insurance management, AI-assisted notes (NoteFlow), a personal digital library, and a memory vault. Users keep full ownership and can export or delete all data at any time. Built as a Progressive Web App.
+
+## Pages
+
+- [Home](/): Overview of CHRONYX, the personal system of record.
+- [About](/about): Mission, principles, and what CHRONYX is for.
+- [Pricing](/pricing): Free, Pro (₹199/mo), and Premium (₹499/mo) plans.
+- [Contact](/contact): Get in touch with the CHRONYX team.
+- [Security](/security): Encryption, RLS, and data protection model.
+- [Privacy](/privacy): Privacy policy — what we collect and why.
+- [Terms](/terms): Terms of service.
+- [Refund](/refund): Refund and cancellation policy.
+- [Login](/login): Sign in or create a CHRONYX account.
+
+## Features
+
+- [Study Planner](/app/study): Templates, syllabus tracking, and timetable for UPSC, SSC, OPSC, banking, and tech exams.
+- [FinanceFlow](/app/financeflow): Unified personal finance — expenses, income, accounts, AI Gmail import.
+- [TAXYN Tax Calculator](/app/tax): Indian Income Tax engine, Old vs New Regime comparison, deductions, PDF reports.
+- [NoteFlow](/app/noteflowlm): AI-powered notes with images, slides, and explainers (Gemini-powered).
+- [Knowledge Hub Library](/app/library): Read PDF and EPUB books; share knowledge and earn rewards.
+- [News (NEWSTACK)](/app/news): Curated India and world news feed inside the dashboard.
+
+## Optional
+
+- [Loans & EMI](/app/loans)
+- [Insurance](/app/insurance)
+- [Documents Vault](/app/documents)
+- [Memory Vault](/app/memory)
+- [Family Tree](/app/family-tree)
+- [Lifespan](/app/lifespan)
+- [Achievements](/app/achievements)
