@@ -186,10 +186,10 @@ serve(async (req) => {
                     </p>
                     <div style="padding-top: 12px; border-top: 1px solid #e2e8f0;">
                       <p style="margin: 0 0 2px; font-size: 10px; color: #94a3b8; font-weight: 500;">
-                        CHRONYX by CROPXON INNOVATIONS PVT. LTD.
+                        CHRONYX
                       </p>
                       <p style="margin: 0; font-size: 9px; color: #94a3b8;">
-                        <a href="https://www.cropxon.com" style="color: #94a3b8; text-decoration: underline;">www.cropxon.com</a>
+                        <a href="https://www.getchronyx.com" style="color: #94a3b8; text-decoration: underline;">www.getchronyx.com</a>
                       </p>
                     </div>
                   </div>

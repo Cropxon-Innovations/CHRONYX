@@ -82,10 +82,11 @@ Allow: /
 
 # Block internal/sensitive paths
 Disallow: /api/
-Disallow: /auth/callback
-Disallow: /app/*/private/
-Disallow: /*.json$
+Disallow: /auth/
+Disallow: /app/
+Disallow: /chronyx-control-8x9k2m
 Disallow: /admin/
+Disallow: /*.json$
 
 # =========================================
 # PUBLIC PAGES - IMPORTANT FOR SEO

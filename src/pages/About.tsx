@@ -235,7 +235,7 @@ const About = () => {
           </div>
         </div>
 
-        {/* CROPXON Section */}
+        {/* CHRONYX Section */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -387,7 +387,7 @@ const About = () => {
               {/* Social Links */}
               <div className="flex items-center justify-center gap-4 mt-8 pt-6 border-t border-border/50">
                 <a 
-                  href="https://www.cropxon.com" 
+                  href="https://www.getchronyx.com" 
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-background flex items-center justify-center hover:bg-primary/10 transition-colors"

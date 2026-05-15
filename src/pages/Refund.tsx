@@ -57,7 +57,7 @@ const Refund = () => {
               To request a refund:
             </p>
             <ul className="list-disc pl-6 text-muted-foreground space-y-1 mt-2">
-              <li>Email refunds@cropxon.com with your account email</li>
+              <li>Email refunds@getchronyx.com with your account email</li>
               <li>Include your order/transaction ID</li>
               <li>Briefly explain the reason for refund</li>
               <li>Allow 5-7 business days for processing</li>
@@ -86,7 +86,7 @@ const Refund = () => {
           <section>
             <h2 className="text-xl font-medium text-foreground mb-3">7. Contact</h2>
             <p className="text-muted-foreground leading-relaxed">
-              For refund inquiries, contact refunds@cropxon.com
+              For refund inquiries, contact refunds@getchronyx.com
             </p>
           </section>
         </div>

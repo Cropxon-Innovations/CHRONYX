@@ -42,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       await supabase.from("system_notifications").insert({
         title: "🎉 Welcome to CHRONYX!",
-        message: `Hello ${displayName}! Welcome to the CHRONYX family. We're thrilled to have you here. Explore all the amazing features designed to help you organize your life with calm and clarity. The Originx Labs team is rooting for your success!`,
+        message: `Hello ${displayName}! Welcome to the CHRONYX family. We're thrilled to have you here. Explore all the amazing features designed to help you organize your life with calm and clarity. The CHRONYX team is rooting for your success!`,
         notification_type: "success",
         target_audience: "all",
         action_url: "/app",
@@ -81,11 +81,11 @@ const handler = async (req: Request): Promise<Response> => {
                     <!-- CEO Message Box -->
                     <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border-radius: 12px; padding: 24px; margin: 28px 0; border: 1px solid #86efac; border-left: 4px solid #22c55e;">
                       <p style="margin: 0 0 12px; font-size: 15px; line-height: 1.7; color: #166534;">
-                        <em>"At Originx Labs, we believe that true productivity comes from clarity and calm, not chaos and hustle. CHRONYX is designed to be your quiet partner in life — always there when you need it, never demanding more than you can give."</em>
+                        <em>"At CHRONYX, we believe that true productivity comes from clarity and calm, not chaos and hustle. CHRONYX is designed to be your quiet partner in life — always there when you need it, never demanding more than you can give."</em>
                       </p>
                       <p style="margin: 0; font-size: 13px; color: #15803d; font-weight: 600;">
                         — Abhishek Panda & Namrata Sahoo<br>
-                        <span style="font-weight: 400; font-size: 12px; color: #22c55e;">Co-Founders, Originx Labs</span>
+                        <span style="font-weight: 400; font-size: 12px; color: #22c55e;">Co-Founders, CHRONYX</span>
                       </p>
                     </div>
                     
@@ -175,7 +175,7 @@ const handler = async (req: Request): Promise<Response> => {
                         The CHRONYX Team
                       </p>
                       <p style="margin: 4px 0 0; font-size: 12px; color: #64748b;">
-                        Originx Labs Pvt. Ltd.
+                        CHRONYX
                       </p>
                     </div>
                   </td>
