@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import chronyxCircularLogo from "@/assets/chronyx-circular-logo.png";
+const chronyxCircularLogo = "/chronyx-logo.svg";
 
 interface ChronyxMiniLogoProps {
   className?: string;
