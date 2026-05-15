@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import chronyxLogo from "@/assets/chronyx-circular-logo.png";
+const chronyxLogo = "/chronyx-logo.svg";
 import { format, startOfYear, endOfYear } from "date-fns";
 import { 
   Download, Share2, X, Trophy, Flame, Star,

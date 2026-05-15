@@ -11,7 +11,7 @@ import {
   Brain
 } from "lucide-react";
 import { StudyMode } from "@/hooks/useStudyOnboarding";
-import chronyxLogo from "@/assets/chronyx-circular-logo.png";
+const chronyxLogo = "/chronyx-logo.svg";
 
 interface Props {
   onSelectMode: (mode: StudyMode) => void;
