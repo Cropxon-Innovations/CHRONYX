@@ -736,7 +736,7 @@ const AnimatedDashboardPreview = memo(() => {
             </motion.div>
           );
         })}
-      </div>
+      </motion.div>
       
       {/* Enhanced navigation dots */}
       <div className="flex justify-center gap-1.5 mt-5">
