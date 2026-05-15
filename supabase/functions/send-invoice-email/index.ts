@@ -113,7 +113,7 @@ const generateInvoiceHTML = (data: {
                 <tr>
                   <td>
                     <div style="font-size: 32px; font-weight: 200; letter-spacing: 12px; color: #ffffff; margin-bottom: 6px;">CHRONYX</div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 3px; text-transform: uppercase;">by ORIGINX LABS PVT. LTD.</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 3px; text-transform: uppercase;"> PVT. LTD.</div>
                   </td>
                   <td align="right">
                     <div style="background: rgba(255,255,255,0.1); padding: 16px 24px; border-radius: 12px; backdrop-filter: blur(10px);">
@@ -257,9 +257,9 @@ const generateInvoiceHTML = (data: {
                       For support, contact us at <a href="mailto:support@getchronyx.com" style="color: #0f172a; text-decoration: none; font-weight: 500;">support@getchronyx.com</a>
                     </div>
                     <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
-                      <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px;">ORIGINX LABS PVT. LTD.</div>
+                      <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px;">CHRONYX</div>
                       <div style="font-size: 10px; color: #cbd5e1; margin-top: 4px;">
-                        <a href="https://www.originxlabs.com" style="color: #94a3b8; text-decoration: none;">www.originxlabs.com</a>
+                        <a href="https://www.getchronyx.com" style="color: #94a3b8; text-decoration: none;">www.getchronyx.com</a>
                       </div>
                     </div>
                     <div style="font-size: 10px; color: #cbd5e1; margin-top: 20px;">

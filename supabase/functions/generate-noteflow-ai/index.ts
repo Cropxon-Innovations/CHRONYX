@@ -32,14 +32,14 @@ ${content}
 
 ${customPrompt ? `Style direction: ${customPrompt}` : "Create a clean, modern visual representation."}
 
-The image should be high-quality and capture the essence of the content. Include subtle "CHRONYX BY ORIGINX LABS PVT LTD" branding in the bottom right corner.`
+The image should be high-quality and capture the essence of the content. Include subtle "CHRONYX " branding in the bottom right corner.`
         : `Create an enhanced, research-backed professional image based on this content titled "${title}":
 
 ${content}
 
 ${customPrompt ? `Style direction: ${customPrompt}` : "Create a visually rich, detailed image with accurate context."}
 
-Add relevant visual details that enhance the message. Include subtle "CHRONYX BY ORIGINX LABS PVT LTD" branding in the bottom right corner.`;
+Add relevant visual details that enhance the message. Include subtle "CHRONYX " branding in the bottom right corner.`;
 
       console.log("Calling image generation API...");
 
@@ -90,13 +90,13 @@ Add relevant visual details that enhance the message. Include subtle "CHRONYX BY
           result: textResult,
           images: images,
           type: "image",
-          branding: "CHRONYX BY ORIGINX LABS PVT LTD"
+          branding: "CHRONYX "
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 
     } else if (type === "slides") {
-      systemPrompt = `You are a professional presentation designer for CHRONYX by ORIGINX LABS PVT LTD. Create structured, engaging slide outlines that are clear and visually organized. Always include the branding "CHRONYX BY ORIGINX LABS PVT LTD" on the first and last slide.`;
+      systemPrompt = `You are a professional presentation designer for CHRONYX  PVT LTD. Create structured, engaging slide outlines that are clear and visually organized. Always include the branding "CHRONYX " on the first and last slide.`;
 
       userPrompt = mode === "private"
         ? `Create a ${slideCount}-slide presentation outline based on this content titled "${title}":
@@ -111,7 +111,7 @@ Format each slide with:
 - Speaker notes (optional)
 - Visual suggestions
 
-Include "CHRONYX BY ORIGINX LABS PVT LTD" branding on title and closing slides.`
+Include "CHRONYX " branding on title and closing slides.`
         : `Create an enhanced ${slideCount}-slide presentation outline based on this content titled "${title}":
 
 ${content}
@@ -126,7 +126,7 @@ Format each slide with:
 - Speaker notes with context
 - Visual suggestions
 
-Include "CHRONYX BY ORIGINX LABS PVT LTD" branding on title and closing slides.`;
+Include "CHRONYX " branding on title and closing slides.`;
 
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
@@ -173,7 +173,7 @@ Include "CHRONYX BY ORIGINX LABS PVT LTD" branding on title and closing slides.`
           success: true,
           result,
           type: "slides",
-          branding: "CHRONYX BY ORIGINX LABS PVT LTD"
+          branding: "CHRONYX "
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
