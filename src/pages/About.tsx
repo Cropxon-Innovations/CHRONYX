@@ -47,6 +47,18 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="About CHRONYX — A quiet space for your life"
+        description="CHRONYX is a private personal system of record for tasks, finance, study, AI notes, documents, and memories. Learn the story and values behind the product."
+        path="/about"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          name: "About CHRONYX",
+          url: "https://www.getchronyx.com/about",
+          isPartOf: { "@type": "WebSite", name: "CHRONYX", url: "https://www.getchronyx.com" },
+        }}
+      />
       {/* Header */}
       <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
