@@ -13,6 +13,7 @@ import { CheckoutDialog } from "@/components/checkout/CheckoutDialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { usePricingConfig } from "@/hooks/useAdmin";
+import { SEO } from "@/components/seo/SEO";
 
 const Pricing = () => {
   const { user } = useAuth();
