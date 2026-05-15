@@ -190,6 +190,26 @@ const Pricing = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
+      <SEO
+        title="CHRONYX Pricing — Free, Pro & Premium Plans"
+        description="Simple, transparent pricing for CHRONYX. Start free, upgrade to Pro or Premium for more storage, AI credits, and advanced personal-system-of-record tools."
+        path="/pricing"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: "CHRONYX",
+          description: "Personal system of record with tasks, finance, study, AI notes, documents and memories.",
+          brand: { "@type": "Brand", name: "CHRONYX" },
+          offers: {
+            "@type": "AggregateOffer",
+            priceCurrency: "INR",
+            lowPrice: "0",
+            highPrice: "999",
+            offerCount: 3,
+            url: "https://www.getchronyx.com/pricing",
+          },
+        }}
+      />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
           <ArrowLeft className="w-4 h-4" />
