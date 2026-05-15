@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef, memo } from "react";
-import { motion, AnimatePresence, useInView, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useInView, useReducedMotion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { 
   CheckSquare, 
@@ -532,11 +532,34 @@ const AnimatedDashboardPreview = memo(() => {
     return () => clearInterval(interval);
   }, [isHovered, animationPhase, loopCount, prefersReducedMotion]);
 
+  // Calm parallax tilt — mouse position drives subtle rotateX/rotateY on the whole stack
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springConfig = { stiffness: 60, damping: 22, mass: 0.8 };
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], prefersReducedMotion ? [0, 0] : [-6, 6]), springConfig);
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], prefersReducedMotion ? [0, 0] : [4, -4]), springConfig);
+  const translateX = useSpring(useTransform(mouseX, [-0.5, 0.5], prefersReducedMotion ? [0, 0] : [-8, 8]), springConfig);
+  const translateY = useSpring(useTransform(mouseY, [-0.5, 0.5], prefersReducedMotion ? [0, 0] : [-6, 6]), springConfig);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (prefersReducedMotion) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    mouseX.set(0);
+    mouseY.set(0);
+  };
+
   return (
     <div
       className="relative w-full max-w-sm mx-auto"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={handleMouseLeave}
+      onMouseMove={handleMouseMove}
       style={{ contain: "layout" }}
     >
       {/* Premium ambient glow - Enhanced for flagship */}
@@ -548,10 +571,18 @@ const AnimatedDashboardPreview = memo(() => {
         className="absolute -inset-10 bg-gradient-to-tr from-violet-500/10 via-transparent to-purple-500/10 rounded-3xl blur-2xl opacity-50"
       />
       
-      {/* Stacked cards container with 3D perspective */}
-      <div 
+      {/* Stacked cards container with 3D perspective + parallax tilt */}
+      <motion.div 
         className="relative h-[380px] sm:h-[400px] w-full"
-        style={{ perspective: "1200px", perspectiveOrigin: "center center" }}
+        style={{
+          perspective: "1200px",
+          perspectiveOrigin: "center center",
+          rotateX,
+          rotateY,
+          x: translateX,
+          y: translateY,
+          transformStyle: "preserve-3d",
+        }}
       >
         {featureCards.map((card, index) => {
           const isActive = index === activeIndex;
