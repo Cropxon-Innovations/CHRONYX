@@ -162,7 +162,7 @@ const NotFound = () => {
       >
         <p className="text-[10px] tracking-[0.2em] text-muted-foreground sm:text-xs">
           CHRONYX<br />
-          LABS PVT. LTD.
+         
         </p>
         <a 
           href="https://www.getchronyx.com" 

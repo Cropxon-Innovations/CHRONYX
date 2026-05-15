@@ -96,7 +96,7 @@ Add relevant visual details that enhance the message. Include subtle "CHRONYX " 
       );
 
     } else if (type === "slides") {
-      systemPrompt = `You are a professional presentation designer for CHRONYX  PVT LTD. Create structured, engaging slide outlines that are clear and visually organized. Always include the branding "CHRONYX " on the first and last slide.`;
+      systemPrompt = `You are a professional presentation designer for CHRONYX . Create structured, engaging slide outlines that are clear and visually organized. Always include the branding "CHRONYX " on the first and last slide.`;
 
       userPrompt = mode === "private"
         ? `Create a ${slideCount}-slide presentation outline based on this content titled "${title}":

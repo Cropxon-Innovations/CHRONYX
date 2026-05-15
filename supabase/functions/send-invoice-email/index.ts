@@ -113,7 +113,7 @@ const generateInvoiceHTML = (data: {
                 <tr>
                   <td>
                     <div style="font-size: 32px; font-weight: 200; letter-spacing: 12px; color: #ffffff; margin-bottom: 6px;">CHRONYX</div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 3px; text-transform: uppercase;"> PVT. LTD.</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 3px; text-transform: uppercase;"></div>
                   </td>
                   <td align="right">
                     <div style="background: rgba(255,255,255,0.1); padding: 16px 24px; border-radius: 12px; backdrop-filter: blur(10px);">

@@ -196,7 +196,7 @@ const handler = async (req: Request): Promise<Response> => {
                 CHRONYX
               </p>
               <p style="margin: 0; font-size: 10px; color: #94a3b8;">
-                <a href="https://www.cropxon.com" style="color: #94a3b8; text-decoration: underline;">www.cropxon.com</a>
+                <a href="https://www.getchronyx.com" style="color: #94a3b8; text-decoration: underline;">www.getchronyx.com</a>
               </p>
             </div>
           </div>

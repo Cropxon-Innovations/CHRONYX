@@ -255,13 +255,13 @@ const Contact = () => {
                       Office@getchronyx.com
                     </a>
                     <a 
-                      href="https://www.cropxon.com" 
+                      href="https://www.getchronyx.com" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-sm text-primary hover:underline"
                     >
                       <Globe className="w-4 h-4" />
-                      www.cropxon.com
+                      www.getchronyx.com
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>

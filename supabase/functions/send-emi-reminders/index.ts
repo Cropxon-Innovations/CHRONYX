@@ -189,7 +189,7 @@ serve(async (req) => {
                         CHRONYX
                       </p>
                       <p style="margin: 0; font-size: 9px; color: #94a3b8;">
-                        <a href="https://www.cropxon.com" style="color: #94a3b8; text-decoration: underline;">www.cropxon.com</a>
+                        <a href="https://www.getchronyx.com" style="color: #94a3b8; text-decoration: underline;">www.getchronyx.com</a>
                       </p>
                     </div>
                   </div>
