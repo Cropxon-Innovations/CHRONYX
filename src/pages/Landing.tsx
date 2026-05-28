@@ -916,6 +916,29 @@ const Landing = () => {
         }
       })}} />
 
+      {/* Organization + WebSite JSON-LD for richer search visibility */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "CHRONYX",
+          "url": "https://www.getchronyx.com",
+          "logo": "https://www.getchronyx.com/chronyx-logo.svg",
+          "sameAs": ["https://www.getchronyx.com"]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "CHRONYX",
+          "url": "https://www.getchronyx.com",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://www.getchronyx.com/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ])}} />
+
       {/* Apple-style background effects */}
       <GradientOrbs />
       <NoiseOverlay />

@@ -8735,6 +8735,344 @@ export type Database = {
           },
         ]
       }
+      tm_board_columns: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          position: number
+          project_id: string
+          status_key: Database["public"]["Enums"]["tm_task_status"]
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          position?: number
+          project_id: string
+          status_key: Database["public"]["Enums"]["tm_task_status"]
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          position?: number
+          project_id?: string
+          status_key?: Database["public"]["Enums"]["tm_task_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tm_board_columns_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "tm_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tm_pages: {
+        Row: {
+          content: string | null
+          created_at: string
+          created_by: string
+          diagram_data: Json | null
+          id: string
+          page_type: Database["public"]["Enums"]["tm_page_type"]
+          parent_id: string | null
+          position: number
+          project_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          created_by: string
+          diagram_data?: Json | null
+          id?: string
+          page_type?: Database["public"]["Enums"]["tm_page_type"]
+          parent_id?: string | null
+          position?: number
+          project_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          created_by?: string
+          diagram_data?: Json | null
+          id?: string
+          page_type?: Database["public"]["Enums"]["tm_page_type"]
+          parent_id?: string | null
+          position?: number
+          project_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tm_pages_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "tm_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tm_pages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "tm_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tm_project_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by: string | null
+          project_id: string
+          role: Database["public"]["Enums"]["tm_member_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          project_id: string
+          role?: Database["public"]["Enums"]["tm_member_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          project_id?: string
+          role?: Database["public"]["Enums"]["tm_member_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tm_project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "tm_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tm_project_share_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          project_id: string
+          role: Database["public"]["Enums"]["tm_member_role"]
+          token: string
+          uses_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          project_id: string
+          role?: Database["public"]["Enums"]["tm_member_role"]
+          token: string
+          uses_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          project_id?: string
+          role?: Database["public"]["Enums"]["tm_member_role"]
+          token?: string
+          uses_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tm_project_share_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "tm_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tm_projects: {
+        Row: {
+          archived: boolean
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          owner_id: string
+          project_key: string
+          task_counter: number
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          project_key: string
+          task_counter?: number
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          project_key?: string
+          task_counter?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tm_task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tm_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tm_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tm_tasks: {
+        Row: {
+          assignee_id: string | null
+          board_position: number
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          labels: string[] | null
+          parent_task_id: string | null
+          priority: Database["public"]["Enums"]["tm_priority"]
+          project_id: string
+          reporter_id: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["tm_task_status"]
+          story_points: number | null
+          task_number: number
+          task_type: Database["public"]["Enums"]["tm_task_type"]
+          time_estimate_hours: number | null
+          time_spent_hours: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          board_position?: number
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          labels?: string[] | null
+          parent_task_id?: string | null
+          priority?: Database["public"]["Enums"]["tm_priority"]
+          project_id: string
+          reporter_id: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["tm_task_status"]
+          story_points?: number | null
+          task_number: number
+          task_type?: Database["public"]["Enums"]["tm_task_type"]
+          time_estimate_hours?: number | null
+          time_spent_hours?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          board_position?: number
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          labels?: string[] | null
+          parent_task_id?: string | null
+          priority?: Database["public"]["Enums"]["tm_priority"]
+          project_id?: string
+          reporter_id?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["tm_task_status"]
+          story_points?: number | null
+          task_number?: number
+          task_type?: Database["public"]["Enums"]["tm_task_type"]
+          time_estimate_hours?: number | null
+          time_spent_hours?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tm_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tm_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tm_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "tm_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           category: string | null
@@ -9870,6 +10208,31 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      tm_can_admin_project: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      tm_can_edit_project: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      tm_has_project_access: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      tm_invite_member_by_email: {
+        Args: {
+          _email: string
+          _project_id: string
+          _role: Database["public"]["Enums"]["tm_member_role"]
+        }
+        Returns: Json
+      }
+      tm_project_role: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: Database["public"]["Enums"]["tm_member_role"]
+      }
+      tm_redeem_share_link: { Args: { _token: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
@@ -9878,6 +10241,17 @@ export type Database = {
       exam_type: "opsc" | "upsc" | "state_psc"
       priority_level: "high" | "medium" | "low"
       pyq_difficulty: "easy" | "medium" | "hard"
+      tm_member_role: "owner" | "admin" | "editor" | "reviewer" | "viewer"
+      tm_page_type: "doc" | "architecture" | "wiki" | "spec"
+      tm_priority: "low" | "medium" | "high" | "urgent"
+      tm_task_status:
+        | "backlog"
+        | "todo"
+        | "in_progress"
+        | "in_review"
+        | "done"
+        | "cancelled"
+      tm_task_type: "epic" | "story" | "task" | "bug" | "subtask"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -10011,6 +10385,18 @@ export const Constants = {
       exam_type: ["opsc", "upsc", "state_psc"],
       priority_level: ["high", "medium", "low"],
       pyq_difficulty: ["easy", "medium", "hard"],
+      tm_member_role: ["owner", "admin", "editor", "reviewer", "viewer"],
+      tm_page_type: ["doc", "architecture", "wiki", "spec"],
+      tm_priority: ["low", "medium", "high", "urgent"],
+      tm_task_status: [
+        "backlog",
+        "todo",
+        "in_progress",
+        "in_review",
+        "done",
+        "cancelled",
+      ],
+      tm_task_type: ["epic", "story", "task", "bug", "subtask"],
     },
   },
 } as const
