@@ -94,6 +94,7 @@ export const TaskDialog = ({ open, onOpenChange, projectId, task, defaultStatus,
         ...payload,
         project_id: projectId,
         reporter_id: user.id,
+        task_number: 0,
       });
       if (error) { setLoading(false); toast.error(error.message); return; }
       toast.success("Task created");

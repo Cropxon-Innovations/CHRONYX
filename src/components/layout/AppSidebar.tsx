@@ -46,6 +46,7 @@ import {
   GitBranch,
   Newspaper,
    Brain,
+   KanbanSquare,
 } from "lucide-react";
 import { getBadgeClasses, getBadgeDotColor } from "@/lib/badge-colors";
 import {
@@ -123,6 +124,12 @@ const navSections: NavSection[] = [
     title: "Media",
     items: [
       { path: "/app/news", label: "NEWSTACK.Live", icon: Newspaper, badge: "NEW" },
+    ],
+  },
+  {
+    title: "Work",
+    items: [
+      { path: "/app/tasks", label: "Task Management", icon: KanbanSquare, badge: "NEW" },
     ],
   },
   {

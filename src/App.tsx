@@ -57,7 +57,10 @@ const Resolutions = lazy(() => import("./pages/app/Resolutions"));
 const NoteflowLMWorkspace = lazy(() => import("./pages/app/NoteflowLMWorkspace"));
 const News = lazy(() => import("./pages/app/News"));
 const Tools = lazy(() => import("./pages/app/Tools"));
- const Aeon = lazy(() => import("./pages/app/Aeon"));
+  const Aeon = lazy(() => import("./pages/app/Aeon"));
+const TaskManagement = lazy(() => import("./pages/app/TaskManagement"));
+const TaskProject = lazy(() => import("./pages/app/TaskProject"));
+const TaskJoin = lazy(() => import("./pages/app/TaskJoin"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -290,6 +293,9 @@ const AnimatedRoutes = () => {
           <Route path="news" element={<Suspense fallback={<PageLoader />}><News /></Suspense>} />
           <Route path="tools" element={<Suspense fallback={<PageLoader />}><Tools /></Suspense>} />
            <Route path="aeon" element={<Suspense fallback={<PageLoader />}><Aeon /></Suspense>} />
+          <Route path="tasks" element={<Suspense fallback={<PageLoader />}><TaskManagement /></Suspense>} />
+          <Route path="tasks/join/:token" element={<Suspense fallback={<PageLoader />}><TaskJoin /></Suspense>} />
+          <Route path="tasks/:projectId" element={<Suspense fallback={<PageLoader />}><TaskProject /></Suspense>} />
           <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         </Route>
         <Route 
