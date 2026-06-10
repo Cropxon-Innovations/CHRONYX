@@ -10,7 +10,7 @@ import {
   Heart, 
   Shield, 
   Image,
-  Play,
+  // Play removed with Watch Demo CTA
   ChevronDown,
   Lock,
   Download,
