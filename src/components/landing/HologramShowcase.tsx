@@ -1,5 +1,5 @@
-import { memo } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { memo, useRef } from "react";
+import { useInView, useReducedMotion } from "framer-motion";
 import {
   Sparkles, Calculator, Wallet, CheckSquare, Library, Shield,
   Bot, FileText, PenTool, Heart, Hourglass, Gift, Users, Lock,
@@ -7,7 +7,7 @@ import {
 
 // Same geometric mark as the header
 const ChronyxMark = ({ className = "w-full h-full" }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
     <circle cx="256" cy="256" r="248" fill="currentColor" />
     <circle cx="256" cy="256" r="200" fill="none" stroke="hsl(var(--background))" strokeWidth="32" />
     <circle cx="256" cy="256" r="168" fill="currentColor" />
@@ -70,16 +70,42 @@ const buckets = [
   modules.slice(9),
 ];
 
+// Compositor-friendly CSS keyframes — GPU only (transform), pausable via animation-play-state
+const hologramKeyframes = `
+@keyframes cx-spin-y { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+@keyframes cx-orbit-cw { from { transform: rotateX(var(--cx-tilt)) rotateZ(0deg); } to { transform: rotateX(var(--cx-tilt)) rotateZ(360deg); } }
+@keyframes cx-orbit-ccw { from { transform: rotateX(var(--cx-tilt)) rotateZ(360deg); } to { transform: rotateX(var(--cx-tilt)) rotateZ(0deg); } }
+@keyframes cx-chip-cw { from { transform: rotateX(var(--cx-untilt)) rotateZ(0deg); } to { transform: rotateX(var(--cx-untilt)) rotateZ(-360deg); } }
+@keyframes cx-chip-ccw { from { transform: rotateX(var(--cx-untilt)) rotateZ(0deg); } to { transform: rotateX(var(--cx-untilt)) rotateZ(360deg); } }
+`;
+
+const ModuleChip = ({ icon: Icon, label, color }: { icon: typeof Sparkles; label: string; color: string }) => (
+  <div
+    className={`flex items-center gap-1.5 rounded-full border bg-gradient-to-b backdrop-blur-md px-3 py-1.5 text-[11px] font-medium shadow-lg shadow-black/5 ${colorClasses[color]}`}
+  >
+    <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+    <span className="text-foreground/85">{label}</span>
+  </div>
+);
+
 const HologramShowcase = memo(() => {
   const reduce = useReducedMotion();
+  const sectionRef = useRef<HTMLElement | null>(null);
+  // Pause all hologram animations while offscreen → smooth scrolling elsewhere on the page
+  const inView = useInView(sectionRef, { amount: 0.15 });
+  const playState = inView ? "running" : "paused";
 
   return (
     <section
-      aria-label="Chronyx ecosystem hologram"
+      ref={sectionRef}
+      aria-labelledby="hologram-heading"
       className="relative w-full overflow-hidden border-t border-border/10 bg-gradient-to-b from-transparent via-background to-muted/10 py-20 sm:py-28"
+      style={{ contain: "layout paint" }}
     >
+      {!reduce && <style dangerouslySetInnerHTML={{ __html: hologramKeyframes }} />}
+
       {/* ambient glow */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
         <div className="h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,hsl(var(--chronyx-brand)/0.18)_0%,transparent_70%)] blur-2xl" />
       </div>
 
@@ -88,6 +114,7 @@ const HologramShowcase = memo(() => {
           The Chronyx Universe
         </p>
         <h2
+          id="hologram-heading"
           className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight"
           style={{ color: "hsl(var(--chronyx-brand))" }}
         >
@@ -98,87 +125,116 @@ const HologramShowcase = memo(() => {
           tasks, memories and AI, all in continuous motion.
         </p>
 
-        {/* Stage */}
-        <div
-          className="relative mx-auto mt-14 sm:mt-20 flex items-center justify-center"
-          style={{ width: "min(640px, 92vw)", height: "min(640px, 92vw)", perspective: "1200px" }}
-        >
-          {/* Tilted orbit rings */}
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ transformStyle: "preserve-3d", transform: "rotateX(60deg)" }}
-            aria-hidden
-          >
-            {orbits.map((o, i) => (
-              <div
-                key={i}
-                className="absolute rounded-full border border-dashed"
-                style={{
-                  width: o.r * 2,
-                  height: o.r * 2,
-                  borderColor: "hsl(var(--chronyx-brand) / 0.22)",
-                }}
-              />
-            ))}
-          </div>
+        {/* Screen-reader friendly module list (visual stage below is decorative) */}
+        <p className="sr-only">
+          CHRONYX modules: {modules.map((m) => m.label).join(", ")}.
+        </p>
 
-          {/* Center logo — gentle 3D float */}
-          <motion.div
-            className="relative z-20"
-            style={{ color: "hsl(var(--chronyx-brand))", transformStyle: "preserve-3d" }}
-            animate={reduce ? undefined : { rotateY: [0, 360] }}
-            transition={reduce ? undefined : { duration: 22, repeat: Infinity, ease: "linear" }}
-          >
-            <div className="relative h-36 w-36 sm:h-48 sm:w-48">
-              {/* halo */}
+        {reduce ? (
+          /* Reduced motion: calm static composition — no rotation, no 3D spin */
+          <div className="mx-auto mt-14 sm:mt-20 max-w-2xl" aria-hidden="true">
+            <div className="relative mx-auto h-32 w-32 sm:h-40 sm:w-40" style={{ color: "hsl(var(--chronyx-brand))" }}>
               <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,hsl(var(--chronyx-brand)/0.35)_0%,transparent_65%)] blur-2xl" />
               <ChronyxMark className="relative h-full w-full drop-shadow-[0_0_30px_hsl(var(--chronyx-brand)/0.45)]" />
             </div>
-          </motion.div>
-
-          {/* Orbiting chips */}
-          {orbits.map((o, oi) => (
-            <motion.div
-              key={oi}
-              className="absolute inset-0"
-              style={{ transformStyle: "preserve-3d", transform: `rotateX(${o.tilt}deg)` }}
-              animate={reduce ? undefined : { rotateZ: oi % 2 === 0 ? [0, 360] : [360, 0] }}
-              transition={
-                reduce ? undefined : { duration: o.d, repeat: Infinity, ease: "linear" }
-              }
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-2.5">
+              {modules.map((m) => (
+                <ModuleChip key={m.label} icon={m.icon} label={m.label} color={m.color} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Full 3D stage — decorative, duplicated for screen readers above */
+          <div
+            role="img"
+            aria-label="3D hologram of the CHRONYX symbol with module chips orbiting around it"
+            className="relative mx-auto mt-14 sm:mt-20 flex items-center justify-center"
+            style={{ width: "min(640px, 92vw)", height: "min(640px, 92vw)", perspective: "1200px" }}
+          >
+            {/* Tilted orbit rings */}
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ transformStyle: "preserve-3d", transform: "rotateX(60deg)" }}
+              aria-hidden="true"
             >
-              {buckets[oi].map((m, mi) => {
-                const angle = (360 / buckets[oi].length) * mi;
-                const Icon = m.icon;
-                return (
-                  <div
-                    key={m.label}
-                    className="absolute left-1/2 top-1/2"
-                    style={{
-                      transform: `rotate(${angle}deg) translateX(${o.r}px) rotate(-${angle}deg)`,
-                    }}
-                  >
-                    {/* counter-rotate to keep chip upright */}
-                    <motion.div
-                      animate={reduce ? undefined : { rotateZ: oi % 2 === 0 ? [0, -360] : [0, 360] }}
-                      transition={
-                        reduce ? undefined : { duration: o.d, repeat: Infinity, ease: "linear" }
-                      }
-                      style={{ transform: `rotateX(-${o.tilt}deg)` }}
-                    >
+              {orbits.map((o, i) => (
+                <div
+                  key={i}
+                  className="absolute rounded-full border border-dashed"
+                  style={{
+                    width: o.r * 2,
+                    height: o.r * 2,
+                    borderColor: "hsl(var(--chronyx-brand) / 0.22)",
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Center logo — GPU-driven spin, paused offscreen */}
+            <div
+              className="relative z-20"
+              aria-hidden="true"
+              style={{
+                color: "hsl(var(--chronyx-brand))",
+                transformStyle: "preserve-3d",
+                animation: "cx-spin-y 22s linear infinite",
+                animationPlayState: playState,
+                willChange: "transform",
+              }}
+            >
+              <div className="relative h-36 w-36 sm:h-48 sm:w-48">
+                {/* halo */}
+                <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,hsl(var(--chronyx-brand)/0.35)_0%,transparent_65%)] blur-2xl" />
+                <ChronyxMark className="relative h-full w-full drop-shadow-[0_0_30px_hsl(var(--chronyx-brand)/0.45)]" />
+              </div>
+            </div>
+
+            {/* Orbiting chips */}
+            {orbits.map((o, oi) => {
+              const cw = oi % 2 === 0;
+              return (
+                <div
+                  key={oi}
+                  className="absolute inset-0"
+                  aria-hidden="true"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    ["--cx-tilt" as string]: `${o.tilt}deg`,
+                    animation: `${cw ? "cx-orbit-cw" : "cx-orbit-ccw"} ${o.d}s linear infinite`,
+                    animationPlayState: playState,
+                    willChange: "transform",
+                  }}
+                >
+                  {buckets[oi].map((m, mi) => {
+                    const angle = (360 / buckets[oi].length) * mi;
+                    return (
                       <div
-                        className={`flex items-center gap-1.5 rounded-full border bg-gradient-to-b backdrop-blur-md px-3 py-1.5 text-[11px] font-medium shadow-lg shadow-black/5 ${colorClasses[m.color]}`}
+                        key={m.label}
+                        className="absolute left-1/2 top-1/2"
+                        style={{
+                          transformStyle: "preserve-3d",
+                          transform: `rotate(${angle}deg) translateX(${o.r}px) rotate(-${angle}deg)`,
+                        }}
                       >
-                        <Icon className="h-3.5 w-3.5" />
-                        <span className="text-foreground/85">{m.label}</span>
+                        {/* counter-rotate to keep chip upright, same compositor animation */}
+                        <div
+                          style={{
+                            ["--cx-untilt" as string]: `-${o.tilt}deg`,
+                            animation: `${cw ? "cx-chip-cw" : "cx-chip-ccw"} ${o.d}s linear infinite`,
+                            animationPlayState: playState,
+                            willChange: "transform",
+                          }}
+                        >
+                          <ModuleChip icon={m.icon} label={m.label} color={m.color} />
+                        </div>
                       </div>
-                    </motion.div>
-                  </div>
-                );
-              })}
-            </motion.div>
-          ))}
-        </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <p className="mt-10 text-xs tracking-[0.25em] uppercase text-muted-foreground/60">
           14 modules · one private space
