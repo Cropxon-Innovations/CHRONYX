@@ -155,3 +155,30 @@ export const useMoveTask = (projectId: string | undefined) => {
     onSettled: () => qc.invalidateQueries({ queryKey: ["tm_tasks", projectId] }),
   });
 };
+
+export const useUpdateProject = (projectId: string | undefined) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (patch: Partial<Pick<TmProject, "name" | "project_key" | "description" | "color" | "archived" | "icon">>) => {
+      const { error } = await supabase.from("tm_projects").update(patch).eq("id", projectId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tm_project", projectId] });
+      qc.invalidateQueries({ queryKey: ["tm_projects"] });
+    },
+  });
+};
+
+export const useDeleteProject = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      const { error } = await supabase.from("tm_projects").delete().eq("id", projectId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tm_projects"] });
+    },
+  });
+};

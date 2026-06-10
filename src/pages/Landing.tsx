@@ -42,6 +42,7 @@ import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import LandingNav from "@/components/landing/LandingNav";
 import ScrollStackedFeatures from "@/components/landing/ScrollStackedFeatures";
 import HologramShowcase from "@/components/landing/HologramShowcase";
+import CalmBenefits from "@/components/landing/CalmBenefits";
 import {
   Dialog,
   DialogContent,
@@ -997,41 +998,56 @@ const Landing = () => {
                   all in one private, minimal dashboard.
                 </motion.p>
 
-                {/* Feature pills - including NoteFlowLM */}
+                {/* Core feature tags — Tasks · Learning · Money · Time */}
                 <motion.div 
                   className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-3"
                   variants={fadeInUp}
                   initial="hidden"
                   animate="visible"
                   custom={3}
+                  role="list"
+                  aria-label="Core CHRONYX features"
                 >
                   {[
-                    { icon: Sparkles, label: "NoteFlow", highlight: true, flagship: true },
-                    { icon: Calculator, label: "Tax Calculator", highlight: true },
-                    { icon: Wallet, label: "Finance" },
-                    { icon: CheckSquare, label: "Tasks" },
-                    { icon: Library, label: "Library" },
-                    { icon: Shield, label: "Private" },
-                  ].map((item) => (
-                    <motion.div 
-                      key={item.label}
+                    { icon: CheckSquare, label: "Tasks", classes: "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm shadow-emerald-500/10" },
+                    { icon: BookOpen, label: "Learning", classes: "border-sky-500/40 bg-sky-500/10 text-sky-600 dark:text-sky-400 shadow-sm shadow-sky-500/10" },
+                    { icon: Wallet, label: "Money", classes: "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-sm shadow-amber-500/10" },
+                    { icon: Clock, label: "Time", classes: "border-violet-500/40 bg-violet-500/10 text-violet-600 dark:text-violet-400 shadow-sm shadow-violet-500/10" },
+                  ].map((tag) => (
+                    <motion.span
+                      key={tag.label}
+                      role="listitem"
                       className={cn(
-                        "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm border transition-all",
-                        (item as any).flagship
-                          ? "border-fuchsia-500/50 bg-gradient-to-r from-fuchsia-500/10 to-purple-500/10 text-fuchsia-600 dark:text-fuchsia-400 font-semibold shadow-lg shadow-fuchsia-500/10" 
-                          : item.highlight 
-                            ? "border-primary/50 bg-primary/5 text-primary font-medium" 
-                            : "border-border/50 bg-card/30 text-muted-foreground hover:text-foreground hover:border-primary/30 backdrop-blur-sm"
+                        "flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium border backdrop-blur-sm transition-all",
+                        tag.classes
                       )}
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.04, y: -1 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <item.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      <span>{item.label}</span>
-                      {(item as any).flagship && <Crown className="w-3 h-3 text-fuchsia-500" />}
-                      {item.highlight && !(item as any).flagship && <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
-                    </motion.div>
+                      <tag.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" aria-hidden="true" />
+                      <span>{tag.label}</span>
+                    </motion.span>
                   ))}
+
+                  {/* Flagship + privacy pills */}
+                  <motion.span
+                    role="listitem"
+                    className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm border border-fuchsia-500/50 bg-gradient-to-r from-fuchsia-500/10 to-purple-500/10 text-fuchsia-600 dark:text-fuchsia-400 font-semibold shadow-lg shadow-fuchsia-500/10"
+                    whileHover={{ scale: 1.04, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" aria-hidden="true" />
+                    <span>NoteFlow</span>
+                    <Crown className="w-3 h-3 text-fuchsia-500" aria-hidden="true" />
+                  </motion.span>
+                  <motion.span
+                    role="listitem"
+                    className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm border border-border/50 bg-card/30 text-muted-foreground backdrop-blur-sm hover:text-foreground hover:border-primary/30 transition-all"
+                    whileHover={{ scale: 1.04, y: -1 }}
+                  >
+                    <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" aria-hidden="true" />
+                    <span>Private</span>
+                  </motion.span>
                 </motion.div>
 
                 {/* CTA Buttons */}
@@ -1678,6 +1694,9 @@ const Landing = () => {
             </div>
           </div>
         </RevealSection>
+
+        {/* CALM BENEFITS + NEXT STEPS */}
+        <CalmBenefits />
 
         {/* 3D HOLOGRAM — Chronyx Universe */}
         <HologramShowcase />
