@@ -10,7 +10,7 @@ import {
   Heart, 
   Shield, 
   Image,
-  Play,
+  // Play removed with Watch Demo CTA
   ChevronDown,
   Lock,
   Download,
@@ -41,6 +41,7 @@ import {
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import LandingNav from "@/components/landing/LandingNav";
 import ScrollStackedFeatures from "@/components/landing/ScrollStackedFeatures";
+import HologramShowcase from "@/components/landing/HologramShowcase";
 import {
   Dialog,
   DialogContent,
@@ -1052,26 +1053,9 @@ const Landing = () => {
                     </motion.button>
                   </Link>
                   
-                  <motion.button 
-                    onClick={() => setShowDemo(true)}
-                    className="flex items-center gap-3 px-6 py-4 text-base text-muted-foreground border border-border/50 rounded-full hover:border-foreground/30 hover:text-foreground transition-all backdrop-blur-sm"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Play className="w-5 h-5" />
-                    Watch Demo
-                  </motion.button>
-                </motion.div>
-
-                {/* PWA Install */}
-                <motion.div
-                  variants={fadeInUp}
-                  initial="hidden"
-                  animate="visible"
-                  custom={5}
-                >
                   <PWAInstallPrompt variant="hero" />
                 </motion.div>
+
 
                 {/* Trust indicators */}
                 <motion.div 
@@ -1695,8 +1679,12 @@ const Landing = () => {
           </div>
         </RevealSection>
 
+        {/* 3D HOLOGRAM — Chronyx Universe */}
+        <HologramShowcase />
+
         {/* FOOTER */}
         <footer id="footer" className="px-6 py-16 border-t border-border/10 bg-muted/10">
+
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-12">
               {/* Brand */}
