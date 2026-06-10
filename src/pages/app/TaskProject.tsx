@@ -10,6 +10,7 @@ import { KanbanBoard } from "@/components/taskmgmt/KanbanBoard";
 import { MembersPanel } from "@/components/taskmgmt/MembersPanel";
 import { PagesPanel } from "@/components/taskmgmt/PagesPanel";
 import { TaskDialog } from "@/components/taskmgmt/TaskDialog";
+import { ProjectSettingsDialog } from "@/components/taskmgmt/ProjectSettingsDialog";
 import { TASK_TYPE_META, PRIORITY_META, ROLE_META } from "@/components/taskmgmt/types";
 
 const TaskProject = () => {
@@ -20,6 +21,7 @@ const TaskProject = () => {
   const canEdit = role === "owner" || role === "admin" || role === "editor";
   const canAdmin = role === "owner" || role === "admin";
   const [createOpen, setCreateOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (isLoading) return <div className="p-8">Loading…</div>;
   if (!project) return (
@@ -48,9 +50,16 @@ const TaskProject = () => {
             <p className="text-xs text-muted-foreground font-mono">{project.project_key}</p>
           </div>
         </div>
-        {canEdit && (
-          <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />New task</Button>
-        )}
+        <div className="flex items-center gap-2">
+          {canAdmin && (
+            <Button variant="outline" size="icon" aria-label="Project settings" onClick={() => setSettingsOpen(true)}>
+              <SettingsIcon className="h-4 w-4" />
+            </Button>
+          )}
+          {canEdit && (
+            <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />New task</Button>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="board">
@@ -117,6 +126,14 @@ const TaskProject = () => {
       </Tabs>
 
       <TaskDialog open={createOpen} onOpenChange={setCreateOpen} projectId={project.id} canEdit={canEdit} />
+      {canAdmin && (
+        <ProjectSettingsDialog
+          project={project}
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          isOwner={role === "owner"}
+        />
+      )}
     </div>
   );
 };
