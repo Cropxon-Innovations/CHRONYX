@@ -121,29 +121,11 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: "Media",
-    items: [
-      { path: "/app/news", label: "NEWSTACK.Live", icon: Newspaper, badge: "NEW" },
-    ],
-  },
-  {
     title: "Work",
     items: [
       { path: "/app/tasks", label: "Task Management", icon: KanbanSquare, badge: "NEW" },
     ],
   },
-  {
-    title: "Tools",
-    items: [
-      { path: "/app/tools", label: "CONVERTIX", icon: Zap, badge: "NEW" },
-    ],
-  },
-   {
-     title: "AI Agent",
-     items: [
-       { path: "/app/aeon", label: "∆E0N", icon: Brain, badge: "SOON" },
-     ],
-   },
   {
     title: "Security",
     items: [
