@@ -7,44 +7,103 @@ interface SplashScreenProps {
   minimal?: boolean;
 }
 
-// CHRONYX Logo — outer ring static, inner geometric symbol animates (rotation + pulse)
+/**
+ * Splash logo — Orbital Nucleus assembled with a "liquid metal" feel:
+ * nucleus pours in from a blurred drop, orbits draw on, electrons fly into place.
+ */
 const ChronxyxLogo = ({ className = "w-24 h-24" }: { className?: string }) => {
   const reduce = useReducedMotion();
+  const orbits = [
+    { rot: 0, dur: 18, dir: 1, w: 10, eR: 18, eFill: "hsl(var(--primary))" },
+    { rot: 60, dur: 22, dir: -1, w: 8, eR: 14, eFill: "currentColor" },
+    { rot: -60, dur: 26, dir: 1, w: 8, eR: 14, eFill: "currentColor" },
+  ];
   return (
     <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="256" cy="256" r="248" fill="currentColor" />
-      <circle cx="256" cy="256" r="200" fill="none" stroke="hsl(var(--background))" strokeWidth="32" />
-      <motion.g
-        style={{ originX: "256px", originY: "256px", transformBox: "fill-box" } as any}
-        animate={reduce ? {} : { rotate: [0, 360], scale: [1, 1.04, 1] }}
-        transition={reduce ? undefined : {
-          rotate: { duration: 8, repeat: Infinity, ease: "linear" },
-          scale: { duration: 3, repeat: Infinity, ease: "easeInOut" },
-        }}
-      >
-        <circle cx="256" cy="256" r="168" fill="currentColor" />
-        <path
-          d="M256 128 L256 216 L168 216 L168 256 L216 256 L216 344 L256 344 L256 296 L344 296 L344 256 L296 256 L296 168 L256 168 L256 128Z"
-          fill="hsl(var(--background))"
-        />
-        <rect x="168" y="168" width="40" height="48" fill="hsl(var(--background))" />
-        <rect x="304" y="296" width="40" height="48" fill="hsl(var(--background))" />
-        <rect x="296" y="168" width="48" height="40" fill="hsl(var(--background))" />
-        <rect x="168" y="304" width="48" height="40" fill="hsl(var(--background))" />
-      </motion.g>
+      <defs>
+        <radialGradient id="splash-n" cx="50%" cy="42%" r="60%">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0.82" />
+        </radialGradient>
+        <radialGradient id="splash-halo" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+          <stop offset="70%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+        </radialGradient>
+        <filter id="splash-blur"><feGaussianBlur stdDeviation="6" /></filter>
+      </defs>
+
+      {/* Halo */}
       {!reduce && (
         <motion.circle
-          cx="256"
-          cy="256"
-          r="180"
-          fill="none"
-          stroke="hsl(var(--primary))"
-          strokeWidth="2"
-          style={{ originX: "256px", originY: "256px", transformBox: "fill-box" } as any}
-          animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0, 0.5] }}
-          transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+          cx="256" cy="256" r="252" fill="url(#splash-halo)"
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: [0, 0.9, 0.5], scale: [0.6, 1.05, 1] }}
+          transition={{ duration: 2.2, ease: [0.22, 1, 0.36, 1] }}
         />
       )}
+
+      {/* Orbits draw on */}
+      {orbits.map((o, i) => (
+        <motion.g
+          key={o.rot}
+          style={{ transformOrigin: "256px 256px", transformBox: "fill-box" as any }}
+          initial={{ rotate: o.rot - 90, opacity: 0 }}
+          animate={
+            reduce
+              ? { rotate: o.rot, opacity: 1 }
+              : { rotate: [o.rot - 90, o.rot, o.rot + o.dir * 360], opacity: [0, 1, 1] }
+          }
+          transition={
+            reduce
+              ? undefined
+              : {
+                  rotate: { duration: o.dur, times: [0, 0.18, 1], repeat: Infinity, ease: ["easeOut", "linear"] as any, delay: 0.2 + i * 0.12 },
+                  opacity: { duration: 0.8, times: [0, 0.4, 1], delay: 0.2 + i * 0.12 },
+                }
+          }
+        >
+          <g transform={`rotate(${o.rot} 256 256)`}>
+            <motion.ellipse
+              cx="256" cy="256" rx="220" ry="74"
+              fill="none" stroke="currentColor" strokeOpacity={0.55} strokeWidth={o.w}
+              strokeDasharray="1380"
+              initial={{ strokeDashoffset: 1380 }}
+              animate={{ strokeDashoffset: 0 }}
+              transition={{ duration: 1.1, delay: 0.25 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+            />
+            <motion.circle
+              cx="476" cy="256" r={o.eR} fill={o.eFill}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [0, 1.4, 1], opacity: [0, 1, 1] }}
+              transition={{ duration: 0.7, delay: 0.9 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </g>
+        </motion.g>
+      ))}
+
+      {/* Nucleus liquid-metal drop */}
+      <motion.g
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.05 }}
+      >
+        <motion.circle
+          cx="256" cy="256" fill="url(#splash-n)" filter="url(#splash-blur)"
+          initial={{ r: 0 }}
+          animate={{ r: [0, 110, 78] }}
+          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        />
+        <motion.circle
+          cx="256" cy="256" fill="url(#splash-n)"
+          initial={{ r: 0 }}
+          animate={{ r: [0, 92, 78] }}
+          transition={{ duration: 1, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+        />
+        <motion.circle
+          cx="232" cy="232" r="22" fill="hsl(var(--background))" fillOpacity="0.22"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1, duration: 0.4 }}
+        />
+      </motion.g>
     </svg>
   );
 };

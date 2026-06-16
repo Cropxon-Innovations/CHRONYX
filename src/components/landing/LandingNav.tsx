@@ -55,26 +55,10 @@ interface LandingNavProps {
   onDesktopDownload?: () => void;
 }
 
-// CHRONYX Logo Icon - Geometric angular symbol in concentric circles
+// CHRONYX Logo Icon - Orbital Nucleus mark
+import { ChronyxOrbitalLogo } from "@/components/brand/ChronyxOrbitalLogo";
 const ChronxyxLogo = ({ className = "w-8 h-8" }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Outer circle */}
-    <circle cx="256" cy="256" r="248" fill="currentColor" />
-    {/* White ring */}
-    <circle cx="256" cy="256" r="200" fill="none" stroke="hsl(var(--background))" strokeWidth="32" />
-    {/* Inner filled circle */}
-    <circle cx="256" cy="256" r="168" fill="currentColor" />
-    {/* Geometric angular symbol - stylized interlocking arms */}
-    <path
-      d="M256 128 L256 216 L168 216 L168 256 L216 256 L216 344 L256 344 L256 296 L344 296 L344 256 L296 256 L296 168 L256 168 L256 128Z"
-      fill="hsl(var(--background))"
-    />
-    {/* Extended arms */}
-    <rect x="168" y="168" width="40" height="48" fill="hsl(var(--background))" />
-    <rect x="304" y="296" width="40" height="48" fill="hsl(var(--background))" />
-    <rect x="296" y="168" width="48" height="40" fill="hsl(var(--background))" />
-    <rect x="168" y="304" width="48" height="40" fill="hsl(var(--background))" />
-  </svg>
+  <ChronyxOrbitalLogo className={className} animated glow />
 );
 
 const featureGroups = {

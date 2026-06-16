@@ -1,19 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" fill="none">
-  <!-- Background -->
-  <rect width="180" height="180" rx="40" fill="#0f172a"/>
-  
-  <!-- Outer ring -->
-  <circle cx="90" cy="90" r="65" stroke="#64748b" stroke-width="3" fill="none" opacity="0.8"/>
-  
-  <!-- Inner dashed ring -->
-  <circle cx="90" cy="90" r="50" stroke="#64748b" stroke-width="1.5" stroke-dasharray="6 4" fill="none" opacity="0.4"/>
-  
-  <!-- Center dot -->
-  <circle cx="90" cy="90" r="8" fill="#64748b" opacity="0.9"/>
-  
-  <!-- Time markers at 12, 3, 6, 9 o'clock positions -->
-  <circle cx="90" cy="30" r="4" fill="#64748b" opacity="0.6"/>
-  <circle cx="150" cy="90" r="4" fill="#64748b" opacity="0.6"/>
-  <circle cx="90" cy="150" r="4" fill="#64748b" opacity="0.6"/>
-  <circle cx="30" cy="90" r="4" fill="#64748b" opacity="0.6"/>
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <g transform="rotate(0 256 256)"><ellipse cx="256" cy="256" rx="200" ry="68" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="12"/><circle cx="456" cy="256" r="22" fill="#3b82f6"/></g>
+  <g transform="rotate(60 256 256)"><ellipse cx="256" cy="256" rx="200" ry="68" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="10"/><circle cx="456" cy="256" r="16" fill="#ffffff"/></g>
+  <g transform="rotate(-60 256 256)"><ellipse cx="256" cy="256" rx="200" ry="68" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="10"/><circle cx="456" cy="256" r="16" fill="#ffffff"/></g>
+  <circle cx="256" cy="256" r="86" fill="#ffffff"/>
+  <circle cx="232" cy="232" r="24" fill="#0f172a" fill-opacity="0.2"/>
 </svg>
