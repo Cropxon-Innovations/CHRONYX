@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 import LandingNav from "@/components/landing/LandingNav";
-import ScrollStackedFeatures from "@/components/landing/ScrollStackedFeatures";
+import LobbyEcosystem from "@/components/landing/LobbyEcosystem";
 import HologramShowcase from "@/components/landing/HologramShowcase";
 import CalmBenefits from "@/components/landing/CalmBenefits";
 import {
@@ -1132,8 +1132,8 @@ const Landing = () => {
           </article>
         </RevealSection>
 
-        {/* FEATURES - Scroll Stacked Animated Cards */}
-        <ScrollStackedFeatures />
+        {/* FEATURES - Apple Vision-style lobby ecosystem */}
+        <LobbyEcosystem />
 
         {/* NOTEFLOW FLAGSHIP SECTION */}
         <RevealSection className="px-4 sm:px-6 py-16 sm:py-24 bg-gradient-to-br from-fuchsia-500/5 via-purple-500/5 to-indigo-500/5 border-t border-fuchsia-500/10">
