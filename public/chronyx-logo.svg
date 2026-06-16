@@ -1,10 +1,22 @@
-<svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="256" cy="256" r="248" fill="black"/>
-<circle cx="256" cy="256" r="200" fill="none" stroke="white" stroke-width="32"/>
-<circle cx="256" cy="256" r="168" fill="black"/>
-<path d="M256 128 L256 216 L168 216 L168 256 L216 256 L216 344 L256 344 L256 296 L344 296 L344 256 L296 256 L296 168 L256 168 L256 128Z" fill="white"/>
-<rect x="168" y="168" width="40" height="48" fill="white"/>
-<rect x="304" y="296" width="40" height="48" fill="white"/>
-<rect x="296" y="168" width="48" height="40" fill="white"/>
-<rect x="168" y="304" width="48" height="40" fill="white"/>
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="n" cx="50%" cy="42%" r="60%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.85"/>
+    </radialGradient>
+  </defs>
+  <g transform="rotate(0 256 256)">
+    <ellipse cx="256" cy="256" rx="220" ry="74" fill="none" stroke="#0f172a" stroke-opacity="0.55" stroke-width="10"/>
+    <circle cx="476" cy="256" r="18" fill="#3b82f6"/>
+  </g>
+  <g transform="rotate(60 256 256)">
+    <ellipse cx="256" cy="256" rx="220" ry="74" fill="none" stroke="#0f172a" stroke-opacity="0.55" stroke-width="8"/>
+    <circle cx="476" cy="256" r="14" fill="#0f172a"/>
+  </g>
+  <g transform="rotate(-60 256 256)">
+    <ellipse cx="256" cy="256" rx="220" ry="74" fill="none" stroke="#0f172a" stroke-opacity="0.55" stroke-width="8"/>
+    <circle cx="476" cy="256" r="14" fill="#0f172a"/>
+  </g>
+  <circle cx="256" cy="256" r="78" fill="url(#n)"/>
+  <circle cx="232" cy="232" r="22" fill="#ffffff" fill-opacity="0.18"/>
 </svg>
