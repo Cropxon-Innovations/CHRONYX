@@ -64,6 +64,7 @@ const TaskJoin = lazy(() => import("./pages/app/TaskJoin"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const IconPreview = lazy(() => import("./pages/IconPreview"));
 
 const queryClient = new QueryClient();
 
@@ -231,6 +232,14 @@ const AnimatedRoutes = () => {
               </Suspense>
             </motion.div>
           } 
+        />
+        <Route
+          path="/icon-preview"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <IconPreview />
+            </Suspense>
+          }
         />
         <Route 
           path="/chronyx-control-8x9k2m" 
