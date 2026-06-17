@@ -1,21 +1,20 @@
-import { motion, useScroll, useTransform, useReducedMotion, MotionValue } from "framer-motion";
-import { useRef, useMemo } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { useRef, useState, MouseEvent } from "react";
 import {
   PenTool, FileText, GraduationCap, Wallet, Receipt, TrendingUp,
   Heart, KanbanSquare, Images, GitBranch, Hourglass, Lock,
   CheckSquare, BookMarked, Zap, Target, Users, Trophy, PieChart,
 } from "lucide-react";
 import { ChronyxOrbitalLogo } from "@/components/brand/ChronyxOrbitalLogo";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
- * Apple Vision–style lobby. The camera flies forward through a dark
- * "lobby"; glass module panels float in from depth and dock around a
- * central Chronyx orbital nucleus.
+ * Lobby Ecosystem — a 3D card gallery of every module that lives in the
+ * /app sidebar. Each card has a mouse-following tilt (three.js / Apple
+ * Vision feel) and a soft glow that follows the cursor. Uses semantic
+ * design tokens so it reads cleanly in both light and dark themes.
  *
- * Only modules that exist in the dashboard sidebar are shown.
- * On mobile and prefers-reduced-motion we fall back to a static,
- * accessible grid for smoothness + battery.
+ * Module list must match AppSidebar.tsx — meta routes (Dashboard,
+ * Security Dashboard, Privacy Center) are intentionally excluded.
  */
 
 interface Module {
@@ -23,180 +22,151 @@ interface Module {
   desc: string;
   Icon: typeof PenTool;
   hue: string;
-  row: number;
-  col: -1 | 1;
+  group: string;
 }
 
-// Sourced from AppSidebar.tsx — keep in sync.
 const MODULES: Module[] = [
-  { label: "Todos",           desc: "Daily plan & timeline.",         Icon: CheckSquare,    hue: "text-teal-300",    row: 0, col: -1 },
-  { label: "Noteflow",        desc: "AI notes, voice, OCR.",          Icon: PenTool,        hue: "text-violet-300",  row: 0, col:  1 },
-  { label: "Study",           desc: "Syllabus, PYQs, NOVA AI.",       Icon: GraduationCap,  hue: "text-emerald-300", row: 1, col: -1 },
-  { label: "Library",         desc: "Books, PDFs, readers.",          Icon: BookMarked,     hue: "text-amber-300",   row: 1, col:  1 },
-  { label: "FinanceFlow",     desc: "Auto-imported transactions.",    Icon: Zap,            hue: "text-yellow-300",  row: 2, col: -1 },
-  { label: "Expenses",        desc: "Budgets & categories.",          Icon: Receipt,        hue: "text-rose-300",    row: 2, col:  1 },
-  { label: "Income",          desc: "Salary & passive income.",       Icon: TrendingUp,     hue: "text-green-300",   row: 3, col: -1 },
-  { label: "Reports & Budget",desc: "Spend insights & forecasts.",    Icon: PieChart,       hue: "text-sky-300",     row: 3, col:  1 },
-  { label: "Loans & EMI",     desc: "Amortization & reminders.",      Icon: Wallet,         hue: "text-orange-300",  row: 4, col: -1 },
-  { label: "Insurance",       desc: "Policies & claims.",             Icon: Heart,          hue: "text-pink-300",    row: 4, col:  1 },
-  { label: "TAXYN",           desc: "Indian tax engine.",             Icon: FileText,       hue: "text-indigo-300",  row: 5, col: -1 },
-  { label: "Documents",       desc: "Personal docs vault.",           Icon: FileText,       hue: "text-cyan-300",    row: 5, col:  1 },
-  { label: "Task Management", desc: "Jira-style boards.",             Icon: KanbanSquare,   hue: "text-blue-300",    row: 6, col: -1 },
-  { label: "Memory",          desc: "Photos & collections.",          Icon: Images,         hue: "text-fuchsia-300", row: 6, col:  1 },
-  { label: "Family Tree",     desc: "Generations & docs.",            Icon: GitBranch,      hue: "text-lime-300",    row: 7, col: -1 },
-  { label: "Social",          desc: "15+ platforms unified.",         Icon: Users,          hue: "text-purple-300",  row: 7, col:  1 },
-  { label: "Lifespan",        desc: "Years left, lived well.",        Icon: Hourglass,      hue: "text-stone-300",   row: 8, col: -1 },
-  { label: "Resolutions",     desc: "Yearly intent, tracked.",        Icon: Target,         hue: "text-red-300",     row: 8, col:  1 },
-  { label: "Achievements",    desc: "Streaks & milestones.",          Icon: Trophy,         hue: "text-yellow-200",  row: 9, col: -1 },
-  { label: "Vault",           desc: "Passwords & secrets.",           Icon: Lock,           hue: "text-slate-300",   row: 9, col:  1 },
+  // Productivity
+  { label: "Todos",            desc: "Daily plan & timeline.",        Icon: CheckSquare,   hue: "from-teal-400/30 to-teal-500/5",       group: "Productivity" },
+  { label: "Noteflow",         desc: "AI notes, voice, OCR.",         Icon: PenTool,       hue: "from-violet-400/30 to-violet-500/5",   group: "Productivity" },
+  { label: "Study",            desc: "Syllabus, PYQs, NOVA AI.",      Icon: GraduationCap, hue: "from-emerald-400/30 to-emerald-500/5", group: "Productivity" },
+  { label: "Library",          desc: "Books, PDFs, readers.",         Icon: BookMarked,    hue: "from-amber-400/30 to-amber-500/5",     group: "Productivity" },
+  { label: "Achievements",     desc: "Streaks & milestones.",         Icon: Trophy,        hue: "from-yellow-300/30 to-yellow-500/5",   group: "Productivity" },
+  { label: "Resolutions",      desc: "Yearly intent, tracked.",       Icon: Target,        hue: "from-red-400/30 to-red-500/5",         group: "Productivity" },
+  // Finance
+  { label: "FinanceFlow",      desc: "Auto-imported transactions.",   Icon: Zap,           hue: "from-yellow-400/30 to-orange-500/5",   group: "Finance" },
+  { label: "Expenses",         desc: "Budgets & categories.",         Icon: Receipt,       hue: "from-rose-400/30 to-rose-500/5",       group: "Finance" },
+  { label: "Income",           desc: "Salary & passive income.",      Icon: TrendingUp,    hue: "from-green-400/30 to-green-500/5",     group: "Finance" },
+  { label: "Reports & Budget", desc: "Spend insights & forecasts.",   Icon: PieChart,      hue: "from-sky-400/30 to-sky-500/5",         group: "Finance" },
+  { label: "Loans & EMI",      desc: "Amortization & reminders.",     Icon: Wallet,        hue: "from-orange-400/30 to-orange-500/5",   group: "Finance" },
+  { label: "Insurance",        desc: "Policies & claims.",            Icon: Heart,         hue: "from-pink-400/30 to-pink-500/5",       group: "Finance" },
+  { label: "TAXYN",            desc: "Indian tax engine.",            Icon: FileText,      hue: "from-indigo-400/30 to-indigo-500/5",   group: "Finance" },
+  // Life
+  { label: "Memory",           desc: "Photos & collections.",         Icon: Images,        hue: "from-fuchsia-400/30 to-fuchsia-500/5", group: "Life" },
+  { label: "Documents",        desc: "Personal docs vault.",          Icon: FileText,      hue: "from-cyan-400/30 to-cyan-500/5",       group: "Life" },
+  { label: "Family Tree",      desc: "Generations & docs.",           Icon: GitBranch,     hue: "from-lime-400/30 to-lime-500/5",       group: "Life" },
+  { label: "Social",           desc: "15+ platforms unified.",        Icon: Users,         hue: "from-purple-400/30 to-purple-500/5",   group: "Life" },
+  { label: "Lifespan",         desc: "Years left, lived well.",       Icon: Hourglass,     hue: "from-stone-400/30 to-stone-500/5",     group: "Life" },
+  // Work + Security
+  { label: "Task Management",  desc: "Jira-style boards.",            Icon: KanbanSquare,  hue: "from-blue-400/30 to-blue-500/5",       group: "Work" },
+  { label: "Vault",            desc: "Passwords & secrets.",          Icon: Lock,          hue: "from-slate-400/30 to-slate-500/5",     group: "Security" },
 ];
 
-const TOTAL_ROWS = 10;
+/** A tilted glass card that follows the cursor (three.js-style). */
+const TiltCard = ({ mod, reduce }: { mod: Module; reduce: boolean }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0, mx: 50, my: 50, lift: 0 });
 
-const Panel = ({ mod, progress }: { mod: Module; progress: MotionValue<number> }) => {
-  // Each row docks across its own scroll slice.
-  const start = mod.row / TOTAL_ROWS;
-  const end = (mod.row + 1.4) / TOTAL_ROWS;
-
-  // Use only transform/opacity (compositor-friendly). No CSS blur.
-  const z = useTransform(progress, [Math.max(0, start - 0.04), start, end], [-900, -180, 0]);
-  const opacity = useTransform(
-    progress,
-    [Math.max(0, start - 0.06), start, end, Math.min(1, end + 0.18)],
-    [0, 1, 1, 0.35]
-  );
-  const x = `${mod.col * 22}%`;
+  const onMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (reduce || !ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width;
+    const py = (e.clientY - r.top) / r.height;
+    setTilt({
+      ry: (px - 0.5) * 14,
+      rx: -(py - 0.5) * 14,
+      mx: px * 100,
+      my: py * 100,
+      lift: 14,
+    });
+  };
+  const onLeave = () => setTilt({ rx: 0, ry: 0, mx: 50, my: 50, lift: 0 });
 
   const Icon = mod.Icon;
   return (
-    <motion.div
-      style={{ translateZ: z, opacity, x }}
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 will-change-transform"
-    >
-      <div className="w-[260px] sm:w-[300px] rounded-2xl border border-white/15 bg-white/[0.07] backdrop-blur-xl p-5 shadow-[0_20px_80px_-20px_rgba(80,120,255,0.45)]">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
-            <Icon className={`w-5 h-5 ${mod.hue}`} aria-hidden />
+    <div style={{ perspective: 1000 }} className="h-full">
+      <motion.div
+        ref={ref}
+        onMouseMove={onMove}
+        onMouseLeave={onLeave}
+        animate={{
+          rotateX: tilt.rx,
+          rotateY: tilt.ry,
+          translateZ: tilt.lift,
+        }}
+        transition={{ type: "spring", stiffness: 200, damping: 18, mass: 0.6 }}
+        style={{ transformStyle: "preserve-3d" }}
+        className="group relative h-full rounded-2xl border border-border bg-card/80 backdrop-blur-xl p-6 shadow-[0_10px_40px_-20px_hsl(var(--primary)/0.35)] hover:shadow-[0_30px_80px_-20px_hsl(var(--primary)/0.55)] transition-shadow will-change-transform"
+      >
+        {/* Cursor-follow glow */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{
+            background: `radial-gradient(380px circle at ${tilt.mx}% ${tilt.my}%, hsl(var(--primary) / 0.18), transparent 45%)`,
+          }}
+        />
+        {/* Color halo per module */}
+        <div className={`pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-br ${mod.hue} opacity-60 mix-blend-overlay`} />
+
+        <div className="relative" style={{ transform: "translateZ(40px)" }}>
+          <div className="flex items-center justify-between">
+            <div className="w-11 h-11 rounded-xl border border-border bg-background/60 flex items-center justify-center shadow-inner">
+              <Icon className="w-5 h-5 text-foreground" aria-hidden />
+            </div>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{mod.group}</span>
           </div>
-          <div>
-            <div className="text-white font-medium tracking-tight">{mod.label}</div>
-            <div className="text-white/60 text-xs">{mod.desc}</div>
+          <div className="mt-5 text-foreground font-medium tracking-tight text-lg">{mod.label}</div>
+          <p className="mt-1 text-sm text-muted-foreground">{mod.desc}</p>
+          <div className="mt-5 h-1 rounded-full bg-muted overflow-hidden">
+            <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-primary to-primary/30" />
           </div>
         </div>
-        <div className="mt-4 h-1.5 rounded-full bg-white/5 overflow-hidden">
-          <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-white/60 to-white/20" />
-        </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };
 
-const StaticGrid = () => (
-  <section className="bg-[#05060a] py-24 px-6" aria-label="Chronyx ecosystem">
-    <div className="max-w-6xl mx-auto text-center mb-14">
-      <p className="text-xs uppercase tracking-[0.4em] text-white/50 mb-3">The lobby</p>
-      <h2 className="text-3xl md:text-5xl font-light text-white tracking-tight">
-        One quiet lobby. <span className="text-white/60">Every module of your life.</span>
-      </h2>
-    </div>
-    <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {MODULES.map((m) => (
-        <div key={m.label} className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <m.Icon className={`w-5 h-5 ${m.hue} mb-3`} aria-hidden />
-          <div className="text-white font-medium">{m.label}</div>
-          <div className="text-white/60 text-xs">{m.desc}</div>
-        </div>
-      ))}
-    </div>
-  </section>
-);
-
 export const LobbyEcosystem = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
-  const isMobile = useIsMobile();
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end end"],
-  });
-
-  const titleOpacity = useTransform(scrollYProgress, [0, 0.04, 0.12], [1, 1, 0]);
-  const subOpacity   = useTransform(scrollYProgress, [0.85, 0.95], [0, 1]);
-  const coreScale    = useTransform(scrollYProgress, [0, 0.5, 1], [0.65, 1, 1.15]);
-  const coreOpacity  = useTransform(scrollYProgress, [0, 0.1, 0.9, 1], [0.4, 0.95, 0.95, 1]);
-
-  // Mobile / reduced motion: skip the heavy 3D scene.
-  if (reduce || isMobile) return <StaticGrid />;
-
-  // ~60vh per row of modules, capped — keeps scroll feel snappy.
-  const height = useMemo(() => `${Math.min(TOTAL_ROWS * 55, 600)}vh`, []);
+  const reduce = useReducedMotion() ?? false;
 
   return (
     <section
-      ref={ref}
-      aria-label="Chronyx ecosystem lobby"
-      className="relative bg-[#05060a]"
-      style={{ height }}
+      aria-label="Chronyx ecosystem"
+      className="relative bg-background py-24 sm:py-32 px-6 overflow-hidden"
     >
-      {/* Sticky stage — always dark so it reads on both themes */}
-      <div className="sticky top-0 h-screen overflow-hidden text-white">
-        {/* Ambient lobby light */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(99,102,241,0.20)_0%,_transparent_55%),radial-gradient(ellipse_at_70%_30%,_rgba(56,189,248,0.14)_0%,_transparent_50%),radial-gradient(ellipse_at_30%_70%,_rgba(244,114,182,0.12)_0%,_transparent_50%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,_rgba(0,0,0,0.6),_transparent_30%,_transparent_70%,_rgba(0,0,0,0.9))]" />
+      {/* Ambient glow that works in both themes */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-70"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 0%, hsl(var(--primary) / 0.18) 0%, transparent 55%), radial-gradient(ellipse at 80% 80%, hsl(var(--primary) / 0.10) 0%, transparent 50%)",
+        }}
+      />
 
-        {/* Floor grid */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-1/2 opacity-40 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to bottom, transparent 0%, rgba(99,102,241,0.10) 100%), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 80px), repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 80px)",
-            transform: "perspective(800px) rotateX(70deg)",
-            transformOrigin: "bottom",
-          }}
-          aria-hidden
-        />
-
-        {/* Intro title */}
-        <motion.div
-          style={{ opacity: titleOpacity }}
-          className="absolute inset-x-0 top-[12%] z-20 text-center px-6"
-        >
-          <p className="text-xs uppercase tracking-[0.4em] text-white/50 mb-3">Welcome to the lobby</p>
-          <h2 className="text-4xl md:text-6xl font-light tracking-tight">Step inside Chronyx.</h2>
-          <p className="mt-4 text-white/60 text-sm md:text-base">
-            Scroll. Every module of your life docks around you.
-          </p>
-        </motion.div>
-
-        {/* 3D stage */}
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ perspective: "1400px", perspectiveOrigin: "50% 50%" }}
-        >
-          <div className="relative w-full h-full" style={{ transformStyle: "preserve-3d" }}>
-            <motion.div
-              style={{ scale: coreScale, opacity: coreOpacity }}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 md:w-56 md:h-56 text-white"
-            >
-              <ChronyxOrbitalLogo className="w-full h-full" animated glow title="Chronyx core" />
-            </motion.div>
-
-            {MODULES.map((m) => (
-              <Panel key={m.label} mod={m} progress={scrollYProgress} />
-            ))}
+      <div className="relative max-w-6xl mx-auto">
+        {/* Heading + central orbital mark */}
+        <div className="text-center mb-16">
+          <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground mb-4">The Chronyx Ecosystem</p>
+          <div className="mx-auto mb-6 w-24 h-24 sm:w-28 sm:h-28 text-foreground">
+            <ChronyxOrbitalLogo className="w-full h-full" animated={!reduce} glow title="Chronyx core" />
           </div>
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tight text-foreground">
+            One quiet lobby.
+            <span className="block text-muted-foreground">Every module of your life.</span>
+          </h2>
+          <p className="mt-5 max-w-xl mx-auto text-muted-foreground">
+            Twenty modules, one private system of record. Hover any card to feel it dock.
+          </p>
         </div>
 
-        {/* Exit caption */}
-        <motion.div
-          style={{ opacity: subOpacity }}
-          className="absolute inset-x-0 bottom-[10%] z-20 text-center px-6"
-        >
-          <p className="text-lg md:text-2xl font-light tracking-tight text-white/85">
+        {/* 3D card grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {MODULES.map((m) => (
+            <TiltCard key={m.label} mod={m} reduce={reduce} />
+          ))}
+        </div>
+
+        {/* Footer line */}
+        <div className="mt-16 text-center">
+          <p className="text-foreground text-lg sm:text-xl font-light tracking-tight">
             Your life, organised — without the noise.
           </p>
-          <p className="text-white/50 text-xs mt-2 uppercase tracking-[0.3em]">Keep scrolling</p>
-        </motion.div>
+          <p className="text-muted-foreground text-xs mt-2 uppercase tracking-[0.3em]">
+            {MODULES.length} modules · 1 dashboard
+          </p>
+        </div>
       </div>
     </section>
   );
