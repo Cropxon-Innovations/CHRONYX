@@ -458,8 +458,9 @@
           height="120"
           decoding="async"
           fetchpriority="high"
-          style="position:absolute;inset:0;width:120px;height:120px;display:block;opacity:0;transition:opacity .4s ease;filter:drop-shadow(0 8px 30px rgba(99,102,241,0.45));"
-          onload="this.style.opacity='1'; var s=document.getElementById('splash-logo-svg'); if(s) s.style.opacity='0';"
+          style="position:absolute;inset:0;width:120px;height:120px;display:block;opacity:0;transition:opacity .5s ease;filter:drop-shadow(0 8px 30px rgba(99,102,241,0.45));"
+          onload="this.style.opacity='1';"
+          onerror="this.remove();"
         />
       </div>
       <div id="splash-loader"></div>
