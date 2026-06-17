@@ -53,32 +53,33 @@
     <meta name="google-site-verification" content="" />
 
     <!-- ========================================= -->
-    <!-- FAVICONS & ICONS -->
+    <!-- FAVICONS & ICONS (3D Orbital Mark) -->
     <!-- ========================================= -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="icon" type="image/svg+xml" href="/chronyx-logo.svg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/chronyx-logo.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/chronyx-logo.png" />
-    <link rel="shortcut icon" href="/chronyx-logo.svg" />
-    
+    <link rel="shortcut icon" href="/favicon.ico" />
+
     <!-- Apple Touch Icons -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.svg" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.svg" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon.svg" />
-    
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- Preload splash icon so the orbital mark renders instantly -->
+    <link rel="preload" as="image" href="/icons/icon-192.png" fetchpriority="high" />
+
     <!-- Web App Manifest -->
     <link rel="manifest" href="/manifest.json" />
-    
+
     <!-- Apple Mobile Web App -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="CHRONYX" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="application-name" content="CHRONYX" />
-    
+
     <!-- Microsoft Tiles -->
     <meta name="msapplication-TileColor" content="#0f172a" />
-    <meta name="msapplication-TileImage" content="/icons/icon-192x192.svg" />
+    <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
     <meta name="msapplication-config" content="none" />
 
     <!-- Preconnect for performance -->
@@ -361,8 +362,8 @@
       #splash-logo-svg {
         width: 100%;
         height: 100%;
-        animation: spinLogo 2s linear infinite;
       }
+      #splash-logo-img { animation: floatLogo 3s ease-in-out infinite; }
       #splash-text { 
         margin-top: 1.5rem;
         font-size: 2rem; 
@@ -422,9 +423,10 @@
         border-radius: 50%;
         animation: pulse 2s ease-in-out infinite;
       }
-      @keyframes spinLogo { 
-        from { transform: rotate(0deg); } 
-        to { transform: rotate(360deg); } 
+      @keyframes spinLogo { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes floatLogo {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-6px) scale(1.03); }
       }
       @keyframes fadeIn { to { opacity: 0.7; } }
       @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(200%); } }
@@ -440,21 +442,25 @@
     <div id="splash-screen">
       <div id="splash-glow"></div>
       <div id="splash-logo-container">
+        <!-- Inline SVG fallback renders instantly; the 3D PNG fades in on load -->
         <svg id="splash-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CHRONYX Logo">
-          <defs>
-            <linearGradient id="splashLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#64748b"/>
-              <stop offset="100%" style="stop-color:#64748b; stop-opacity:0.6"/>
-            </linearGradient>
-          </defs>
-          <circle cx="50" cy="50" r="45" stroke="url(#splashLogoGradient)" stroke-width="2" fill="none" opacity="0.8"/>
-          <circle cx="50" cy="50" r="35" stroke="#64748b" stroke-width="1" stroke-dasharray="6 4" fill="none" opacity="0.4"/>
-          <circle cx="50" cy="50" r="5" fill="#64748b" opacity="0.9"/>
-          <circle cx="50" cy="10" r="2" fill="#64748b" opacity="0.5"/>
-          <circle cx="90" cy="50" r="2" fill="#64748b" opacity="0.5"/>
-          <circle cx="50" cy="90" r="2" fill="#64748b" opacity="0.5"/>
-          <circle cx="10" cy="50" r="2" fill="#64748b" opacity="0.5"/>
+          <circle cx="50" cy="50" r="14" fill="#94a3b8"/>
+          <ellipse cx="50" cy="50" rx="44" ry="14" stroke="#94a3b8" stroke-width="2" fill="none" opacity="0.85"/>
+          <ellipse cx="50" cy="50" rx="44" ry="14" stroke="#94a3b8" stroke-width="1.5" fill="none" opacity="0.5" transform="rotate(60 50 50)"/>
+          <ellipse cx="50" cy="50" rx="44" ry="14" stroke="#94a3b8" stroke-width="1.5" fill="none" opacity="0.5" transform="rotate(-60 50 50)"/>
+          <circle cx="94" cy="50" r="3" fill="#60a5fa"/>
         </svg>
+        <img
+          id="splash-logo-img"
+          src="/icons/icon-192.png"
+          alt="CHRONYX"
+          width="120"
+          height="120"
+          decoding="async"
+          fetchpriority="high"
+          style="position:absolute;inset:0;width:120px;height:120px;display:block;opacity:0;transition:opacity .4s ease;filter:drop-shadow(0 8px 30px rgba(99,102,241,0.45));"
+          onload="this.style.opacity='1'; var s=document.getElementById('splash-logo-svg'); if(s) s.style.opacity='0';"
+        />
       </div>
       <div id="splash-loader"></div>
       <div id="splash-footer">
