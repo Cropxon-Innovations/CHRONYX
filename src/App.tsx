@@ -66,6 +66,24 @@ const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const IconPreview = lazy(() => import("./pages/IconPreview"));
 
+// WealthX module (isolated, lazy-loaded)
+const WealthXLayout      = lazy(() => import("./modules/wealthx/components/WealthXLayout"));
+const WealthXDashboard   = lazy(() => import("./modules/wealthx/pages/WealthXDashboard"));
+const WealthXPortfolio   = lazy(() => import("./modules/wealthx/pages/Portfolio"));
+const WealthXMutualFunds = lazy(() => import("./modules/wealthx/pages/MutualFunds"));
+const WealthXStocks      = lazy(() => import("./modules/wealthx/pages/Stocks"));
+const WealthXETFs        = lazy(() => import("./modules/wealthx/pages/ETFs"));
+const WealthXGold        = lazy(() => import("./modules/wealthx/pages/Gold"));
+const WealthXTransactions= lazy(() => import("./modules/wealthx/pages/Transactions"));
+const WealthXSIPManager  = lazy(() => import("./modules/wealthx/pages/SIPManager"));
+const WealthXGoals       = lazy(() => import("./modules/wealthx/pages/Goals"));
+const WealthXWatchlist   = lazy(() => import("./modules/wealthx/pages/Watchlist"));
+const WealthXAnalytics   = lazy(() => import("./modules/wealthx/pages/Analytics"));
+const WealthXInsights    = lazy(() => import("./modules/wealthx/pages/Insights"));
+const WealthXPredictions = lazy(() => import("./modules/wealthx/pages/Predictions"));
+const WealthXNews        = lazy(() => import("./modules/wealthx/pages/News"));
+const WealthXSettings    = lazy(() => import("./modules/wealthx/pages/Settings"));
+
 const queryClient = new QueryClient();
 
 // Enhanced page transition with smooth fade and subtle scale
@@ -305,6 +323,23 @@ const AnimatedRoutes = () => {
           <Route path="tasks" element={<Suspense fallback={<PageLoader />}><TaskManagement /></Suspense>} />
           <Route path="tasks/join/:token" element={<Suspense fallback={<PageLoader />}><TaskJoin /></Suspense>} />
           <Route path="tasks/:projectId" element={<Suspense fallback={<PageLoader />}><TaskProject /></Suspense>} />
+          <Route path="wealthx" element={<Suspense fallback={<PageLoader />}><WealthXLayout /></Suspense>}>
+            <Route index                 element={<Suspense fallback={<PageLoader />}><WealthXDashboard /></Suspense>} />
+            <Route path="portfolio"      element={<Suspense fallback={<PageLoader />}><WealthXPortfolio /></Suspense>} />
+            <Route path="mutual-funds"   element={<Suspense fallback={<PageLoader />}><WealthXMutualFunds /></Suspense>} />
+            <Route path="stocks"         element={<Suspense fallback={<PageLoader />}><WealthXStocks /></Suspense>} />
+            <Route path="etfs"           element={<Suspense fallback={<PageLoader />}><WealthXETFs /></Suspense>} />
+            <Route path="gold"           element={<Suspense fallback={<PageLoader />}><WealthXGold /></Suspense>} />
+            <Route path="transactions"   element={<Suspense fallback={<PageLoader />}><WealthXTransactions /></Suspense>} />
+            <Route path="sip"            element={<Suspense fallback={<PageLoader />}><WealthXSIPManager /></Suspense>} />
+            <Route path="goals"          element={<Suspense fallback={<PageLoader />}><WealthXGoals /></Suspense>} />
+            <Route path="watchlist"      element={<Suspense fallback={<PageLoader />}><WealthXWatchlist /></Suspense>} />
+            <Route path="analytics"      element={<Suspense fallback={<PageLoader />}><WealthXAnalytics /></Suspense>} />
+            <Route path="insights"       element={<Suspense fallback={<PageLoader />}><WealthXInsights /></Suspense>} />
+            <Route path="predictions"    element={<Suspense fallback={<PageLoader />}><WealthXPredictions /></Suspense>} />
+            <Route path="news"           element={<Suspense fallback={<PageLoader />}><WealthXNews /></Suspense>} />
+            <Route path="settings"       element={<Suspense fallback={<PageLoader />}><WealthXSettings /></Suspense>} />
+          </Route>
           <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         </Route>
         <Route 
