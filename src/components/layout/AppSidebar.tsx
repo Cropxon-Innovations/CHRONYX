@@ -81,7 +81,7 @@ interface NavSection {
 }
 
 // Modularized navigation sections - Reordered: Overview → Productivity → Finance → Life → Media → Tools → Security
-const navSections: NavSection[] = [
+export const navSections: NavSection[] = [
   {
     title: "Overview",
     items: [
