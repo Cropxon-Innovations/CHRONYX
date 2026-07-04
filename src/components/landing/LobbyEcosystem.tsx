@@ -3,7 +3,7 @@ import { useRef, useState, MouseEvent } from "react";
 import {
   PenTool, FileText, GraduationCap, Wallet, Receipt, TrendingUp,
   Heart, KanbanSquare, Images, GitBranch, Hourglass, Lock,
-  CheckSquare, BookMarked, Zap, Target, Users, Trophy, PieChart,
+  CheckSquare, BookMarked, Zap, Target, Users, Trophy, PieChart, LineChart,
 } from "lucide-react";
 import { ChronyxOrbitalLogo } from "@/components/brand/ChronyxOrbitalLogo";
 
