@@ -47,6 +47,7 @@ import {
   Newspaper,
    Brain,
    KanbanSquare,
+   LineChart,
 } from "lucide-react";
 import { getBadgeClasses, getBadgeDotColor } from "@/lib/badge-colors";
 import {
