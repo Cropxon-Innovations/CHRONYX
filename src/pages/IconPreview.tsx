@@ -1,4 +1,9 @@
 import { Helmet } from "react-helmet-async";
+import { useState } from "react";
+import JSZip from "jszip";
+import { Download, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 /**
  * Internal icon preview gallery — visualises the Chronyx 3D orbital
@@ -8,13 +13,24 @@ import { Helmet } from "react-helmet-async";
  */
 
 const ICONS = [
-  { label: "favicon-32 (browser tab)", src: "/favicon-32.png", size: 32 },
-  { label: "favicon.ico (legacy)",     src: "/favicon.ico",    size: 32 },
-  { label: "PWA 192",                  src: "/icons/icon-192.png", size: 96 },
-  { label: "PWA 512",                  src: "/icons/icon-512.png", size: 128 },
-  { label: "Apple touch (180)",        src: "/apple-touch-icon.png", size: 120 },
-  { label: "SVG mark",                 src: "/chronyx-logo.svg", size: 96 },
+  { label: "favicon-32 (browser tab)", src: "/favicon-32.png",         file: "favicon-32.png",         size: 32  },
+  { label: "favicon.ico (legacy)",     src: "/favicon.ico",            file: "favicon.ico",            size: 32  },
+  { label: "PWA 192",                  src: "/icons/icon-192.png",     file: "icon-192.png",           size: 96  },
+  { label: "PWA 512",                  src: "/icons/icon-512.png",     file: "icon-512.png",           size: 128 },
+  { label: "Apple touch (180)",        src: "/apple-touch-icon.png",   file: "apple-touch-icon.png",   size: 120 },
+  { label: "SVG mark",                 src: "/chronyx-logo.svg",       file: "chronyx-logo.svg",       size: 96  },
 ];
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
 
 const Surface = ({
   bg, label, children,
@@ -29,10 +45,19 @@ const Surface = ({
   </div>
 );
 
-const Tile = ({ label, src, size }: { label: string; src: string; size: number }) => (
+const Tile = ({
+  label, src, size, file,
+}: { label: string; src: string; size: number; file: string }) => (
   <figure className="flex flex-col items-center text-center gap-2">
     <img src={src} alt={label} width={size} height={size} style={{ width: size, height: size }} className="rounded-xl shadow-lg" />
     <figcaption className="text-[10px] text-muted-foreground leading-tight max-w-[110px]">{label}</figcaption>
+    <a
+      href={src}
+      download={file}
+      className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+    >
+      <Download className="h-3 w-3" /> download
+    </a>
   </figure>
 );
 
@@ -48,6 +73,39 @@ const PlatformMock = ({
 );
 
 const IconPreview = () => {
+  const [zipping, setZipping] = useState(false);
+
+  const exportZip = async () => {
+    try {
+      setZipping(true);
+      const zip = new JSZip();
+      const folder = zip.folder("chronyx-icons")!;
+      await Promise.all(
+        ICONS.map(async (i) => {
+          const res = await fetch(i.src, { cache: "no-store" });
+          if (!res.ok) throw new Error(`Failed to fetch ${i.file}`);
+          folder.file(i.file, await res.blob());
+        })
+      );
+      folder.file(
+        "README.txt",
+        [
+          "Chronyx icon set",
+          `Generated: ${new Date().toISOString()}`,
+          "",
+          ...ICONS.map((i) => `- ${i.file}  (${i.label})`),
+        ].join("\n")
+      );
+      const blob = await zip.generateAsync({ type: "blob" });
+      downloadBlob(blob, `chronyx-icons-${new Date().toISOString().slice(0, 10)}.zip`);
+      toast.success("Icon set exported");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setZipping(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-background text-foreground py-12 px-6">
       <Helmet>
@@ -56,13 +114,19 @@ const IconPreview = () => {
       </Helmet>
 
       <div className="max-w-5xl mx-auto space-y-8">
-        <header>
-          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Internal</p>
-          <h1 className="text-3xl sm:text-4xl font-light tracking-tight mt-2">Icon Preview Gallery</h1>
-          <p className="text-muted-foreground mt-2 max-w-2xl">
-            QA the Chronyx 3D orbital mark across favicons, PWA icons, and home-screen treatments
-            for iOS, Android, and desktop. Open this page in light and dark themes to confirm contrast.
-          </p>
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Internal</p>
+            <h1 className="text-3xl sm:text-4xl font-light tracking-tight mt-2">Icon Preview Gallery</h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl">
+              QA the Chronyx 3D orbital mark across favicons, PWA icons, and home-screen treatments
+              for iOS, Android, and desktop. Download individual assets or grab the full set as a ZIP.
+            </p>
+          </div>
+          <Button onClick={exportZip} disabled={zipping} className="gap-2">
+            <Package className="h-4 w-4" />
+            {zipping ? "Packaging…" : "Export ZIP"}
+          </Button>
         </header>
 
         <Surface bg="bg-white" label="On light surface">

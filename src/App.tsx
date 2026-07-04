@@ -358,21 +358,42 @@ const AnimatedRoutes = () => {
   );
 };
 
+/**
+ * Splash policy: shown at most once per browser session. The inline SVG in
+ * SplashScreen renders instantly (no network dependency), and we preload
+ * the high-res orbital mark with a cache-busted URL + a bounded retry so
+ * a slow / flaky connection can never leave the splash blank. After login
+ * the same session flag applies, so users don't see the splash again on
+ * route changes or auth callbacks.
+ */
+const SPLASH_KEY = "chronyx_splash_shown_v3";
+const SPLASH_ASSET_VERSION = "3";
+
+const preloadSplashAsset = (attempt = 0): void => {
+  const src = `/icons/icon-mark.png?v=${SPLASH_ASSET_VERSION}`;
+  const img = new Image();
+  img.onerror = () => {
+    if (attempt < 2) setTimeout(() => preloadSplashAsset(attempt + 1), 400 * (attempt + 1));
+  };
+  img.src = src;
+};
+
 const AppContent = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   useEffect(() => {
-    // Check if this is first visit in this session (v2 key forces re-show after branding update)
-    const hasSeenSplash = sessionStorage.getItem("chronyx_splash_shown_v2");
+    const hasSeenSplash = sessionStorage.getItem(SPLASH_KEY);
     if (hasSeenSplash) {
       setShowSplash(false);
       setIsFirstLoad(false);
+    } else {
+      preloadSplashAsset();
     }
   }, []);
 
   const handleSplashComplete = () => {
-    sessionStorage.setItem("chronyx_splash_shown_v2", "true");
+    sessionStorage.setItem(SPLASH_KEY, "1");
     setShowSplash(false);
     setIsFirstLoad(false);
   };

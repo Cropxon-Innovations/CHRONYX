@@ -47,6 +47,7 @@ import {
   Newspaper,
    Brain,
    KanbanSquare,
+   LineChart,
 } from "lucide-react";
 import { getBadgeClasses, getBadgeDotColor } from "@/lib/badge-colors";
 import {
@@ -80,7 +81,7 @@ interface NavSection {
 }
 
 // Modularized navigation sections - Reordered: Overview → Productivity → Finance → Life → Media → Tools → Security
-const navSections: NavSection[] = [
+export const navSections: NavSection[] = [
   {
     title: "Overview",
     items: [
@@ -108,6 +109,12 @@ const navSections: NavSection[] = [
       { path: "/app/loans", label: "Loans & EMI", icon: Wallet },
       { path: "/app/insurance", label: "Insurance", icon: Heart },
       { path: "/app/tax", label: "TAXYN", icon: FileText, badge: "PRO" },
+    ],
+  },
+  {
+    title: "Wealth",
+    items: [
+      { path: "/app/wealthx", label: "WealthX", icon: LineChart, badge: "NEW" },
     ],
   },
   {
