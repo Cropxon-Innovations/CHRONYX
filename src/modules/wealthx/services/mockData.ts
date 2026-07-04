@@ -1,7 +1,7 @@
 import type {
   Holding, MutualFund, Stock, Transaction, SIP, Goal, WatchItem,
   NewsItem, PortfolioSummary,
-} from "./types";
+} from "../types";
 
 /**
  * Deterministic mock market/portfolio data.
