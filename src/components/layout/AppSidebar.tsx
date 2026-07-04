@@ -112,6 +112,12 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    title: "Wealth",
+    items: [
+      { path: "/app/wealthx", label: "WealthX", icon: LineChart, badge: "NEW" },
+    ],
+  },
+  {
     title: "Life",
     items: [
       { path: "/app/memory", label: "Memory", icon: Images },
