@@ -56,7 +56,7 @@ export function exportPortfolioPDF(opts: {
     const tx = M + col * (tileW + 10);
     const ty = y + row * 56;
     doc.setDrawColor(226);
-    doc.setFillColor(250);
+    doc.setFillColor(250, 250, 250);
     (doc as any).roundedRect(tx, ty, tileW, 48, 6, 6, "FD");
     doc.setFontSize(8);
     doc.setTextColor(120);
