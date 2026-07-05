@@ -27,6 +27,8 @@ import {
   Images,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+
   Target,
   Mail,
   Zap,
@@ -179,6 +181,25 @@ const AppSidebar = () => {
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(isCollapsed));
   }, [isCollapsed]);
+
+  // Per-group collapsed state — persisted so the sidebar remembers what the
+  // user closed. Default: everything open on first visit.
+  const GROUPS_KEY = "sidebar-groups-collapsed-v1";
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem(GROUPS_KEY);
+      return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem(GROUPS_KEY, JSON.stringify(collapsedGroups));
+  }, [collapsedGroups]);
+  const toggleGroup = (title: string) =>
+    setCollapsedGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -381,14 +402,30 @@ const AppSidebar = () => {
 
         {/* Navigation Sections */}
         <nav className={cn("flex-1 overflow-y-auto", collapsed ? "p-2" : "p-3")}>
-          {navSections.map((section, sectionIndex) => (
+          {navSections.map((section, sectionIndex) => {
+            // Groups are always open in icon-collapsed mode (no room for chevron)
+            const groupCollapsed = !collapsed && !!collapsedGroups[section.title];
+            return (
             <div key={section.title} className={cn(sectionIndex > 0 && "mt-4")}>
               {!collapsed && (
-                <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
-                  {section.title}
-                </p>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(section.title)}
+                  aria-expanded={!groupCollapsed}
+                  aria-controls={`sidebar-group-${section.title}`}
+                  className="w-full px-3 mb-1 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40 hover:text-sidebar-foreground/70 transition-colors"
+                >
+                  <span>{section.title}</span>
+                  <ChevronDown
+                    className={cn(
+                      "w-3 h-3 transition-transform",
+                      groupCollapsed && "-rotate-90"
+                    )}
+                  />
+                </button>
               )}
-              <div className="space-y-0.5">
+              {!groupCollapsed && (
+              <div id={`sidebar-group-${section.title}`} className="space-y-0.5">
                 {section.items.map(({ path, label, icon: Icon, badge }) => {
                   const isActive = location.pathname === path || (path === "/app" && location.pathname === "/app/dashboard");
                   
@@ -445,8 +482,11 @@ const AppSidebar = () => {
                   );
                 })}
               </div>
+              )}
             </div>
-          ))}
+            );
+          })}
+
         </nav>
 
         {/* Version Footer */}
