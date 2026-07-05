@@ -182,6 +182,25 @@ const AppSidebar = () => {
     localStorage.setItem("sidebar-collapsed", String(isCollapsed));
   }, [isCollapsed]);
 
+  // Per-group collapsed state — persisted so the sidebar remembers what the
+  // user closed. Default: everything open on first visit.
+  const GROUPS_KEY = "sidebar-groups-collapsed-v1";
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem(GROUPS_KEY);
+      return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+    } catch {
+      return {};
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem(GROUPS_KEY, JSON.stringify(collapsedGroups));
+  }, [collapsedGroups]);
+  const toggleGroup = (title: string) =>
+    setCollapsedGroups((prev) => ({ ...prev, [title]: !prev[title] }));
+
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
