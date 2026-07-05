@@ -73,8 +73,89 @@ const PlatformMock = ({
   </div>
 );
 
+type HealthStatus = "pending" | "ok" | "fail";
+interface HealthRow {
+  source: string;
+  url: string;
+  status: HealthStatus;
+  detail?: string;
+  contentType?: string;
+  bytes?: number;
+}
+
 const IconPreview = () => {
   const [zipping, setZipping] = useState(false);
+  const [health, setHealth] = useState<HealthRow[]>([]);
+  const [checking, setChecking] = useState(false);
+
+  const runHealthCheck = async () => {
+    setChecking(true);
+    try {
+      // Discover icons from live <link> tags + manifest
+      const linkHrefs = Array.from(
+        document.querySelectorAll<HTMLLinkElement>(
+          'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"], link[rel="mask-icon"]'
+        )
+      ).map((l) => ({ source: `<link rel="${l.rel}">`, url: new URL(l.href, location.origin).pathname }));
+
+      const manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+      const manifestUrl = manifestLink ? new URL(manifestLink.href, location.origin).pathname : "/manifest.json";
+
+      const manifestRows: { source: string; url: string }[] = [
+        { source: "manifest link", url: manifestUrl },
+      ];
+      try {
+        const mres = await fetch(manifestUrl, { cache: "no-store" });
+        if (mres.ok) {
+          const mjson = await mres.json();
+          for (const icon of mjson.icons ?? []) {
+            manifestRows.push({
+              source: `manifest.icons[${icon.sizes ?? "?"}]`,
+              url: new URL(icon.src, location.origin).pathname,
+            });
+          }
+        }
+      } catch {
+        /* handled below */
+      }
+
+      const all = [...linkHrefs, ...manifestRows];
+      const seen = new Set<string>();
+      const unique = all.filter((r) => (seen.has(r.url) ? false : seen.add(r.url)));
+
+      const rows: HealthRow[] = unique.map((r) => ({ ...r, status: "pending" as HealthStatus }));
+      setHealth(rows);
+
+      const results = await Promise.all(
+        rows.map(async (row): Promise<HealthRow> => {
+          try {
+            const res = await fetch(row.url, { cache: "no-store" });
+            if (!res.ok) return { ...row, status: "fail", detail: `HTTP ${res.status}` };
+            const blob = await res.blob();
+            return {
+              ...row,
+              status: "ok",
+              contentType: blob.type || res.headers.get("content-type") || "",
+              bytes: blob.size,
+            };
+          } catch (e) {
+            return { ...row, status: "fail", detail: e instanceof Error ? e.message : "network error" };
+          }
+        })
+      );
+      setHealth(results);
+      const failed = results.filter((r) => r.status === "fail").length;
+      if (failed === 0) toast.success(`All ${results.length} icons resolve correctly`);
+      else toast.error(`${failed} of ${results.length} icons failed to load`);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    void runHealthCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const exportZip = async () => {
     try {
@@ -106,6 +187,7 @@ const IconPreview = () => {
       setZipping(false);
     }
   };
+
 
   return (
     <main className="min-h-screen bg-background text-foreground py-12 px-6">
