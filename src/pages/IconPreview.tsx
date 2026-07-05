@@ -1,9 +1,10 @@
 import { Helmet } from "react-helmet-async";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import JSZip from "jszip";
-import { Download, Package } from "lucide-react";
+import { Download, Package, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
 
 /**
  * Internal icon preview gallery — visualises the Chronyx 3D orbital
