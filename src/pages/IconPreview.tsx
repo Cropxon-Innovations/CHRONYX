@@ -212,7 +212,63 @@ const IconPreview = () => {
           </Button>
         </header>
 
+        {/* Manifest & favicon health check */}
+        <section className="rounded-2xl border border-border overflow-hidden">
+          <div className="px-4 py-3 flex items-center justify-between border-b border-border bg-card">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Runtime check</p>
+              <h2 className="text-sm font-medium text-foreground mt-0.5">Manifest & favicon resolution</h2>
+            </div>
+            <Button size="sm" variant="outline" onClick={runHealthCheck} disabled={checking} className="gap-2">
+              {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Re-check
+            </Button>
+          </div>
+          <div className="divide-y divide-border">
+            {health.length === 0 && (
+              <p className="px-4 py-6 text-sm text-muted-foreground">Discovering icons…</p>
+            )}
+            {health.map((r) => (
+              <div key={r.url} className="px-4 py-3 grid grid-cols-[auto_1fr_auto] items-center gap-4">
+                <div className="flex items-center gap-3">
+                  {r.status === "ok" ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  ) : r.status === "fail" ? (
+                    <XCircle className="h-4 w-4 text-rose-500" />
+                  ) : (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                  {/* Twin swatches so we can see the icon on both themes */}
+                  <div className="flex items-center gap-1">
+                    <div className="w-8 h-8 rounded bg-white flex items-center justify-center border border-border">
+                      <img src={r.url} alt="" className="max-w-6 max-h-6" onError={(e) => (e.currentTarget.style.opacity = "0.15")} />
+                    </div>
+                    <div className="w-8 h-8 rounded bg-[#0b0f1a] flex items-center justify-center border border-border">
+                      <img src={r.url} alt="" className="max-w-6 max-h-6" onError={(e) => (e.currentTarget.style.opacity = "0.15")} />
+                    </div>
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground truncate">{r.source}</p>
+                  <p className="text-sm font-mono truncate">{r.url}</p>
+                </div>
+                <div className="text-right text-[11px] text-muted-foreground">
+                  {r.status === "ok" && (
+                    <>
+                      <div>{r.contentType || "—"}</div>
+                      <div>{r.bytes != null ? `${(r.bytes / 1024).toFixed(1)} KB` : ""}</div>
+                    </>
+                  )}
+                  {r.status === "fail" && <span className="text-rose-500">{r.detail}</span>}
+                  {r.status === "pending" && <span>checking…</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <Surface bg="bg-white" label="On light surface">
+
           {ICONS.map((i) => <Tile key={i.label} {...i} />)}
         </Surface>
 
