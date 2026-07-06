@@ -257,16 +257,19 @@ const AnimatedRoutes = () => {
             </Suspense>
           }
         />
-        <Route 
-          path="/chronyx-control-8x9k2m" 
+        <Route
+          path="/admin"
           element={
             <motion.div {...pageTransition}>
               <Suspense fallback={<PageLoader />}>
                 <AdminPanel />
               </Suspense>
             </motion.div>
-          } 
+          }
         />
+        {/* Legacy obscure admin URL — permanently redirect to /admin so old bookmarks still work */}
+        <Route path="/chronyx-control-8x9k2m" element={<Navigate to="/admin" replace />} />
+
         <Route 
           path="/auth/callback" 
           element={
@@ -305,16 +308,16 @@ const AnimatedRoutes = () => {
           <Route path="documents" element={<Suspense fallback={<PageLoader />}><Documents /></Suspense>} />
           <Route path="social" element={<Suspense fallback={<PageLoader />}><Social /></Suspense>} />
           <Route path="analytics" element={<Suspense fallback={<PageLoader />}><PaymentAnalytics /></Suspense>} />
-          <Route path="notes" element={<Suspense fallback={<PageLoader />}><Notes /></Suspense>} />
+          {/* /notes route removed — Noteflow module retired */}
           <Route path="vault" element={<Suspense fallback={<PageLoader />}><Vault /></Suspense>} />
           <Route path="tax" element={<Suspense fallback={<PageLoader />}><Tax /></Suspense>} />
           <Route path="library" element={<Suspense fallback={<PageLoader />}><Library /></Suspense>} />
           <Route path="family-tree" element={<Suspense fallback={<PageLoader />}><FamilyTree /></Suspense>} />
-          <Route path="financeflow" element={<Suspense fallback={<PageLoader />}><FinanceFlow /></Suspense>} />
+          {/* /financeflow route removed — FinanceFlow module retired, its data now surfaces inside WealthX */}
           <Route path="privacy" element={<Suspense fallback={<PageLoader />}><PrivacyCenter /></Suspense>} />
           <Route path="security" element={<Suspense fallback={<PageLoader />}><SecurityDashboard /></Suspense>} />
           <Route path="resolutions" element={<Suspense fallback={<PageLoader />}><Resolutions /></Suspense>} />
-          <Route path="noteflowlm" element={<Suspense fallback={<PageLoader />}><NoteflowLMWorkspace /></Suspense>} />
+          {/* /noteflowlm route removed — Noteflow module retired */}
           <Route path="news" element={<Suspense fallback={<PageLoader />}><News /></Suspense>} />
           <Route path="tools" element={<Suspense fallback={<PageLoader />}><Tools /></Suspense>} />
            <Route path="aeon" element={<Suspense fallback={<PageLoader />}><Aeon /></Suspense>} />
