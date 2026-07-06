@@ -53,8 +53,9 @@ export const APP_MODULES: AppModule[] = [
   { path: "/app/insurance",    label: "Insurance",         group: "Finance",      showInLobby: true,  lobbyDesc: "Policies & claims.",             lobbyHue: "from-pink-400/30 to-pink-500/5" },
   { path: "/app/tax",          label: "TAXYN",             group: "Finance",      badge: "PRO",  showInLobby: true, lobbyDesc: "Indian tax engine.",     lobbyHue: "from-indigo-400/30 to-indigo-500/5" },
 
-  // Wealth (new)
-  { path: "/app/wealthx",      label: "WealthX",           group: "Wealth",       badge: "NEW",  showInLobby: true, lobbyDesc: "Investments, SIPs, portfolio intelligence.", lobbyHue: "from-emerald-400/30 to-cyan-500/5" },
+  // WealthX (moved into Finance group)
+  { path: "/app/wealthx",      label: "WealthX",           group: "Finance",      badge: "NEW",  showInLobby: true, lobbyDesc: "Investments, SIPs, portfolio intelligence.", lobbyHue: "from-emerald-400/30 to-cyan-500/5" },
+
 
   // Life
   { path: "/app/memory",       label: "Memory",            group: "Life",         showInLobby: true,  lobbyDesc: "Photos & collections.",          lobbyHue: "from-fuchsia-400/30 to-fuchsia-500/5" },

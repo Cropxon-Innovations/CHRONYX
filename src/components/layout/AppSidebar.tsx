@@ -95,7 +95,6 @@ export const navSections: NavSection[] = [
     title: "Productivity",
     items: [
       { path: "/app/todos", label: "Todos", icon: CheckSquare },
-      { path: "/app/notes", label: "Noteflow", icon: PenTool, badge: "BETA" },
       { path: "/app/study", label: "Study", icon: GraduationCap },
       { path: "/app/library", label: "Library", icon: BookMarked, badge: "NEW" },
       { path: "/app/achievements", label: "Achievements", icon: Trophy },
@@ -104,7 +103,7 @@ export const navSections: NavSection[] = [
   {
     title: "Finance",
     items: [
-      { path: "/app/financeflow", label: "FinanceFlow", icon: Zap, badge: "NEW" },
+      { path: "/app/wealthx", label: "WealthX", icon: LineChart, badge: "NEW" },
       { path: "/app/expenses", label: "Expenses", icon: Receipt },
       { path: "/app/income", label: "Income", icon: TrendingUp },
       { path: "/app/reports", label: "Reports & Budget", icon: PieChart },
@@ -113,12 +112,7 @@ export const navSections: NavSection[] = [
       { path: "/app/tax", label: "TAXYN", icon: FileText, badge: "PRO" },
     ],
   },
-  {
-    title: "Wealth",
-    items: [
-      { path: "/app/wealthx", label: "WealthX", icon: LineChart, badge: "NEW" },
-    ],
-  },
+
   {
     title: "Life",
     items: [
