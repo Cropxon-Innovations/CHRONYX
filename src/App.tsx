@@ -45,16 +45,14 @@ const Backup = lazy(() => import("./pages/app/Backup"));
 const Documents = lazy(() => import("./pages/app/Documents"));
 const Social = lazy(() => import("./pages/app/SocialHub"));
 const PaymentAnalytics = lazy(() => import("./pages/app/PaymentAnalytics"));
-const Notes = lazy(() => import("./pages/app/Notes"));
 const Vault = lazy(() => import("./pages/app/Vault"));
 const Tax = lazy(() => import("./pages/app/Tax"));
 const Library = lazy(() => import("./pages/app/Library"));
 const FamilyTree = lazy(() => import("./pages/app/FamilyTree"));
-const FinanceFlow = lazy(() => import("./pages/app/FinanceFlow"));
 const PrivacyCenter = lazy(() => import("./pages/app/PrivacyCenter"));
 const SecurityDashboard = lazy(() => import("./pages/app/SecurityDashboard"));
 const Resolutions = lazy(() => import("./pages/app/Resolutions"));
-const NoteflowLMWorkspace = lazy(() => import("./pages/app/NoteflowLMWorkspace"));
+
 const News = lazy(() => import("./pages/app/News"));
 const Tools = lazy(() => import("./pages/app/Tools"));
   const Aeon = lazy(() => import("./pages/app/Aeon"));

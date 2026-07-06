@@ -25,5 +25,6 @@ export const checkIsAdmin = async (userId: string): Promise<boolean> => {
   }
 };
 
-// Secure admin route path - not exposed publicly
-export const ADMIN_ROUTE = "/chronyx-control-8x9k2m";
+// Admin route path (renamed from the old obscure /chronyx-control-8x9k2m).
+export const ADMIN_ROUTE = "/admin";
+
