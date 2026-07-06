@@ -10,10 +10,10 @@ export type ModuleGroup =
   | "Overview"
   | "Productivity"
   | "Finance"
-  | "Wealth"
   | "Life"
   | "Work"
   | "Security";
+
 
 export interface AppModule {
   /** Unique path under /app (e.g. "/app/todos") */
@@ -39,13 +39,13 @@ export const APP_MODULES: AppModule[] = [
 
   // Productivity
   { path: "/app/todos",        label: "Todos",             group: "Productivity", showInLobby: true,  lobbyDesc: "Daily plan & timeline.",        lobbyHue: "from-teal-400/30 to-teal-500/5" },
-  { path: "/app/notes",        label: "Noteflow",          group: "Productivity", badge: "BETA", showInLobby: true, lobbyDesc: "AI notes, voice, OCR.",  lobbyHue: "from-violet-400/30 to-violet-500/5" },
+  // Noteflow (path /app/notes) retired
   { path: "/app/study",        label: "Study",             group: "Productivity", showInLobby: true,  lobbyDesc: "Syllabus, PYQs, NOVA AI.",       lobbyHue: "from-emerald-400/30 to-emerald-500/5" },
   { path: "/app/library",      label: "Library",           group: "Productivity", badge: "NEW",  showInLobby: true, lobbyDesc: "Books, PDFs, readers.",  lobbyHue: "from-amber-400/30 to-amber-500/5" },
   { path: "/app/achievements", label: "Achievements",      group: "Productivity", showInLobby: true,  lobbyDesc: "Streaks & milestones.",          lobbyHue: "from-yellow-300/30 to-yellow-500/5" },
 
   // Finance
-  { path: "/app/financeflow",  label: "FinanceFlow",       group: "Finance",      badge: "NEW",  showInLobby: true, lobbyDesc: "Auto-imported transactions.", lobbyHue: "from-yellow-400/30 to-orange-500/5" },
+  // FinanceFlow (path /app/financeflow) retired — data surfaces inside WealthX
   { path: "/app/expenses",     label: "Expenses",          group: "Finance",      showInLobby: true,  lobbyDesc: "Budgets & categories.",          lobbyHue: "from-rose-400/30 to-rose-500/5" },
   { path: "/app/income",       label: "Income",            group: "Finance",      showInLobby: true,  lobbyDesc: "Salary & passive income.",       lobbyHue: "from-green-400/30 to-green-500/5" },
   { path: "/app/reports",      label: "Reports & Budget",  group: "Finance",      showInLobby: true,  lobbyDesc: "Spend insights & forecasts.",    lobbyHue: "from-sky-400/30 to-sky-500/5" },
