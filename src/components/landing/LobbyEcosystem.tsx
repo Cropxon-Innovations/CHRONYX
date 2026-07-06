@@ -28,21 +28,19 @@ interface Module {
 export const MODULES: Module[] = [
   // Productivity
   { label: "Todos",            desc: "Daily plan & timeline.",        Icon: CheckSquare,   hue: "from-teal-400/30 to-teal-500/5",       group: "Productivity" },
-  { label: "Noteflow",         desc: "AI notes, voice, OCR.",         Icon: PenTool,       hue: "from-violet-400/30 to-violet-500/5",   group: "Productivity" },
   { label: "Study",            desc: "Syllabus, PYQs, NOVA AI.",      Icon: GraduationCap, hue: "from-emerald-400/30 to-emerald-500/5", group: "Productivity" },
   { label: "Library",          desc: "Books, PDFs, readers.",         Icon: BookMarked,    hue: "from-amber-400/30 to-amber-500/5",     group: "Productivity" },
   { label: "Achievements",     desc: "Streaks & milestones.",         Icon: Trophy,        hue: "from-yellow-300/30 to-yellow-500/5",   group: "Productivity" },
   { label: "Resolutions",      desc: "Yearly intent, tracked.",       Icon: Target,        hue: "from-red-400/30 to-red-500/5",         group: "Productivity" },
   // Finance
-  { label: "FinanceFlow",      desc: "Auto-imported transactions.",   Icon: Zap,           hue: "from-yellow-400/30 to-orange-500/5",   group: "Finance" },
+  { label: "WealthX",          desc: "Investments, SIPs, portfolio intelligence.", Icon: LineChart, hue: "from-emerald-400/30 to-cyan-500/5", group: "Finance" },
   { label: "Expenses",         desc: "Budgets & categories.",         Icon: Receipt,       hue: "from-rose-400/30 to-rose-500/5",       group: "Finance" },
   { label: "Income",           desc: "Salary & passive income.",      Icon: TrendingUp,    hue: "from-green-400/30 to-green-500/5",     group: "Finance" },
   { label: "Reports & Budget", desc: "Spend insights & forecasts.",   Icon: PieChart,      hue: "from-sky-400/30 to-sky-500/5",         group: "Finance" },
   { label: "Loans & EMI",      desc: "Amortization & reminders.",     Icon: Wallet,        hue: "from-orange-400/30 to-orange-500/5",   group: "Finance" },
   { label: "Insurance",        desc: "Policies & claims.",            Icon: Heart,         hue: "from-pink-400/30 to-pink-500/5",       group: "Finance" },
   { label: "TAXYN",            desc: "Indian tax engine.",            Icon: FileText,      hue: "from-indigo-400/30 to-indigo-500/5",   group: "Finance" },
-  // Wealth
-  { label: "WealthX",          desc: "Investments, SIPs, portfolio intelligence.", Icon: LineChart, hue: "from-emerald-400/30 to-cyan-500/5", group: "Wealth" },
+
   // Life
   { label: "Memory",           desc: "Photos & collections.",         Icon: Images,        hue: "from-fuchsia-400/30 to-fuchsia-500/5", group: "Life" },
   { label: "Documents",        desc: "Personal docs vault.",          Icon: FileText,      hue: "from-cyan-400/30 to-cyan-500/5",       group: "Life" },
