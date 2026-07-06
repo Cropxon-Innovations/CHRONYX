@@ -84,7 +84,6 @@ Allow: /
 Disallow: /api/
 Disallow: /auth/
 Disallow: /app/
-Disallow: /chronyx-control-8x9k2m
 Disallow: /admin/
 Disallow: /*.json$
 
@@ -108,7 +107,6 @@ Allow: /refund
 Allow: /app/dashboard
 Allow: /app/expenses
 Allow: /app/income
-Allow: /app/financeflow
 Allow: /app/tax
 Allow: /app/loans
 Allow: /app/insurance
@@ -128,7 +126,6 @@ Allow: /app/study?tab=timetable
 # Rich Text Notes | Document Vault | AI
 # =========================================
 Allow: /app/notes
-Allow: /app/noteflowlm
 Allow: /app/documents
 Allow: /app/vault
 
