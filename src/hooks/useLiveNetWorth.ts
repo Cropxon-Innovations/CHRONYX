@@ -51,40 +51,38 @@ export function useLiveNetWorth(): LiveNetWorth {
     monthEnd.setMonth(monthEnd.getMonth() + 1);
     const isoMonthEnd = monthEnd.toISOString().slice(0, 10);
 
-    const [assetsQ, expAllQ, incAllQ, expMonthQ, incMonthQ, loansQ, emiMonthQ] =
-      await Promise.all([
-        supabase
-          .from("user_assets")
-          .select("current_value, purchase_price")
-          .eq("user_id", user.id),
-        supabase.from("expenses").select("amount").eq("user_id", user.id),
-        supabase
-          .from("income_entries")
-          .select("amount")
-          .eq("user_id", user.id),
-        supabase
-          .from("expenses")
-          .select("amount")
-          .eq("user_id", user.id)
-          .gte("expense_date", isoMonthStart)
-          .lt("expense_date", isoMonthEnd),
-        supabase
-          .from("income_entries")
-          .select("amount")
-          .eq("user_id", user.id)
-          .gte("received_date", isoMonthStart)
-          .lt("received_date", isoMonthEnd),
-        supabase
-          .from("loans")
-          .select("outstanding_amount, principal_amount, loan_amount, status")
-          .eq("user_id", user.id),
-        supabase
-          .from("emi_schedule")
-          .select("emi_amount, due_date, status")
-          .eq("user_id", user.id)
-          .gte("due_date", isoMonthStart)
-          .lt("due_date", isoMonthEnd),
-      ]);
+    type R = { data: any[] | null };
+    const run = async (p: PromiseLike<any>): Promise<R> => {
+      const r = (await p) as R;
+      return { data: r.data ?? [] };
+    };
+
+    const assetsQ = await run(
+      supabase.from("user_assets").select("current_value, purchase_price").eq("user_id", user.id),
+    );
+    const expAllQ = await run(
+      supabase.from("expenses").select("amount").eq("user_id", user.id),
+    );
+    const incAllQ = await run(
+      supabase.from("income_entries").select("amount").eq("user_id", user.id),
+    );
+    const expMonthQ = await run(
+      supabase.from("expenses").select("amount").eq("user_id", user.id)
+        .gte("expense_date", isoMonthStart).lt("expense_date", isoMonthEnd),
+    );
+    const incMonthQ = await run(
+      supabase.from("income_entries").select("amount").eq("user_id", user.id)
+        .gte("received_date", isoMonthStart).lt("received_date", isoMonthEnd),
+    );
+    const loansQ = await run(
+      supabase.from("loans")
+        .select("outstanding_amount, principal_amount, loan_amount, status")
+        .eq("user_id", user.id),
+    );
+    const emiMonthQ = await run(
+      supabase.from("emi_schedule").select("emi_amount, due_date, status")
+        .eq("user_id", user.id).gte("due_date", isoMonthStart).lt("due_date", isoMonthEnd),
+    );
 
     const assets = (assetsQ.data ?? []).reduce(
       (s, a: any) => s + num(a.current_value ?? a.purchase_price),
