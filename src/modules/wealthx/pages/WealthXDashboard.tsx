@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, BarChart, Bar, Legend } from "recharts";
-import { Download, Sparkles, TrendingUp, TrendingDown } from "lucide-react";
+import { Download, Sparkles, TrendingUp, TrendingDown, Activity, Radio } from "lucide-react";
 
 import MetricCard from "../components/MetricCard";
 import ChartCard from "../components/ChartCard";
@@ -10,6 +10,7 @@ import { usePortfolioSummary, useGrowthSeries, useAllocation, useSectorAllocatio
 import { formatCompactINR, formatINR, formatPct } from "@/lib/inr";
 import { CHART_COLORS } from "../utils/chartTheme";
 import { exportPortfolioPDF } from "../utils/exportPdf";
+import { useLiveNetWorth } from "@/hooks/useLiveNetWorth";
 
 const CardSkeleton = () => <Skeleton className="h-28 rounded-2xl" />;
 
