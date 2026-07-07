@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, BarChart, Bar, Legend } from "recharts";
-import { Download, Sparkles, TrendingUp, TrendingDown } from "lucide-react";
+import { Download, Sparkles, TrendingUp, TrendingDown, Activity, Radio } from "lucide-react";
 
 import MetricCard from "../components/MetricCard";
 import ChartCard from "../components/ChartCard";
@@ -10,10 +10,12 @@ import { usePortfolioSummary, useGrowthSeries, useAllocation, useSectorAllocatio
 import { formatCompactINR, formatINR, formatPct } from "@/lib/inr";
 import { CHART_COLORS } from "../utils/chartTheme";
 import { exportPortfolioPDF } from "../utils/exportPdf";
+import { useLiveNetWorth } from "@/hooks/useLiveNetWorth";
 
 const CardSkeleton = () => <Skeleton className="h-28 rounded-2xl" />;
 
 export const WealthXDashboard = () => {
+  const live      = useLiveNetWorth();
   const summary   = usePortfolioSummary();
   const growth    = useGrowthSeries();
   const alloc     = useAllocation();
@@ -34,6 +36,35 @@ export const WealthXDashboard = () => {
 
   return (
     <div className="space-y-8">
+      {/* Live finance sync — Realtime from expenses/income/loans/EMIs/assets */}
+      <section className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-cyan-500/5 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+              <Radio className="inline w-3.5 h-3.5 mr-1 -mt-0.5" /> Live sync — Net Worth
+            </h2>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            {live.loading ? "Syncing…" : `Updated ${live.updatedAt.toLocaleTimeString("en-IN")}`}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <MetricCard label="Net Worth"          value={live.netWorth} />
+          <MetricCard label="Total Assets"       value={live.assets} />
+          <MetricCard label="Liabilities"        value={live.liabilities} />
+          <MetricCard label="Cash Flow (LTD)"    value={live.cash} />
+          <MetricCard label="This month savings" value={live.monthlySavings} />
+          <MetricCard label="EMIs due (month)"   value={live.emiDueThisMonth} />
+        </div>
+        <p className="mt-3 text-[11px] text-muted-foreground flex items-center gap-1">
+          <Activity className="w-3 h-3" /> Auto-updates the moment you add or edit expenses, income, loans, EMIs, or assets — no refresh needed.
+        </p>
+      </section>
+
       {/* Top summary */}
       <section>
         <div className="flex items-center justify-between gap-3 mb-4">
