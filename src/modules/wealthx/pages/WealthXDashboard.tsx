@@ -15,6 +15,7 @@ import { useLiveNetWorth } from "@/hooks/useLiveNetWorth";
 const CardSkeleton = () => <Skeleton className="h-28 rounded-2xl" />;
 
 export const WealthXDashboard = () => {
+  const live      = useLiveNetWorth();
   const summary   = usePortfolioSummary();
   const growth    = useGrowthSeries();
   const alloc     = useAllocation();
